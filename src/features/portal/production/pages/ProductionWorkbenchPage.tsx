@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useParams, useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Modal } from 'antd'
+import { Button, Modal } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
@@ -26,6 +26,7 @@ import {
 import {
   assignProductionTask,
   bulkAssignProductionTasks,
+  claimProductionTask,
   exportProductionQcTasks,
   exportProductionTasksCsv,
   type FileCheck,
@@ -35,6 +36,7 @@ import {
   listScaleAssignees,
   type ProductionStatus,
   type ProductionTask,
+  type QcStatus,
   recheckPsdBlockedTasks,
   submitProductionQc,
   submitScaleForQc,
@@ -225,24 +227,20 @@ export function ProductionWorkbenchPage({
   )
   const filters = useMemo(() => {
     let filterStatus: ProductionStatus | undefined = undefined
+    let filterQcStatus: QcStatus | undefined = undefined
     let filterDesignType: 'NORMAL' | 'UNCLASSIFIED' | undefined = undefined
     let filterView: 'SCALE' | 'QC' | undefined = undefined
     let psdReadyOnly = false
 
     if (viewMode === 'scale') {
+      filterView = 'SCALE'
       if (tab === 'need_scale') {
-        filterView = 'SCALE'
         filterStatus = 'NEED_SCALE'
-        filterDesignType = 'NORMAL'
+        filterDesignType = undefined
         psdReadyOnly = true
       } else if (tab === 'qc_rejected') {
-        filterView = 'SCALE'
         filterStatus = 'QC_REJECTED'
-        filterDesignType = 'NORMAL'
-        psdReadyOnly = true
-      } else if (tab === 'unclassified') {
-        filterView = 'SCALE'
-        filterDesignType = 'UNCLASSIFIED'
+        filterDesignType = undefined
         psdReadyOnly = true
       } else if (tab === 'blocked') {
         filterStatus = 'BLOCKED'
@@ -250,41 +248,30 @@ export function ProductionWorkbenchPage({
       } else if (tab === 'qc_pending') {
         filterStatus = 'QC_PENDING'
         psdReadyOnly = false
-      } else if (tab === 'ready') {
-        filterStatus = 'READY_TO_SEND_VENDOR'
-        psdReadyOnly = false
-      } else if (tab === 'sent') {
-        filterStatus = 'SENT_TO_VENDOR'
-        psdReadyOnly = false
-      } else if (tab === 'cancelled') {
-        filterStatus = 'CANCELLED'
+      } else if (tab === 'sent' || tab === 'ready') {
+        filterStatus = 'READY_TO_SEND_VENDOR,SENT_TO_VENDOR' as ProductionStatus
         psdReadyOnly = false
       } else {
+        // 'all' in scale: all tasks belonging to scale workflow
         filterStatus = undefined
         filterDesignType = undefined
         psdReadyOnly = false
       }
     } else if (viewMode === 'qc') {
+      filterView = 'QC'
       if (tab === 'qc') {
-        filterView = 'QC'
+        filterQcStatus = 'PENDING'
         psdReadyOnly = true
-      } else if (tab === 'ready') {
-        filterStatus = 'READY_TO_SEND_VENDOR'
+      } else if (tab === 'ready' || tab === 'sent') {
+        filterQcStatus = 'PASSED'
         psdReadyOnly = false
       } else if (tab === 'qc_rejected') {
-        filterStatus = 'QC_REJECTED'
-        psdReadyOnly = false
-      } else if (tab === 'sent') {
-        filterStatus = 'SENT_TO_VENDOR'
-        psdReadyOnly = false
-      } else if (tab === 'blocked') {
-        filterStatus = 'BLOCKED'
-        psdReadyOnly = false
-      } else if (tab === 'cancelled') {
-        filterStatus = 'CANCELLED'
+        filterQcStatus = 'REJECTED'
         psdReadyOnly = false
       } else {
+        // 'all' in qc: all tasks belonging to qc workflow (excluding not ready / need scale)
         filterStatus = undefined
+        filterQcStatus = undefined
         psdReadyOnly = false
       }
     } else {
@@ -293,6 +280,7 @@ export function ProductionWorkbenchPage({
         psdReadyOnly = true
       } else if (tab === 'qc') {
         filterView = 'QC'
+        filterQcStatus = 'PENDING'
         psdReadyOnly = true
       } else if (tab === 'ready') {
         filterStatus = 'READY_TO_SEND_VENDOR'
@@ -313,6 +301,7 @@ export function ProductionWorkbenchPage({
       scaleDifficultyLevel,
       designType: filterDesignType,
       status: filterStatus,
+      qcStatus: filterQcStatus,
       view: filterView,
     }
   }, [createdDates, deferredSearch, salesChannelCode, scaleDifficultyLevel, tab, viewMode])
@@ -389,12 +378,19 @@ export function ProductionWorkbenchPage({
     }),
     [displaySummary, queueCounts.data],
   )
-  const scaleTabItems = useMemo<UiButtonTabItem<ProductionTab>[]>(
-    () => [
+  const scaleTabItems = useMemo<UiButtonTabItem<ProductionTab>[]>(() => {
+    const scaleTotal =
+      (queueSummary.needScale ?? 0) +
+      (queueSummary.qcRejected ?? 0) +
+      (queueSummary.qcPending ?? 0) +
+      (queueSummary.ready ?? 0) +
+      (queueSummary.sent ?? 0) +
+      (queueSummary.blocked ?? 0)
+    return [
       {
         value: 'all',
         label: (
-          <UiTabLabel count={queueSummary.total ?? 0} active={tab === 'all'}>
+          <UiTabLabel count={scaleTotal} active={tab === 'all'}>
             {t('portal.production.allQueue', { defaultValue: 'Tất cả' })}
           </UiTabLabel>
         ),
@@ -416,14 +412,6 @@ export function ProductionWorkbenchPage({
         ),
       },
       {
-        value: 'unclassified',
-        label: (
-          <UiTabLabel count={queueSummary.unclassified ?? 0} active={tab === 'unclassified'}>
-            {t('portal.production.unclassifiedQueue', { defaultValue: 'Chưa phân loại' })}
-          </UiTabLabel>
-        ),
-      },
-      {
         value: 'qc_pending',
         label: (
           <UiTabLabel count={queueSummary.qcPending ?? 0} active={tab === 'qc_pending'}>
@@ -432,18 +420,13 @@ export function ProductionWorkbenchPage({
         ),
       },
       {
-        value: 'ready',
-        label: (
-          <UiTabLabel count={queueSummary.ready ?? 0} active={tab === 'ready'}>
-            {t('portal.production.readyQueue', { defaultValue: 'QC đạt' })}
-          </UiTabLabel>
-        ),
-      },
-      {
         value: 'sent',
         label: (
-          <UiTabLabel count={queueSummary.sent ?? 0} active={tab === 'sent'}>
-            {t('portal.production.sentQueue', { defaultValue: 'Đã gửi Vendor (Xong)' })}
+          <UiTabLabel
+            count={(queueSummary.ready ?? 0) + (queueSummary.sent ?? 0)}
+            active={tab === 'sent'}
+          >
+            {t('portal.production.completedQueue', { defaultValue: 'Đã hoàn thành' })}
           </UiTabLabel>
         ),
       },
@@ -455,35 +438,28 @@ export function ProductionWorkbenchPage({
           </UiTabLabel>
         ),
       },
-      {
-        value: 'cancelled',
-        label: (
-          <UiTabLabel count={queueSummary.cancelled ?? 0} active={tab === 'cancelled'}>
-            {t('portal.production.cancelledQueue', { defaultValue: 'Đã hủy' })}
-          </UiTabLabel>
-        ),
-      },
-    ],
-    [
-      queueSummary.blocked,
-      queueSummary.cancelled,
-      queueSummary.needScale,
-      queueSummary.qcPending,
-      queueSummary.qcRejected,
-      queueSummary.ready,
-      queueSummary.sent,
-      queueSummary.total,
-      queueSummary.unclassified,
-      tab,
-      t,
-    ],
-  )
-  const qcTabItems = useMemo<UiButtonTabItem<ProductionTab>[]>(
-    () => [
+    ]
+  }, [
+    queueSummary.blocked,
+    queueSummary.needScale,
+    queueSummary.qcPending,
+    queueSummary.qcRejected,
+    queueSummary.ready,
+    queueSummary.sent,
+    tab,
+    t,
+  ])
+  const qcTabItems = useMemo<UiButtonTabItem<ProductionTab>[]>(() => {
+    const qcTotal =
+      (queueSummary.qcQueue ?? 0) +
+      (queueSummary.ready ?? 0) +
+      (queueSummary.sent ?? 0) +
+      (queueSummary.qcRejected ?? 0)
+    return [
       {
         value: 'all',
         label: (
-          <UiTabLabel count={queueSummary.total ?? 0} active={tab === 'all'}>
+          <UiTabLabel count={qcTotal} active={tab === 'all'}>
             {t('portal.production.allQueue', { defaultValue: 'Tất cả' })}
           </UiTabLabel>
         ),
@@ -492,15 +468,18 @@ export function ProductionWorkbenchPage({
         value: 'qc',
         label: (
           <UiTabLabel count={queueSummary.qcQueue ?? 0} active={tab === 'qc'}>
-            {t('portal.production.qcQueue')}
+            {t('portal.production.qcQueue', { defaultValue: 'Chờ duyệt' })}
           </UiTabLabel>
         ),
       },
       {
         value: 'ready',
         label: (
-          <UiTabLabel count={queueSummary.ready ?? 0} active={tab === 'ready'}>
-            {t('portal.production.readyQueue')}
+          <UiTabLabel
+            count={(queueSummary.ready ?? 0) + (queueSummary.sent ?? 0)}
+            active={tab === 'ready'}
+          >
+            {t('portal.production.readyQueue', { defaultValue: 'QC đạt' })}
           </UiTabLabel>
         ),
       },
@@ -512,43 +491,8 @@ export function ProductionWorkbenchPage({
           </UiTabLabel>
         ),
       },
-      {
-        value: 'sent',
-        label: (
-          <UiTabLabel count={queueSummary.sent ?? 0} active={tab === 'sent'}>
-            {t('portal.production.sentQueue')}
-          </UiTabLabel>
-        ),
-      },
-      {
-        value: 'blocked',
-        label: (
-          <UiTabLabel count={queueSummary.blocked ?? 0} active={tab === 'blocked'}>
-            {t('portal.production.blockedQueue')}
-          </UiTabLabel>
-        ),
-      },
-      {
-        value: 'cancelled',
-        label: (
-          <UiTabLabel count={queueSummary.cancelled ?? 0} active={tab === 'cancelled'}>
-            {t('portal.production.cancelledQueue', { defaultValue: 'Đã hủy' })}
-          </UiTabLabel>
-        ),
-      },
-    ],
-    [
-      queueSummary.blocked,
-      queueSummary.cancelled,
-      queueSummary.qcQueue,
-      queueSummary.qcRejected,
-      queueSummary.ready,
-      queueSummary.sent,
-      queueSummary.total,
-      tab,
-      t,
-    ],
-  )
+    ]
+  }, [queueSummary.qcQueue, queueSummary.qcRejected, queueSummary.ready, queueSummary.sent, tab, t])
   const generalTabItems = useMemo<UiButtonTabItem<ProductionTab>[]>(
     () => [
       {
@@ -754,6 +698,17 @@ export function ProductionWorkbenchPage({
     },
     onError: (error) => handleMutationError(error),
   })
+  const claimTask = useMutation({
+    mutationFn: (taskId: string) => claimProductionTask(taskId),
+    onSuccess: async () => {
+      await refresh()
+      toast(
+        'success',
+        t('portal.production.taskClaimed', { defaultValue: 'Đã nhận việc thành công' }),
+      )
+    },
+    onError: handleMutationError,
+  })
   const operations = useMutation({
     mutationFn: async (input: { kind: 'bulk-assign' | 'recheck' }) => {
       const taskIds = selectedTasks.filter(canAssignProductionTask).map((task) => task.id)
@@ -915,12 +870,14 @@ export function ProductionWorkbenchPage({
         task={task}
         tab={tab}
         viewMode={viewMode}
+        currentUserId={currentAccountId}
         canScale={canScaleTask(task)}
         canQc={canQcTask(task)}
         decisions={decisions}
         savingNoteTaskId={saveNote.variables?.taskId}
         submittingQc={action.isPending}
         submittingScale={submitScale.isPending && submitScale.variables === task.id}
+        claimingTaskId={claimTask.isPending ? claimTask.variables : undefined}
         uploadingFileCheckIds={uploadingFileCheckIds}
         onSaveNote={handleSaveNote}
         onSubmitQc={handleSubmitQc}
@@ -929,12 +886,15 @@ export function ProductionWorkbenchPage({
         onInspectSlot={handleInspectionSlotAction}
         onPassSlot={handleQcSlotPass}
         onManualSlotUploaded={refresh}
+        onClaimTask={(taskId) => claimTask.mutate(taskId)}
       />
     ),
     [
       action.isPending,
       canQcTask,
       canScaleTask,
+      claimTask,
+      currentAccountId,
       decisions,
       handleInspectionSlotAction,
       handleQcSlotPass,
@@ -952,7 +912,24 @@ export function ProductionWorkbenchPage({
     ],
   )
   const displayedTasks = useDeferredValue(tasks.data)
-  const rows = useMemo(() => displayedTasks?.items ?? [], [displayedTasks?.items])
+  const rows = useMemo(() => {
+    const items = displayedTasks?.items ?? []
+    if (viewMode === 'qc') {
+      return items.filter(
+        (task) =>
+          task.qcStatus !== 'NOT_READY' &&
+          task.status !== 'NEED_SCALE' &&
+          task.status !== 'BLOCKED' &&
+          task.status !== 'CANCELLED',
+      )
+    }
+    if (viewMode === 'scale') {
+      return items.filter(
+        (task) => task.designType !== 'CUSTOM_IMAGE' && task.status !== 'CANCELLED',
+      )
+    }
+    return items
+  }, [displayedTasks?.items, viewMode])
   const expandedRowKeys = useMemo(() => rows.map((row) => row.id), [rows])
   const selectedTasks = useMemo(
     () => rows.filter((row) => selectedRowKeys.map(String).includes(row.id)),
@@ -984,20 +961,6 @@ export function ProductionWorkbenchPage({
         },
       },
       {
-        title: t('portal.production.psdStatus'),
-        width: 132,
-        render: (_, row) => {
-          const hasInput = (row.qcPreviewFileChecks || row.fileChecks || []).some(
-            (check) => check.sourceType === 'PSD_TEMPLATE' && check.inputAssetDownloadUrl,
-          )
-          return (
-            <StatusTag status={hasInput ? 'operational' : 'pending'}>
-              {hasInput ? t('portal.production.psdReady') : t('portal.production.psdMissing')}
-            </StatusTag>
-          )
-        },
-      },
-      {
         title: t('portal.production.blockers'),
         width: 180,
         render: (_, row) => (row.blockers || []).join(', ') || '-',
@@ -1017,10 +980,29 @@ export function ProductionWorkbenchPage({
       {
         title: t('portal.production.assignedTo'),
         width: 138,
-        render: (_, row) =>
-          row.assignedDesigner?.fullName ||
-          row.assignedDesigner?.employeeCode ||
-          t('portal.production.unassigned'),
+        render: (_, row) => {
+          if (row.assignedDesigner?.fullName || row.assignedDesigner?.employeeCode) {
+            return row.assignedDesigner.fullName || row.assignedDesigner.employeeCode
+          }
+          if (
+            !row.assignedDesignUserId &&
+            (row.status === 'NEED_SCALE' || row.status === 'QC_REJECTED') &&
+            allowed.has('DESIGN:WORK')
+          ) {
+            return (
+              <Button
+                size="small"
+                type="link"
+                style={{ padding: 0, height: 'auto' }}
+                loading={claimTask.isPending && claimTask.variables === row.id}
+                onClick={() => claimTask.mutate(row.id)}
+              >
+                {t('portal.production.claimShort', { defaultValue: 'Nhận việc' })}
+              </Button>
+            )
+          }
+          return t('portal.production.unassigned')
+        },
       },
       {
         title: t('portal.production.columns.status'),
@@ -1038,7 +1020,7 @@ export function ProductionWorkbenchPage({
         render: (_, row) => <FormattedDateTime value={row.updatedAt} />,
       },
     ],
-    [t, tab, viewMode],
+    [allowed, claimTask, t, tab, viewMode],
   )
   return (
     <section className={styles.page}>

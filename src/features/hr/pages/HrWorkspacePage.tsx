@@ -13,7 +13,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Button, Empty, Select, Skeleton, Switch } from 'antd'
 import dayjs from 'dayjs'
 
-import { getPermissions } from '@/shared/auth/session'
+import { usePermissions } from '@/shared/auth/useAuthStore'
 import {
   ConfirmDangerModal,
   FeedbackAlert,
@@ -54,7 +54,7 @@ export function HrWorkspacePage() {
   const [editor, setEditor] = useState<EmployeeProfile | 'create'>()
   const [deleteTarget, setDeleteTarget] = useState<EmployeeProfile>()
 
-  const permissions = useMemo(() => getPermissions(), [])
+  const permissions = usePermissions()
   const canWrite = permissions.includes('HR_EMPLOYEES:WRITE')
   const canReadCompensation = useMemo(
     () =>

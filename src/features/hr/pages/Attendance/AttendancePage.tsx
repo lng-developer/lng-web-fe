@@ -16,6 +16,7 @@ import dayjs from 'dayjs'
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import {
   DateTimePicker,
+  FeedbackAlert,
   FormActions,
   MetricCard,
   MonthPicker,
@@ -70,9 +71,24 @@ export const AttendancePage = ({
   }, [])
 
   const punctualityRate = useMemo(() => {
-    if (items.length === 0) return '100%'
+    if (records.isError) return '—'
+    if (records.isLoading) return '...'
+    if (items.length === 0) return '—'
     return `${Math.round(((items.length - late) / items.length) * 100)}%`
-  }, [items.length, late])
+  }, [items.length, late, records.isError, records.isLoading])
+
+  const tableError = records.isError ? (
+    <FeedbackAlert
+      type="error"
+      title={t('hrOperations.messages.loadFailed')}
+      description={records.error instanceof Error ? records.error.message : undefined}
+      action={
+        <Button type="link" onClick={() => void records.refetch()}>
+          {t('hrOperations.retry')}
+        </Button>
+      }
+    />
+  ) : undefined
 
   const totalLateMinutes = useMemo(() => {
     return items.reduce((acc, cur) => acc + (cur.lateMinutes || 0), 0)
@@ -186,6 +202,7 @@ export const AttendancePage = ({
                 size="small"
                 rowKey="id"
                 loading={records.isLoading}
+                error={tableError}
                 dataSource={items}
                 pagination={pagination}
                 columns={columns}
@@ -279,7 +296,12 @@ export const AttendancePage = ({
                   <span>{t('hrOperations.attendance.punctualityRate')}</span>
                   <strong
                     style={{
-                      color: late > 0 ? 'var(--ant-color-error)' : 'var(--ant-color-success)',
+                      color:
+                        records.isSuccess && items.length > 0
+                          ? late > 0
+                            ? 'var(--ant-color-error)'
+                            : 'var(--ant-color-success)'
+                          : undefined,
                     }}
                   >
                     {punctualityRate}
@@ -315,6 +337,7 @@ export const AttendancePage = ({
             size="small"
             rowKey="id"
             loading={records.isLoading}
+            error={tableError}
             dataSource={items}
             pagination={pagination}
             columns={columns}

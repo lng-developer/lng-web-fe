@@ -19,6 +19,7 @@ vi.mock('@/features/hr/api/hrTimeApi', async (importOriginal) => ({
 describe('AttendancePage', () => {
   beforeEach(async () => {
     queryClient.clear()
+    queryClient.setDefaultOptions({ queries: { retry: false } })
     setPermissions(['HR_ATTENDANCE:READ', 'HR_ATTENDANCE:WRITE'])
     await i18n.changeLanguage('en')
     vi.mocked(listAttendanceMatrix).mockResolvedValue({})
@@ -88,5 +89,92 @@ describe('AttendancePage', () => {
     expect(listAttendanceMatrix).toHaveBeenCalledWith(
       expect.objectContaining({ teamId: 'team-sales' }),
     )
+  })
+
+  it('displays dash for punctuality rate when records list is empty', async () => {
+    vi.mocked(listMyAttendance).mockResolvedValue({
+      items: [],
+      capabilities: { checkIn: true, checkOut: false },
+    })
+
+    render(
+      <MemoryRouter>
+        <AppProviders>
+          <AttendancePage />
+        </AppProviders>
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      const punctualityLabel = screen.getByText('On-time punctuality')
+      const statItem = punctualityLabel.closest('div')
+      expect(statItem).not.toBeNull()
+      expect(within(statItem!).getByText('—')).toBeVisible()
+    })
+  })
+
+  it('displays error alert with retry button when records fail to load', async () => {
+    vi.mocked(listMyAttendance).mockRejectedValue(new Error('Network disconnected'))
+
+    render(
+      <MemoryRouter>
+        <AppProviders>
+          <AttendancePage />
+        </AppProviders>
+      </MemoryRouter>,
+    )
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toBeVisible()
+    expect(within(alert).getByText('Network disconnected')).toBeVisible()
+
+    const retryBtn = within(alert).getByRole('button', { name: 'Retry' })
+    expect(retryBtn).toBeVisible()
+
+    await waitFor(() => {
+      const punctualityLabel = screen.getByText('On-time punctuality')
+      const statItem = punctualityLabel.closest('div')
+      expect(within(statItem!).getByText('—')).toBeVisible()
+    })
+  })
+
+  it('calculates punctuality rate correctly when attendance records exist', async () => {
+    vi.mocked(listMyAttendance).mockResolvedValue({
+      items: [
+        {
+          id: 'att-1',
+          profileId: 'prof-1',
+          workDateKey: '2026-11-01',
+          status: 'PRESENT',
+          lateMinutes: 0,
+          checkInAt: '2026-11-01T08:30:00Z',
+          checkOutAt: '2026-11-01T17:30:00Z',
+        },
+        {
+          id: 'att-2',
+          profileId: 'prof-1',
+          workDateKey: '2026-11-02',
+          status: 'PRESENT',
+          lateMinutes: 15,
+          checkInAt: '2026-11-02T08:45:00Z',
+          checkOutAt: '2026-11-02T17:30:00Z',
+        },
+      ] as never,
+      capabilities: { checkIn: false, checkOut: false },
+    })
+
+    render(
+      <MemoryRouter>
+        <AppProviders>
+          <AttendancePage />
+        </AppProviders>
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => {
+      const punctualityLabel = screen.getByText('On-time punctuality')
+      const statItem = punctualityLabel.closest('div')
+      expect(within(statItem!).getByText('50%')).toBeVisible()
+    })
   })
 })

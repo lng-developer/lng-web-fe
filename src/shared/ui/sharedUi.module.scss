@@ -458,6 +458,7 @@
   min-width: 0;
   max-width: 100%;
   margin-top: 8px;
+  margin-inline: auto;
 }
 
 .dataTable :global(.ant-table-body) {
@@ -468,6 +469,7 @@
 .dataTable :global(.ant-table-header > table),
 .dataTable :global(.ant-table-body > table) {
   min-width: 100% !important;
+  table-layout: fixed !important;
 }
 
 .dataTableToolbar {
@@ -592,7 +594,12 @@
   background: var(--ant-color-fill-alter);
   color: var(--ant-color-text-heading);
   font-weight: 600;
-  text-align: left;
+  white-space: nowrap;
+  text-align: center;
+
+  &:global(.ant-table-cell-align-left) {
+    text-align: left;
+  }
 
   &:global(.ant-table-cell-align-right) {
     text-align: right;
@@ -623,14 +630,87 @@
   box-shadow: 0 10px 30px rgb(0 0 0 / 4%);
 }
 
-.dataTable :global(.ant-table-thead > tr > th:not(:last-child)),
+.dataTable :global(.ant-table-thead > tr > th:not(:last-child)) {
+  border-inline-end: 1px solid var(--ant-color-border-secondary, rgba(0, 0, 0, 0.06));
+}
+
+.dataTable :global(.ant-table-thead > tr > th::before) {
+  display: none !important;
+}
+
 .dataTable :global(.ant-table-tbody > tr:not(.ant-table-expanded-row) > td:not(:last-child)) {
-  border-inline-end: 0;
+  border-inline-end: 1px solid var(--ant-color-border-secondary, rgba(0, 0, 0, 0.06));
+}
+
+.cellContentBlock {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+.dataTable :global(.ant-table-cell) {
+  min-width: 0;
+  vertical-align: middle;
+}
+
+.dataTable :global(.ant-table-cell .ant-space) {
+  max-width: 100%;
+  text-align: left;
+  align-items: flex-start;
+}
+
+.dataTable :global(.ant-table-cell.ant-table-cell-align-left .ant-space) {
+  justify-content: flex-start;
+  align-items: flex-start;
+  margin-inline: 0;
+}
+
+.dataTable :global(.ant-table-cell.ant-table-cell-align-right .ant-space) {
+  justify-content: flex-end;
+  align-items: flex-end;
+  margin-inline: 0;
+}
+
+.dataTable :global(.ant-table-cell .dateTime) {
+  align-items: flex-start;
+  text-align: left;
+}
+
+.dataTable :global(.ant-table-cell.ant-table-cell-align-left .dateTime) {
+  align-items: flex-start;
+  text-align: left;
+  margin-inline: 0;
+}
+
+.dataTable :global(.ant-table-cell.ant-table-cell-align-right .dateTime) {
+  align-items: flex-end;
+  text-align: right;
+  margin-inline: 0;
+}
+
+.dataTable :global(.ant-table-cell .ant-typography) {
+  text-align: left;
+}
+
+.dataTable :global(.ant-table-cell.ant-table-cell-align-left .ant-typography) {
+  text-align: left;
+}
+
+.dataTable :global(.ant-table-cell.ant-table-cell-align-right .ant-typography) {
+  text-align: right;
 }
 
 .dataTable :global(.ant-table-tbody > tr:not(.ant-table-expanded-row) > td) {
   border-bottom: 1px solid var(--ant-color-border);
-  text-align: left;
+  text-align: center;
+  vertical-align: middle;
+
+  &:global(.ant-table-cell-align-left) {
+    text-align: left;
+  }
 
   &:global(.ant-table-cell-align-right) {
     text-align: right;

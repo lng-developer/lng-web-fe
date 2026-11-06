@@ -15,7 +15,7 @@ import {
 import { Button, Descriptions, Dropdown, type MenuProps, Space, Tooltip, Typography } from 'antd'
 
 import { AuthenticatedMediaImage, downloadMediaAsset } from '@/shared/media'
-import { StatusTag } from '@/shared/ui'
+import { CopyableAsin, CopyableListingId, CopyableSku, StatusTag } from '@/shared/ui'
 
 import type { OrderWorkbenchItem } from '../api/orderApi'
 import { FulfillmentInlineEditor } from '../pages/FulfillmentInlineEditor'
@@ -69,19 +69,19 @@ export const OrderItemPanel = memo(function OrderItemPanel({
     [item.customization?.inputs],
   )
   const buyerImageInputs = useMemo(
-    () => customizationInputs.filter((input) => input.assetDownloadUrl),
+    () => customizationInputs.filter((input) => input?.assetDownloadUrl),
     [customizationInputs],
   )
   const customizationImage = buyerImageInputs[0]?.assetDownloadUrl
   const customizationPreview = item.customization?.previewImageUrl
   const buyerImageUrls = useMemo(
-    () => new Set(buyerImageInputs.map((input) => input.assetDownloadUrl)),
+    () => new Set(buyerImageInputs.map((input) => input?.assetDownloadUrl).filter(Boolean)),
     [buyerImageInputs],
   )
   const extractedArtworkImages = useMemo(
     () =>
       (item.customization?.extractedImages ?? []).filter(
-        (image) => image.assetDownloadUrl && !buyerImageUrls.has(image.assetDownloadUrl),
+        (image) => image?.assetDownloadUrl && !buyerImageUrls.has(image.assetDownloadUrl),
       ),
     [item.customization?.extractedImages, buyerImageUrls],
   )
@@ -94,42 +94,66 @@ export const OrderItemPanel = memo(function OrderItemPanel({
           : [],
     [extractedArtworkImages, customizationPreview, buyerImageUrls],
   )
-  const savedListingImage = item.item.listingImageAssetId
+  const savedListingImage = item.item?.listingImageAssetId
     ? `/api/media/assets/${encodeURIComponent(item.item.listingImageAssetId)}/download`
     : null
   const mainListingImage =
-    item.listing?.productImageUrl || savedListingImage || item.item.listingImageUrl
+    item.listing?.productImageUrl || savedListingImage || item.item?.listingImageUrl
   const listingImageFallback =
-    item.item.listingImageThumbnailUrl || item.item.listingImageUrl || '/assets/images/favicon.svg'
-  const isEtsy = item.item.salesChannelCode === 'ETSY'
-  const etsyListingId = item.item.externalListingId
+    item.item?.listingImageThumbnailUrl ||
+    item.item?.listingImageUrl ||
+    '/assets/images/favicon.svg'
+  const isEtsy = item.item?.salesChannelCode === 'ETSY'
+  const etsyListingId = item.item?.externalListingId
   const platformIdentity = isEtsy ? (
     etsyListingId && /^\d+$/.test(etsyListingId) ? (
-      <Typography.Link
-        href={`https://www.etsy.com/listing/${etsyListingId}`}
-        target="_blank"
-        rel="noreferrer"
-      >
-        {etsyListingId}
-      </Typography.Link>
+      <Space size={4} className={styles.asinWithLink}>
+        <CopyableListingId value={etsyListingId} className={styles.asinChip} fallback="—" />
+        <Tooltip title={t('orders.actions.openProduct', { defaultValue: 'Open product' })}>
+          <Button
+            type="text"
+            size="small"
+            className={styles.asinLink}
+            icon={<ExportOutlined />}
+            href={`https://www.etsy.com/listing/${etsyListingId}`}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={t('orders.actions.openProduct', { defaultValue: 'Open product' })}
+          />
+        </Tooltip>
+      </Space>
     ) : (
-      displayValue(etsyListingId)
+      <CopyableListingId value={etsyListingId} className={styles.asinChip} fallback="—" />
     )
   ) : null
+  const productionPsd = item.production?.scaleContext?.use?.psdTemplate
+  const listingPsdAssetId = (item.listing as { defaultPsdTemplateAssetId?: string | null })
+    ?.defaultPsdTemplateAssetId
+  const variantSource = item.psd?.listingVariant || item.mapping?.listingVariant
+  const listingSource = item.psd?.listingPsd || item.mapping?.listingPsd
   const psdSource =
-    item.psd?.listingVariant ||
-    item.psd?.listingPsd ||
-    item.mapping?.listingVariant ||
-    item.mapping?.listingPsd
-  const psdStatus = psdSource?.psdReadiness?.status
-  const psdDownloadUrl = psdSource?.psdTemplate?.downloadUrl
-  const terminal = ['CANCELLED', 'FAILED', 'REFUNDED', 'SHIPPED'].includes(item.item.status ?? '')
-  const canRecheckProduction =
-    item.workflow.nextActions.some(
+    variantSource?.psdReadiness?.status || variantSource?.psdTemplate?.downloadUrl
+      ? variantSource
+      : listingSource?.psdReadiness?.status || listingSource?.psdTemplate?.downloadUrl
+        ? listingSource
+        : variantSource || listingSource
+  const psdStatus =
+    psdSource?.psdReadiness?.status ||
+    (listingPsdAssetId || productionPsd?.status === 'READY' ? 'PRESENT' : productionPsd?.status)
+  const psdDownloadUrl =
+    psdSource?.psdTemplate?.downloadUrl ||
+    productionPsd?.assetDownloadUrl ||
+    (listingPsdAssetId
+      ? `/api/media/assets/${encodeURIComponent(listingPsdAssetId)}/download`
+      : null)
+  const terminal = ['CANCELLED', 'FAILED', 'REFUNDED', 'SHIPPED'].includes(item.item?.status ?? '')
+  const canRecheckProduction = Boolean(
+    item.workflow?.nextActions?.some(
       (action) => action === 'CREATE_PRODUCTION_TASK' || action.startsWith('RECHECK_'),
     ) ||
     item.mapping?.status === 'BLOCKED' ||
-    (item.production?.status === 'BLOCKED' && psdStatus === 'PRESENT')
+    (item.production?.status === 'BLOCKED' && psdStatus === 'PRESENT'),
+  )
   const productionRecheckBlocked = mappingRecheckPending || item.mapping?.status !== 'READY'
   const productionRecheckLabel = mappingRecheckPending
     ? t('orders.actions.recheckProductionWaitingMapping')
@@ -143,8 +167,8 @@ export const OrderItemPanel = memo(function OrderItemPanel({
         new Set([
           customizationPreview,
           customizationImage,
-          ...artworkImages.map((image) => image.assetDownloadUrl),
-          ...customizationInputs.map((input) => input.assetDownloadUrl),
+          ...artworkImages.map((image) => image?.assetDownloadUrl),
+          ...customizationInputs.map((input) => input?.assetDownloadUrl),
         ]),
       )
         .filter((image): image is string => Boolean(image))
@@ -152,14 +176,18 @@ export const OrderItemPanel = memo(function OrderItemPanel({
     [artworkImages, customizationPreview, customizationImage, customizationInputs],
   )
 
-  const customizationValueInputs = customizationInputs.filter((input) => !input.assetDownloadUrl)
+  const customizationValueInputs = customizationInputs.filter((input) => !input?.assetDownloadUrl)
   const [showAllCustomizations, setShowAllCustomizations] = useState(false)
   const [isArtworkExpanded, setIsArtworkExpanded] = useState(false)
-  const visibleCustomizationInputs = showAllCustomizations
-    ? customizationInputs
-    : [...customizationValueInputs.slice(0, 4), ...buyerImageInputs]
-  const hiddenCustomizationCount =
-    customizationValueInputs.length - Math.min(customizationValueInputs.length, 4)
+  const CUSTOMIZATION_PREVIEW_LIMIT = 8
+  const shouldCollapseCustomizations = customizationValueInputs.length > CUSTOMIZATION_PREVIEW_LIMIT
+  const visibleCustomizationInputs =
+    showAllCustomizations || !shouldCollapseCustomizations
+      ? customizationInputs
+      : [...customizationValueInputs.slice(0, CUSTOMIZATION_PREVIEW_LIMIT), ...buyerImageInputs]
+  const hiddenCustomizationCount = shouldCollapseCustomizations
+    ? customizationValueInputs.length - CUSTOMIZATION_PREVIEW_LIMIT
+    : 0
 
   const actionMenuItems: NonNullable<MenuProps['items']> = useMemo(
     () => [
@@ -180,7 +208,7 @@ export const OrderItemPanel = memo(function OrderItemPanel({
               key: 'recheck-mapping',
               icon: <ReloadOutlined />,
               label: t('orders.actions.recheckMappingShort'),
-              onClick: () => onAction({ kind: 'recheck-mapping', itemId: item.item.id }),
+              onClick: () => onAction({ kind: 'recheck-mapping', itemId: item.item?.id ?? '' }),
             },
           ]
         : []),
@@ -191,7 +219,7 @@ export const OrderItemPanel = memo(function OrderItemPanel({
               icon: <ReloadOutlined />,
               label: productionRecheckLabel,
               disabled: productionRecheckBlocked,
-              onClick: () => onAction({ kind: 'recheck-production', itemId: item.item.id }),
+              onClick: () => onAction({ kind: 'recheck-production', itemId: item.item?.id ?? '' }),
             },
           ]
         : []),
@@ -201,7 +229,7 @@ export const OrderItemPanel = memo(function OrderItemPanel({
               key: 'ready',
               icon: <CheckCircleOutlined />,
               label: t('orders.actions.readyShort'),
-              onClick: () => onAction({ kind: 'ready', itemId: item.item.id }),
+              onClick: () => onAction({ kind: 'ready', itemId: item.item?.id ?? '' }),
             },
             {
               key: 'cancel',
@@ -232,7 +260,7 @@ export const OrderItemPanel = memo(function OrderItemPanel({
 
     return (
       <Space size={4} className={styles.asinWithLink}>
-        <span className={styles.asinChip}>{displayValue(asin)}</span>
+        <CopyableAsin value={asin} className={styles.asinChip} fallback="—" />
         {productUrl ? (
           <Tooltip title={t('orders.actions.openProduct', { defaultValue: 'Open product' })}>
             <Button
@@ -335,12 +363,14 @@ export const OrderItemPanel = memo(function OrderItemPanel({
             {
               key: 'sku',
               label: 'SKU',
-              children: <span className={styles.skuChip}>{displayValue(item.item.sku)}</span>,
+              children: (
+                <CopyableSku value={item.item?.sku} className={styles.skuChip} fallback="—" />
+              ),
             },
             {
               key: 'platform-id',
               label: isEtsy ? t('orders.fields.etsyListingId') : 'ASIN',
-              children: isEtsy ? platformIdentity : renderAsin(item.item.asin),
+              children: isEtsy ? platformIdentity : renderAsin(item.item?.asin),
             },
             {
               key: 'seller',
@@ -354,13 +384,13 @@ export const OrderItemPanel = memo(function OrderItemPanel({
         <div className={styles.identifierList}>
           <div>
             <Typography.Text type="secondary">SKU</Typography.Text>
-            <span className={styles.skuChip}>{displayValue(item.item.sku)}</span>
+            <CopyableSku value={item.item?.sku} className={styles.skuChip} fallback="—" />
           </div>
           <div>
             <Typography.Text type="secondary">
               {isEtsy ? t('orders.fields.etsyListingId') : 'ASIN'}
             </Typography.Text>
-            {isEtsy ? platformIdentity : renderAsin(item.item.asin)}
+            {isEtsy ? platformIdentity : renderAsin(item.item?.asin)}
           </div>
           <div>
             <Typography.Text type="secondary">{t('orders.fields.seller')}</Typography.Text>
@@ -375,7 +405,14 @@ export const OrderItemPanel = memo(function OrderItemPanel({
               <Typography.Text type="secondary">{t('orders.fields.scaleBy')}</Typography.Text>
               <span className={styles.sellerChip}>
                 {displayValue(
-                  [item.production.scaleBy.employeeCode, item.production.scaleBy.name]
+                  [
+                    typeof item.production.scaleBy === 'object'
+                      ? item.production.scaleBy?.employeeCode
+                      : null,
+                    typeof item.production.scaleBy === 'object'
+                      ? item.production.scaleBy?.name
+                      : null,
+                  ]
                     .filter(Boolean)
                     .join(' · '),
                 )}
@@ -403,7 +440,9 @@ export const OrderItemPanel = memo(function OrderItemPanel({
               size="small"
               icon={<ReloadOutlined />}
               loading={pending}
-              onClick={() => onAction({ kind: 'retry-customization-assets', itemId: item.item.id })}
+              onClick={() =>
+                onAction({ kind: 'retry-customization-assets', itemId: item.item?.id ?? '' })
+              }
             >
               Retry Amazon data
             </Button>
@@ -412,9 +451,11 @@ export const OrderItemPanel = memo(function OrderItemPanel({
         {isEtsy ? <EtsyPurchasedDetails item={item} /> : null}
         <div className={styles.inputList}>
           {(isEtsy ? buyerImageInputs : visibleCustomizationInputs).map((input, index) => (
-            <div key={`${input.label}-${index}`}>
-              <Typography.Text type="secondary">{input.label || input.type}: </Typography.Text>
-              {input.assetDownloadUrl ? (
+            <div key={`${input?.label ?? ''}-${index}`}>
+              <Typography.Text type="secondary">
+                {input?.label || input?.type || '—'}:{' '}
+              </Typography.Text>
+              {input?.assetDownloadUrl ? (
                 <div className={styles.buyerImage}>
                   <AuthenticatedMediaImage
                     width={72}
@@ -439,7 +480,7 @@ export const OrderItemPanel = memo(function OrderItemPanel({
                   </Button>
                 </div>
               ) : (
-                <Typography.Text>{displayValue(input.value)}</Typography.Text>
+                <Typography.Text>{displayValue(input?.value)}</Typography.Text>
               )}
             </div>
           ))}
@@ -466,13 +507,13 @@ export const OrderItemPanel = memo(function OrderItemPanel({
           column={1}
           colon={false}
           items={[
-            { key: 'qty', label: t('orders.fields.quantity'), children: item.item.quantity },
+            { key: 'qty', label: t('orders.fields.quantity'), children: item.item?.quantity ?? 1 },
             {
               key: 'base',
               label: t('orders.fields.totalCost'),
               children: formatMinorMoney(
-                item.pricing.totalCostAmount ?? item.pricing.baseCostAmount,
-                item.pricing.currency ?? 'USD',
+                item.pricing?.totalCostAmount ?? item.pricing?.baseCostAmount,
+                item.pricing?.currency ?? 'USD',
               ),
             },
           ]}
@@ -496,17 +537,17 @@ export const OrderItemPanel = memo(function OrderItemPanel({
                 size="small"
                 aria-label={t('orders.actions.viewHistory')}
                 icon={<HistoryOutlined />}
-                onClick={(event) => onHistory(event, item.item.id)}
+                onClick={(event) => onHistory(event, item.item?.id ?? '')}
               />
             </Tooltip>
           </Space>
         </div>
         <OrderItemNoteEditor
-          key={`${item.item.id}:${item.item.csNote ?? ''}`}
+          key={`${item.item?.id ?? ''}:${item.item?.csNote ?? ''}`}
           canWrite={canOperate}
-          initialNote={item.item.csNote ?? ''}
+          initialNote={item.item?.csNote ?? ''}
           pending={pending}
-          onSave={(note) => onAction({ kind: 'note', itemId: item.item.id, note })}
+          onSave={(note) => onAction({ kind: 'note', itemId: item.item?.id ?? '', note })}
         />
       </section>
       <section className={styles.itemActions}>

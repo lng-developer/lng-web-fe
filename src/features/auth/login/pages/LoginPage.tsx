@@ -34,7 +34,7 @@ export function LoginPage() {
 
   useEffect(() => {
     if (getAccessToken()) {
-      navigate('/operations-dashboard', { replace: true })
+      navigate('/', { replace: true })
     }
   }, [navigate])
   async function onFinish(values: LoginValues) {
@@ -42,7 +42,7 @@ export function LoginPage() {
     setSubmitting(true)
     try {
       const session = await login(values.identifier, values.password)
-      navigate(session.account.mustChangePassword ? '/setup/password' : '/operations-dashboard', {
+      navigate(session.account.mustChangePassword ? '/setup/password' : '/', {
         replace: true,
       })
     } catch (cause) {

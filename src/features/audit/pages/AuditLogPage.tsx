@@ -13,7 +13,7 @@ import { Button, Descriptions, Modal, Result, Select, Space, Typography } from '
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { AccessDeniedResult } from '@/shared/auth/AccessDeniedResult'
-import { getPermissions } from '@/shared/auth/session'
+import { usePermissions } from '@/shared/auth/useAuthStore'
 import { DEFAULT_TABLE_PAGINATION } from '@/shared/constants/enum'
 import {
   DateRangePicker,
@@ -48,6 +48,7 @@ const shortId = (value: string | null) => (value ? `#${value.slice(-8)}` : '')
 
 export function AuditLogPage() {
   const { t } = useTranslation()
+  const permissions = usePermissions()
   const [filters, setFilters] = useState<AuditFilters>({})
   const [selected, setSelected] = useState<AuditEvent>()
   const [currentPage, setCurrentPage] = useState(1)
@@ -177,7 +178,7 @@ export function AuditLogPage() {
     [localizedCode, t],
   )
 
-  if (!getPermissions().includes('AUDIT:READ')) return <AccessDeniedResult />
+  if (!permissions.includes('AUDIT:READ')) return <AccessDeniedResult />
 
   return (
     <section className="grid gap-6">
@@ -362,7 +363,12 @@ export function AuditLogPage() {
             </Typography.Title>
             <pre
               className="max-h-64 overflow-auto rounded-lg bg-page p-4"
-              style={{ background: '#f5f5f5', padding: 12, borderRadius: 6 }}
+              style={{
+                background: 'var(--ant-color-fill-quaternary)',
+                border: '1px solid var(--ant-color-border-secondary)',
+                padding: 12,
+                borderRadius: 6,
+              }}
             >
               {JSON.stringify(event.changes ?? {}, null, 2)}
             </pre>
@@ -371,7 +377,12 @@ export function AuditLogPage() {
             </Typography.Title>
             <pre
               className="max-h-64 overflow-auto rounded-lg bg-page p-4"
-              style={{ background: '#f5f5f5', padding: 12, borderRadius: 6 }}
+              style={{
+                background: 'var(--ant-color-fill-quaternary)',
+                border: '1px solid var(--ant-color-border-secondary)',
+                padding: 12,
+                borderRadius: 6,
+              }}
             >
               {JSON.stringify(event.metadata, null, 2)}
             </pre>

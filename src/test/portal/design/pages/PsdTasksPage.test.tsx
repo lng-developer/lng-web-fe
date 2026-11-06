@@ -183,7 +183,8 @@ describe('PsdTasksPage', () => {
     expect(screen.getByText('All')).toBeInTheDocument()
     expect(screen.getAllByText('Requested').length).toBeGreaterThan(0)
     expect(screen.getByPlaceholderText(/Search/)).toBeInTheDocument()
-    expect(screen.getAllByText('Seller').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Shop').length).toBeGreaterThan(0)
+    expect(screen.getByPlaceholderText(/Search.*Etsy Listing ID/)).toBeInTheDocument()
     expect(screen.queryByPlaceholderText('ASIN Type')).not.toBeInTheDocument()
   })
 

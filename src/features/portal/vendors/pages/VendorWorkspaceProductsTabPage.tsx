@@ -6,7 +6,7 @@ import type { TableColumnsType } from 'antd'
 import { Button, Image, Select, Space, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
-import { FilterBar, SearchInput, StatusTag } from '@/shared/ui'
+import { FeedbackAlert, FilterBar, SearchInput, StatusTag } from '@/shared/ui'
 
 import { RecordStatus, VendorProduct } from '../api/vendorApi'
 import { mockVendorProducts } from './vendorProductTabMocks'
@@ -29,6 +29,7 @@ interface VendorWorkspaceProductsTabPageProps {
   readonly productsLoading: boolean
   readonly productsTotal: number | undefined
   readonly productsError: unknown
+  readonly refetchProducts?: () => void
   readonly vendorFilterOptions: SelectOption[]
   readonly productTypeGroupOptions: SelectOption[]
   readonly onSearchProductsChange: (value: string) => void
@@ -53,6 +54,7 @@ export function VendorWorkspaceProductsTabPage({
   productsLoading,
   productsTotal,
   productsError,
+  refetchProducts,
   vendorFilterOptions,
   productTypeGroupOptions,
   onSearchProductsChange,
@@ -262,11 +264,19 @@ export function VendorWorkspaceProductsTabPage({
         loading={productsLoading}
         error={
           productsError ? (
-            <Typography.Text type="danger">
-              {productsError instanceof Error
-                ? productsError.message
-                : t('portal.vendors.branchUnavailable')}
-            </Typography.Text>
+            <FeedbackAlert
+              type="error"
+              title={
+                productsError instanceof Error
+                  ? productsError.message
+                  : t('portal.vendors.branchUnavailable')
+              }
+              action={
+                <Button type="link" onClick={() => void refetchProducts?.()}>
+                  {t('common.retry', { defaultValue: 'Retry' })}
+                </Button>
+              }
+            />
           ) : undefined
         }
         pagination={{

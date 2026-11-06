@@ -77,9 +77,9 @@ describe('PsdFileWorkspacePage', () => {
 
     expect(await view.findByText('reference.png')).toBeVisible()
     expect(view.getByAltText('reference.png')).toBeVisible()
-    expect(view.queryByAltText('master.psd')).not.toBeInTheDocument()
+    expect(view.getByText('master.psd')).toBeVisible()
     expect(view.getByText('SKU-1')).toBeVisible()
-    expect(view.queryByText('Shirt')).not.toBeInTheDocument()
+    expect(view.getByText('Shirt')).toBeVisible()
     expect(view.getByPlaceholderText('Search file or SKU')).toBeVisible()
     fireEvent.click(view.getByRole('button', { name: 'Download master.psd' }))
     expect(downloadMediaAsset).toHaveBeenCalledWith(

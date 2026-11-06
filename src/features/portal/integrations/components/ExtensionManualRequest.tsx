@@ -21,11 +21,13 @@ export function ExtensionManualRequest({
   agent,
   source,
   loading,
+  iconOnly = false,
   onRequest,
 }: {
   readonly agent: ExtensionManagementAgent
   readonly source: keyof typeof commandTypes
   readonly loading: boolean
+  readonly iconOnly?: boolean
   readonly onRequest: (input: CreateExtensionCommandInput) => void
 }) {
   const { t } = useTranslation()
@@ -41,20 +43,21 @@ export function ExtensionManualRequest({
     from?.isValid() && to?.isValid() && !to.isBefore(from) && to.diff(from, 'day') <= 119
   const validCount =
     maxOrders !== null && Number.isInteger(maxOrders) && maxOrders >= 1 && maxOrders <= 200
-  if (etsy && source !== 'ORDERS') return null
+  if (etsy && (source === 'TRANSACTIONS' || source === 'ADS')) return null
 
   return (
     <Popover
       trigger="click"
+      destroyTooltipOnHide
       title={t(`${key}.title`, { label })}
       content={
         <div className={styles.commandPopover}>
           <Typography.Text>
             {t(
-              `${key}.${etsy ? 'etsyHint' : source === 'ORDERS' ? 'ordersHint' : source === 'SETTLEMENTS' ? 'settlementHint' : 'dateHint'}`,
+              `${key}.${etsy && source === 'ORDERS' ? 'etsyHint' : source === 'ORDERS' ? 'ordersHint' : source === 'SETTLEMENTS' ? 'settlementHint' : 'dateHint'}`,
             )}
           </Typography.Text>
-          {etsy ? (
+          {etsy && source === 'ORDERS' ? (
             <InputNumber
               aria-label={t(`${key}.maxOrders`)}
               min={1}
@@ -85,14 +88,18 @@ export function ExtensionManualRequest({
             disabled={
               agent.status !== 'ONLINE' ||
               loading ||
-              (etsy && !validCount) ||
+              (etsy && source === 'ORDERS' && !validCount) ||
               (source !== 'ORDERS' && !validDates)
             }
             onClick={() =>
               onRequest({
                 agentId: agent.id,
                 type: commandTypes[source],
-                ...(etsy ? { maxOrders: maxOrders! } : source === 'ORDERS' ? { numDays } : dates),
+                ...(etsy && source === 'ORDERS'
+                  ? { maxOrders: maxOrders! }
+                  : source === 'ORDERS'
+                    ? { numDays }
+                    : dates),
               })
             }
           >
@@ -105,10 +112,11 @@ export function ExtensionManualRequest({
         aria-label={t(`${key}.requestLabel`, { label: label.toLowerCase() })}
         disabled={agent.status !== 'ONLINE' || loading}
         size="small"
-        type="primary"
+        type={iconOnly ? 'default' : 'primary'}
         icon={<SyncOutlined />}
+        title={t(`${key}.requestNow`)}
       >
-        {t(`${key}.requestNow`)}
+        {iconOnly ? null : t(`${key}.requestNow`)}
       </Button>
     </Popover>
   )

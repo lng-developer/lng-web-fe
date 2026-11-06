@@ -48,6 +48,7 @@ export type DesignTask = {
     productImageUrl?: string | null
     asinType?: string | null
     asin_type?: string | null
+    seller?: { name?: string | null; employeeCode?: string | null } | null
   } | null
   listingVariantId: string | null
   targetScope?: 'LISTING' | 'LISTING_VARIANT'
@@ -80,17 +81,85 @@ export type DesignTask = {
   productType?: string | null
   image?: string | null
   imageUrl?: string | null
-  seller?: { id: string; fullName: string | null } | null
+  seller?: {
+    id?: string | null
+    fullName?: string | null
+    name?: string | null
+    employeeCode?: string | null
+  } | null
+  requestedBy?: {
+    id?: string | null
+    fullName?: string | null
+    employeeCode?: string | null
+  } | null
   asinType?: string | null
   asin_type?: string | null
   createdBy?: { id: string; fullName?: string | null; full_name?: string | null } | null
   createdAt: string
   updatedAt: string
 }
+
+export function parseEmployeeCodeFromSku(sku?: string | null): string | null {
+  const match = String(sku || '')
+    .trim()
+    .match(/^(J\d{3,})(?:[-_]|$)/i)
+  return match ? match[1].toUpperCase() : null
+}
+
+export function formatTaskSeller(task: DesignTask): string {
+  const codeFromSku = parseEmployeeCodeFromSku(task.listing?.sku)
+  const listingSeller = task.listing?.seller
+
+  if (listingSeller) {
+    if (!codeFromSku || !listingSeller.employeeCode || listingSeller.employeeCode === codeFromSku) {
+      if (listingSeller.name && listingSeller.employeeCode) {
+        return `${listingSeller.name} (${listingSeller.employeeCode})`
+      }
+      if (listingSeller.name) return listingSeller.name
+      if (listingSeller.employeeCode) return listingSeller.employeeCode
+    }
+  }
+
+  const isShopPlaceholder = Boolean(
+    task.seller?.name &&
+    task.shop?.name &&
+    task.seller.name === task.shop.name &&
+    !task.seller.fullName &&
+    !task.seller.employeeCode,
+  )
+
+  if (!isShopPlaceholder && task.seller) {
+    if (!codeFromSku || !task.seller.employeeCode || task.seller.employeeCode === codeFromSku) {
+      const name = task.seller.fullName || task.seller.name
+      const code = task.seller.employeeCode
+      if (name && code && name !== code) return `${name} (${code})`
+      if (name) return name
+      if (code) return code
+    }
+  }
+
+  if (codeFromSku) return codeFromSku
+
+  if (task.requestedBy) {
+    const name = task.requestedBy.fullName
+    const code = task.requestedBy.employeeCode
+    if (name && code && name !== code) return `${name} (${code})`
+    if (name) return name
+    if (code) return code
+  }
+
+  const createdByName =
+    task.createdBy?.fullName || (task.createdBy as { full_name?: string })?.full_name
+  if (createdByName) return createdByName
+
+  return '-'
+}
 export type DesignListParams = {
   page: number
   limit: number
   search?: string
+  asin?: string
+  etsyListingId?: string
   salesChannelCode?: 'AMAZON' | 'ETSY'
   status?: string
   taskType?: string

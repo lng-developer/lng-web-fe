@@ -27,8 +27,13 @@ export function getEtsyPurchasedDetails(variations: string | null | undefined, i
     const label = input.label?.trim() || input.type
     originals.add(`${label}: ${value}`)
     if (raw && compact(value) === compact(raw)) continue
-    if (/^personalization$/i.test(label)) addPersonalization(value)
-    else if (input.type === 'OPTION') addOption(label, value)
+    if (/^personalization$/i.test(label)) {
+      addPersonalization(value)
+    } else if (input.type === 'TEXT') {
+      addPersonalization(label ? `${label}: ${value}` : value)
+    } else if (input.type === 'OPTION') {
+      addOption(label, value)
+    }
   }
   // Parsed inputs are authoritative; never combine them with guesses from the raw report.
   if (!options.length && !personalizations.length) {

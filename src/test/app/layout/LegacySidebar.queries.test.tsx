@@ -45,7 +45,7 @@ describe('sidebar summary authorization', () => {
   })
 
   it.each([
-    ['designer', ['DESIGN:WORK'], false, false, true],
+    ['designer', ['DESIGN:WORK'], false, false, false],
     ['seller', ['ORDERS:READ'], true, false, false],
     ['no access', [], false, false, false],
   ] as const)(

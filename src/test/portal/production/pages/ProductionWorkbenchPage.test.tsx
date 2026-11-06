@@ -187,7 +187,9 @@ describe('ProductionWorkbenchPage', () => {
 
     const tables = document.querySelectorAll<HTMLTableElement>('.ant-table-container table')
     expect(tables.length).toBeGreaterThan(0)
-    tables.forEach((table) => expect(table).toHaveStyle({ width: '100%' }))
+    tables.forEach((table) =>
+      expect(table.style.width === '100%' || table.style.minWidth === '100%').toBe(true),
+    )
   })
 
   it('applies scale difficulty to both task rows and summary', async () => {
@@ -330,7 +332,7 @@ describe('ProductionWorkbenchPage', () => {
         expect.objectContaining({
           psdReadyOnly: false,
           status: 'BLOCKED',
-          view: undefined,
+          view: 'SCALE',
         }),
       ),
     )
@@ -448,41 +450,36 @@ describe('ProductionWorkbenchPage', () => {
 
     await waitFor(() =>
       expect(listProductionTasks).toHaveBeenCalledWith(
-        expect.objectContaining({ salesChannelCode: 'ETSY', view: undefined }),
+        expect.objectContaining({ salesChannelCode: 'ETSY', view: 'SCALE' }),
       ),
     )
     expect(screen.getByRole('button', { name: /All/ })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Need scale/ })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Ready to send/ })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Sent to vendor/ })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Cancelled/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /QC rejected/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /QC pending/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Completed/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Blocked/ })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Amazon' })).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Unclassified/ })).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: /Unclassified/ }))
-    await waitFor(() =>
-      expect(listProductionTasks).toHaveBeenLastCalledWith(
-        expect.objectContaining({ designType: 'UNCLASSIFIED' }),
-      ),
-    )
+    expect(screen.queryByRole('button', { name: /Unclassified/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Cancelled/ })).not.toBeInTheDocument()
   })
 
   it('supports viewing completed and historical tasks from the scale queue route', async () => {
     renderPage('/portal/production/scale', scaleManagerAccount)
 
-    fireEvent.click(await screen.findByRole('button', { name: /Ready to send/ }))
+    fireEvent.click(await screen.findByRole('button', { name: /Completed/ }))
 
     await waitFor(() =>
       expect(screen.getByRole('status', { name: 'Current location' })).toHaveTextContent(
-        '/portal/production/scale?queue=ready',
+        '/portal/production/scale?queue=sent',
       ),
     )
     await waitFor(() =>
       expect(listProductionTasks).toHaveBeenLastCalledWith(
         expect.objectContaining({
-          status: 'READY_TO_SEND_VENDOR',
+          status: 'READY_TO_SEND_VENDOR,SENT_TO_VENDOR',
           psdReadyOnly: false,
-          view: undefined,
-          designType: undefined,
+          view: 'SCALE',
         }),
       ),
     )

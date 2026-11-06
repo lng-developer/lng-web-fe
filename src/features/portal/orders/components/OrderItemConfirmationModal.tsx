@@ -2,7 +2,7 @@ import { memo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Descriptions, Input, InputNumber, Typography } from 'antd'
 
-import { PopupModal, type PopupModalAnchor } from '@/shared/ui'
+import { CopyableSku, PopupModal, type PopupModalAnchor } from '@/shared/ui'
 
 import styles from '../pages/OrderWorkbenchPage.module.scss'
 import { displayValue, type OrderAction, type OrderItemConfirmation } from './orderTypes'
@@ -26,7 +26,6 @@ export const OrderItemConfirmationModal = memo(function OrderItemConfirmationMod
 
   return (
     <OrderItemConfirmationModalInner
-      key={`${confirmation.kind}-${confirmation.item.item.id}`}
       confirmation={confirmation}
       anchor={anchor}
       pending={pending}
@@ -37,7 +36,7 @@ export const OrderItemConfirmationModal = memo(function OrderItemConfirmationMod
 })
 
 type OrderItemConfirmationModalInnerProps = {
-  readonly confirmation: NonNullable<OrderItemConfirmationModalProps['confirmation']>
+  readonly confirmation: OrderItemConfirmation
   readonly anchor?: PopupModalAnchor
   readonly pending: boolean
   readonly onClose: () => void
@@ -53,21 +52,22 @@ function OrderItemConfirmationModalInner({
 }: OrderItemConfirmationModalInnerProps) {
   const { t } = useTranslation()
   const [reason, setReason] = useState('')
-  const [quantity, setQuantity] = useState(confirmation.item.item.quantity || 1)
+  const [quantity, setQuantity] = useState(confirmation.item.item?.quantity || 1)
 
   const isCancel = confirmation.kind === 'cancel'
 
   const handleOk = () => {
+    const itemId = confirmation.item.item?.id ?? ''
     if (isCancel) {
       onConfirm({
         kind: 'cancel',
-        itemId: confirmation.item.item.id,
+        itemId,
         reason: reason.trim(),
       })
     } else {
       onConfirm({
         kind: 'replacement',
-        itemId: confirmation.item.item.id,
+        itemId,
         reason: reason.trim(),
         quantity,
       })
@@ -89,7 +89,11 @@ function OrderItemConfirmationModalInner({
           size="small"
           column={1}
           items={[
-            { key: 'sku', label: 'SKU', children: displayValue(confirmation.item.item.sku) },
+            {
+              key: 'sku',
+              label: 'SKU',
+              children: <CopyableSku value={confirmation.item.item?.sku ?? ''} fallback="—" />,
+            },
             {
               key: 'seller',
               label: t('orders.fields.seller'),
@@ -104,7 +108,12 @@ function OrderItemConfirmationModalInner({
         {!isCancel ? (
           <label>
             <Typography.Text>{t('orders.fields.quantity')}</Typography.Text>
-            <InputNumber min={1} value={quantity} onChange={(next) => setQuantity(next ?? 1)} />
+            <InputNumber
+              min={1}
+              max={confirmation.item.item?.quantity || 1}
+              value={quantity}
+              onChange={(next) => setQuantity(next ?? 1)}
+            />
           </label>
         ) : null}
       </div>

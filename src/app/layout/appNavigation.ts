@@ -376,7 +376,12 @@ export function getDefaultWorkspacePath(account: CurrentAccount) {
   if (!core) return '/operations-dashboard'
   const groups = getContextNavigation(core, account)
   if (core === 'portal') {
-    return groups[0]?.items[0]?.path ?? '/operations-dashboard'
+    return (
+      groups.find(({ key }) => key === 'orders')?.items[0]?.path ??
+      groups.find(({ key }) => key !== 'dashboard')?.items[0]?.path ??
+      groups[0]?.items[0]?.path ??
+      '/portal/orders'
+    )
   }
   if (core === 'hr') {
     if (groups[0]?.key === 'dashboard') return groups[0].items[0]?.path ?? '/operations-dashboard'

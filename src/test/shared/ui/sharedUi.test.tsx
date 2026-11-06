@@ -239,6 +239,43 @@ describe('shared UI', () => {
     expect(document.querySelector('.ant-table-header')).not.toBeInTheDocument()
   })
 
+  it('centers columns by default while preserving explicit alignments and column widths', () => {
+    const { container } = render(
+      <CoreDataTable
+        rowKey="id"
+        columns={[
+          { dataIndex: 'id', title: 'ID', width: 100 },
+          { dataIndex: 'name', title: 'Name', width: 200 },
+          { dataIndex: 'status', title: 'Status', width: 120, align: 'center' },
+          { dataIndex: 'amount', title: 'Amount', width: 100, align: 'right' },
+        ]}
+        dataSource={[{ id: '1', name: 'Product A', status: 'Active', amount: 50 }]}
+      />,
+    )
+
+    const table = container.querySelector('table')
+    expect(table).not.toBeNull()
+
+    const cols = Array.from(table!.querySelectorAll('col'))
+    expect(cols).toHaveLength(4)
+    expect(cols[0].getAttribute('style')).toContain('width: 100px')
+    expect(cols[1].getAttribute('style')).toContain('width: 200px')
+    expect(cols[2].getAttribute('style')).toContain('width: 120px')
+    expect(cols[3].getAttribute('style')).toContain('width: 100px')
+
+    const ths = Array.from(table!.querySelectorAll<HTMLElement>('thead th'))
+    expect(ths[0]).not.toHaveClass('ant-table-cell-align-right')
+    expect(ths[1]).not.toHaveClass('ant-table-cell-align-right')
+    expect(ths[2]).not.toHaveClass('ant-table-cell-align-right')
+    expect(ths[3]).toHaveStyle({ textAlign: 'right' })
+
+    const tds = Array.from(table!.querySelectorAll<HTMLElement>('tbody td'))
+    expect(tds[0]).not.toHaveClass('ant-table-cell-align-right')
+    expect(tds[1]).not.toHaveClass('ant-table-cell-align-right')
+    expect(tds[2]).not.toHaveClass('ant-table-cell-align-right')
+    expect(tds[3]).toBeVisible()
+  })
+
   it('returns to the first row when the table page changes', async () => {
     function PaginatedTable() {
       const [page, setPage] = useState(1)

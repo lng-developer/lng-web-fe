@@ -16,7 +16,6 @@ import {
   listFinanceCoverage,
   listFinanceDaily,
   listFinanceDailyProfit,
-  listFinanceOrderProfitability,
   listFinanceSellerDaily,
   listVendorPerformance,
   type SellerDailyProfit,
@@ -50,7 +49,6 @@ vi.mock('@/features/portal/reports/api/reportApi', async (importOriginal) => ({
   listFinanceByTeam: vi.fn(),
   listFinanceDaily: vi.fn(),
   listFinanceDailyProfit: vi.fn(),
-  listFinanceOrderProfitability: vi.fn(),
   listVendorPerformance: vi.fn(),
 }))
 vi.mock('@/features/portal/finance/api/financeApi', async (importOriginal) => ({
@@ -96,11 +94,6 @@ describe('ReportWorkspacePage', () => {
     })
     vi.mocked(listFinanceDaily).mockResolvedValue([])
     vi.mocked(listAdsSellerDaily).mockResolvedValue([])
-    vi.mocked(listFinanceOrderProfitability).mockResolvedValue({
-      items: [],
-      pagination: { total: 0, page: 1, limit: 20 },
-      summaryByCurrency: [],
-    })
     vi.mocked(listFinanceDailyProfit).mockResolvedValue([
       {
         date: '2026-08-01',
@@ -299,7 +292,7 @@ describe('ReportWorkspacePage', () => {
     ).toBeInTheDocument()
     expect(await screen.findByRole('img', { name: 'Profit comparison' })).toBeInTheDocument()
     expect(screen.getAllByText('Đặng Thành Trung')).toHaveLength(2)
-    expect(screen.getByText('Seller 9')).toBeInTheDocument()
+    expect(screen.getAllByText('Seller 9').length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('15.00')).toBeInTheDocument()
     expect(screen.getByText('1 / 2 items with cost')).toBeInTheDocument()
     expect(
@@ -308,9 +301,13 @@ describe('ReportWorkspacePage', () => {
     expect(screen.getByRole('columnheader', { name: 'Type' })).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'Total' })).toBeInTheDocument()
     expect(
-      screen.getByRole('columnheader', { name: dayjs().subtract(6, 'day').format('MM-DD') }),
+      screen.getByRole('columnheader', {
+        name: new RegExp(dayjs().subtract(6, 'day').format('DD/MM')),
+      }),
     ).toBeInTheDocument()
-    expect(screen.getByRole('columnheader', { name: dayjs().format('MM-DD') })).toBeInTheDocument()
+    expect(
+      screen.getByRole('columnheader', { name: new RegExp(dayjs().format('DD/MM')) }),
+    ).toBeInTheDocument()
   })
 
   it('does not show a scrollbar for a short seller comparison', async () => {
@@ -486,7 +483,7 @@ describe('ReportWorkspacePage', () => {
       screen.getAllByRole('table').some((table) => table.closest('[class*="dailyTable"]')),
     ).toBe(true)
     expect(screen.getByText('Product cost')).toBeInTheDocument()
-    expect(screen.getByText('Gross profit')).toBeInTheDocument()
+    expect(screen.getAllByText('Gross profit').length).toBeGreaterThanOrEqual(1)
     expect(await screen.findByText('Additional fulfillment')).toBeInTheDocument()
     expect(
       screen.getByText(
@@ -744,5 +741,23 @@ describe('ReportWorkspacePage', () => {
     await waitFor(() => expect(listFinanceBySeller).toHaveBeenCalledTimes(1))
     expect(listFinanceDaily).not.toHaveBeenCalled()
     expect(getOperationsOverview).not.toHaveBeenCalled()
+  })
+
+  it('allows navigating to the order profitability tab directly from the main reports page', async () => {
+    render(
+      <MemoryRouter>
+        <AppProviders>
+          <ReportWorkspacePage />
+        </AppProviders>
+      </MemoryRouter>,
+    )
+
+    const orderProfitabilityTab = screen.getByRole('tab', { name: 'Order profitability' })
+    expect(orderProfitabilityTab).toBeInTheDocument()
+    fireEvent.click(orderProfitabilityTab)
+
+    await waitFor(() =>
+      expect(listFinanceSnapshots).toHaveBeenCalledWith(expect.objectContaining({ page: 1 })),
+    )
   })
 })

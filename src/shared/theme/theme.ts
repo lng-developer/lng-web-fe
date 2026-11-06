@@ -38,6 +38,15 @@ export function createAppTheme(resolved: ResolvedAppearance): ThemeConfig {
       borderRadius: 8,
       borderRadiusLG: 12,
       borderRadiusSM: 6,
+      fontSize: 13,
+      fontSizeSM: 11,
+      fontSizeLG: 15,
+      fontSizeXL: 19,
+      fontSizeHeading1: 37,
+      fontSizeHeading2: 29,
+      fontSizeHeading3: 23,
+      fontSizeHeading4: 19,
+      fontSizeHeading5: 15,
       boxShadow: isDark
         ? '0 1px 3px 0 rgb(0 0 0 / 40%), 0 1px 2px -1px rgb(0 0 0 / 40%)'
         : '0 1px 3px 0 rgb(15 23 42 / 6%), 0 1px 2px -1px rgb(15 23 42 / 4%)',
@@ -103,7 +112,8 @@ export function createAppTheme(resolved: ResolvedAppearance): ThemeConfig {
       Segmented: {
         itemSelectedBg: APP_PRIMARY_COLOR,
         itemSelectedColor: '#FFFFFF',
-        itemHoverColor: APP_PRIMARY_COLOR,
+        itemHoverBg: isDark ? '#3A3B3C' : '#F1F5F9',
+        itemHoverColor: isDark ? '#E4E6EB' : '#0F172A',
         itemColor: isDark ? '#B0B3B8' : '#475569',
         trackBg: isDark ? '#242526' : '#F1F5F9',
         trackPadding: 3,

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest'
 
 vi.mock('@/shared/api', () => ({
-  apiClient: { get: vi.fn(), patch: vi.fn(), post: vi.fn() },
+  apiClient: { get: vi.fn(), patch: vi.fn(), post: vi.fn(), put: vi.fn() },
 }))
 
 import {
@@ -17,6 +17,8 @@ import {
   updateIssueStatus,
   uploadEtsySoldItems,
   uploadManualExcel,
+  upsertExtensionFinanceSchedule,
+  upsertExtensionOrderSchedule,
 } from '@/features/portal/integrations/api/integrationApi'
 import { apiClient } from '@/shared/api'
 
@@ -30,6 +32,7 @@ describe('integrationApi', () => {
     vi.mocked(apiClient.get).mockResolvedValue({ data: { items: [], pagination: {} } })
     vi.mocked(apiClient.patch).mockResolvedValue({ data: {} })
     vi.mocked(apiClient.post).mockResolvedValue({ data: {} })
+    vi.mocked(apiClient.put).mockResolvedValue({ data: {} })
   })
 
   it('uses the import job, issue, raw-record, and retry contracts', async () => {
@@ -128,5 +131,39 @@ describe('integrationApi', () => {
       expect(form.get('externalAccountId')).toBe('etsy-account')
       expect(form.has('fileBase64')).toBe(false)
     }
+  })
+
+  it('upserts order and finance schedules with scheduleType and fixedTimes', async () => {
+    await upsertExtensionOrderSchedule('agent-1', {
+      enabled: true,
+      scheduleType: 'FIXED_TIMES',
+      fixedTimes: ['10:00', '17:00'],
+      timezone: 'Asia/Ho_Chi_Minh',
+    })
+    expect(apiClient.put).toHaveBeenCalledWith(
+      '/api/integration/extension-commands/order-schedules/agent-1',
+      {
+        enabled: true,
+        scheduleType: 'FIXED_TIMES',
+        fixedTimes: ['10:00', '17:00'],
+        timezone: 'Asia/Ho_Chi_Minh',
+      },
+    )
+
+    await upsertExtensionFinanceSchedule('agent-1', 'ADS', {
+      enabled: true,
+      scheduleType: 'FIXED_TIMES',
+      fixedTimes: ['10:00', '17:00'],
+      timezone: 'Asia/Ho_Chi_Minh',
+    })
+    expect(apiClient.put).toHaveBeenCalledWith(
+      '/api/integration/extension-commands/finance-schedules/agent-1/ADS',
+      {
+        enabled: true,
+        scheduleType: 'FIXED_TIMES',
+        fixedTimes: ['10:00', '17:00'],
+        timezone: 'Asia/Ho_Chi_Minh',
+      },
+    )
   })
 })

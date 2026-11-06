@@ -1,64 +1,59 @@
-import { type ReactNode, useEffect, useMemo, useState } from 'react'
+import {
+  cloneElement,
+  type ReactElement,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 import { useTranslation } from 'react-i18next'
-import { AiOutlineFileSync } from 'react-icons/ai'
-import { BiExtension } from 'react-icons/bi'
-import { BsFiletypePsd } from 'react-icons/bs'
-import { CgShoppingBag } from 'react-icons/cg'
-import { CgFileDocument } from 'react-icons/cg'
-import { FaAmazon, FaEtsy, FaShopify } from 'react-icons/fa'
-import { FaAnglesLeft, FaAnglesRight } from 'react-icons/fa6'
-import { HiOutlineBuildingStorefront } from 'react-icons/hi2'
-import { IoStorefrontOutline } from 'react-icons/io5'
-import { IoImageOutline } from 'react-icons/io5'
-import {
-  LuBox,
-  LuLayoutDashboard,
-  LuLayoutList,
-  LuLightbulb,
-  LuNotebook,
-  LuTruck,
-} from 'react-icons/lu'
-import { MdBalance, MdOutlineConnectedTv } from 'react-icons/md'
-import {
-  RiAdvertisementLine,
-  RiPaletteLine,
-  RiSettings2Line,
-  RiTokenSwapLine,
-} from 'react-icons/ri'
-import {
-  TbAward,
-  TbBlender,
-  TbBuildingFactory2,
-  TbHomeDollar,
-  TbHomeStats,
-  TbPackages,
-  TbReport,
-  TbReportSearch,
-} from 'react-icons/tb'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
+  AccountBookOutlined,
   ApartmentOutlined,
+  AppstoreAddOutlined,
+  BgColorsOutlined,
+  BookOutlined,
+  BuildOutlined,
+  BulbOutlined,
   CalendarOutlined,
+  CarOutlined,
   ClockCircleOutlined,
   ContactsOutlined,
+  DashboardOutlined,
+  DesktopOutlined,
   DollarOutlined,
+  DoubleLeftOutlined,
+  DoubleRightOutlined,
+  ExperimentOutlined,
+  FileDoneOutlined,
+  FileImageOutlined,
+  FileSearchOutlined,
   FileTextOutlined,
   FormatPainterOutlined,
+  FundOutlined,
   HistoryOutlined,
+  InboxOutlined,
   LineChartOutlined,
+  NotificationOutlined,
   PictureOutlined,
+  PropertySafetyOutlined,
   SafetyCertificateOutlined,
   SettingOutlined,
+  ShopOutlined,
+  ShoppingOutlined,
+  SwapOutlined,
+  SyncOutlined,
   TeamOutlined,
   TrophyOutlined,
+  UnorderedListOutlined,
   UserOutlined,
 } from '@ant-design/icons'
 import { Badge, Image, Layout, Menu, Tooltip } from 'antd'
 
 import { workspaceRouteLinks } from '@/app/router/workspaceRoutes'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
-import { useOrderSummaryQuery } from '@/features/portal/orders/hooks/useOrderSummaryQuery'
-import { useProductionQueueCountsQuery } from '@/features/portal/production/hooks/useProductionTasksQuery'
+import { useSidebarBadges } from './useSidebarBadges'
 
 import {
   canReadHrDashboard,
@@ -94,13 +89,13 @@ const topMenus: LegacyRailItem[] = [
     key: 'dashboard',
     path: '/portal/dashboard',
     labelKey: 'shell.navigation.dashboard',
-    icon: <LuLayoutDashboard size={20} />,
+    icon: <DashboardOutlined />,
   },
-  { key: 'sales', labelKey: 'legacyMenu.sales', icon: <TbHomeStats size={20} /> },
-  { key: 'fulfillment', labelKey: 'legacyMenu.fulfillment', icon: <MdBalance size={20} /> },
-  { key: 'design', labelKey: 'legacyMenu.design', icon: <RiPaletteLine size={20} /> },
-  { key: 'vendor', labelKey: 'legacyMenu.vendor', icon: <HiOutlineBuildingStorefront size={20} /> },
-  { key: 'extensions', labelKey: 'legacyMenu.extensions', icon: <BiExtension size={20} /> },
+  { key: 'sales', labelKey: 'legacyMenu.sales', icon: <FundOutlined /> },
+  { key: 'fulfillment', labelKey: 'legacyMenu.fulfillment', icon: <AccountBookOutlined /> },
+  { key: 'design', labelKey: 'legacyMenu.design', icon: <BgColorsOutlined /> },
+  { key: 'vendor', labelKey: 'legacyMenu.vendor', icon: <ShopOutlined /> },
+  { key: 'extensions', labelKey: 'legacyMenu.extensions', icon: <AppstoreAddOutlined /> },
 ]
 
 const hrTopMenus: LegacyRailItem[] = [
@@ -108,7 +103,7 @@ const hrTopMenus: LegacyRailItem[] = [
     key: 'hr-dashboard',
     path: '/hr/dashboard',
     labelKey: 'shell.navigation.dashboard',
-    icon: <LuLayoutDashboard size={20} />,
+    icon: <DashboardOutlined />,
   },
   { key: 'hr', labelKey: 'shell.cores.hr', icon: <TeamOutlined /> },
 ]
@@ -127,90 +122,90 @@ const detailMenus: Record<string, LegacyMenuItem[]> = {
     {
       key: workspaceRouteLinks.orders,
       labelKey: 'legacyMenu.orders',
-      icon: <LuBox size={20} />,
+      icon: <InboxOutlined />,
       children: [
         {
           key: workspaceRouteLinks.ordersBySalesChannel('amazon'),
           labelKey: 'legacyMenu.amazon',
-          icon: <FaAmazon size={20} />,
+          icon: <ShopOutlined />,
         },
         {
           key: workspaceRouteLinks.ordersBySalesChannel('etsy'),
           labelKey: 'legacyMenu.etsy',
-          icon: <FaEtsy size={20} />,
+          icon: <ShopOutlined />,
         },
         {
           key: workspaceRouteLinks.ordersBySalesChannel('shopify'),
           labelKey: 'legacyMenu.shopify',
-          icon: <FaShopify size={20} />,
+          icon: <ShopOutlined />,
         },
       ],
     },
     {
       key: workspaceRouteLinks.teamTasks,
       labelKey: 'legacyMenu.teamTasks',
-      icon: <LuNotebook size={20} />,
+      icon: <BookOutlined />,
     },
     {
       key: 'listing',
       labelKey: 'legacyMenu.listing',
-      icon: <LuLayoutList size={20} />,
+      icon: <UnorderedListOutlined />,
       children: [
         {
           key: '/portal/listing/amazon',
           labelKey: 'legacyMenu.amzListing',
-          icon: <FaAmazon size={20} />,
+          icon: <ShopOutlined />,
         },
         {
           key: '/portal/listing/etsy',
           labelKey: 'legacyMenu.etsyListing',
-          icon: <FaEtsy size={20} />,
+          icon: <ShopOutlined />,
         },
       ],
     },
     {
       key: 'cost-centers',
       labelKey: 'legacyMenu.costCenters',
-      icon: <TbHomeDollar size={20} />,
+      icon: <PropertySafetyOutlined />,
       children: [
         {
           key: '/portal/catalog/product-types',
           labelKey: 'shell.navigation.productTypes',
-          icon: <TbPackages size={20} />,
+          icon: <InboxOutlined />,
         },
         {
           key: '/portal/catalog/templates',
           labelKey: 'shell.navigation.internalTemplates',
-          icon: <BsFiletypePsd size={20} />,
+          icon: <FileImageOutlined />,
         },
         {
           key: '/portal/mapping',
           labelKey: 'shell.navigation.mapping',
-          icon: <RiTokenSwapLine size={20} />,
+          icon: <SwapOutlined />,
         },
       ],
     },
     {
       key: 'reports',
       labelKey: 'legacyMenu.reports',
-      icon: <TbReport size={20} />,
+      icon: <FileDoneOutlined />,
       children: [
         {
           key: 'reports-order-cost',
           labelKey: 'legacyMenu.ordersCost',
-          icon: <CgShoppingBag size={20} />,
+          icon: <ShoppingOutlined />,
           className: styles.reportChannel,
           children: [
             {
               key: '/portal/reports/amazon/order-cost',
               labelKey: 'legacyMenu.amazon',
-              icon: <FaAmazon size={20} />,
+              icon: <ShopOutlined />,
               className: styles.reportChannelItem,
             },
             {
               key: '/portal/reports/etsy/order-cost',
               labelKey: 'legacyMenu.etsy',
-              icon: <FaEtsy size={20} />,
+              icon: <ShopOutlined />,
               className: styles.reportChannelItem,
             },
           ],
@@ -218,19 +213,19 @@ const detailMenus: Record<string, LegacyMenuItem[]> = {
         {
           key: 'reports-ads',
           labelKey: 'legacyMenu.adsReport',
-          icon: <RiAdvertisementLine size={20} />,
+          icon: <NotificationOutlined />,
           className: styles.reportChannel,
           children: [
             {
               key: '/portal/reports/amazon/ads',
               labelKey: 'legacyMenu.amazon',
-              icon: <FaAmazon size={20} />,
+              icon: <ShopOutlined />,
               className: styles.reportChannelItem,
             },
             {
               key: '/portal/reports/etsy/ads',
               labelKey: 'legacyMenu.etsy',
-              icon: <FaEtsy size={20} />,
+              icon: <ShopOutlined />,
               className: styles.reportChannelItem,
             },
           ],
@@ -238,19 +233,19 @@ const detailMenus: Record<string, LegacyMenuItem[]> = {
         {
           key: 'reports-sales',
           labelKey: 'legacyMenu.saleReport',
-          icon: <TbReportSearch size={20} />,
+          icon: <FileSearchOutlined />,
           className: styles.reportChannel,
           children: [
             {
               key: '/portal/reports/amazon/sales',
               labelKey: 'legacyMenu.amazon',
-              icon: <FaAmazon size={20} />,
+              icon: <ShopOutlined />,
               className: styles.reportChannelItem,
             },
             {
               key: '/portal/reports/etsy/sales',
               labelKey: 'legacyMenu.etsy',
-              icon: <FaEtsy size={20} />,
+              icon: <ShopOutlined />,
               className: styles.reportChannelItem,
             },
           ],
@@ -260,27 +255,27 @@ const detailMenus: Record<string, LegacyMenuItem[]> = {
     {
       key: '/portal/monitoring',
       labelKey: 'legacyMenu.monitoring',
-      icon: <AiOutlineFileSync size={20} />,
+      icon: <SyncOutlined />,
     },
     {
       key: 'configuration',
       labelKey: 'legacyMenu.configuration',
-      icon: <RiSettings2Line size={20} />,
+      icon: <SettingOutlined />,
       children: [
         {
           key: '/portal/shops',
           labelKey: 'shell.navigation.shops',
-          icon: <IoStorefrontOutline size={20} />,
+          icon: <ShopOutlined />,
         },
         {
           key: '/portal/integrations',
           labelKey: 'shell.navigation.integrations',
-          icon: <BiExtension size={20} />,
+          icon: <AppstoreAddOutlined />,
         },
         {
           key: '/portal/shipments',
           labelKey: 'shell.navigation.shipments',
-          icon: <LuTruck size={20} />,
+          icon: <CarOutlined />,
         },
       ],
     },
@@ -289,168 +284,168 @@ const detailMenus: Record<string, LegacyMenuItem[]> = {
     {
       key: 'scale',
       labelKey: 'legacyMenu.scale',
-      icon: <MdBalance size={20} />,
+      icon: <AccountBookOutlined />,
       children: [
         {
           key: '/portal/production/scale?salesChannelCode=AMAZON',
           labelKey: 'legacyMenu.amazonScale',
-          icon: <FaAmazon size={20} />,
+          icon: <ShopOutlined />,
         },
         {
           key: '/portal/production/scale?salesChannelCode=ETSY',
           labelKey: 'legacyMenu.etsyScale',
-          icon: <FaEtsy size={20} />,
+          icon: <ShopOutlined />,
         },
       ],
     },
     {
       key: 'qc',
       labelKey: 'legacyMenu.qc',
-      icon: <TbBlender size={20} />,
+      icon: <ExperimentOutlined />,
       children: [
         {
           key: '/portal/production/qc?salesChannelCode=AMAZON',
           labelKey: 'legacyMenu.amazonQc',
-          icon: <FaAmazon size={20} />,
+          icon: <ShopOutlined />,
         },
         {
           key: '/portal/production/qc?salesChannelCode=ETSY',
           labelKey: 'legacyMenu.etsyQc',
-          icon: <FaEtsy size={20} />,
+          icon: <ShopOutlined />,
         },
       ],
     },
     {
       key: '/portal/production/scores',
       labelKey: 'portal.production.scores',
-      icon: <TbHomeStats size={20} />,
+      icon: <FundOutlined />,
     },
     {
       key: '/portal/vendor-submissions',
       labelKey: 'shell.navigation.vendorSubmissions',
-      icon: <TbBuildingFactory2 size={20} />,
+      icon: <BuildOutlined />,
     },
   ],
   design: [
     {
       key: '/portal/design/idea-tasks',
       labelKey: 'portal.design.ideaTasks',
-      icon: <LuLightbulb size={20} />,
+      icon: <BulbOutlined />,
       children: [
         {
           key: workspaceRouteLinks.designIdeaTasksBySalesChannel('amazon'),
           labelKey: 'portal.design.amazonTasks',
-          icon: <FaAmazon size={20} />,
+          icon: <ShopOutlined />,
         },
         {
           key: workspaceRouteLinks.designIdeaTasksBySalesChannel('etsy'),
           labelKey: 'portal.design.etsyTasks',
-          icon: <FaEtsy size={20} />,
+          icon: <ShopOutlined />,
         },
       ],
     },
     {
       key: '/portal/design/psd-tasks',
       labelKey: 'portal.design.psdTasks',
-      icon: <BsFiletypePsd size={20} />,
+      icon: <FileImageOutlined />,
       children: [
         {
           key: workspaceRouteLinks.designPsdTasksBySalesChannel('amazon'),
           labelKey: 'portal.design.amazonTasks',
-          icon: <FaAmazon size={20} />,
+          icon: <ShopOutlined />,
         },
         {
           key: workspaceRouteLinks.designPsdTasksBySalesChannel('etsy'),
           labelKey: 'portal.design.etsyTasks',
-          icon: <FaEtsy size={20} />,
+          icon: <ShopOutlined />,
         },
       ],
     },
     {
       key: '/portal/design/png-tasks',
       labelKey: 'portal.design.pngTasks',
-      icon: <IoImageOutline size={20} />,
+      icon: <PictureOutlined />,
       children: [
         {
           key: workspaceRouteLinks.designPngTasksBySalesChannel('amazon'),
           labelKey: 'portal.design.amazonTasks',
-          icon: <FaAmazon size={20} />,
+          icon: <ShopOutlined />,
         },
         {
           key: workspaceRouteLinks.designPngTasksBySalesChannel('etsy'),
           labelKey: 'portal.design.etsyTasks',
-          icon: <FaEtsy size={20} />,
+          icon: <ShopOutlined />,
         },
       ],
     },
     {
       key: '/portal/design/scores',
       labelKey: 'portal.design.scores',
-      icon: <TbAward size={20} />,
+      icon: <TrophyOutlined />,
     },
     {
       key: '/portal/design/files',
       labelKey: 'portal.design.psdFiles',
-      icon: <BsFiletypePsd size={20} />,
+      icon: <FileImageOutlined />,
     },
     {
       key: '/portal/media',
       labelKey: 'shell.navigation.media',
-      icon: <IoImageOutline size={20} />,
+      icon: <PictureOutlined />,
     },
   ],
   vendor: [
     {
       key: '/portal/vendors',
       labelKey: 'shell.navigation.vendors',
-      icon: <LuLayoutList size={20} />,
+      icon: <UnorderedListOutlined />,
     },
     {
       key: '/portal/vendors?tab=products',
       labelKey: 'legacyMenu.vendorProducts',
-      icon: <CgFileDocument size={20} />,
+      icon: <FileTextOutlined />,
     },
     {
       key: '/portal/vendors?tab=integrations',
       labelKey: 'portal.vendors.tabs.integrations',
-      icon: <BiExtension size={20} />,
+      icon: <AppstoreAddOutlined />,
     },
     {
       key: '/portal/vendors?tab=migration',
       labelKey: 'portal.vendors.tabs.migration',
-      icon: <TbPackages size={20} />,
+      icon: <InboxOutlined />,
     },
   ],
   extensions: [
     {
       key: '/portal/extensions/clients',
       labelKey: 'legacyMenu.manageClients',
-      icon: <MdOutlineConnectedTv size={20} />,
+      icon: <DesktopOutlined />,
     },
     {
-      key: '/portal/extensions/config-auto',
+      key: '/portal/extensions/schedules',
       labelKey: 'legacyMenu.configAuto',
-      icon: <RiSettings2Line size={20} />,
+      icon: <SettingOutlined />,
     },
     {
-      key: '/portal/extensions/log-manager',
+      key: '/portal/extensions/logs',
       labelKey: 'legacyMenu.logManager',
-      icon: <TbReport size={20} />,
+      icon: <FileDoneOutlined />,
     },
     {
-      key: '/portal/extensions/tracking-etsy',
-      labelKey: 'legacyMenu.trackingEtsy',
-      icon: <FaEtsy size={20} />,
+      key: '/portal/extensions/tracking',
+      labelKey: 'legacyMenu.trackingAutomation',
+      icon: <CarOutlined />,
     },
     {
-      key: '/portal/extensions/message-etsy',
-      labelKey: 'legacyMenu.messageEtsy',
-      icon: <FaEtsy size={20} />,
+      key: '/portal/extensions/messages',
+      labelKey: 'legacyMenu.messageAutomation',
+      icon: <ShopOutlined />,
     },
     {
-      key: '/portal/extensions/check-tracking',
-      labelKey: 'legacyMenu.checkTracking',
-      icon: <LuTruck size={20} />,
+      key: '/portal/extensions/images',
+      labelKey: 'legacyMenu.imageSync',
+      icon: <PictureOutlined />,
     },
   ],
 }
@@ -687,7 +682,11 @@ function toMenuItems(
 ): Parameters<typeof Menu>[0]['items'] {
   return items.map((item) => ({
     key: item.key,
-    icon: item.icon,
+    icon: item.icon
+      ? cloneElement(item.icon as ReactElement<{ 'aria-hidden'?: boolean }>, {
+          'aria-hidden': true,
+        })
+      : undefined,
     className: item.className,
     label: (
       <span className={styles.menuLabel}>
@@ -777,7 +776,7 @@ function getRouteMenuState(
 }
 
 function iconForNavigationItem(item: NavigationItem) {
-  if (item.key.includes('dashboard')) return <LuLayoutDashboard />
+  if (item.key.includes('dashboard')) return <DashboardOutlined />
   if (item.key.includes('schedule')) return <CalendarOutlined />
   if (item.key.includes('attendance')) return <ClockCircleOutlined />
   if (item.key.includes('request') || item.key.includes('approval')) return <FileTextOutlined />
@@ -804,7 +803,7 @@ function iconForNavigationItem(item: NavigationItem) {
 }
 
 function iconForNavigationGroup(key: string) {
-  if (key === 'dashboard') return <LuLayoutDashboard />
+  if (key === 'dashboard') return <DashboardOutlined />
   if (key === 'personal') return <UserOutlined />
   if (key === 'team') return <TeamOutlined />
   if (key === 'operations') return <CalendarOutlined />
@@ -884,30 +883,6 @@ export function LegacySidebar({
   const navigate = useNavigate()
   const location = useLocation()
   const permissions = useMemo(() => getPermissionsSet(account), [account])
-  const canQuerySummary = (required: readonly string[]) =>
-    Boolean(account) &&
-    (permissions === null || required.some((permission) => permissions.has(permission)))
-  const orderSummary = useOrderSummaryQuery(
-    { page: 1, limit: 1 },
-    {
-      enabled: canQuerySummary(['ORDERS:READ', 'ORDERS:WRITE']),
-    },
-  )
-  const productionQueueCounts = useProductionQueueCountsQuery(
-    {},
-    {
-      enabled: canQuerySummary([
-        'PRODUCTION:READ',
-        'PRODUCTION:WRITE',
-        'PRODUCTION:SCALE_WORK',
-        'PRODUCTION:SCALE_ASSIGN',
-        'PRODUCTION:QC_REVIEW',
-        'DESIGN:WORK',
-        'DESIGN:REVIEW',
-      ]),
-    },
-  )
-
   const [activeMenu, setActiveMenu] = useState(
     () =>
       getRouteMenuState(
@@ -921,6 +896,12 @@ export function LegacySidebar({
   const [lastPortalMenu, setLastPortalMenu] = useState<string>(() =>
     getInitialPortalMenu(location.pathname, location.search, permissions, financeVisible),
   )
+  const badgeCounts = useSidebarBadges({
+    account,
+    permissions,
+    collapsed,
+    activeMenu,
+  })
   const [activeMode, setActiveMode] = useState<'portal' | 'hr'>(() => {
     const isHr =
       location.pathname.startsWith('/hr') || location.pathname.startsWith('/organization')
@@ -1131,10 +1112,6 @@ export function LegacySidebar({
         : (getDetailMenu(currentPortalMenu, financeVisible, permissions) ??
           getDetailMenu(lastPortalMenu, financeVisible, permissions) ??
           [])
-  const badgeCounts = {
-    [workspaceRouteLinks.orders]: orderSummary.data?.tabCounts.NEW,
-    '/portal/production/blocked': productionQueueCounts.data?.blocked,
-  }
   const menuItems = toMenuItems(activeDetailMenu, t, badgeCounts)
 
   const selectedPortalKeys = useMemo(() => {
@@ -1345,6 +1322,11 @@ export function LegacySidebar({
                       bottomMenuGroups.hr?.find((g) => g.key !== 'dashboard')?.items?.[0]?.path ||
                       '/hr/me'
                     navigate(target)
+                  } else if (
+                    item.key === 'extensions' &&
+                    !location.pathname.startsWith('/portal/extensions')
+                  ) {
+                    navigate('/portal/extensions/clients')
                   }
                 }}
               >
@@ -1450,7 +1432,7 @@ export function LegacySidebar({
         aria-label={t(collapsed ? 'shell.expand' : 'shell.collapse')}
         onClick={() => onCollapsedChange(!collapsed)}
       >
-        {collapsed ? <FaAnglesRight size={15} /> : <FaAnglesLeft size={15} />}
+        {collapsed ? <DoubleRightOutlined /> : <DoubleLeftOutlined />}
       </button>
     </aside>
   )

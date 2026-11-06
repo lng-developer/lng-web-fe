@@ -25,7 +25,7 @@ const ADDRESS_FIELDS: Array<keyof ShippingAddress> = [
 type OrderAddressModalProps = {
   readonly open: boolean
   readonly anchor?: PopupModalAnchor
-  readonly order: OrderWorkbenchRow['order']
+  readonly order?: OrderWorkbenchRow['order']
   readonly pending: boolean
   readonly onClose: () => void
   readonly onAction: (action: OrderAction) => void
@@ -39,7 +39,7 @@ export const OrderAddressModal = memo(function OrderAddressModal({
   onClose,
   onAction,
 }: OrderAddressModalProps) {
-  if (!open) return null
+  if (!open || !order) return null
 
   return (
     <OrderAddressModalInner
@@ -69,7 +69,20 @@ function OrderAddressModalInner({
   onAction,
 }: OrderAddressModalInnerProps) {
   const { t } = useTranslation()
-  const [address, setAddress] = useState<ShippingAddress>(order.shippingAddress)
+  const [address, setAddress] = useState<ShippingAddress>(
+    () =>
+      order.shippingAddress ?? {
+        name: null,
+        company: null,
+        addressLine1: null,
+        addressLine2: null,
+        city: null,
+        stateOrProvinceCode: null,
+        postalCode: null,
+        countryCode: null,
+        phoneMasked: null,
+      },
+  )
   const [overrideReasonOpen, setOverrideReasonOpen] = useState(false)
   const [overrideReason, setOverrideReason] = useState('')
 
@@ -105,7 +118,7 @@ function OrderAddressModalInner({
             <label key={field}>
               <Typography.Text type="secondary">{t(`orders.address.${field}`)}</Typography.Text>
               <Input
-                value={address[field] ?? ''}
+                value={address?.[field] ?? ''}
                 onChange={(event) =>
                   setAddress((current) => ({ ...current, [field]: event.target.value }))
                 }

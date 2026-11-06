@@ -152,7 +152,11 @@ export function HrDashboardPage() {
               <Badge
                 count={data?.approvals.totalPending}
                 overflowCount={99}
-                style={{ marginLeft: 8, backgroundColor: '#ffffff', color: '#1677ff' }}
+                style={{
+                  marginLeft: 8,
+                  backgroundColor: 'var(--ant-color-bg-container)',
+                  color: 'var(--ant-color-primary)',
+                }}
               />
             )}
           </Button>
@@ -297,7 +301,13 @@ export function HrDashboardPage() {
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div style={{ padding: '32px 0', textAlign: 'center', color: '#94a3b8' }}>
+              <div
+                style={{
+                  padding: '32px 0',
+                  textAlign: 'center',
+                  color: 'var(--ant-color-text-tertiary)',
+                }}
+              >
                 <CalendarOutlined style={{ fontSize: 32, marginBottom: 8 }} />
                 <Typography.Paragraph type="secondary">
                   {t('common.empty', { defaultValue: 'No trend data recorded for this range' })}
@@ -325,7 +335,10 @@ export function HrDashboardPage() {
                 <div className={styles.actionQueueLeft}>
                   <div
                     className={styles.actionQueueIcon}
-                    style={{ background: '#e6f7ff', color: '#1677ff' }}
+                    style={{
+                      background: 'var(--ant-color-primary-bg)',
+                      color: 'var(--ant-color-primary)',
+                    }}
                   >
                     <FileTextOutlined />
                   </div>
@@ -362,7 +375,10 @@ export function HrDashboardPage() {
                 <div className={styles.actionQueueLeft}>
                   <div
                     className={styles.actionQueueIcon}
-                    style={{ background: '#fff7e6', color: '#fa8c16' }}
+                    style={{
+                      background: 'var(--ant-color-warning-bg)',
+                      color: 'var(--ant-color-warning)',
+                    }}
                   >
                     <ClockCircleOutlined />
                   </div>
@@ -399,7 +415,10 @@ export function HrDashboardPage() {
                 <div className={styles.actionQueueLeft}>
                   <div
                     className={styles.actionQueueIcon}
-                    style={{ background: '#fff1f0', color: '#f5222d' }}
+                    style={{
+                      background: 'var(--ant-color-error-bg)',
+                      color: 'var(--ant-color-error)',
+                    }}
                   >
                     <WarningOutlined />
                   </div>
@@ -460,7 +479,7 @@ export function HrDashboardPage() {
                       percent={dept.percentage}
                       showInfo={false}
                       size="small"
-                      strokeColor="#1677ff"
+                      strokeColor="var(--ant-color-primary)"
                     />
                   </div>
                 ))}
@@ -495,7 +514,7 @@ export function HrDashboardPage() {
               </div>
               <div className={styles.breakdownItem}>
                 <span className={styles.breakdownLabel}>
-                  <CheckCircleOutlined style={{ color: '#10b981' }} />
+                  <CheckCircleOutlined style={{ color: 'var(--ant-color-success)' }} />
                   {t('hrOperations.dashboard.present', { defaultValue: 'Present' })}
                 </span>
                 <span className={`${styles.breakdownValue} ${styles.breakdownSuccess}`}>
@@ -504,7 +523,7 @@ export function HrDashboardPage() {
               </div>
               <div className={styles.breakdownItem}>
                 <span className={styles.breakdownLabel}>
-                  <ClockCircleOutlined style={{ color: '#f59e0b' }} />
+                  <ClockCircleOutlined style={{ color: 'var(--ant-color-warning)' }} />
                   {t('hrOperations.dashboard.late', { defaultValue: 'Late' })}
                 </span>
                 <span
@@ -515,14 +534,14 @@ export function HrDashboardPage() {
               </div>
               <div className={styles.breakdownItem}>
                 <span className={styles.breakdownLabel}>
-                  <CalendarOutlined style={{ color: '#3b82f6' }} />
+                  <CalendarOutlined style={{ color: 'var(--ant-color-primary)' }} />
                   {t('hrOperations.dashboard.onLeave', { defaultValue: 'On leave' })}
                 </span>
                 <span className={styles.breakdownValue}>{data?.attendance.onLeave ?? 0}</span>
               </div>
               <div className={styles.breakdownItem}>
                 <span className={styles.breakdownLabel}>
-                  <WarningOutlined style={{ color: '#ef4444' }} />
+                  <WarningOutlined style={{ color: 'var(--ant-color-error)' }} />
                   {t('hrOperations.dashboard.absent', { defaultValue: 'Absent' })}
                 </span>
                 <span
@@ -533,7 +552,7 @@ export function HrDashboardPage() {
               </div>
               <div className={styles.breakdownItem}>
                 <span className={styles.breakdownLabel}>
-                  <FieldTimeOutlined style={{ color: '#ef4444' }} />
+                  <FieldTimeOutlined style={{ color: 'var(--ant-color-error)' }} />
                   {t('hrOperations.dashboard.missingCheckouts', { defaultValue: 'Missing out' })}
                 </span>
                 <span
@@ -548,13 +567,13 @@ export function HrDashboardPage() {
                 marginTop: 12,
                 padding: '8px 12px',
                 borderRadius: 8,
-                background: 'var(--ant-color-fill-quaternary, #f8fafc)',
+                background: 'var(--ant-color-fill-quaternary)',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
               }}
             >
-              <span style={{ fontSize: 13, color: 'var(--ant-color-text-secondary, #64748b)' }}>
+              <span style={{ fontSize: 13, color: 'var(--ant-color-text-secondary)' }}>
                 {t('hrOperations.dashboard.approvedOtToday', { defaultValue: 'Approved OT today' })}
               </span>
               <Tag color="cyan">
@@ -584,7 +603,9 @@ export function HrDashboardPage() {
                   <div className={styles.announcementHeader}>
                     <div className={styles.announcementTitle}>
                       {item.isPinned && (
-                        <PushpinFilled style={{ color: '#2563eb', fontSize: 13 }} />
+                        <PushpinFilled
+                          style={{ color: 'var(--ant-color-primary)', fontSize: 13 }}
+                        />
                       )}
                       <span>{item.title}</span>
                     </div>

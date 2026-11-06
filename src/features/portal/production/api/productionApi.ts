@@ -35,6 +35,7 @@ export type ProductionScaleContext = {
     psdTemplate?: { assetDownloadUrl?: string | null; status?: string | null }
     listing?: {
       salesChannelCode?: string | null
+      sku?: string | null
       asin?: string | null
       etsyListingId?: string | null
       psdStatus?: string | null
@@ -82,6 +83,8 @@ export type ProductionTask = {
   updatedAt: string
   orderItem?: {
     externalOrderId?: string | null
+    externalItemId?: string | null
+    externalListingId?: string | null
     salesChannelCode?: string | null
     marketplaceCode?: string | null
     asin?: string | null

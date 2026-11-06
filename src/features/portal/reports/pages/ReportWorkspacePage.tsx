@@ -218,10 +218,17 @@ export function ReportWorkspacePage() {
         width: 120,
         align: 'right',
         sorter: (a, b) => (a.netProfitAmount ?? -Infinity) - (b.netProfitAmount ?? -Infinity),
-        render: (_, row) =>
-          row.netProfitAmount === null
-            ? '—'
-            : formatReportMoney(row.netProfitAmount, row.currency || 'USD'),
+        render: (_, row) => {
+          if (row.netProfitAmount === null) return '—'
+          const text = formatReportMoney(row.netProfitAmount, row.currency || 'USD')
+          if (row.netProfitAmount > 0) {
+            return <span className={styles.dailyMoneyProfit}>{text}</span>
+          }
+          if (row.netProfitAmount < 0) {
+            return <span className={styles.dailyMoneyLoss}>{text}</span>
+          }
+          return <span>{text}</span>
+        },
       },
       {
         title: t('reports.columns.margin'),
@@ -331,47 +338,80 @@ export function ReportWorkspacePage() {
     </SectionCard>
   )
 
-  const sellerProfitabilitySummary = (
+  const overviewMetrics = (
     <div className={styles.stack}>
-      {sellersByCurrency.map(([currency, rows]) => {
+      {(sellersByCurrency.length
+        ? sellersByCurrency
+        : ([['USD', [] as SellerPerformance[]]] as const)
+      ).map(([currency, rows]) => {
         const revenue = rows.reduce((total, row) => total + row.revenueAmount, 0)
-        const grossProfit = rows.some((row) => row.grossProfitAmount === null)
-          ? null
-          : rows.reduce((total, row) => total + (row.grossProfitAmount ?? 0), 0)
-        const netProfit = rows.some((row) => row.netProfitAmount === null)
-          ? null
-          : rows.reduce((total, row) => total + (row.netProfitAmount ?? 0), 0)
+        const grossProfit =
+          rows.length > 0 && rows.some((row) => row.grossProfitAmount === null)
+            ? null
+            : rows.reduce((total, row) => total + (row.grossProfitAmount ?? 0), 0)
+        const netProfit =
+          rows.length > 0 && rows.some((row) => row.netProfitAmount === null)
+            ? null
+            : rows.reduce((total, row) => total + (row.netProfitAmount ?? 0), 0)
         return (
           <section key={currency} className={styles.currencySection} aria-label={currency}>
-            <Typography.Text strong className={styles.currencyLabel}>
-              {currency}
-            </Typography.Text>
+            {sellersByCurrency.length > 1 ? (
+              <Typography.Text strong className={styles.currencyLabel}>
+                {currency}
+              </Typography.Text>
+            ) : null}
             <div className={styles.metrics}>
               <MetricCard
                 icon={<FundOutlined />}
                 variant="primary"
                 label={t('reports.metrics.sellers')}
                 value={String(rows.length)}
+                loading={sellers.isPending}
               />
               <MetricCard
                 icon={<DollarOutlined />}
                 variant="info"
                 label={t('reports.metrics.revenue')}
                 value={formatReportMoney(revenue, currency)}
+                loading={sellers.isPending}
               />
               <MetricCard
                 icon={<RiseOutlined />}
                 variant="success"
                 label={t('reports.metrics.grossProfit')}
-                value={grossProfit === null ? '—' : formatReportMoney(grossProfit, currency)}
+                value={
+                  grossProfit === null || !rows.length
+                    ? '—'
+                    : formatReportMoney(grossProfit, currency)
+                }
+                loading={sellers.isPending}
               />
               <MetricCard
                 icon={<RiseOutlined />}
                 variant="success"
                 label={t('reports.metrics.netProfit')}
-                value={netProfit === null ? '—' : formatReportMoney(netProfit, currency)}
+                value={
+                  netProfit === null || !rows.length ? '—' : formatReportMoney(netProfit, currency)
+                }
+                loading={sellers.isPending}
               />
             </div>
+          </section>
+        )
+      })}
+    </div>
+  )
+
+  const sellerProfitabilitySummary = (
+    <div className={styles.stack}>
+      {sellersByCurrency.map(([currency, rows]) => {
+        return (
+          <section key={currency} className={styles.currencySection} aria-label={currency}>
+            {sellersByCurrency.length > 1 ? (
+              <Typography.Text strong className={styles.currencyLabel}>
+                {currency}
+              </Typography.Text>
+            ) : null}
             <ReportProfitComparisonChart rows={rows} currency={currency} />
             <SectionCard title={t('reports.profitability.table')}>
               <CoreDataTable
@@ -461,15 +501,27 @@ export function ReportWorkspacePage() {
         const renderAmount = (amount: number | null, row: DailyMatrixRow) => {
           if (amount === null) return '—'
           if (row.metricKey === 'orderCount') return <span>{amount}</span>
-          const className =
-            row.metricKey === 'revenueAmount'
-              ? styles.dailyMoneyRevenue
-              : row.metricKey === 'netProfitAmount'
-                ? amount < 0
-                  ? styles.dailyMoneyLoss
-                  : styles.dailyMoneyProfit
-                : styles.dailyMoneyCost
-          return <span className={className}>{formatReportMoney(amount, currency)}</span>
+          const isProfit =
+            row.metricKey === 'grossProfitAmount' || row.metricKey === 'netProfitAmount'
+          if (isProfit) {
+            if (amount > 0) {
+              return (
+                <span className={styles.dailyMoneyProfit}>
+                  {formatReportMoney(amount, currency)}
+                </span>
+              )
+            }
+            if (amount < 0) {
+              return (
+                <span className={styles.dailyMoneyLoss}>{formatReportMoney(amount, currency)}</span>
+              )
+            }
+            return <span className={styles.dailyMetric}>{formatReportMoney(amount, currency)}</span>
+          }
+          if (row.metricKey === 'revenueAmount') {
+            return <span className={styles.dailyMetric}>{formatReportMoney(amount, currency)}</span>
+          }
+          return <span>{formatReportMoney(amount, currency)}</span>
         }
         const columns: TableColumnsType<DailyMatrixRow> = [
           {
@@ -553,6 +605,8 @@ export function ReportWorkspacePage() {
 
   const sellerProfitabilityTab = (
     <div className={styles.stack}>
+      {overviewMetrics}
+      {filterBar}
       <ReportCoverageStrip rows={coverage.data} dateBasis={filters.dateBasis} />
       <Space className={styles.profitabilityMode}>
         <Button
@@ -580,13 +634,18 @@ export function ReportWorkspacePage() {
         hideReconciliationLinks
       />
     ) : activeTab === 'ads-employee' ? (
-      <ReportAdsEmployeeTab data={adsSellerDaily.data} isPending={adsSellerDaily.isPending} />
+      <ReportAdsEmployeeTab
+        data={adsSellerDaily.data}
+        isPending={adsSellerDaily.isPending}
+        filterBar={filterBar}
+      />
     ) : activeTab === 'sales-profit' ? (
       <ReportSalesTab
         data={sellerDaily.data}
         isPending={sellerDaily.isPending}
         canCompareSellers={operationalScope}
         dates={reportDates}
+        filterBar={filterBar}
       />
     ) : activeTab === 'overview' ? (
       sellerProfitabilityTab
@@ -597,14 +656,18 @@ export function ReportWorkspacePage() {
         isAdsDailyPending={adsDaily.isPending}
         channelsData={channels.data}
         isChannelsPending={channels.isPending}
+        filterBar={filterBar}
       />
     ) : (
-      <ReportTeamTab teamsData={teams.data} isTeamsPending={teams.isPending} />
+      <ReportTeamTab
+        teamsData={teams.data}
+        isTeamsPending={teams.isPending}
+        filterBar={filterBar}
+      />
     )
 
   return (
     <div className={styles.page}>
-      {activeTab === 'order-cost' ? null : filterBar}
       {isDedicatedReport ? (
         <div className={styles.stack}>{reportContent}</div>
       ) : (
@@ -618,6 +681,17 @@ export function ReportWorkspacePage() {
               children: sellerProfitabilityTab,
             },
             {
+              key: 'order-cost',
+              label: <UiTabLabel>{t('reports.tabs.orderCost')}</UiTabLabel>,
+              children: (
+                <FinanceWorkspacePage
+                  fixedSalesChannelCode={fixedSalesChannelCode}
+                  hideCashFlow
+                  hideReconciliationLinks
+                />
+              ),
+            },
+            {
               key: 'sales',
               label: <UiTabLabel>{t('reports.tabs.ads')}</UiTabLabel>,
               children: (
@@ -627,13 +701,20 @@ export function ReportWorkspacePage() {
                   isAdsDailyPending={adsDaily.isPending}
                   channelsData={channels.data}
                   isChannelsPending={channels.isPending}
+                  filterBar={filterBar}
                 />
               ),
             },
             {
               key: 'operations',
               label: <UiTabLabel>{t('reports.tabs.teams')}</UiTabLabel>,
-              children: <ReportTeamTab teamsData={teams.data} isTeamsPending={teams.isPending} />,
+              children: (
+                <ReportTeamTab
+                  teamsData={teams.data}
+                  isTeamsPending={teams.isPending}
+                  filterBar={filterBar}
+                />
+              ),
             },
           ]}
         />

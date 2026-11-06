@@ -593,6 +593,10 @@ describe('OrderInlinePanel', () => {
               { type: 'TEXT', label: 'Field 3', value: 'Value 3' },
               { type: 'TEXT', label: 'Field 4', value: 'Value 4' },
               { type: 'TEXT', label: 'Field 5', value: 'Value 5' },
+              { type: 'TEXT', label: 'Field 6', value: 'Value 6' },
+              { type: 'TEXT', label: 'Field 7', value: 'Value 7' },
+              { type: 'TEXT', label: 'Field 8', value: 'Value 8' },
+              { type: 'TEXT', label: 'Field 9', value: 'Value 9' },
             ],
           },
         },
@@ -601,10 +605,10 @@ describe('OrderInlinePanel', () => {
 
     renderPanel(true, undefined, source)
 
-    expect(screen.getByText(/Field 4/)).toBeInTheDocument()
-    expect(screen.queryByText(/Field 5/)).not.toBeInTheDocument()
+    expect(screen.getByText(/Field 8/)).toBeInTheDocument()
+    expect(screen.queryByText(/Field 9/)).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'orders.actions.showMoreCustomization' }))
-    expect(screen.getByText(/Field 5/)).toBeInTheDocument()
+    expect(screen.getByText(/Field 9/)).toBeInTheDocument()
   })
 
   it('keeps buyer-uploaded images visible when customization values are collapsed', () => {
@@ -621,6 +625,11 @@ describe('OrderInlinePanel', () => {
               { type: 'TEXT', label: 'Field 2', value: 'Value 2' },
               { type: 'TEXT', label: 'Field 3', value: 'Value 3' },
               { type: 'TEXT', label: 'Field 4', value: 'Value 4' },
+              { type: 'TEXT', label: 'Field 5', value: 'Value 5' },
+              { type: 'TEXT', label: 'Field 6', value: 'Value 6' },
+              { type: 'TEXT', label: 'Field 7', value: 'Value 7' },
+              { type: 'TEXT', label: 'Field 8', value: 'Value 8' },
+              { type: 'TEXT', label: 'Field 9', value: 'Value 9' },
               {
                 type: 'IMAGE',
                 label: 'Upload Photo',
@@ -959,7 +968,9 @@ describe('OrderInlinePanel', () => {
 
     fireEvent.mouseDown(screen.getByLabelText('orders.fields.product'))
 
-    await waitFor(() => expect(searchMappingProducts).toHaveBeenCalledWith({ q: '', page: 1, limit: 20 }))
+    await waitFor(() =>
+      expect(searchMappingProducts).toHaveBeenCalledWith({ q: '', page: 1, limit: 20 }),
+    )
   })
 
   it('allows browsing products across vendors without a vendor selection', async () => {

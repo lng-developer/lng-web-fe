@@ -10,6 +10,7 @@ import { NotificationCenter } from '@/features/notifications/components/Notifica
 import { ChatShell } from '@/features/portal/chat/components/ChatShell'
 import { LanguageSwitch } from '@/shared/i18n/LanguageSwitch'
 import { ThemeSwitch } from '@/shared/theme/ThemeSwitch'
+import { ContentErrorBoundary } from '@/shared/ui'
 
 import { AccountMenu } from './AccountMenu'
 import { TeamsSetupPrompt } from './TeamsSetupPrompt'
@@ -234,7 +235,9 @@ export function AppShell() {
         >
           <TeamsSetupPrompt key={account.account.id} accountId={account.account.id} />
           <div className={`${styles.workspace} ${isFixedWorkspace ? styles.workspaceFixed : ''}`}>
-            <Outlet />
+            <ContentErrorBoundary>
+              <Outlet />
+            </ContentErrorBoundary>
           </div>
         </Content>
       </Layout>

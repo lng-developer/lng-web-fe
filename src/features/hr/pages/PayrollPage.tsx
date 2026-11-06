@@ -22,7 +22,7 @@ import {
 import dayjs from 'dayjs'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
-import { getPermissions } from '@/shared/auth/session'
+import { usePermissions } from '@/shared/auth/useAuthStore'
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from '@/shared/constants/enum'
 import {
   EmployeeAvatar,
@@ -96,7 +96,8 @@ export function PayrollPage({ workspace = 'personal' }: { workspace?: 'personal'
     enabled: Boolean(targetId) && workspace === 'personal',
     retry: false,
   })
-  const permissions = useMemo(() => new Set(getPermissions()), [])
+  const permissionsList = usePermissions()
+  const permissions = useMemo(() => new Set(permissionsList), [permissionsList])
   const isManagement = workspace === 'management'
   const canRead = isManagement && permissions.has('HR_PAYROLL:READ')
   const canWrite = isManagement && permissions.has('HR_PAYROLL:WRITE')

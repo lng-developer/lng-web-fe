@@ -43,6 +43,7 @@ import {
   deleteDesignTask,
   type DesignTask,
   type DesignTaskPriority,
+  formatTaskSeller,
   getDesignSummary,
   listDesignAssignees,
   listDesignTasks,
@@ -62,14 +63,44 @@ dayjs.extend(relativeTime)
 const { Text } = Typography
 
 const STATUS_TABS = [
-  { key: 'all', title: 'All', status: undefined },
-  { key: 'New', title: 'New', status: 'NEW' },
-  { key: 'Requested', title: 'Requested', status: 'REQUESTED' },
-  { key: 'Assigned', title: 'Assigned', status: 'ASSIGNED' },
-  { key: 'In Progress', title: 'In Progress', status: 'IN_PROGRESS' },
-  { key: 'Uploaded', title: 'Uploaded', status: 'SUBMITTED' },
-  { key: 'QC Rejected', title: 'QC Rejected', status: 'REJECTED' },
-  { key: 'QC Passed', title: 'QC Passed', status: 'APPROVED' },
+  { key: 'all', titleKey: 'portal.design.tabs.all', defaultTitle: 'All', status: undefined },
+  { key: 'New', titleKey: 'portal.design.tabs.new', defaultTitle: 'New', status: 'NEW' },
+  {
+    key: 'Requested',
+    titleKey: 'portal.design.tabs.requested',
+    defaultTitle: 'Requested',
+    status: 'REQUESTED',
+  },
+  {
+    key: 'Assigned',
+    titleKey: 'portal.design.tabs.assigned',
+    defaultTitle: 'Assigned',
+    status: 'ASSIGNED',
+  },
+  {
+    key: 'In Progress',
+    titleKey: 'portal.design.tabs.inProgress',
+    defaultTitle: 'In Progress',
+    status: 'IN_PROGRESS',
+  },
+  {
+    key: 'Uploaded',
+    titleKey: 'portal.design.tabs.uploaded',
+    defaultTitle: 'Uploaded',
+    status: 'SUBMITTED',
+  },
+  {
+    key: 'QC Rejected',
+    titleKey: 'portal.design.tabs.qcRejected',
+    defaultTitle: 'QC Rejected',
+    status: 'REJECTED',
+  },
+  {
+    key: 'QC Passed',
+    titleKey: 'portal.design.tabs.qcPassed',
+    defaultTitle: 'QC Passed',
+    status: 'APPROVED',
+  },
 ] as const
 
 type TaskHistoryItem = {
@@ -198,6 +229,8 @@ export function PsdTasksPage() {
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [search, setSearch] = useState('')
   const deferredSearch = useDeferredValue(search)
+  const [etsyListingId, setEtsyListingId] = useState('')
+  const deferredEtsyListingId = useDeferredValue(etsyListingId)
   const [activeTabKey, setActiveTabKey] = useState<string>('all')
   const [selectedSellerId, setSelectedSellerId] = useState<string>()
   const [dateRange, setDateRange] = useState<DateRangeValue>({})
@@ -237,6 +270,7 @@ export function PsdTasksPage() {
       page,
       limit: pageSize,
       search: deferredSearch || undefined,
+      etsyListingId: deferredEtsyListingId.trim() || undefined,
       taskType: 'PSD_TEMPLATE' as const,
       salesChannelCode,
       status: activeTabConfig.status,
@@ -249,6 +283,7 @@ export function PsdTasksPage() {
       page,
       pageSize,
       deferredSearch,
+      deferredEtsyListingId,
       salesChannelCode,
       activeTabConfig.status,
       selectedSellerId,
@@ -271,11 +306,31 @@ export function PsdTasksPage() {
     enabled: !canPsdRequest || canWrite,
   })
 
+  const summaryParams = useMemo(
+    () => ({
+      taskType: 'PSD_TEMPLATE' as const,
+      salesChannelCode,
+      search: deferredSearch || undefined,
+      etsyListingId: deferredEtsyListingId.trim() || undefined,
+      sellerId: selectedSellerId || undefined,
+      shopId: selectedSellerId || undefined,
+      dateFrom: dateRange.dateFrom,
+      dateTo: dateRange.dateTo,
+    }),
+    [
+      salesChannelCode,
+      deferredSearch,
+      deferredEtsyListingId,
+      selectedSellerId,
+      dateRange.dateFrom,
+      dateRange.dateTo,
+    ],
+  )
+
   const summaryQuery = useQuery({
-    queryKey: designKeys.summary({ taskType: 'PSD_TEMPLATE', salesChannelCode }),
-    queryFn: () => getDesignSummary({ taskType: 'PSD_TEMPLATE', salesChannelCode }),
-    staleTime: 30_000,
-    enabled: !canPsdRequest || canWrite,
+    queryKey: designKeys.summary(summaryParams),
+    queryFn: () => getDesignSummary(summaryParams),
+    staleTime: 15_000,
   })
 
   const assigneesQuery = useQuery({
@@ -460,7 +515,10 @@ export function PsdTasksPage() {
     if (salesChannelCode) {
       items = items.filter((item) => {
         const code = item.listing?.salesChannelCode?.toUpperCase()
-        return !code || code === salesChannelCode
+        if (code) return code === salesChannelCode
+        if (salesChannelCode === 'AMAZON') return Boolean(item.listing?.asin)
+        if (salesChannelCode === 'ETSY') return Boolean(item.listing?.etsyListingId)
+        return false
       })
     }
     if (selectedSellerId) {
@@ -471,6 +529,8 @@ export function PsdTasksPage() {
     }
     return items
   }, [tasksQuery.data?.items, salesChannelCode, selectedSellerId])
+
+  const paginationTotal = tasksQuery.data?.pagination?.total ?? displayedTasks.length
 
   const columns = useMemo<TableColumnsType<DesignTask>>(() => {
     const baseColumns: TableColumnsType<DesignTask> = [
@@ -551,7 +611,9 @@ export function PsdTasksPage() {
         title:
           salesChannelCode === 'ETSY'
             ? 'Listing ID'
-            : t('portal.design.asin', { defaultValue: 'Asin' }),
+            : salesChannelCode === 'AMAZON'
+              ? 'ASIN'
+              : 'ASIN / Listing ID',
         key: 'asin',
         width: 130,
         align: 'center',
@@ -676,19 +738,21 @@ export function PsdTasksPage() {
         },
       },
       {
+        title: t('portal.design.shop', { defaultValue: 'Shop' }),
+        key: 'shop',
+        width: 140,
+        align: 'center',
+        render: (_, record) => (
+          <StatusPill title={record.shop?.name || '-'} color={DATA_COLORS.pending} />
+        ),
+      },
+      {
         title: t('portal.design.seller', { defaultValue: 'Seller' }),
         key: 'seller',
-        width: 150,
+        width: 160,
         align: 'center',
         render: (_, record) => {
-          const sellerName =
-            record.seller?.fullName ||
-            (record.seller as { full_name?: string })?.full_name ||
-            record.createdBy?.fullName ||
-            (record.createdBy as { full_name?: string })?.full_name ||
-            (record.seller as { name?: string })?.name ||
-            record.shop?.name ||
-            'Unknown'
+          const sellerName = formatTaskSeller(record)
           return <StatusPill title={sellerName} color={DATA_COLORS.process} />
         },
       },
@@ -924,7 +988,7 @@ export function PsdTasksPage() {
               key: tab.key,
               label: (
                 <UiTabLabel count={counts[tab.key]} active={activeTabKey === tab.key}>
-                  {tab.title}
+                  {t(tab.titleKey, { defaultValue: tab.defaultTitle })}
                 </UiTabLabel>
               ),
             }))}
@@ -946,17 +1010,42 @@ export function PsdTasksPage() {
       {/* Filter bar: Search + Seller + Refresh */}
       <div className={styles.filterBar}>
         <Input
-          placeholder={t('common.search', { defaultValue: 'Search PSD tasks...' })}
+          placeholder={
+            salesChannelCode === 'ETSY'
+              ? t('portal.design.searchEtsyPlaceholder', {
+                  defaultValue: 'Search Listing ID, SKU...',
+                })
+              : salesChannelCode === 'AMAZON'
+                ? t('portal.design.searchAmazonPlaceholder', {
+                    defaultValue: 'Search ASIN, SKU...',
+                  })
+                : t('portal.design.searchAllPlaceholder', {
+                    defaultValue: 'Search ASIN, Etsy Listing ID, SKU...',
+                  })
+          }
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value)
+            setPage(1)
+          }}
           allowClear
           className={styles.search}
+        />
+        <Input
+          placeholder={t('portal.design.etsyListingId', { defaultValue: 'Etsy Listing ID' })}
+          value={etsyListingId}
+          onChange={(e) => {
+            setEtsyListingId(e.target.value)
+            setPage(1)
+          }}
+          allowClear
+          style={{ width: 180 }}
         />
         <Select
           allowClear
           showSearch
           optionFilterProp="label"
-          placeholder={t('portal.design.seller', { defaultValue: 'Seller' })}
+          placeholder={t('portal.design.shop', { defaultValue: 'Shop' })}
           value={selectedSellerId}
           onChange={(val) => {
             setSelectedSellerId(val)
@@ -984,16 +1073,14 @@ export function PsdTasksPage() {
           pagination={{
             current: page,
             pageSize,
-            total: selectedSellerId
-              ? displayedTasks.length
-              : tasksQuery.data?.pagination?.total || 0,
+            total: paginationTotal,
             showSizeChanger: true,
             onChange: (p, ps) => {
               setPage(p)
               setPageSize(ps)
             },
           }}
-          scroll={{ x: 'max-content' }}
+          scroll={{ x: 1380 }}
         />
       </div>
 

@@ -9,7 +9,6 @@ import {
   listFinanceBySeller,
   listFinanceByTeam,
   listFinanceCoverage,
-  listFinanceOrderProfitability,
   listFinanceSellerDaily,
   type ReportFilters,
 } from '../api/reportApi'
@@ -60,12 +59,6 @@ export const useReportData = ({
       (activeTab === 'overview' && profitabilityView === 'daily') || activeTab === 'sales-profit',
   })
 
-  const orderProfitability = useQuery({
-    queryKey: ['reports', 'order-profitability', filters],
-    queryFn: () => listFinanceOrderProfitability(filters),
-    enabled: activeTab === 'order-cost',
-  })
-
   const adsSellerDaily = useQuery({
     queryKey: ['reports', 'ads-seller-daily', filters],
     queryFn: () => listAdsSellerDaily(filters),
@@ -107,7 +100,6 @@ export const useReportData = ({
     sellers,
     coverage,
     sellerDaily,
-    orderProfitability,
     adsSellerDaily,
     teams,
     channels,

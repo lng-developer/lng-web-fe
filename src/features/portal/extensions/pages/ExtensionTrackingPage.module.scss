@@ -1,0 +1,44 @@
+.page {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.overviewCard {
+  display: grid;
+  gap: 12px;
+}
+
+.instructionSteps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.stepBox {
+  background: var(--ant-color-fill-quaternary);
+  padding: 16px;
+  border-radius: var(--ant-border-radius);
+  border: 1px solid var(--ant-color-border-secondary);
+}
+
+.stepTitle {
+  font-weight: 600;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stepDesc {
+  font-size: 13px;
+  color: var(--ant-color-text-secondary);
+  line-height: 1.5;
+}

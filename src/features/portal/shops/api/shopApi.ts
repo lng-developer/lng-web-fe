@@ -8,6 +8,7 @@ export type Shop = {
   name: string
   currency: string
   status: ShopStatus
+  salesChannelCode?: string
   createdAt: string
   updatedAt: string
 }

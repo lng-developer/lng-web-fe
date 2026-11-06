@@ -72,13 +72,50 @@ select {
   font: inherit;
 }
 
-// Keep table headers consistent across common CoreDataTable and direct Ant Design Table usage.
+// Keep table headers and cells centered by default, respecting explicit left/right alignments.
 .ant-table-wrapper .ant-table-thead > tr > th {
-  text-align: left !important;
+  text-align: center !important;
+
+  &.ant-table-cell-align-left {
+    text-align: left !important;
+  }
+
+  &.ant-table-cell-align-right {
+    text-align: right !important;
+  }
+
+  &.ant-table-cell-align-center {
+    text-align: center !important;
+  }
 }
 
 .ant-table-wrapper .ant-table-thead > tr > th .ant-table-column-sorters {
+  justify-content: center;
+}
+
+.ant-table-wrapper .ant-table-thead > tr > th.ant-table-cell-align-left .ant-table-column-sorters {
   justify-content: flex-start;
+}
+
+.ant-table-wrapper .ant-table-thead > tr > th.ant-table-cell-align-right .ant-table-column-sorters {
+  justify-content: flex-end;
+}
+
+.ant-table-wrapper .ant-table-tbody > tr:not(.ant-table-expanded-row) > td {
+  text-align: center;
+  vertical-align: middle;
+
+  &.ant-table-cell-align-left {
+    text-align: left !important;
+  }
+
+  &.ant-table-cell-align-right {
+    text-align: right !important;
+  }
+
+  &.ant-table-cell-align-center {
+    text-align: center !important;
+  }
 }
 
 .route-state {
@@ -211,8 +248,8 @@ html[data-theme='dark'] {
 
 // Segmented Tabs - Edge-to-edge flush presentation (border fills entire segment, no inset gap)
 .ant-segmented {
-  background: var(--ant-color-bg-container, #ffffff);
-  border: 1px solid var(--ant-color-border, #cbd5e1);
+  background: var(--ant-color-bg-container);
+  border: 1px solid var(--ant-color-border);
   padding: 0 !important;
   border-radius: 6px;
   overflow: hidden;
@@ -228,13 +265,13 @@ html[data-theme='dark'] {
     bottom: 0 !important;
     height: 100% !important;
     border-radius: 0 !important;
-    background: var(--ant-color-primary, #2563eb) !important;
+    background: var(--ant-color-primary) !important;
     box-shadow: none !important;
   }
 
   .ant-segmented-item {
     border-radius: 0 !important;
-    color: var(--ant-color-text-secondary, #475569);
+    color: var(--ant-color-text-secondary);
     font-size: 13px;
     font-weight: 500;
     transition:
@@ -242,16 +279,16 @@ html[data-theme='dark'] {
       background-color 0.16s ease;
 
     &:not(:last-child) {
-      border-inline-end: 1px solid var(--ant-color-border-secondary, #e2e8f0);
+      border-inline-end: 1px solid var(--ant-color-border-secondary);
     }
 
     &:hover:not(.ant-segmented-item-selected):not(.ant-segmented-item-disabled) {
-      color: var(--ant-color-text, #0f172a);
-      background: var(--ant-color-fill-quaternary, #f8fafc);
+      color: var(--ant-color-text);
+      background: var(--ant-color-fill-quaternary);
 
       .anticon,
       svg {
-        color: var(--ant-color-text, #0f172a);
+        color: var(--ant-color-text);
         fill: currentColor;
       }
     }
@@ -260,7 +297,7 @@ html[data-theme='dark'] {
   .ant-segmented-item-selected {
     color: #ffffff !important;
     font-weight: 600 !important;
-    background: var(--ant-color-primary, #2563eb) !important;
+    background: var(--ant-color-primary) !important;
 
     .ant-segmented-item-label {
       color: #ffffff !important;
@@ -275,41 +312,5 @@ html[data-theme='dark'] {
   }
 }
 html[data-theme='dark'] .ant-segmented {
-  background: #242526;
-  border-color: #393a3b;
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 20%);
-
-  .ant-segmented-item:not(:last-child) {
-    border-inline-end-color: #393a3b;
-  }
-
-  .ant-segmented-item {
-    color: #b0b3b8;
-
-    &:hover:not(.ant-segmented-item-selected):not(.ant-segmented-item-disabled) {
-      color: #e4e6eb;
-      background: #3a3b3c;
-
-      .anticon,
-      svg {
-        color: #e4e6eb;
-        fill: currentColor;
-      }
-    }
-  }
-
-  .ant-segmented-item-selected {
-    color: #ffffff !important;
-    background: var(--ant-color-primary, #2563eb) !important;
-
-    .ant-segmented-item-label {
-      color: #ffffff !important;
-
-      .anticon,
-      svg {
-        color: #ffffff !important;
-        fill: currentColor !important;
-      }
-    }
-  }
 }

@@ -14,11 +14,13 @@ import {
   bulkAssignDesignTasks,
   cancelDesignTask,
   createDesignTask,
+  formatTaskSeller,
   getDesignSummary,
   getDesignWorkload,
   listDesignSubmissions,
   listDesignTasks,
   listPsdFiles,
+  parseEmployeeCodeFromSku,
   rejectDesignTask,
   reopenDesignTask,
   startDesignTask,
@@ -171,5 +173,154 @@ describe('designApi', () => {
 
     expect(uploadApiClient.post).toHaveBeenCalledWith('/api/design/assets', expect.any(FormData))
     expect(result.id).toBe('direct-asset-1')
+  })
+
+  it('correctly parses seller employee code from SKU', () => {
+    expect(parseEmployeeCodeFromSku('J001-CANVAS-01')).toBe('J001')
+    expect(parseEmployeeCodeFromSku('j1234_mug')).toBe('J1234')
+    expect(parseEmployeeCodeFromSku('J567')).toBe('J567')
+    expect(parseEmployeeCodeFromSku('NON-MATCHING-SKU')).toBeNull()
+    expect(parseEmployeeCodeFromSku(null)).toBeNull()
+  })
+
+  it('formats task seller accurately based on seller, listing, and SKU fallbacks', () => {
+    // 1. Full seller with name and employee code
+    expect(
+      formatTaskSeller({
+        id: '1',
+        taskType: 'PSD_TEMPLATE',
+        status: 'REQUESTED',
+        priority: 'NORMAL',
+        listing: {
+          sku: 'J001-TEST',
+          title: 'Test',
+          psdStatus: null,
+          productTypeName: null,
+          seller: { name: 'Nguyen Van A', employeeCode: 'J001' },
+        },
+        listingVariantId: null,
+        internalTemplate: null,
+        targetListingId: null,
+        assignedDesignerId: null,
+        assignedDesigner: null,
+        shop: { id: 'shop-1', name: 'US Shop' },
+        brief: null,
+        expectedOutputs: [],
+        referenceAssetCount: 0,
+        latestSubmission: null,
+        createdAt: '2026-01-01',
+        updatedAt: '2026-01-01',
+      }),
+    ).toBe('Nguyen Van A (J001)')
+
+    // 2. Seller on task object
+    expect(
+      formatTaskSeller({
+        id: '2',
+        taskType: 'PSD_TEMPLATE',
+        status: 'REQUESTED',
+        priority: 'NORMAL',
+        listing: null,
+        listingVariantId: null,
+        internalTemplate: null,
+        targetListingId: null,
+        assignedDesignerId: null,
+        assignedDesigner: null,
+        shop: { id: 'shop-1', name: 'US Shop' },
+        brief: null,
+        expectedOutputs: [],
+        referenceAssetCount: 0,
+        latestSubmission: null,
+        seller: { fullName: 'Tran Van B', employeeCode: 'J002' },
+        createdAt: '2026-01-01',
+        updatedAt: '2026-01-01',
+      }),
+    ).toBe('Tran Van B (J002)')
+
+    // 3. Fallback to SKU regex when seller profile is not yet loaded
+    expect(
+      formatTaskSeller({
+        id: '3',
+        taskType: 'PSD_TEMPLATE',
+        status: 'REQUESTED',
+        priority: 'NORMAL',
+        listing: {
+          sku: 'J999-POSTER-01',
+          title: 'Poster',
+          psdStatus: null,
+          productTypeName: null,
+        },
+        listingVariantId: null,
+        internalTemplate: null,
+        targetListingId: null,
+        assignedDesignerId: null,
+        assignedDesigner: null,
+        shop: { id: 'shop-1', name: 'US Shop' },
+        brief: null,
+        expectedOutputs: [],
+        referenceAssetCount: 0,
+        latestSubmission: null,
+        createdAt: '2026-01-01',
+        updatedAt: '2026-01-01',
+      }),
+    ).toBe('J999')
+
+    // 4. Listing seller matching SKU code
+    expect(
+      formatTaskSeller({
+        id: '4',
+        taskType: 'PSD_TEMPLATE',
+        status: 'APPROVED',
+        priority: 'NORMAL',
+        listing: {
+          sku: 'J2608-ACO-080926-1972',
+          title: 'Ornament',
+          psdStatus: null,
+          productTypeName: null,
+          seller: { name: 'yennth', employeeCode: 'J2608' },
+        },
+        listingVariantId: null,
+        internalTemplate: null,
+        targetListingId: null,
+        assignedDesignerId: null,
+        assignedDesigner: null,
+        shop: { id: 'shop-1', name: 'US Shop' },
+        brief: null,
+        expectedOutputs: [],
+        referenceAssetCount: 0,
+        latestSubmission: null,
+        createdAt: '2026-01-01',
+        updatedAt: '2026-01-01',
+      }),
+    ).toBe('yennth (J2608)')
+
+    // 5. When listing has mismatched requester (J2504) for SKU J2608, do not show wrong requester
+    expect(
+      formatTaskSeller({
+        id: '5',
+        taskType: 'PSD_TEMPLATE',
+        status: 'APPROVED',
+        priority: 'NORMAL',
+        listing: {
+          sku: 'J2608-ACO-080926-1972',
+          title: 'Ornament',
+          psdStatus: null,
+          productTypeName: null,
+          seller: { name: 'Nguyễn Đức Sơn', employeeCode: 'J2504' },
+        },
+        listingVariantId: null,
+        internalTemplate: null,
+        targetListingId: null,
+        assignedDesignerId: null,
+        assignedDesigner: null,
+        shop: { id: 'shop-1', name: 'US Shop' },
+        brief: null,
+        expectedOutputs: [],
+        referenceAssetCount: 0,
+        latestSubmission: null,
+        createdAt: '2026-01-01',
+        updatedAt: '2026-01-01',
+      }),
+    ).toBe('J2608')
   })
 })

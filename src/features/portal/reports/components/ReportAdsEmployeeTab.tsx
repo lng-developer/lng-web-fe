@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AimOutlined, DollarOutlined, FundOutlined, ShoppingOutlined } from '@ant-design/icons'
 import { Button, Empty, Space, Typography } from 'antd'
@@ -15,6 +15,7 @@ import { formatReportMoney } from './reportFormatters'
 interface ReportAdsEmployeeTabProps {
   data?: AdsSellerDaily[]
   isPending: boolean
+  filterBar?: ReactNode
 }
 
 type RankingMetric = 'roas' | 'sales' | 'spend' | 'cpa'
@@ -30,7 +31,11 @@ type SellerSummary = {
   attributedOrdersCount: number
 }
 
-export function ReportAdsEmployeeTab({ data = [], isPending }: ReportAdsEmployeeTabProps) {
+export function ReportAdsEmployeeTab({
+  data = [],
+  isPending,
+  filterBar,
+}: ReportAdsEmployeeTabProps) {
   const rowsByCurrency = useMemo(() => {
     const groups = new Map<string, AdsSellerDaily[]>()
     data.forEach((row) => {
@@ -40,19 +45,18 @@ export function ReportAdsEmployeeTab({ data = [], isPending }: ReportAdsEmployee
     return [...groups.entries()]
   }, [data])
 
-  if (!data.length && !isPending) {
-    return (
-      <SectionCard title="">
-        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
-      </SectionCard>
-    )
-  }
-
   return (
     <div className={styles.stack}>
-      {rowsByCurrency.map(([currency, rows]) => (
-        <AdsCurrencyReport key={currency} currency={currency} rows={rows} isPending={isPending} />
-      ))}
+      {filterBar}
+      {!data.length && !isPending ? (
+        <SectionCard title="">
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        </SectionCard>
+      ) : (
+        rowsByCurrency.map(([currency, rows]) => (
+          <AdsCurrencyReport key={currency} currency={currency} rows={rows} isPending={isPending} />
+        ))
+      )}
     </div>
   )
 }

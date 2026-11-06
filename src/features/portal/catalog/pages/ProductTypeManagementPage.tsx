@@ -21,7 +21,7 @@ import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { hasAnyPermission } from '@/shared/auth/permissions'
 import { printMethodSelectOptions } from '@/shared/constants/printMethods'
-import { humanizeCode, SectionCard, StatusTag, TableTextCell } from '@/shared/ui'
+import { FeedbackAlert, humanizeCode, SectionCard, StatusTag, TableTextCell } from '@/shared/ui'
 
 import {
   listVendorProducts,
@@ -332,6 +332,21 @@ export function ProductTypeManagementPage({ canManage }: { readonly canManage: b
     [canManage, open, t],
   )
 
+  const tableError = groups.isError ? (
+    <FeedbackAlert
+      type="error"
+      title={t('portal.catalog.master.loadFailed', {
+        defaultValue: 'Failed to load product types',
+      })}
+      description={groups.error instanceof Error ? groups.error.message : undefined}
+      action={
+        <Button type="link" onClick={() => void groups.refetch()}>
+          {t('common.retry', { defaultValue: 'Retry' })}
+        </Button>
+      }
+    />
+  ) : undefined
+
   return (
     <section>
       <Flex
@@ -367,6 +382,7 @@ export function ProductTypeManagementPage({ canManage }: { readonly canManage: b
           columns={columns}
           dataSource={groups.data?.items ?? []}
           loading={groups.isLoading}
+          error={tableError}
           onRow={(row) => ({ onClick: () => canManage && open(row) })}
           pagination={{
             current: page,

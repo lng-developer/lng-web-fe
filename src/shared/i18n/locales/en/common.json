@@ -76,6 +76,8 @@
     "refresh": "Refresh",
     "unknown": "Unknown",
     "copy": "Copy",
+    "retry": "Retry",
+    "noMatchingResults": "No matching results found",
     "table": {
       "viewDetails": "View details"
     }
@@ -155,11 +157,20 @@
     "logManager": "Log Manager",
     "trackingEtsy": "Tracking Etsy",
     "messageEtsy": "Message Etsy",
-    "checkTracking": "Check Tracking"
+    "checkTracking": "Check Tracking",
+    "trackingAutomation": "Tracking Center",
+    "messageAutomation": "Message Center",
+    "imageSync": "Image Sync"
   },
   "shell": {
     "refresh": "Refresh",
     "searchPlaceholder": "Search navigation",
+    "noSearchResults": "No navigation items found",
+    "quickNav": "Quick navigation",
+    "searchResults": "Search results",
+    "navigationHintNavigate": "Navigate",
+    "navigationHintSelect": "Select",
+    "navigationHintClose": "Close",
     "legacySystemName": "LNG System",
     "navigation": {
       "dashboard": "Dashboard",
@@ -483,7 +494,8 @@
       "operations": "Operations",
       "profitability": "Seller profitability",
       "ads": "Ads & attribution",
-      "teams": "Team comparison"
+      "teams": "Team comparison",
+      "orderCost": "Order profitability"
     },
     "filters": {
       "label": "Report filters",
@@ -561,6 +573,12 @@
       "netCashFlow": "Net cash flow",
       "daily": "Daily detail",
       "dailyTable": "Daily seller P&L",
+      "allMetrics": "All metrics",
+      "coreMetrics": "Core P&L",
+      "profitOnly": "Profit only",
+      "searchSeller": "Filter seller...",
+      "showChart": "Show comparison chart",
+      "hideChart": "Hide comparison chart",
       "explanation": "How profit is calculated",
       "grossFormula": "Gross profit = Revenue − Product cost − Additional fulfillment − Marketplace fee − Refund − Discount",
       "netFormula": "Net profit = Gross profit − Operating cost − Ads spend",
@@ -1213,6 +1231,9 @@
       "totalPrice": "Total Price",
       "action": "Action",
       "incomeGrowth": "Gross profit",
+      "grossProfit": "Gross Profit",
+      "revenueByChannel": "Revenue by Channel",
+      "revenueAndProfit": "Revenue and Profit",
       "addProduct": "Add Product",
       "salesByChannel": "Sales by Channel",
       "targetTrendDesc": "{{approved}} approved from {{total}} listings",
@@ -2539,6 +2560,7 @@
   },
   "customers": {
     "title": "Customers",
+    "loadFailed": "Failed to load customers",
     "description": "Track new, returning, VIP and follow-up customers.",
     "columns": {
       "customer": "Customer",
@@ -2592,6 +2614,9 @@
     }
   },
   "portal": {
+    "finance": {
+      "loadFailed": "Failed to load financial records"
+    },
     "catalog": {
       "title": "Catalog listings",
       "asin": "Asin",
@@ -2669,6 +2694,7 @@
         "advanced": "Advanced setup"
       },
       "master": {
+        "loadFailed": "Failed to load master data",
         "productTypes": "Product types",
         "productTypeDescription": "Define the product families used by listings and internal templates.",
         "createProductType": "Create product type",
@@ -3073,6 +3099,20 @@
     },
     "design": {
       "title": "Design operations",
+      "tabs": {
+        "all": "All",
+        "new": "New",
+        "requested": "Requested",
+        "assigned": "Assigned",
+        "inProgress": "In Progress",
+        "uploaded": "Uploaded",
+        "qcPassed": "QC Passed",
+        "qcRejected": "QC Rejected",
+        "pendingAssignment": "Pending Assignment",
+        "needScale": "Need Scale",
+        "qcPending": "Pending QC",
+        "completed": "Completed"
+      },
       "actions": "Actions",
       "view": "View",
       "review": "Review",
@@ -3111,7 +3151,7 @@
       "unknownDesigner": "Unknown designer",
       "unassigned": "Unassigned",
       "productImage": "Product Image",
-      "asin": "Asin",
+      "asin": "ASIN",
       "statusTask": "Status Task",
       "assignedTo": "Assigned",
       "psdStatus": "PSD Status",
@@ -3133,7 +3173,7 @@
       "sourceListing": "Listing",
       "sourceTemplate": "Internal template",
       "expectedOutputs": "Expected outputs",
-      "referenceFiles": "Reference files",
+      "referenceFiles": "Reference Files",
       "assign": "Assign",
       "start": "Start",
       "submitFiles": "Submit design files",
@@ -3188,6 +3228,7 @@
       "attachments": "Attachments",
       "etsyListingId": "Listing ID",
       "openProduct": "Open SP",
+      "listingId": "Listing ID",
       "image": "Image",
       "copyAsin": "Copy ASIN",
       "asinCopied": "ASIN copied",
@@ -3259,6 +3300,12 @@
         "SUBMISSION": "Submission",
         "APPROVED": "Approved"
       },
+      "totalFiles": "Total PSD Files",
+      "approvedFiles": "Approved Files",
+      "submissionFiles": "Submissions",
+      "open": "Open",
+      "download": "Download",
+      "clearFilters": "Reset",
       "taskStatus": "Task status",
       "psdFilters": "PSD filters",
       "searchFileOrSku": "Search file or SKU",
@@ -3467,7 +3514,29 @@
         "configurePullAds": "Configure ads pull",
         "testConnection": "Test connection",
         "revokeToken": "Revoke token",
-        "viewTaskDetails": "View task details"
+        "viewTaskDetails": "View task details",
+        "scheduleModeFixed": "Fixed times",
+        "scheduleModeInterval": "Interval",
+        "fixedTimesLabel": "Run times (UTC+7)",
+        "fixedTimesPlaceholder": "Select or enter HH:mm",
+        "intervalLabel": "Repeat every",
+        "orderSchedule": "Order schedule",
+        "orderImport": "Order import",
+        "adsSchedule": "Ads schedule",
+        "financeSchedule": "Finance schedule",
+        "saveSchedule": "Save schedule",
+        "enableSchedule": "Enable & Save",
+        "disableSchedule": "Disable",
+        "notScheduled": "Not scheduled",
+        "dailyAt": "Daily at {{times}} (UTC+7)",
+        "everyHours": "Every {{hours}}h",
+        "nextRun": "Next: {{time}}",
+        "configureSchedule": "Configure schedule",
+        "presets": "Presets:",
+        "presetCommon": "10:00, 17:00",
+        "presetThreeTimes": "09:00, 15:00, 21:00",
+        "timezoneNote": "Timezone: Asia/Ho_Chi_Minh (UTC+7)",
+        "monthlyStatement": "Monthly statement"
       },
       "panel": {
         "title": "Import job",
@@ -3639,6 +3708,11 @@
     },
     "production": {
       "title": "Production operations",
+      "taskClaimed": "Task claimed successfully",
+      "claimTask": "Claim task",
+      "claimShort": "Claim",
+      "claimToUpload": "Claim task to upload output",
+      "assignedToOther": "Assigned to: {{name}}",
       "designType": "Design Type",
       "unclassified": "Unclassified",
       "description": "Prepare artwork, review scaled files, and hand approved orders to vendors.",
@@ -3654,6 +3728,7 @@
       "unclassifiedQueue": "Unclassified",
       "qcPendingQueue": "QC pending",
       "blockedQueue": "Blocked",
+      "completedQueue": "Completed",
       "qcQueue": "QC queue",
       "readyQueue": "Ready to send",
       "sentQueue": "Sent to vendor",
@@ -4017,7 +4092,11 @@
       "description": "Review Design and Scale output points with an auditable adjustment history.",
       "refresh": "Refresh",
       "unavailable": "Work scores are unavailable",
-      "filters": "Score filters",
+      "filters": {
+        "label": "Score filters",
+        "allTaskTypes": "All Task Types",
+        "allDifficulties": "All Difficulties"
+      },
       "search": "Search SKU, order, or task",
       "allSources": "All sources",
       "detail": "Work score detail",
@@ -4127,6 +4206,7 @@
         "action": "Actions"
       },
       "fields": {
+        "taskType": "Task Type",
         "points": "Points",
         "level": "Score level",
         "reason": "Reason",
@@ -4422,6 +4502,120 @@
         "DISCONNECTED": "Disconnected"
       },
       "testConnection": "Test connection"
+    },
+    "extensions": {
+      "metrics": {
+        "onlineClients": "Online Clients",
+        "amazonClients": "Amazon Workers",
+        "etsyClients": "Etsy Workers",
+        "activeSchedules": "Active Schedules",
+        "orderSchedules": "Order Sync Schedules",
+        "financeSchedules": "Finance Schedules",
+        "totalCommands": "Total Commands",
+        "runningCommands": "In Progress / Queued",
+        "succeededCommands": "Succeeded",
+        "failedCommands": "Needs Attention",
+        "monitoredShops": "Connected Stores",
+        "onlineSyncBots": "Online Dispatch Bots",
+        "onlineAgents": "Online Agents"
+      },
+      "filters": {
+        "allStatus": "All Status",
+        "allTypes": "All Types",
+        "searchPlaceholder": "Search client, shop, command..."
+      },
+      "clients": {
+        "subtitle": "Monitor connected worker bots across Amazon & Etsy, verify online heartbeats, and manage client access tokens.",
+        "table": {
+          "status": "Status",
+          "platform": "Platform",
+          "client": "Client Machine",
+          "shop": "Bound Shop",
+          "version": "Version & Gateway",
+          "lastSeen": "Last Heartbeat"
+        },
+        "actions": {
+          "ping": "Send health check ping",
+          "syncNow": "Trigger order fetch now"
+        }
+      },
+      "tokens": {
+        "modalTitle": "Generate Extension Bot Token",
+        "generate": "Generate Token",
+        "createdSuccess": "Token created successfully!",
+        "copyNotice": "Copy this token now. It will not be shown again for security reasons. Paste it into the LNG Extension settings on the bot client machine.",
+        "shop": "Target Shop",
+        "shopPlaceholder": "Select shop to bind extension to",
+        "clientLabel": "Client PC / VM Name",
+        "environment": "Environment",
+        "validity": "Validity (Days)",
+        "revokeConfirm": "Revoke this bot token? The extension will disconnect."
+      },
+      "view": {
+        "cards": "Cards View",
+        "table": "Table View"
+      },
+      "schedules": {
+        "subtitle": "Configure recurring automated background tasks for order ingestion and finance reporting by shop.",
+        "showOfflineBots": "{{count}} offline worker (click to expand)",
+        "showOfflineBots_other": "{{count}} offline workers (click to expand)",
+        "hideOfflineBots": "Hide {{count}} offline worker",
+        "hideOfflineBots_other": "Hide {{count}} offline workers",
+        "columns": {
+          "store": "Store & Platform",
+          "agent": "Worker Extension",
+          "orderSync": "Order Ingestion Schedule",
+          "financeSync": "Finance & Reporting Schedule",
+          "actions": "Actions"
+        }
+      },
+      "logs": {
+        "subtitle": "Monitor bot command dispatch queues, track live execution status, and inspect payload logs.",
+        "table": {
+          "status": "Status",
+          "platform": "Platform",
+          "type": "Command",
+          "shop": "Shop",
+          "agent": "Agent Machine",
+          "result": "Execution Result",
+          "time": "Timestamp"
+        },
+        "actions": {
+          "details": "View command payload & response"
+        }
+      },
+      "tracking": {
+        "title": "Tracking & Dispatch Center",
+        "subtitle": "Review shipments ready to dispatch, preview tracking upload files, and synchronize fulfillment numbers to Etsy and Amazon.",
+        "workflowTitle": "Automated Dispatch Workflow",
+        "shopsTitle": "Stores & Extension Tracking Status",
+        "table": {
+          "platform": "Platform",
+          "shop": "Shop",
+          "botAgent": "Worker Extension"
+        },
+        "actions": {
+          "preview": "Preview Fulfillments"
+        }
+      },
+      "messages": {
+        "title": "Customer Message Center",
+        "subtitle": "Monitor customer conversations, coordinate prompt CS responses, and synchronize messages across Etsy and Amazon Seller Central.",
+        "slaAlertTitle": "24-Hour Marketplace Response SLA",
+        "slaAlertDesc": "Both Etsy (Star Seller) and Amazon (Buyer-Seller Messaging SLA) require responses within 24 hours including weekends. Use Extension Bot to notify customer support teams of pending customer questions.",
+        "storesTitle": "Store Message Inboxes",
+        "table": {
+          "platform": "Platform",
+          "shop": "Store",
+          "botAgent": "Worker Extension"
+        },
+        "actions": {
+          "openInbox": "Open Store Inbox"
+        }
+      },
+      "images": {
+        "subtitle": "Synchronize marketplace listing high-resolution gallery and mockup images to LNG System storage."
+      }
     }
   },
   "organization": {
@@ -4759,6 +4953,7 @@
       "PAYMENT_PENDING": "Payment pending",
       "IN_PROGRESS": "In progress",
       "SHIPPED": "Shipped",
+      "DELIVERED": "Delivered",
       "CANCELLED": "Cancelled",
       "OPEN_CASE": "Open case",
       "ADDRESS_ISSUE": "Address issue",
@@ -4975,7 +5170,7 @@
       "MEDIA_ASSET_NOT_READY": "Media asset is not ready.",
       "INTERNAL_SERVER_ERROR": "Server error. Please try again later."
     },
-    "serverTitle": "Anh em đợi tôi :))",
+    "serverTitle": "Internal Server Error",
     "technicalHint": "Try again, then return to dashboard if the issue continues.",
     "requestId": "Request ID",
     "goBack": "Go back",

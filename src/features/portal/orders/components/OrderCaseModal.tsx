@@ -55,12 +55,12 @@ export const OrderCaseModal = memo(function OrderCaseModal({
   const cases = useQuery({
     queryKey: orderKeys.cases(orderId),
     queryFn: () => listOrderCases(orderId),
-    enabled: open,
+    enabled: open && Boolean(orderId),
     ...modalQueryOptions,
     retry: false,
   })
 
-  const openCase = cases.data?.items.find((item) => item.status === 'OPEN')
+  const openCase = cases.data?.items?.find((item) => item.status === 'OPEN')
 
   const caseDetail = useQuery({
     queryKey: orderKeys.caseDetail(openCase?.id ?? ''),

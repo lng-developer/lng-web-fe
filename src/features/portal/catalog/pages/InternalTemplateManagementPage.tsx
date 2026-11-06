@@ -6,7 +6,14 @@ import { Button, Flex, Form, Input, Modal, Select, Switch, Tabs, Tooltip } from 
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
-import { humanizeCode, SectionCard, StatusTag, TableTextCell, useFeedbackToast } from '@/shared/ui'
+import {
+  FeedbackAlert,
+  humanizeCode,
+  SectionCard,
+  StatusTag,
+  TableTextCell,
+  useFeedbackToast,
+} from '@/shared/ui'
 
 import {
   getInternalTemplate,
@@ -177,6 +184,19 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
     [canManage, open, t],
   )
 
+  const tableError = templates.isError ? (
+    <FeedbackAlert
+      type="error"
+      title={t('portal.catalog.master.loadFailed', { defaultValue: 'Failed to load templates' })}
+      description={templates.error instanceof Error ? templates.error.message : undefined}
+      action={
+        <Button type="link" onClick={() => void templates.refetch()}>
+          {t('common.retry', { defaultValue: 'Retry' })}
+        </Button>
+      }
+    />
+  ) : undefined
+
   return (
     <section>
       <Flex
@@ -212,6 +232,12 @@ export function InternalTemplateManagementPage({ canManage }: { readonly canMana
           columns={columns}
           dataSource={templates.data?.items ?? []}
           loading={templates.isLoading}
+          error={tableError}
+          emptyText={
+            search
+              ? t('common.noMatchingResults', { defaultValue: 'No matching templates found' })
+              : undefined
+          }
           onRow={(row) => ({ onClick: () => canManage && void open(row) })}
           pagination={{
             current: page,

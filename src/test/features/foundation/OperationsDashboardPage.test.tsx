@@ -219,7 +219,7 @@ describe('OperationsDashboardPage', () => {
   it('shows the cash-flow table with localized columns', async () => {
     renderWithTestProviders(<OperationsDashboardPage />)
 
-    expect(await screen.findByText('Doanh thu & lợi nhuận')).toBeVisible()
+    expect(await screen.findByText('Doanh thu & Lợi nhuận')).toBeVisible()
     expect(screen.getByRole('columnheader', { name: 'Ngày' })).toBeVisible()
     expect(screen.getByRole('columnheader', { name: 'Doanh thu' })).toBeVisible()
     expect(screen.getByRole('columnheader', { name: 'Chi phí' })).toBeVisible()
@@ -247,7 +247,7 @@ describe('OperationsDashboardPage', () => {
 
     renderWithTestProviders(<OperationsDashboardPage />)
 
-    expect(await screen.findByText('Doanh thu & lợi nhuận')).toBeVisible()
+    expect(await screen.findByText('Doanh thu & Lợi nhuận')).toBeVisible()
     expect(screen.getByRole('columnheader', { name: 'Chi phí' })).toBeVisible()
     expect(screen.getByRole('columnheader', { name: 'Lợi nhuận gộp' })).toBeVisible()
     expect(await screen.findByText('3 order items thiếu giá vốn')).toBeVisible()

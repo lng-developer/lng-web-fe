@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Button, Tooltip } from 'antd'
 
-import { type Language, LANGUAGE_STORAGE_KEY } from './i18n'
+import { type Language, switchLanguage } from './i18n'
 import styles from './LanguageSwitch.module.scss'
 
 type LanguageSwitchProps = {
@@ -14,8 +14,7 @@ export function LanguageSwitch({ showTooltip = true }: LanguageSwitchProps) {
   const nextLanguage: Language = language === 'en' ? 'vi' : 'en'
 
   function changeLanguage() {
-    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, nextLanguage)
-    void i18n.changeLanguage(nextLanguage)
+    void switchLanguage(nextLanguage)
   }
 
   const button = (

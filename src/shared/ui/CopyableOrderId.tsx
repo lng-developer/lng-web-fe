@@ -12,6 +12,7 @@ export const CopyableText = memo(function CopyableText({
   strong = false,
   copiedMessage,
   title,
+  showIcon = false,
 }: {
   readonly value?: string | null
   readonly fallback?: string
@@ -19,16 +20,31 @@ export const CopyableText = memo(function CopyableText({
   readonly strong?: boolean
   readonly copiedMessage: string
   readonly title: string
+  readonly showIcon?: boolean
 }) {
   const { message } = App.useApp()
 
   if (!value) return <>{fallback}</>
 
-  const copyValue = async () => {
-    if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(value)
+  const copyValue = async (event?: React.SyntheticEvent) => {
+    event?.stopPropagation?.()
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value)
+      } else {
+        const textArea = document.createElement('textarea')
+        textArea.value = value
+        textArea.style.position = 'fixed'
+        textArea.style.left = '-9999px'
+        document.body.appendChild(textArea)
+        textArea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textArea)
+      }
+      message.success(copiedMessage)
+    } catch {
+      message.success(copiedMessage)
     }
-    message.success(copiedMessage)
   }
 
   return (
@@ -44,12 +60,12 @@ export const CopyableText = memo(function CopyableText({
         onKeyDown={(event) => {
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault()
-            void copyValue()
+            void copyValue(event)
           }
         }}
       >
         <span className={styles.badgeText}>{value}</span>
-        <CopyOutlined className={styles.copyIcon} aria-hidden />
+        {showIcon ? <CopyOutlined className={styles.copyIcon} aria-hidden /> : null}
       </Typography.Text>
     </Tooltip>
   )
@@ -58,11 +74,15 @@ export const CopyableText = memo(function CopyableText({
 export const CopyableOrderId = memo(function CopyableOrderId({
   value,
   fallback = '-',
+  className,
   strong = false,
+  showIcon = false,
 }: {
   readonly value?: string | null
   readonly fallback?: string
+  readonly className?: string
   readonly strong?: boolean
+  readonly showIcon?: boolean
 }) {
   const { t } = useTranslation()
 
@@ -70,8 +90,9 @@ export const CopyableOrderId = memo(function CopyableOrderId({
     <CopyableText
       value={value}
       fallback={fallback}
-      className={styles.orderIdBadge}
+      className={className ? `${styles.orderIdBadge} ${className}` : styles.orderIdBadge}
       strong={strong}
+      showIcon={showIcon}
       title={t('common.copyOrderId')}
       copiedMessage={t('common.orderIdCopied')}
     />
@@ -81,11 +102,15 @@ export const CopyableOrderId = memo(function CopyableOrderId({
 export const CopyableSku = memo(function CopyableSku({
   value,
   fallback = '-',
+  className,
   strong = false,
+  showIcon = false,
 }: {
   readonly value?: string | null
   readonly fallback?: string
+  readonly className?: string
   readonly strong?: boolean
+  readonly showIcon?: boolean
 }) {
   const { t } = useTranslation()
 
@@ -93,8 +118,9 @@ export const CopyableSku = memo(function CopyableSku({
     <CopyableText
       value={value}
       fallback={fallback}
-      className={styles.skuBadge}
+      className={className ? `${styles.skuBadge} ${className}` : styles.skuBadge}
       strong={strong}
+      showIcon={showIcon}
       title={t('portal.catalog.copySku', { defaultValue: 'Copy SKU' })}
       copiedMessage={t('portal.catalog.skuCopied', { defaultValue: 'SKU copied' })}
     />
@@ -104,11 +130,15 @@ export const CopyableSku = memo(function CopyableSku({
 export const CopyableAsin = memo(function CopyableAsin({
   value,
   fallback = '-',
+  className,
   strong = false,
+  showIcon = false,
 }: {
   readonly value?: string | null
   readonly fallback?: string
+  readonly className?: string
   readonly strong?: boolean
+  readonly showIcon?: boolean
 }) {
   const { t } = useTranslation()
 
@@ -116,8 +146,9 @@ export const CopyableAsin = memo(function CopyableAsin({
     <CopyableText
       value={value}
       fallback={fallback}
-      className={styles.asinBadge}
+      className={className ? `${styles.asinBadge} ${className}` : styles.asinBadge}
       strong={strong}
+      showIcon={showIcon}
       title={t('portal.catalog.copyAsin', { defaultValue: 'Copy ASIN' })}
       copiedMessage={t('portal.catalog.asinCopied', { defaultValue: 'ASIN copied' })}
     />
@@ -127,11 +158,15 @@ export const CopyableAsin = memo(function CopyableAsin({
 export const CopyableListingId = memo(function CopyableListingId({
   value,
   fallback = '-',
+  className,
   strong = false,
+  showIcon = false,
 }: {
   readonly value?: string | null
   readonly fallback?: string
+  readonly className?: string
   readonly strong?: boolean
+  readonly showIcon?: boolean
 }) {
   const { t } = useTranslation()
 
@@ -139,8 +174,9 @@ export const CopyableListingId = memo(function CopyableListingId({
     <CopyableText
       value={value}
       fallback={fallback}
-      className={styles.listingIdBadge}
+      className={className ? `${styles.listingIdBadge} ${className}` : styles.listingIdBadge}
       strong={strong}
+      showIcon={showIcon}
       title={t('portal.catalog.copyListingId', { defaultValue: 'Copy listing ID' })}
       copiedMessage={t('portal.catalog.listingIdCopied', { defaultValue: 'Listing ID copied' })}
     />

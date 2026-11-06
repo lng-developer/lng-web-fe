@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Space, Typography } from 'antd'
+import { Button, Space, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { FormattedDateTime, MetricCard, SectionCard, StatusTag } from '@/shared/ui'
@@ -58,7 +58,14 @@ export function SettlementCashFlow() {
         title: t('finance.settlements.variance'),
         width: 130,
         align: 'right',
-        render: (_, row) => formatFinanceMoney(row.ledgerSummary.cashVarianceAmount, row.currency),
+        render: (_, row) => {
+          const formatted = formatFinanceMoney(row.ledgerSummary.cashVarianceAmount, row.currency)
+          return row.ledgerSummary.cashVarianceAmount !== 0 ? (
+            <Typography.Text type="danger">{formatted}</Typography.Text>
+          ) : (
+            formatted
+          )
+        },
       },
       {
         title: t('finance.settlements.linked'),
@@ -83,7 +90,14 @@ export function SettlementCashFlow() {
   return (
     <SectionCard
       title={t('finance.settlements.title')}
-      extra={<Typography.Text type="secondary">{t('finance.settlements.note')}</Typography.Text>}
+      extra={
+        <Space size={12}>
+          <Typography.Text type="secondary">{t('finance.settlements.note')}</Typography.Text>
+          <Button type="link" size="small" href="/portal/finance/settlements">
+            {t('finance.actions.settlements')} →
+          </Button>
+        </Space>
+      }
     >
       <div className={styles.metrics}>
         {(settlements.data?.summaryByCurrency || []).map((summary) => (

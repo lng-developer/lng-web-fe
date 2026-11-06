@@ -55,6 +55,7 @@ import {
   type CreateDesignTaskInput,
   deleteDesignTask,
   type DesignTask,
+  formatTaskSeller,
   getDesignSummary,
   listDesignAssignees,
   listDesignTasks,
@@ -73,13 +74,38 @@ dayjs.extend(relativeTime)
 const { Text } = Typography
 
 const STATUS_TABS = [
-  { key: 'all', title: 'All', status: undefined },
-  { key: 'New', title: 'New', status: 'REQUESTED' },
-  { key: 'Assigned', title: 'Assigned', status: 'ASSIGNED' },
-  { key: 'In Progress', title: 'In Progress', status: 'IN_PROGRESS' },
-  { key: 'Uploaded', title: 'Uploaded', status: 'SUBMITTED' },
-  { key: 'QC Passed', title: 'QC Passed', status: 'APPROVED' },
-  { key: 'QC Rejected', title: 'QC Rejected', status: 'REJECTED' },
+  { key: 'all', titleKey: 'portal.design.tabs.all', defaultTitle: 'All', status: undefined },
+  { key: 'New', titleKey: 'portal.design.tabs.new', defaultTitle: 'New', status: 'REQUESTED' },
+  {
+    key: 'Assigned',
+    titleKey: 'portal.design.tabs.assigned',
+    defaultTitle: 'Assigned',
+    status: 'ASSIGNED',
+  },
+  {
+    key: 'In Progress',
+    titleKey: 'portal.design.tabs.inProgress',
+    defaultTitle: 'In Progress',
+    status: 'IN_PROGRESS',
+  },
+  {
+    key: 'Uploaded',
+    titleKey: 'portal.design.tabs.uploaded',
+    defaultTitle: 'Uploaded',
+    status: 'SUBMITTED',
+  },
+  {
+    key: 'QC Passed',
+    titleKey: 'portal.design.tabs.qcPassed',
+    defaultTitle: 'QC Passed',
+    status: 'APPROVED',
+  },
+  {
+    key: 'QC Rejected',
+    titleKey: 'portal.design.tabs.qcRejected',
+    defaultTitle: 'QC Rejected',
+    status: 'REJECTED',
+  },
 ] as const
 
 type TaskHistoryItem = { action?: string; status?: string; at?: string; createdAt?: string }
@@ -229,10 +255,21 @@ export function IdeaTasksPage() {
     staleTime: 15_000,
   })
 
+  const summaryParams = useMemo(
+    () => ({
+      taskType: 'IDEA' as const,
+      salesChannelCode,
+      search: deferredSearch || undefined,
+      dateFrom: dates.dateFrom,
+      dateTo: dates.dateTo,
+    }),
+    [salesChannelCode, deferredSearch, dates.dateFrom, dates.dateTo],
+  )
+
   const summaryQuery = useQuery({
-    queryKey: designKeys.summary({ taskType: 'IDEA', salesChannelCode }),
-    queryFn: () => getDesignSummary({ taskType: 'IDEA', salesChannelCode }),
-    staleTime: 30_000,
+    queryKey: designKeys.summary(summaryParams),
+    queryFn: () => getDesignSummary(summaryParams),
+    staleTime: 15_000,
   })
 
   const assigneesQuery = useQuery({
@@ -382,11 +419,16 @@ export function IdeaTasksPage() {
     if (salesChannelCode) {
       items = items.filter((item) => {
         const code = item.listing?.salesChannelCode?.toUpperCase()
-        return !code || code === salesChannelCode
+        if (code) return code === salesChannelCode
+        if (salesChannelCode === 'AMAZON') return Boolean(item.listing?.asin)
+        if (salesChannelCode === 'ETSY') return Boolean(item.listing?.etsyListingId)
+        return false
       })
     }
     return items
   }, [tasksQuery.data?.items, salesChannelCode])
+
+  const paginationTotal = tasksQuery.data?.pagination?.total ?? displayedTasks.length
 
   const columns = useMemo<TableColumnsType<DesignTask>>(() => {
     const baseColumns: TableColumnsType<DesignTask> = [
@@ -505,12 +547,7 @@ export function IdeaTasksPage() {
         key: 'seller',
         width: 150,
         render: (_, record) => {
-          const sellerName =
-            record.seller?.fullName ||
-            record.createdBy?.fullName ||
-            record.createdBy?.full_name ||
-            record.shop?.name ||
-            '-'
+          const sellerName = formatTaskSeller(record)
           return <Text>{sellerName}</Text>
         },
       },
@@ -667,7 +704,7 @@ export function IdeaTasksPage() {
               key: tab.key,
               label: (
                 <UiTabLabel count={counts[tab.key]} active={activeTabKey === tab.key}>
-                  {tab.title}
+                  {t(tab.titleKey, { defaultValue: tab.defaultTitle })}
                 </UiTabLabel>
               ),
             }))}
@@ -703,7 +740,10 @@ export function IdeaTasksPage() {
         <Input
           placeholder={t('common.search', { defaultValue: 'Search ideas...' })}
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value)
+            setPage(1)
+          }}
           allowClear
           className={styles.search}
         />
@@ -722,7 +762,7 @@ export function IdeaTasksPage() {
           pagination={{
             current: page,
             pageSize,
-            total: tasksQuery.data?.pagination?.total || 0,
+            total: paginationTotal,
             showSizeChanger: true,
             onChange: (p, ps) => {
               setPage(p)

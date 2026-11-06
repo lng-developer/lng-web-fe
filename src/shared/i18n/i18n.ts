@@ -24,4 +24,18 @@ void i18n.use(initReactI18next).init({
   interpolation: { escapeValue: false },
 })
 
+export async function switchLanguage(nextLanguage: Language) {
+  if (typeof window !== 'undefined') {
+    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, nextLanguage)
+  }
+  if (!i18n.hasResourceBundle(nextLanguage, 'common')) {
+    const bundle =
+      nextLanguage === 'vi'
+        ? await import('./locales/vi/common.json')
+        : await import('./locales/en/common.json')
+    i18n.addResourceBundle(nextLanguage, 'common', bundle.default || bundle, true, true)
+  }
+  return i18n.changeLanguage(nextLanguage)
+}
+
 export default i18n

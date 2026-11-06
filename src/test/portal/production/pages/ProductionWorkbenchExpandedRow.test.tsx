@@ -128,7 +128,7 @@ describe('ProductionWorkbenchExpandedRow', () => {
         },
       },
     })
-    expect(screen.getByText(/Design source missing/)).toBeVisible()
+    expect(screen.queryByText(/Design source missing/)).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Download PSD source/ })).not.toBeInTheDocument()
   })
 
@@ -331,32 +331,57 @@ describe('ProductionWorkbenchExpandedRow', () => {
     expect(screen.queryByText(/Design source missing/)).not.toBeInTheDocument()
   })
 
-  it('renders Open SP button and Listing ID for Etsy tasks', () => {
-    const windowOpenSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
-    const etsyTask: ProductionTask = {
+  it('renders Open SP link pointing to Etsy listing and displays Listing ID for Etsy tasks', () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
+    renderExpandedRow({
       ...task,
       salesChannelCode: 'ETSY',
       orderItem: {
-        externalOrderId: 'ETSY-12345',
+        externalOrderId: '4220617020',
         salesChannelCode: 'ETSY',
-        etsyListingId: '987654321',
+        etsyListingId: '1793859852095',
       },
-    }
+    })
 
-    renderExpandedRow(etsyTask)
-
-    expect(screen.getByText('Listing ID')).toBeVisible()
-    expect(screen.getByText('987654321')).toBeVisible()
+    expect(screen.getByText('Listing ID')).toBeInTheDocument()
+    expect(screen.getByText('1793859852095')).toBeInTheDocument()
 
     const openSpButton = screen.getByRole('button', { name: /Open SP/i })
-    expect(openSpButton).toBeVisible()
-
+    expect(openSpButton).toBeInTheDocument()
     fireEvent.click(openSpButton)
-    expect(windowOpenSpy).toHaveBeenCalledWith(
-      'https://www.etsy.com/listing/987654321',
+
+    expect(openSpy).toHaveBeenCalledWith(
+      'https://www.etsy.com/listing/1793859852095',
       '_blank',
       'noopener,noreferrer',
     )
-    windowOpenSpy.mockRestore()
+    openSpy.mockRestore()
+  })
+
+  it('renders Open SP link pointing to Amazon product and displays ASIN for Amazon tasks', () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null)
+    renderExpandedRow({
+      ...task,
+      salesChannelCode: 'AMAZON',
+      orderItem: {
+        externalOrderId: '112-5345323-9768215',
+        salesChannelCode: 'AMAZON',
+        asin: 'B0HBQ2NNZ4',
+      },
+    })
+
+    expect(screen.getByText('ASIN')).toBeInTheDocument()
+    expect(screen.getByText('B0HBQ2NNZ4')).toBeInTheDocument()
+
+    const openSpButton = screen.getByRole('button', { name: /Open SP/i })
+    expect(openSpButton).toBeInTheDocument()
+    fireEvent.click(openSpButton)
+
+    expect(openSpy).toHaveBeenCalledWith(
+      'https://www.amazon.com/dp/B0HBQ2NNZ4',
+      '_blank',
+      'noopener,noreferrer',
+    )
+    openSpy.mockRestore()
   })
 })

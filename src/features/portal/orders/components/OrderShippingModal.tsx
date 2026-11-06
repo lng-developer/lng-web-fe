@@ -13,7 +13,7 @@ const SHIPPING_LEVEL_OPTIONS = ['Standard', 'Expedited', 'SecondDay', 'NextDay',
 type OrderShippingModalProps = {
   readonly open: boolean
   readonly anchor?: PopupModalAnchor
-  readonly initialShipping: ShippingService
+  readonly initialShipping?: ShippingService
   readonly pending: boolean
   readonly onClose: () => void
   readonly onAction: (action: OrderAction) => void
@@ -42,7 +42,7 @@ export const OrderShippingModal = memo(function OrderShippingModal({
 
 type OrderShippingModalInnerProps = {
   readonly anchor?: PopupModalAnchor
-  readonly initialShipping: ShippingService
+  readonly initialShipping?: ShippingService
   readonly pending: boolean
   readonly onClose: () => void
   readonly onAction: (action: OrderAction) => void
@@ -56,7 +56,13 @@ function OrderShippingModalInner({
   onAction,
 }: OrderShippingModalInnerProps) {
   const { t } = useTranslation()
-  const [shipping, setShipping] = useState<ShippingService>(initialShipping)
+  const [shipping, setShipping] = useState<ShippingService>(
+    () =>
+      initialShipping ?? {
+        level: null,
+        name: null,
+      },
+  )
 
   return (
     <PopupModal
@@ -72,7 +78,7 @@ function OrderShippingModalInner({
         <label>
           <Typography.Text>{t('orders.shipping.name')}</Typography.Text>
           <Input
-            value={shipping.name ?? ''}
+            value={shipping?.name ?? ''}
             onChange={(event) =>
               setShipping((current) => ({ ...current, name: event.target.value }))
             }
@@ -85,7 +91,7 @@ function OrderShippingModalInner({
             allowClear
             mode="tags"
             maxCount={1}
-            value={shipping.level ? [shipping.level] : []}
+            value={shipping?.level ? [shipping.level] : []}
             options={SHIPPING_LEVEL_OPTIONS.map((level) => ({ label: level, value: level }))}
             onChange={(values) =>
               setShipping((current) => ({ ...current, level: values[0] ?? null }))
