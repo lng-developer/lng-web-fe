@@ -56,7 +56,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: ['1/4', '2/4', '3/4', '4/4']
+        shard: ['1/6', '2/6', '3/6', '4/6', '5/6', '6/6']
     env:
       TZ: Asia/Ho_Chi_Minh
     steps:
@@ -91,7 +91,7 @@ jobs:
     name: deploy-server
     needs: [quality-gate, ui-tests]
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' && inputs.ui_test_file == '' }}
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     timeout-minutes: 10
     env:
       TZ: Asia/Ho_Chi_Minh
@@ -100,27 +100,11 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: frontend-build
-      - name: Connect to Tailscale
-        uses: tailscale/github-action@v3
-        with:
-          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-          tags: tag:github-actions
-      - name: Install SSH key
+      - name: Deploy build to app directory
         run: |
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          printf '%s' "${{ secrets.FE_DEPLOY_SSH_KEY_B64 }}" | base64 -d > ~/.ssh/fe_deploy_key
-          chmod 600 ~/.ssh/fe_deploy_key
-          ssh-keyscan -p "${{ secrets.FE_DEPLOY_PORT }}" "${{ secrets.FE_DEPLOY_HOST }}" >> ~/.ssh/known_hosts
-      - name: Upload dist
-        run: |
-          rsync -az --delete -e "ssh -i ~/.ssh/fe_deploy_key -p ${{ secrets.FE_DEPLOY_PORT }}" \
-            dist/ "${{ secrets.FE_DEPLOY_USER }}@${{ secrets.FE_DEPLOY_HOST }}:/home/lng/apps/lng-web-fe/dist/"
-          rsync -az -e "ssh -i ~/.ssh/fe_deploy_key -p ${{ secrets.FE_DEPLOY_PORT }}" \
-            server.mjs "${{ secrets.FE_DEPLOY_USER }}@${{ secrets.FE_DEPLOY_HOST }}:/home/lng/apps/lng-web-fe/server.mjs"
+          mkdir -p /home/lng/apps/lng-web-fe/dist
+          rsync -a --delete dist/ /home/lng/apps/lng-web-fe/dist/
+          cp server.mjs /home/lng/apps/lng-web-fe/server.mjs
       - name: Restart FE
         run: |
-          ssh -i ~/.ssh/fe_deploy_key -p "${{ secrets.FE_DEPLOY_PORT }}" \
-            "${{ secrets.FE_DEPLOY_USER }}@${{ secrets.FE_DEPLOY_HOST }}" \
-            "pm2 restart lng-web-fe"
+          pm2 restart lng-web-fe

@@ -61,6 +61,8 @@ export type ProductionCustomization = {
   }> | null
 }
 export type ProductionTask = {
+  salesChannelCode?: string | null
+  marketplaceCode?: string | null
   designType?: 'NORMAL' | 'CUSTOM_IMAGE' | null
   designTypeSource?: 'AUTO' | 'MANUAL' | null
   id: string
@@ -79,8 +81,6 @@ export type ProductionTask = {
   productImageUrl?: string | null
   readyAt: string | null
   updatedAt: string
-  salesChannelCode?: string | null
-  marketplaceCode?: string | null
   orderItem?: {
     externalOrderId?: string | null
     externalItemId?: string | null

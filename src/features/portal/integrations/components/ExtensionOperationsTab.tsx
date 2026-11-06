@@ -99,6 +99,7 @@ export function ExtensionOperationsTab({
   >('ALL')
   const initializedTokenShop = useRef(false)
   const [previewShopId, setPreviewShopId] = useState<string>()
+  const [previewAgentId, setPreviewAgentId] = useState<string>()
   const defaultSetupShopId = setupShopOptions[0]?.value
 
   useEffect(() => {
@@ -344,7 +345,10 @@ export function ExtensionOperationsTab({
                               <Button
                                 block
                                 icon={<EyeOutlined />}
-                                onClick={() => setPreviewShopId(agent.shopId)}
+                                onClick={() => {
+                                  setPreviewShopId(agent.shopId)
+                                  setPreviewAgentId(agent.id)
+                                }}
                               >
                                 {t('portal.shipments.trackingPreview.open')}
                               </Button>
@@ -526,7 +530,11 @@ export function ExtensionOperationsTab({
       {previewShopId ? (
         <TrackingUploadPreviewModal
           shopId={previewShopId}
-          onClose={() => setPreviewShopId(undefined)}
+          agentId={previewAgentId}
+          onClose={() => {
+            setPreviewShopId(undefined)
+            setPreviewAgentId(undefined)
+          }}
         />
       ) : null}
     </div>

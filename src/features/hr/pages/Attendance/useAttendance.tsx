@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EditOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Form, type TableProps, Tag, Tooltip, Typography } from 'antd'
+import { Button, Form, Space, type TableProps, Tag, Tooltip, Typography } from 'antd'
 import dayjs from 'dayjs'
 
 import { getPermissions } from '@/shared/auth/session'
@@ -18,6 +18,7 @@ import {
   listAttendance,
   listAttendanceMatrix,
   listMyAttendance,
+  syncSqlAttendance,
 } from '../../api/hrTimeApi'
 
 const attendanceStatusTone = (status: string): 'approved' | 'rejected' | 'pending' =>
@@ -40,6 +41,8 @@ export const useAttendance = (workspace: AttendanceWorkspace = 'personal', teamI
   const showTeamAttendance =
     workspace !== 'personal' && canRead && (workspace !== 'team' || Boolean(teamId))
   const canManage = workspace !== 'personal' && permissions.has('HR_ATTENDANCE:MANAGE')
+  const canSyncMachine =
+    permissions.has('HR_INTEGRATIONS:MANAGE') || permissions.has('HR_ATTENDANCE:MANAGE')
 
   const params = {
     month: month.month() + 1,
@@ -117,10 +120,36 @@ export const useAttendance = (workspace: AttendanceWorkspace = 'personal', teamI
     onError: (error) => toast('error', t('hrOperations.messages.adjustFailed'), error.message),
   })
 
-  const items = records.data?.items ?? []
+  const syncMachine = useMutation({
+    mutationFn: () => syncSqlAttendance(true),
+    onSuccess: (data) => {
+      toast(
+        'success',
+        t('hrOperations.attendance.syncSuccess', {
+          inserted: data.inserted,
+          updated: data.updated,
+          total: data.inserted + data.updated,
+        }),
+      )
+      void refresh()
+    },
+    onError: (error: Error) =>
+      toast('error', t('hrOperations.attendance.syncFailed'), error.message),
+  })
+
+  const items = useMemo(() => records.data?.items ?? [], [records.data?.items])
   const present = items.filter((item) => item.status === 'PRESENT').length
   const late = items.filter((item) => item.lateMinutes > 0).length
   const missing = items.filter((item) => item.checkInAt && !item.checkOutAt).length
+
+  const totalWorkdays = useMemo(() => {
+    return Math.round(items.reduce((acc, cur) => acc + (cur.workDayValue ?? 0), 0) * 100) / 100
+  }, [items])
+
+  const totalWorkedHours = useMemo(() => {
+    const minutes = items.reduce((acc, cur) => acc + (cur.workedMinutes ?? 0), 0)
+    return Math.round((minutes / 60) * 10) / 10
+  }, [items])
 
   const openAdjusting = (item: Attendance) => {
     setAdjusting(item)
@@ -137,9 +166,17 @@ export const useAttendance = (workspace: AttendanceWorkspace = 'personal', teamI
     {
       title: t('hrOperations.common.date'),
       dataIndex: 'workDateKey',
-      render: (value) => (
-        <Typography.Text strong>{dayjs(value).format('DD/MM/YYYY')}</Typography.Text>
-      ),
+      render: (value: string) => {
+        const d = dayjs(value)
+        return (
+          <Space direction="vertical" size={0}>
+            <Typography.Text strong>{d.format('DD/MM/YYYY')}</Typography.Text>
+            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+              {d.format('dddd')}
+            </Typography.Text>
+          </Space>
+        )
+      },
     },
     ...(showTeamAttendance
       ? [
@@ -150,6 +187,15 @@ export const useAttendance = (workspace: AttendanceWorkspace = 'personal', teamI
           },
         ]
       : []),
+    {
+      title: t('hrOperations.attendance.shift'),
+      dataIndex: 'shift',
+      render: (shift: Attendance['shift']) => (
+        <Typography.Text>
+          {shift?.name || t('hrOperations.attendance.standardShiftName')}
+        </Typography.Text>
+      ),
+    },
     {
       title: t('hrOperations.attendance.checkInTime'),
       dataIndex: 'checkInAt',
@@ -163,12 +209,57 @@ export const useAttendance = (workspace: AttendanceWorkspace = 'personal', teamI
     {
       title: t('hrOperations.attendance.lateMinutes'),
       dataIndex: 'lateMinutes',
-      render: (value) =>
-        value > 0 ? (
-          <Tag color="red">{t('hrOperations.attendance.minutes', { count: value })}</Tag>
-        ) : (
-          <Tag color="green">{t('hrOperations.attendance.minutes', { count: 0 })}</Tag>
-        ),
+      render: (value: number, item: Attendance) => (
+        <Space size={4} wrap>
+          {value > 0 ? (
+            <Tag color="red">{t('hrOperations.attendance.lateTag', { count: value })}</Tag>
+          ) : null}
+          {item.earlyLeaveMinutes > 0 ? (
+            <Tag color="orange">
+              {t('hrOperations.attendance.earlyTag', { count: item.earlyLeaveMinutes })}
+            </Tag>
+          ) : null}
+          {value === 0 && item.earlyLeaveMinutes === 0 ? (
+            <Tag color="green">{t('hrOperations.attendance.punctualTag')}</Tag>
+          ) : null}
+        </Space>
+      ),
+    },
+    {
+      title: t('hrOperations.attendance.workedHours'),
+      dataIndex: 'workedMinutes',
+      render: (minutes: number) => {
+        if (!minutes) return '--'
+        const h = Math.floor(minutes / 60)
+        const m = minutes % 60
+        return m > 0 ? `${h}h ${m}p` : `${h}h`
+      },
+    },
+    {
+      title: t('hrOperations.attendance.workDayValue'),
+      dataIndex: 'workDayValue',
+      render: (value: number) => (
+        <Tag
+          color={value >= 1 ? 'blue' : value > 0 ? 'cyan' : 'default'}
+          style={{ fontWeight: 600 }}
+        >
+          {t('hrOperations.attendance.workDayCount', { count: value ?? 0 })}
+        </Tag>
+      ),
+    },
+    {
+      title: t('hrOperations.attendance.source'),
+      dataIndex: 'source',
+      render: (source: string | null | undefined) => {
+        const isMachine = source === 'SQL_ATTENDANCE'
+        return (
+          <Tag color={isMachine ? 'purple' : 'default'}>
+            {t(`hrOperations.attendance.sources.${source || 'SELF_SERVICE'}`, {
+              defaultValue: source || t('hrOperations.attendance.sources.SELF_SERVICE'),
+            })}
+          </Tag>
+        )
+      },
     },
     {
       title: t('hrOperations.common.status'),
@@ -216,10 +307,13 @@ export const useAttendance = (workspace: AttendanceWorkspace = 'personal', teamI
       todayAttendance,
       action,
       adjust,
+      syncMachine,
       items,
       present,
       late,
       missing,
+      totalWorkdays,
+      totalWorkedHours,
       columns,
       pagination,
     },
@@ -229,6 +323,7 @@ export const useAttendance = (workspace: AttendanceWorkspace = 'personal', teamI
       canRead: showTeamAttendance,
       canWrite,
       canManage,
+      canSyncMachine,
     },
   ] as const
 }

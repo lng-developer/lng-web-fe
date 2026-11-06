@@ -51,6 +51,7 @@ import { inspectionReference } from './inspectionReference'
 import { ProductionWorkbenchExpandedRow } from './ProductionWorkbenchExpandedRow'
 import { ProductionWorkbenchFilterBar } from './ProductionWorkbenchFilterBar'
 import { isForbiddenProductionError, isOwnProductionOutput } from './productionAuthorization'
+import { formatProductionError, validateScaledOutputFile } from '../utils/productionFeedback'
 import styles from './ProductionWorkbenchPage.module.scss'
 
 const PAGE_SIZE = DEFAULT_PAGE_SIZE
@@ -590,13 +591,16 @@ export function ProductionWorkbenchPage({
     ])
   }, [queryClient])
   const handleMutationError = useCallback(
-    async (error: unknown) => {
+    async (error: unknown, defaultAction?: string) => {
       if (isForbiddenProductionError(error)) {
         setSelectedRowKeys([])
         setDecisions({})
         await refresh()
       }
-      toast('error', error instanceof Error ? error.message : t('portal.production.actionFailed'))
+      const actionName =
+        typeof defaultAction === 'string' ? defaultAction : t('portal.production.actionFailed')
+      const { title, description } = formatProductionError(error, actionName)
+      toast('error', title, description)
     },
     [refresh, t, toast],
   )
@@ -656,28 +660,43 @@ export function ProductionWorkbenchPage({
     mutationFn: async (input: { task: ProductionTask; fileDecisions: FileDecision[] }) => {
       return submitProductionQc(input.task.id, input.fileDecisions)
     },
-    onSuccess: async () => {
+    onSuccess: async (_, variables) => {
       await refresh()
-      toast('success', t('portal.production.updated'))
+      const isAllPassed = variables.fileDecisions.every((d) => d.decision === 'PASSED')
+      toast(
+        'success',
+        t('portal.production.feedback.qcReviewedSuccessTitle'),
+        isAllPassed
+          ? t('portal.production.feedback.qcPassedDescription')
+          : t('portal.production.feedback.qcRejectedDescription'),
+      )
     },
-    onError: handleMutationError,
+    onError: (error) => handleMutationError(error),
   })
   const submitScale = useMutation({
     mutationFn: (taskId: string) => submitScaleForQc(taskId),
     onSuccess: async () => {
       await refresh()
-      toast('success', t('portal.production.updated'))
+      toast(
+        'success',
+        t('portal.production.feedback.submitQcSuccessTitle'),
+        t('portal.production.feedback.submitQcSuccessDescription'),
+      )
     },
-    onError: handleMutationError,
+    onError: (error) => handleMutationError(error),
   })
   const saveNote = useMutation({
     mutationFn: (input: { taskId: string; note: string }) =>
       updateDesignNote(input.taskId, input.note),
     onSuccess: async () => {
       await refresh()
-      toast('success', t('portal.production.updated'))
+      toast(
+        'success',
+        t('portal.production.feedback.saveNoteSuccessTitle'),
+        t('portal.production.feedback.saveNoteSuccessDescription'),
+      )
     },
-    onError: handleMutationError,
+    onError: (error) => handleMutationError(error),
   })
   const claimTask = useMutation({
     mutationFn: (taskId: string) => claimProductionTask(taskId),
@@ -699,12 +718,24 @@ export function ProductionWorkbenchPage({
       }
       return recheckPsdBlockedTasks({ limit: 100 })
     },
-    onSuccess: async () => {
+    onSuccess: async (_, variables) => {
       setSelectedRowKeys([])
       await refresh()
-      toast('success', t('portal.production.updated'))
+      if (variables.kind === 'bulk-assign') {
+        toast(
+          'success',
+          t('portal.production.feedback.bulkAssignSuccessTitle'),
+          t('portal.production.feedback.bulkAssignSuccessDescription'),
+        )
+      } else {
+        toast(
+          'success',
+          t('portal.production.feedback.recheckBlockedSuccessTitle'),
+          t('portal.production.feedback.recheckBlockedSuccessDescription'),
+        )
+      }
     },
-    onError: handleMutationError,
+    onError: (error) => handleMutationError(error),
   })
   const exportQc = useMutation({
     mutationFn: () =>
@@ -722,7 +753,7 @@ export function ProductionWorkbenchPage({
       link.click()
       URL.revokeObjectURL(url)
     },
-    onError: handleMutationError,
+    onError: (error) => handleMutationError(error),
   })
   const exportCsv = useMutation({
     mutationFn: () => exportProductionTasksCsv(params),
@@ -734,8 +765,7 @@ export function ProductionWorkbenchPage({
       link.click()
       URL.revokeObjectURL(url)
     },
-    onError: (error) =>
-      toast('error', error instanceof Error ? error.message : t('portal.production.actionFailed')),
+    onError: (error) => handleMutationError(error),
   })
   const handleRecheck = useCallback(() => operations.mutate({ kind: 'recheck' }), [operations])
   const handleExportQc = useCallback(() => exportQc.mutate(), [exportQc])
@@ -775,11 +805,20 @@ export function ProductionWorkbenchPage({
   )
   const handleUploadScaledOutput = useCallback(
     async (taskId: string, fileCheckId: string, file: File) => {
+      const validation = validateScaledOutputFile(file)
+      if (!validation.valid) {
+        toast('error', validation.errorTitle!, validation.errorDescription)
+        return
+      }
       setUploadingFileCheckIds((current) => new Set(current).add(fileCheckId))
       try {
         await uploadScaledOutput(taskId, fileCheckId, file)
         await refresh()
-        toast('success', t('portal.production.updated'))
+        toast(
+          'success',
+          t('portal.production.feedback.uploadSuccessTitle'),
+          t('portal.production.feedback.uploadSuccessDescription'),
+        )
       } catch (error) {
         await handleMutationError(error)
       } finally {

@@ -33,6 +33,7 @@ describe('authenticated media API', () => {
     await expect(fetchMediaBlob('/api/media/assets/a/download', signal)).resolves.toBe(blob)
     expect(apiClient.get).toHaveBeenCalledWith('/api/media/assets/a/download?disposition=inline', {
       responseType: 'blob',
+      withCredentials: false,
       signal,
     })
   })
@@ -114,12 +115,12 @@ describe('authenticated media API', () => {
     expect(apiClient.get).toHaveBeenNthCalledWith(
       1,
       '/api/media/assets/first/download?disposition=attachment',
-      { responseType: 'blob', signal: undefined },
+      { responseType: 'blob', withCredentials: false, signal: undefined },
     )
     expect(apiClient.get).toHaveBeenNthCalledWith(
       2,
       '/api/media/assets/second/download?disposition=attachment',
-      { responseType: 'blob', signal: undefined },
+      { responseType: 'blob', withCredentials: false, signal: undefined },
     )
     expect(anchor.download).toBe('114-9346153-9624212-customer-images.zip')
     expect(click).toHaveBeenCalledTimes(1)

@@ -1,10 +1,12 @@
+import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Alert, Modal, Table, Tag, Typography } from 'antd'
+import { Alert, Button, message, Modal, Space, Table, Tag, Typography } from 'antd'
 import dayjs from 'dayjs'
 
 import { listShipments, type Shipment } from '@/features/portal/shipments/api/shipmentApi'
+import { createAmazonTrackingSubmission } from '@/features/portal/integrations/api/integrationApi'
 
 type PreviewShipment = Pick<
   Shipment,
@@ -19,18 +21,50 @@ function isReady(shipment: PreviewShipment) {
 
 export function TrackingUploadPreviewModal({
   shopId,
+  agentId,
   onClose,
 }: {
   readonly shopId: string
+  readonly agentId?: string
   readonly onClose: () => void
 }) {
   const { t } = useTranslation()
+  const queryClient = useQueryClient()
+  const [selectedKeysOverride, setSelectedKeysOverride] = useState<string[]>()
+
   const shipments = useQuery({
     queryKey: ['shipments', 'amazon-tracking-preview', shopId],
     queryFn: () => listShipments({ shopId, status: 'SHIPPED', page: 1, limit: 100 }),
     staleTime: 20_000,
     retry: false,
   })
+
+  const readyShipmentIds = useMemo(
+    () => (shipments.data?.items ?? []).filter(isReady).map((s) => s.id),
+    [shipments.data?.items],
+  )
+  const selectedRowKeys = selectedKeysOverride ?? readyShipmentIds
+
+  const submitMutation = useMutation({
+    mutationFn: (shipmentIds: string[]) => {
+      if (!agentId) throw new Error('Extension agent is required')
+      return createAmazonTrackingSubmission({ shopId, agentId, shipmentIds })
+    },
+    onSuccess: () => {
+      message.success(
+        t('portal.shipments.trackingPreview.submitSuccess', {
+          defaultValue: 'Tracking submission queued for Amazon Extension.',
+        }),
+      )
+      queryClient.invalidateQueries({ queryKey: ['shipments'] })
+      queryClient.invalidateQueries({ queryKey: ['extension-commands'] })
+      onClose()
+    },
+    onError: (error: Error) => {
+      message.error(error.message || 'Failed to submit tracking')
+    },
+  })
+
   const columns: TableColumnsType<PreviewShipment> = [
     {
       title: t('portal.shipments.trackingPreview.orderId'),
@@ -64,9 +98,28 @@ export function TrackingUploadPreviewModal({
     },
   ]
 
+  const readyCount = selectedRowKeys.length
+
   return (
     <Modal
-      footer={null}
+      footer={
+        agentId ? (
+          <Space>
+            <Button onClick={onClose}>{t('common.cancel', { defaultValue: 'Cancel' })}</Button>
+            <Button
+              type="primary"
+              loading={submitMutation.isPending}
+              disabled={readyCount === 0}
+              onClick={() => submitMutation.mutate(selectedRowKeys)}
+            >
+              {t('portal.shipments.trackingPreview.submitToAmazon', {
+                count: readyCount,
+                defaultValue: `Submit ${readyCount} to Amazon`,
+              })}
+            </Button>
+          </Space>
+        ) : null
+      }
       open
       title={t('portal.shipments.trackingPreview.title')}
       width="min(1200px, 92vw)"
@@ -82,6 +135,17 @@ export function TrackingUploadPreviewModal({
         loading={shipments.isLoading}
         pagination={false}
         rowKey="id"
+        rowSelection={
+          agentId
+            ? {
+                selectedRowKeys,
+                onChange: (keys) => setSelectedKeysOverride(keys as string[]),
+                getCheckboxProps: (record) => ({
+                  disabled: !isReady(record),
+                }),
+              }
+            : undefined
+        }
         scroll={{ x: 900 }}
         style={{ marginTop: 16 }}
       />

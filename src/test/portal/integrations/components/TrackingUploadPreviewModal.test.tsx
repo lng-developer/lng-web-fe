@@ -3,10 +3,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { listShipments } from '@/features/portal/shipments/api/shipmentApi'
+import { createAmazonTrackingSubmission } from '@/features/portal/integrations/api/integrationApi'
 import { TrackingUploadPreviewModal } from '@/features/portal/integrations/components/TrackingUploadPreviewModal'
 import i18n from '@/shared/i18n/i18n'
 
 vi.mock('@/features/portal/shipments/api/shipmentApi', () => ({ listShipments: vi.fn() }))
+vi.mock('@/features/portal/integrations/api/integrationApi', () => ({
+  createAmazonTrackingSubmission: vi.fn(),
+}))
 
 describe('TrackingUploadPreviewModal', () => {
   afterEach(cleanup)
@@ -60,5 +64,44 @@ describe('TrackingUploadPreviewModal', () => {
     expect(screen.getByText('9400111899223856928499')).toBeVisible()
     expect(screen.getByText('Wait for vendor')).toBeVisible()
     expect(screen.getAllByText('-').length).toBeGreaterThan(0)
+  })
+  it('submits ready tracking rows when agentId is provided', async () => {
+    vi.mocked(createAmazonTrackingSubmission).mockResolvedValue({
+      id: 'sub-1',
+      shopId: 'shop-1',
+      agentId: 'agent-1',
+      shipmentIds: ['shipment-1'],
+      filename: 'shipping-confirmation-1.txt',
+      rowCount: 1,
+      checksum: 'fake-checksum',
+      status: 'PENDING',
+      createdAt: '2026-09-29T10:00:00.000Z',
+      updatedAt: '2026-09-29T10:00:00.000Z',
+    } as Awaited<ReturnType<typeof createAmazonTrackingSubmission>>)
+
+    const onClose = vi.fn()
+
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <TrackingUploadPreviewModal shopId="shop-1" agentId="agent-1" onClose={onClose} />
+      </QueryClientProvider>,
+    )
+
+    await waitFor(() => expect(screen.getByText('114-1234567-1234567')).toBeVisible())
+
+    const submitButton = screen.getByRole('button', { name: /Submit 1 to Amazon/i })
+    expect(submitButton).toBeEnabled()
+    submitButton.click()
+
+    await waitFor(() => {
+      expect(createAmazonTrackingSubmission).toHaveBeenCalledWith({
+        shopId: 'shop-1',
+        agentId: 'agent-1',
+        shipmentIds: ['shipment-1'],
+      })
+      expect(onClose).toHaveBeenCalled()
+    })
   })
 })

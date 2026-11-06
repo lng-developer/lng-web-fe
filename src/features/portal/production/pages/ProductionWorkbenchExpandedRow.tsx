@@ -15,6 +15,7 @@ import {
   uploadManualScaledOutput,
 } from '../api/productionApi'
 import { formatCustomization } from './inspectionReference'
+import { formatProductionError, formatSlotLabel } from '../utils/productionFeedback'
 import { ManualSlotUploadModal } from './ManualSlotUploadModal'
 import styles from './ProductionWorkbenchPage.module.scss'
 
@@ -30,10 +31,9 @@ function productUrl(task: ProductionTask) {
     task.orderItem?.externalListingId ||
     task.listing?.etsyListingId ||
     task.scaleContext?.use?.listing?.etsyListingId
-  if ((channel === 'ETSY' || (!asin && etsyListingId)) && etsyListingId) {
-    return `https://www.etsy.com/listing/${etsyListingId}`
-  }
+  if (channel === 'ETSY' && etsyListingId) return `https://www.etsy.com/listing/${etsyListingId}`
   if (asin) return `https://www.amazon.com/dp/${asin}`
+  if (etsyListingId) return `https://www.etsy.com/listing/${etsyListingId}`
   return null
 }
 
@@ -79,13 +79,23 @@ function ManualSlotUploadAction({
   const [open, setOpen] = useState(false)
   const upload = useMutation({
     mutationFn: (input: ManualScaledOutput) => uploadManualScaledOutput(taskId, input),
-    onSuccess: async () => {
+    onSuccess: async (_, variables) => {
       setOpen(false)
       await onUploaded()
-      toast('success', t('portal.production.updated'))
+      const slotName = formatSlotLabel(variables.slotKey, variables.slotLabel)
+      toast(
+        'success',
+        t('portal.production.feedback.addSlotSuccessTitle'),
+        t('portal.production.feedback.addSlotSuccessDescription', { slot: slotName }),
+      )
     },
-    onError: (error) =>
-      toast('error', error instanceof Error ? error.message : t('portal.production.actionFailed')),
+    onError: (error) => {
+      const { title, description } = formatProductionError(
+        error,
+        t('portal.production.feedback.defaultFailedTitle'),
+      )
+      toast('error', title, description)
+    },
   })
 
   return (
@@ -205,7 +215,6 @@ export function ProductionWorkbenchExpandedRow({
       (asset.mimeType ? asset.mimeType.startsWith('image/') : true),
   )
   const listingPreview = task.listing?.previewAssetDownloadUrl
-  const spUrl = productUrl(task)
   const isEtsy =
     task.orderItem?.salesChannelCode === 'ETSY' ||
     task.salesChannelCode === 'ETSY' ||
@@ -217,12 +226,14 @@ export function ProductionWorkbenchExpandedRow({
       task.listing?.etsyListingId ||
       task.scaleContext?.use?.listing?.etsyListingId,
     )
-  const identifier = isEtsy
+  const productIdentifier = isEtsy
     ? task.orderItem?.etsyListingId ||
       task.orderItem?.externalListingId ||
       task.listing?.etsyListingId ||
-      task.scaleContext?.use?.listing?.etsyListingId
-    : task.orderItem?.asin || task.listing?.asin || task.scaleContext?.use?.listing?.asin
+      task.scaleContext?.use?.listing?.etsyListingId ||
+      '-'
+    : task.orderItem?.asin || task.listing?.asin || task.scaleContext?.use?.listing?.asin || '-'
+  const spUrl = productUrl(task)
   const customizationEntries = formatCustomization(task.customization?.customerInputs)
   const outputChecks = checks.filter(
     (check) =>
@@ -326,7 +337,7 @@ export function ProductionWorkbenchExpandedRow({
                 ? t('portal.production.listingId', 'Listing ID')
                 : t('portal.production.asin', 'ASIN')}
             </Typography.Text>
-            <Typography.Text>{identifier || '-'}</Typography.Text>
+            <Typography.Text>{productIdentifier}</Typography.Text>
           </div>
         </div>
         <div className={styles.artworkPreview}>

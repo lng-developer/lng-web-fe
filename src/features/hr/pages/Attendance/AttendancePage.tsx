@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
+  CalendarOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
   InfoCircleOutlined,
   LoginOutlined,
   LogoutOutlined,
+  SyncOutlined,
   WarningOutlined,
 } from '@ant-design/icons'
 import { Button, Divider, Form, Input, Modal, Space, Tag } from 'antd'
@@ -47,14 +49,17 @@ export const AttendancePage = ({
       todayAttendance,
       action,
       adjust,
+      syncMachine,
       items,
       present,
       late,
       missing,
+      totalWorkdays,
+      totalWorkedHours,
       columns,
       pagination,
     },
-    { records, canRead, canWrite },
+    { records, canRead, canWrite, canSyncMachine },
   ] = useAttendance(workspace, teamId)
 
   const [currentTime, setCurrentTime] = useState(() => dayjs().format('HH:mm:ss'))
@@ -128,10 +133,37 @@ export const AttendancePage = ({
           canRead ? t('hrOperations.attendance.teamTitle') : t('hrOperations.attendance.myTitle')
         }
         description={t('hrOperations.attendance.description')}
-        actions={<MonthPicker value={month} onChange={(value) => value && setMonth(value)} />}
+        actions={
+          <Space>
+            {canSyncMachine && (
+              <Button
+                icon={<SyncOutlined spin={syncMachine.isPending} />}
+                loading={syncMachine.isPending}
+                onClick={() => syncMachine.mutate()}
+              >
+                {t('hrOperations.attendance.syncSqlAttendance')}
+              </Button>
+            )}
+            <MonthPicker value={month} onChange={(value) => value && setMonth(value)} />
+          </Space>
+        }
       />
 
       <div className={styles.metrics}>
+        <MetricCard
+          icon={<CalendarOutlined />}
+          variant="primary"
+          label={t('hrOperations.attendance.totalWorkdays')}
+          value={t('hrOperations.attendance.workDayCount', { count: totalWorkdays })}
+          loading={records.isLoading}
+        />
+        <MetricCard
+          icon={<ClockCircleOutlined />}
+          variant="neutral"
+          label={t('hrOperations.attendance.totalWorkedHours')}
+          value={`${totalWorkedHours}h`}
+          loading={records.isLoading}
+        />
         <MetricCard
           icon={<ClockCircleOutlined />}
           variant="neutral"
@@ -247,7 +279,17 @@ export const AttendancePage = ({
                   <strong>08:30 - 17:30</strong>
                 </div>
                 <div className={styles.statItem}>
-                  <span>{t('hrOperations.attendance.workday')}</span>
+                  <span>{t('hrOperations.attendance.totalWorkdays')}</span>
+                  <strong style={{ color: 'var(--ant-color-primary)' }}>
+                    {t('hrOperations.attendance.workDayCount', { count: totalWorkdays })}
+                  </strong>
+                </div>
+                <div className={styles.statItem}>
+                  <span>{t('hrOperations.attendance.totalWorkedHours')}</span>
+                  <strong>{totalWorkedHours}h</strong>
+                </div>
+                <div className={styles.statItem}>
+                  <span>{t('hrOperations.attendance.records')}</span>
                   <strong>{items.length}</strong>
                 </div>
                 <div className={styles.statItem}>
