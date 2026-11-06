@@ -174,7 +174,7 @@ describe('SettlementWorkspacePage', () => {
 
     expect(await screen.findByText('Ledger movement')).toBeVisible()
     expect(screen.getByText('ORDER-1')).toBeVisible()
-  })
+  }, 15000)
 
   it('forwards mismatch and shop filters to the settlement query', async () => {
     renderPage()

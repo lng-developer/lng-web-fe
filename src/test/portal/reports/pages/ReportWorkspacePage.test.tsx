@@ -295,12 +295,12 @@ describe('ReportWorkspacePage', () => {
     const adjustments = await screen.findByText('Adjustments')
     expect(adjustments).toBeInTheDocument()
     expect(
-      within(adjustments.closest('[class*="metricCard"]') as HTMLElement).getByText('180.00'),
+      within(adjustments.closest('[class*="metricCard"]') as HTMLElement).getByText('$180.00'),
     ).toBeInTheDocument()
     expect(await screen.findByRole('img', { name: 'Profit comparison' })).toBeInTheDocument()
     expect(screen.getAllByText('Đặng Thành Trung')).toHaveLength(2)
     expect(screen.getAllByText('Seller 9').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getByText('15.00')).toBeInTheDocument()
+    expect(screen.getByText('$15.00')).toBeInTheDocument()
     expect(screen.getByText('1 / 2 items with cost')).toBeInTheDocument()
     expect(
       await screen.findByRole('heading', { name: 'Daily seller P&L · USD' }),
@@ -584,7 +584,7 @@ describe('ReportWorkspacePage', () => {
     )
 
     expect(await screen.findByText('Partial gross profit')).toBeInTheDocument()
-    expect(screen.getByText('32.00')).toBeInTheDocument()
+    expect(screen.getByText('$32.00')).toBeInTheDocument()
     expect(screen.getByText('2 / 3 items with cost')).toBeInTheDocument()
   })
 
@@ -683,7 +683,7 @@ describe('ReportWorkspacePage', () => {
       '.ant-card',
     ) as HTMLElement
     expect(within(sellerCard).getByRole('columnheader', { name: 'Ad spend' })).toBeVisible()
-    expect(await within(sellerCard).findByText('8.00')).toBeVisible()
+    expect(await within(sellerCard).findByText('$8.00')).toBeVisible()
   })
 
   it('shows ads spend in team performance', async () => {
@@ -720,7 +720,7 @@ describe('ReportWorkspacePage', () => {
       '.ant-card',
     ) as HTMLElement
     expect(within(teamCard).getByRole('columnheader', { name: 'Ad spend' })).toBeVisible()
-    expect(await within(teamCard).findByText('2.91')).toBeVisible()
+    expect(await within(teamCard).findByText('$2.91')).toBeVisible()
   })
 
   it('does not request unsupported operational aggregates for a team-only reader', async () => {
