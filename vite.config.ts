@@ -107,6 +107,11 @@ export default defineConfig(({ mode }) => {
             name: 'ui',
             environment: 'jsdom',
             pool: 'forks',
+            poolOptions: {
+              forks: {
+                singleFork: true,
+              },
+            },
             setupFiles: './src/test/setup.ts',
             include: [
               'src/test/**/*.test.tsx',
