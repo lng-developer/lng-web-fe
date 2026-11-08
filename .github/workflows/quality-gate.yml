@@ -8,9 +8,9 @@ on:
         required: false
         type: string
   pull_request:
-    branches: [develop]
+    branches: [develop, main]
   push:
-    branches: [develop]
+    branches: [develop, main]
 
 permissions:
   contents: read
@@ -90,7 +90,7 @@ jobs:
   deploy:
     name: deploy-server
     needs: [quality-gate, ui-tests]
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' && inputs.ui_test_file == '' }}
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && inputs.ui_test_file == '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:

@@ -249,7 +249,8 @@ describe('OrderInlinePanel', () => {
       ],
     })
 
-    expect(screen.getByText('J2502 · Đặng Thành Trung')).toBeInTheDocument()
+    expect(screen.getByText('Đặng Thành Trung')).toBeInTheDocument()
+    expect(screen.getByText('J2502')).toBeInTheDocument()
   })
 
   it('shows recheck for a mapping-blocked item', () => {
