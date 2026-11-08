@@ -91,7 +91,7 @@ jobs:
     name: deploy-server
     needs: [quality-gate, ui-tests]
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' && inputs.ui_test_file == '' }}
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
       TZ: Asia/Ho_Chi_Minh
@@ -100,11 +100,22 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: frontend-build
+      - name: Configure deployment SSH
+        env:
+          ECOMATRIX_SSH_PRIVATE_KEY: ${{ secrets.ECOMATRIX_SSH_PRIVATE_KEY }}
+          ECOMATRIX_KNOWN_HOSTS: ${{ secrets.ECOMATRIX_KNOWN_HOSTS }}
+        run: |
+          test -n "$ECOMATRIX_SSH_PRIVATE_KEY"
+          test -n "$ECOMATRIX_KNOWN_HOSTS"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$ECOMATRIX_SSH_PRIVATE_KEY" > "$HOME/.ssh/id_ed25519"
+          printf '%s\n' "$ECOMATRIX_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
       - name: Deploy build to app directory
+        env:
+          ECOMATRIX_HOST: ${{ secrets.ECOMATRIX_HOST }}
+          ECOMATRIX_USER: ${{ secrets.ECOMATRIX_USER }}
         run: |
-          mkdir -p /home/lng/apps/lng-web-fe/dist
-          rsync -a --delete dist/ /home/lng/apps/lng-web-fe/dist/
-          cp server.mjs /home/lng/apps/lng-web-fe/server.mjs
-      - name: Restart FE
-        run: |
-          pm2 restart lng-web-fe
+          test -n "$ECOMATRIX_HOST"
+          test -n "$ECOMATRIX_USER"
+          tar -czf - -C dist . | ssh "$ECOMATRIX_USER@$ECOMATRIX_HOST" 'set -e; rm -rf /srv/lng-web-fe/dist.next; mkdir -p /srv/lng-web-fe/dist.next; tar -xzf - -C /srv/lng-web-fe/dist.next; rm -rf /srv/lng-web-fe/dist.previous; mv /srv/lng-web-fe/dist /srv/lng-web-fe/dist.previous 2>/dev/null || true; mv /srv/lng-web-fe/dist.next /srv/lng-web-fe/dist; rm -rf /srv/lng-web-fe/dist.previous'
