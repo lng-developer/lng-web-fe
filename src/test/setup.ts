@@ -8,6 +8,7 @@ import i18n from '@/shared/i18n/i18n'
 
 afterEach(async () => {
   cleanup()
+  await new Promise<void>((resolve) => setImmediate(resolve))
   notification.destroy()
   document.body.querySelectorAll('.ant-notification').forEach((el) => el.remove())
   vi.useRealTimers()
