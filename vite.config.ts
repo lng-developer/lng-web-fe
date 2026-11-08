@@ -106,6 +106,7 @@ export default defineConfig(({ mode }) => {
           test: {
             name: 'ui',
             environment: 'jsdom',
+            pool: 'forks',
             setupFiles: './src/test/setup.ts',
             include: [
               'src/test/**/*.test.tsx',
