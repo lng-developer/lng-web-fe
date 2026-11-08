@@ -8,7 +8,7 @@ import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { getListingOptions } from '@/features/portal/catalog/api/catalogApi'
 import { listVendors } from '@/features/portal/vendors/api/vendorApi'
 import { normalizeApiError } from '@/shared/api'
-import { FeedbackAlert, humanizeCode, StatusTag, useFeedbackToast } from '@/shared/ui'
+import { DetailModal, FeedbackAlert, humanizeCode, StatusTag, useFeedbackToast } from '@/shared/ui'
 
 import {
   createMappingRule,
@@ -276,11 +276,12 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
         />
       </Card>
       {/* Rule Editor — Modal */}
-      <Modal
+      <DetailModal
         destroyOnClose
         open={editorOpen}
-        width="min(1280px, 90vw)"
-        style={{ top: 40 }}
+        width="min(860px, 92vw)"
+        drawerWidth="min(840px, 65vw)"
+        onClose={handleCloseDrawer}
         title={
           <Space size={8}>
             <span>
@@ -293,7 +294,6 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
             ) : null}
           </Space>
         }
-        onCancel={handleCloseDrawer}
         footer={null}
       >
         {orderItemId ? (
@@ -338,7 +338,7 @@ export function MappingRulePage({ pageKey }: { readonly pageKey: MappingRulePage
           }
           onSave={(rule) => saveRule.mutateAsync(rule).then(() => undefined)}
         />
-      </Modal>
+      </DetailModal>
       <RuleHistoryModal
         id={historyRule?.id}
         open={Boolean(historyRule)}

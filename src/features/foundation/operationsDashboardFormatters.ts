@@ -42,3 +42,13 @@ export function formatDashboardDate(value: Date, language: string) {
     year: 'numeric',
   }).format(value)
 }
+
+export function formatSalesChannel(code?: string | null): string {
+  if (!code) return '—'
+  const upper = code.toUpperCase()
+  if (upper === 'AMAZON') return 'Amazon'
+  if (upper === 'ETSY') return 'Etsy'
+  if (upper === 'TIKTOK') return 'TikTok'
+  if (upper === 'SHOPIFY') return 'Shopify'
+  return code.charAt(0).toUpperCase() + code.slice(1).toLowerCase()
+}

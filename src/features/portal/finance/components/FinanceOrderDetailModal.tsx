@@ -8,9 +8,9 @@ import {
   WalletOutlined,
 } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Alert, Button, Modal, Space, Spin, Timeline, Typography } from 'antd'
+import { Alert, Button, Space, Spin, Timeline, Typography } from 'antd'
 
-import { FormattedDateTime, humanizeCode, MetricCard, StatusTag } from '@/shared/ui'
+import { DetailDrawer, FormattedDateTime, humanizeCode, MetricCard, StatusTag } from '@/shared/ui'
 
 import { type FinanceSnapshot, getOrderFinanceSummary } from '../api/financeApi'
 import styles from '../pages/FinanceWorkspacePage.module.scss'
@@ -47,13 +47,15 @@ export const FinanceOrderDetailModal: React.FC<FinanceOrderDetailModalProps> = (
   })
 
   return (
-    <Modal
-      width={900}
+    <DetailDrawer
+      width="min(1360px, 92vw)"
       open={Boolean(selectedOrder)}
       title={t('finance.detail.title')}
       footer={null}
-      onCancel={onClose}
+      onClose={onClose}
       destroyOnHidden
+      allowModeToggle
+      allowMaximize
     >
       {orderDetail.isLoading ? (
         <Spin />
@@ -420,6 +422,6 @@ export const FinanceOrderDetailModal: React.FC<FinanceOrderDetailModalProps> = (
           ) : null}
         </Space>
       ) : null}
-    </Modal>
+    </DetailDrawer>
   )
 }

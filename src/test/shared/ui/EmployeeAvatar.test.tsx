@@ -7,7 +7,7 @@ vi.mock('@/shared/media', () => ({
   ),
 }))
 
-import { EmployeeAvatar } from '@/shared/ui/EmployeeAvatar'
+import { EmployeeAvatar, EmployeeIdentity } from '@/shared/ui/EmployeeAvatar'
 
 describe('EmployeeAvatar', () => {
   afterEach(cleanup)
@@ -21,6 +21,13 @@ describe('EmployeeAvatar', () => {
 
     view.rerender(<EmployeeAvatar name="Nguyen Van An" avatarUrl={null} />)
     expect(screen.getByText('VA')).toBeVisible()
+  })
+
+  it('renders direct data uri without authenticated media wrapper', () => {
+    render(<EmployeeAvatar name="Nguyen Van An" avatarUrl="data:image/png;base64,YXZhdGFy" />)
+
+    const img = screen.getByRole('img', { name: 'Nguyen Van An' })
+    expect(img).toHaveAttribute('src', 'data:image/png;base64,YXZhdGFy')
   })
 
   it('falls back to initials when authenticated media fails', () => {
@@ -41,4 +48,47 @@ describe('EmployeeAvatar', () => {
       expect(screen.getByText('VA')).toBeVisible()
     },
   )
+})
+
+describe('EmployeeIdentity', () => {
+  afterEach(cleanup)
+
+  it('renders mode="code" with avatar and employee code only', () => {
+    render(<EmployeeIdentity name="Truc Nguyen" employeeCode="J2617" mode="code" />)
+
+    expect(screen.getByText('TN')).toBeVisible()
+    expect(screen.getByText('J2617')).toBeVisible()
+    expect(screen.queryByText('Truc Nguyen')).not.toBeInTheDocument()
+  })
+
+  it('renders mode="name" with avatar and name only', () => {
+    render(<EmployeeIdentity name="Truc Nguyen" employeeCode="J2617" mode="name" />)
+
+    expect(screen.getByText('TN')).toBeVisible()
+    expect(screen.getByText('Truc Nguyen')).toBeVisible()
+    expect(screen.queryByText('J2617')).not.toBeInTheDocument()
+  })
+
+  it('renders mode="inline" with avatar, name, and employee code badge', () => {
+    render(<EmployeeIdentity name="Truc Nguyen" employeeCode="J2617" mode="inline" />)
+
+    expect(screen.getByText('TN')).toBeVisible()
+    expect(screen.getByText('Truc Nguyen')).toBeVisible()
+    expect(screen.getByText('J2617')).toBeVisible()
+  })
+
+  it('renders mode="stacked" with avatar and subtitle/code stacked', () => {
+    render(
+      <EmployeeIdentity
+        name="Truc Nguyen"
+        employeeCode="J2617"
+        mode="stacked"
+        subtitle="Designer"
+      />,
+    )
+
+    expect(screen.getByText('TN')).toBeVisible()
+    expect(screen.getByText('Truc Nguyen')).toBeVisible()
+    expect(screen.getByText('Designer')).toBeVisible()
+  })
 })

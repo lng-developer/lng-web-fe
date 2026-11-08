@@ -281,9 +281,16 @@ export const ROUTE_TITLE_DEFINITIONS: readonly RouteTitleDefinition[] = [
   },
 ]
 
-export function formatDocumentTitle(pageTitle?: string | null, appName = 'LNG Web'): string {
+export function formatDocumentTitle(
+  pageTitle?: string | null,
+  appName = 'LNG Web',
+  unreadCount = 0,
+): string {
   const trimmed = pageTitle?.trim()
-  return trimmed ? `${trimmed} | ${appName}` : appName
+  const baseTitle = trimmed ? `${trimmed} | ${appName}` : appName
+  if (!unreadCount || unreadCount <= 0) return baseTitle
+  const badge = unreadCount > 99 ? '99+' : `${unreadCount}`
+  return `(${badge}) ${baseTitle}`
 }
 
 export function resolvePageTitle(

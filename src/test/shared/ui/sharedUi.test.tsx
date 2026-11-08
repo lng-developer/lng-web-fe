@@ -392,4 +392,37 @@ describe('shared UI', () => {
     expect(screen.getByText('Open orders')).toBeInTheDocument()
     expect(screen.getByRole('img', { name: 'Daily orders' })).toBeVisible()
   })
+
+  it('supports maximizing and toggling between modal and drawer modes', () => {
+    const onClose = vi.fn()
+    render(
+      <DetailDrawer open title="Flexible Detail" onClose={onClose}>
+        <div>Detail Content</div>
+      </DetailDrawer>,
+    )
+
+    // Initially in modal mode, with Maximize button
+    const maximizeBtn = screen.getByRole('button', { name: 'Maximize' })
+    expect(maximizeBtn).toBeInTheDocument()
+
+    // Toggle maximize
+    fireEvent.click(maximizeBtn)
+    expect(screen.getByRole('button', { name: 'Restore' })).toBeInTheDocument()
+
+    // Restore back
+    fireEvent.click(screen.getByRole('button', { name: 'Restore' }))
+    expect(screen.getByRole('button', { name: 'Maximize' })).toBeInTheDocument()
+
+    // Toggle mode to drawer
+    const switchToDrawerBtn = screen.getByRole('button', { name: 'Switch to side panel' })
+    fireEvent.click(switchToDrawerBtn)
+
+    // Now in drawer mode, has switch to modal button
+    const switchToModalBtn = screen.getByRole('button', { name: 'Switch to modal dialog' })
+    expect(switchToModalBtn).toBeInTheDocument()
+
+    // Switch back to modal
+    fireEvent.click(switchToModalBtn)
+    expect(screen.getByRole('button', { name: 'Switch to side panel' })).toBeInTheDocument()
+  })
 })

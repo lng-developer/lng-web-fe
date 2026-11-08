@@ -76,7 +76,8 @@ function iconForHrKey(key: string, path: string): ReactNode {
   return <UserOutlined />
 }
 
-export function getSearchableNavigationItems(account: CurrentAccount): SearchableNavigationItem[] {
+export function getSearchableNavigationItems(account?: CurrentAccount): SearchableNavigationItem[] {
+  if (!account) return []
   const permissions = getPermissionsSet(account)
   const financeVisible = hasFinanceAccess(account)
   const items: SearchableNavigationItem[] = []

@@ -15,18 +15,23 @@ export function ChatReplyQuote({
   participants,
   onCancel,
   disabled,
+  isOwn,
 }: {
   quote?: Quote | null
   participants: Map<string, ChatParticipant>
   onCancel?: () => void
   disabled?: boolean
+  isOwn?: boolean
 }) {
   const { t } = useTranslation()
+  const quoteVariantClass = onCancel
+    ? styles.quoteDraft
+    : isOwn
+      ? styles.quoteOwn
+      : styles.quoteOther
+
   return (
-    <div
-      className={`${styles.quote} ${onCancel ? styles.quoteDraft : ''}`}
-      aria-label={t('chatReply.quote')}
-    >
+    <div className={`${styles.quote} ${quoteVariantClass}`} aria-label={t('chatReply.quote')}>
       <div className="min-w-0 flex-1">
         <strong className={styles.quoteSender}>
           {quote

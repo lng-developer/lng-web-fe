@@ -36,6 +36,7 @@ import { getPermissions } from '@/shared/auth/session'
 import { DEFAULT_TABLE_PAGINATION } from '@/shared/constants/enum'
 import {
   DateTimePicker,
+  EmployeeIdentity,
   FormActions,
   MetricCard,
   MonthPicker,
@@ -194,13 +195,6 @@ export function ScheduleCalendarPage() {
         })),
     [manualTeamId, profiles.data],
   )
-  const manualTeamEmployeeIds = useMemo(
-    () =>
-      (profiles.data?.items ?? [])
-        .filter((profile) => profile.teamId === manualTeamId)
-        .map((profile) => profile.id),
-    [manualTeamId, profiles.data],
-  )
   const saturdaysOfMonth = useCallback(
     (monthValue: Values[string]) => {
       const monthDate = dayjs.isDayjs(monthValue) ? monthValue : month
@@ -282,16 +276,8 @@ export function ScheduleCalendarPage() {
         const teamId = String(values.teamId)
         const byDate = (values.employeeProfileIdsByDate as RotationOffByDate) || {}
         const targetDates = saturdaysOfMonth(values.month)
-        const teamEmployeeIds = manualTeamEmployeeIds.length
-          ? manualTeamEmployeeIds
-          : (profiles.data?.items ?? [])
-              .filter((profile) => profile.teamId === teamId)
-              .map((profile) => profile.id)
         const createPayloads = targetDates.map((dateKey) => {
-          const offEmployeeProfileIds = Array.isArray(byDate[dateKey]) ? byDate[dateKey] : []
-          const employeeProfileIds = teamEmployeeIds.filter(
-            (id) => !offEmployeeProfileIds.includes(id),
-          )
+          const employeeProfileIds = Array.isArray(byDate[dateKey]) ? byDate[dateKey] : []
           return createSaturdayRotation({
             teamId,
             dateKey,
@@ -377,9 +363,12 @@ export function ScheduleCalendarPage() {
               {
                 title: t('hrOperations.common.employee'),
                 render: (_, item) => (
-                  <Typography.Text strong>
-                    {item.employee?.fullName || item.employee?.employeeCode || item.profileId}
-                  </Typography.Text>
+                  <EmployeeIdentity
+                    name={item.employee?.fullName}
+                    employeeCode={item.employee?.employeeCode}
+                    mode="stacked"
+                    size="small"
+                  />
                 ),
               },
               {

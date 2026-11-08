@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Divider, Form, Input, Modal, Switch } from 'antd'
+import { Button, Divider, Form, Input, Switch } from 'antd'
 
-import { FormActions } from '@/shared/ui'
+import { DetailModal, FormActions } from '@/shared/ui'
 
 import type { CreateShopInput, Shop, ShopStatus } from '../../api/shopApi'
 
@@ -41,10 +41,11 @@ export function ShopEditorModal({
     shop ? form.getFieldValue('status') !== shop.status : form.isFieldsTouched()
 
   return (
-    <Modal
+    <DetailModal
       destroyOnHidden
       footer={null}
       open={open}
+      allowMaximize
       title={
         isEditing
           ? canWrite
@@ -115,6 +116,6 @@ export function ShopEditorModal({
           <Button onClick={onClose}>{t('portal.shops.cancel')}</Button>
         )}
       </Form>
-    </Modal>
+    </DetailModal>
   )
 }

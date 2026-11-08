@@ -6,7 +6,6 @@ import {
   SearchOutlined,
   SendOutlined,
   TeamOutlined,
-  UserOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -46,15 +45,14 @@ import { chatKeys } from '@/features/portal/chat/api/chatKeys'
 import { type ChatSocket, createChatSocket } from '@/features/portal/chat/realtime/chatSocket'
 import { uploadMediaAsset } from '@/features/portal/media/api/mediaApi'
 import { getAccount } from '@/shared/auth/session'
+import { EmployeeAvatar } from '@/shared/ui'
 import { ChatAttachments } from '../components/ChatAttachments'
 import { ChatReplyQuote } from '../components/ChatReplyQuote'
 import { ChatReplyAction } from '../components/ChatReplyAction'
 import messageStyles from '../components/ChatMessageActions.module.scss'
 import {
-  conversationInitials,
   conversationTitle,
   formatRelativeTime,
-  getInitials,
   matchesConversationSearch,
   matchesParticipantSearch,
   messagePreviewText,
@@ -121,7 +119,7 @@ function MessageBubble({
   sending: boolean
 }) {
   const timeLabel = formatMessageTime(message.createdAt)
-  const senderInitials = getInitials(participantLabel(senderParticipant))
+  const senderLabel = participantLabel(senderParticipant)
 
   return (
     <div
@@ -133,19 +131,12 @@ function MessageBubble({
     >
       {!isOwn ? (
         showAvatar ? (
-          <Avatar
+          <EmployeeAvatar
             size={32}
-            style={{
-              backgroundColor: '#f1f5f9',
-              color: '#334155',
-              fontWeight: 600,
-              fontSize: 12,
-              border: '1px solid #e2e8f0',
-            }}
+            name={senderLabel}
+            avatarUrl={senderParticipant?.avatarUrl}
             className={styles.messageAvatar}
-          >
-            {senderInitials || <UserOutlined style={{ color: '#64748b' }} />}
-          </Avatar>
+          />
         ) : (
           <div style={{ width: 32, flexShrink: 0 }} />
         )
@@ -154,7 +145,11 @@ function MessageBubble({
         className={`${styles.messageBubble} ${isOwn ? styles.ownBubble : styles.receivedBubble}`}
       >
         {message.replyToMessageId ? (
-          <ChatReplyQuote quote={message.replyToMessage} participants={participants} />
+          <ChatReplyQuote
+            quote={message.replyToMessage}
+            participants={participants}
+            isOwn={isOwn}
+          />
         ) : null}
         {message.body ? <div className={styles.messageText}>{message.body}</div> : null}
         <ChatAttachments message={message} />
@@ -392,9 +387,6 @@ export function ChatWorkspacePage() {
     ? (presenceByAccountId[otherAccountId] ?? otherParticipant?.presence ?? 'OFFLINE')
     : 'OFFLINE'
   const isOtherOnline = otherPresence === 'ONLINE'
-  const otherInitials = selectedConversation
-    ? conversationInitials(selectedConversation, participantById, account?.id)
-    : ''
   const canShowTeamsStatus =
     selectedConversation?.type === 'DIRECT' &&
     Boolean(otherParticipant?.email.toLowerCase().endsWith('@lngwork.co')) &&
@@ -475,7 +467,6 @@ export function ChatWorkspacePage() {
                   const presence =
                     presenceByAccountId[accountItem.id] ?? accountItem.presence ?? 'OFFLINE'
                   const isOnline = presence === 'ONLINE'
-                  const itemInitials = getInitials(participantLabel(accountItem))
 
                   return (
                     <button
@@ -485,23 +476,31 @@ export function ChatWorkspacePage() {
                       onClick={() => startDirectChat(accountItem.id)}
                     >
                       <Badge dot status={isOnline ? 'success' : 'default'} offset={[-2, 30]}>
-                        <Avatar
+                        <EmployeeAvatar
                           size={38}
-                          style={{
-                            backgroundColor: '#f1f5f9',
-                            color: '#334155',
-                            fontWeight: 600,
-                            fontSize: 13,
-                            border: '1px solid #e2e8f0',
-                          }}
-                        >
-                          {itemInitials || <UserOutlined style={{ color: '#64748b' }} />}
-                        </Avatar>
+                          name={participantLabel(accountItem)}
+                          avatarUrl={accountItem.avatarUrl}
+                        />
                       </Badge>
                       <span className={styles.conversationMeta}>
                         <span className={styles.conversationHeaderRow}>
-                          <span className={styles.participantName}>
-                            {participantLabel(accountItem)}
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 6,
+                              minWidth: 0,
+                              flex: 1,
+                            }}
+                          >
+                            <span className={styles.participantName}>
+                              {participantLabel(accountItem)}
+                            </span>
+                            {accountItem.employeeCode ? (
+                              <span className={styles.employeeCodeTag}>
+                                {accountItem.employeeCode}
+                              </span>
+                            ) : null}
                           </span>
                         </span>
                         <span className={styles.previewRow}>
@@ -540,7 +539,6 @@ export function ChatWorkspacePage() {
                 const timeLabel = conv.lastMessageAt
                   ? formatRelativeTime(conv.lastMessageAt, timeLabels)
                   : null
-                const initials = conversationInitials(conv, participantById, account?.id)
                 const title = conversationTitle(
                   conv,
                   participantById,
@@ -570,28 +568,39 @@ export function ChatWorkspacePage() {
                       status={isOnline ? 'success' : 'default'}
                       offset={[-2, 30]}
                     >
-                      <Avatar
-                        size={38}
-                        style={{
-                          backgroundColor: isSelected ? '#2563eb' : '#f1f5f9',
-                          color: isSelected ? '#ffffff' : '#334155',
-                          fontWeight: 600,
-                          fontSize: 13,
-                          border: isSelected ? 'none' : '1px solid #e2e8f0',
-                        }}
-                      >
-                        {conv.type === 'TEAM' ? (
+                      {conv.type === 'TEAM' ? (
+                        <Avatar
+                          size={38}
+                          style={{
+                            backgroundColor: isSelected ? '#2563eb' : '#f1f5f9',
+                            color: isSelected ? '#ffffff' : '#2563eb',
+                            fontWeight: 600,
+                            fontSize: 13,
+                            border: isSelected ? 'none' : '1px solid #e2e8f0',
+                          }}
+                        >
                           <TeamOutlined style={{ color: isSelected ? '#ffffff' : '#2563eb' }} />
-                        ) : initials ? (
-                          initials
-                        ) : (
-                          <UserOutlined style={{ color: isSelected ? '#ffffff' : '#64748b' }} />
-                        )}
-                      </Avatar>
+                        </Avatar>
+                      ) : (
+                        <EmployeeAvatar size={38} name={title} avatarUrl={otherP?.avatarUrl} />
+                      )}
                     </Badge>
                     <span className={styles.conversationMeta}>
                       <span className={styles.conversationHeaderRow}>
-                        <span className={styles.participantName}>{title}</span>
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            minWidth: 0,
+                            flex: 1,
+                          }}
+                        >
+                          <span className={styles.participantName}>{title}</span>
+                          {otherP?.employeeCode ? (
+                            <span className={styles.employeeCodeTag}>{otherP.employeeCode}</span>
+                          ) : null}
+                        </span>
                         {timeLabel ? (
                           <span className={styles.lastMessageTime}>{timeLabel}</span>
                         ) : null}
@@ -625,23 +634,34 @@ export function ChatWorkspacePage() {
               status={isOtherOnline ? 'success' : 'default'}
               offset={[-2, 32]}
             >
-              <Avatar
-                size={40}
-                style={{
-                  backgroundColor: '#2563eb',
-                  color: '#ffffff',
-                  fontWeight: 600,
-                  fontSize: 14,
-                }}
-              >
-                {selectedConversation?.type === 'TEAM' ? (
+              {selectedConversation?.type === 'TEAM' ? (
+                <Avatar
+                  size={40}
+                  style={{
+                    backgroundColor: '#2563eb',
+                    color: '#ffffff',
+                    fontWeight: 600,
+                    fontSize: 14,
+                  }}
+                >
                   <TeamOutlined style={{ color: '#ffffff' }} />
-                ) : otherInitials ? (
-                  otherInitials
-                ) : (
-                  <UserOutlined style={{ color: '#ffffff' }} />
-                )}
-              </Avatar>
+                </Avatar>
+              ) : (
+                <EmployeeAvatar
+                  size={40}
+                  name={
+                    selectedConversation
+                      ? conversationTitle(
+                          selectedConversation,
+                          participantById,
+                          account?.id,
+                          t('chat.deletedUser'),
+                        )
+                      : ''
+                  }
+                  avatarUrl={otherParticipant?.avatarUrl}
+                />
+              )}
             </Badge>
             <div className={styles.paneHeaderInfo}>
               <Typography.Title level={4} className={styles.paneHeaderTitle}>

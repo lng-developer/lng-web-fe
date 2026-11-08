@@ -23,7 +23,7 @@ import {
   DATA_COLORS,
   DateRangePicker,
   type DateRangeValue,
-  EmployeeAvatar,
+  EmployeeIdentity,
   FormattedDateTime,
   MetricCard,
   StatusPill,
@@ -342,10 +342,15 @@ export function PsdFileWorkspacePage() {
           const assignee = (assignees.data ?? []).find(({ id }) => id === value.id)
           const name = value.name ?? assignee?.fullName ?? assignee?.name ?? 'Unassigned'
           return (
-            <Space size={8}>
-              <EmployeeAvatar name={name} avatarUrl={assignee?.avatarUrl} size="small" />
-              <Typography.Text style={{ fontSize: 13 }}>{name}</Typography.Text>
-            </Space>
+            <EmployeeIdentity
+              size="small"
+              mode="code"
+              name={name}
+              employeeCode={
+                (assignee as { employeeCode?: string | null } | undefined)?.employeeCode
+              }
+              avatarUrl={assignee?.avatarUrl}
+            />
           )
         },
       },

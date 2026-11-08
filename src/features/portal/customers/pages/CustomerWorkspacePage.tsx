@@ -9,7 +9,7 @@ import {
   UserSwitchOutlined,
   WarningOutlined,
 } from '@ant-design/icons'
-import { Button, Descriptions, Input, Modal, Select, Space, Tag, Timeline, Typography } from 'antd'
+import { Button, Descriptions, Input, Select, Space, Tag, Timeline, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
@@ -29,7 +29,7 @@ import {
 } from '@/features/portal/customers/hooks'
 import { getPermissions } from '@/shared/auth/session'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
-import { FeedbackAlert, FilterBar, FormattedDateTime, MetricCard } from '@/shared/ui'
+import { DetailModal, FeedbackAlert, FilterBar, FormattedDateTime, MetricCard } from '@/shared/ui'
 
 import styles from './CustomerWorkspacePage.module.scss'
 
@@ -278,13 +278,13 @@ export const CustomerWorkspacePage = () => {
         />
       </div>
 
-      <Modal
+      <DetailModal
         destroyOnClose
         title={selected?.name || selected?.emailMasked || t('customers.title')}
         open={Boolean(selectedId)}
-        width="min(1080px, 88vw)"
-        style={{ top: 40 }}
-        onCancel={() => setSelectedId(null)}
+        width="min(1100px, 90vw)"
+        drawerWidth="min(720px, 60vw)"
+        onClose={() => setSelectedId(null)}
         footer={null}
       >
         {selected ? (
@@ -358,7 +358,7 @@ export const CustomerWorkspacePage = () => {
             />
           </Space>
         ) : null}
-      </Modal>
+      </DetailModal>
     </section>
   )
 }

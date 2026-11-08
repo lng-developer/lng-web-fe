@@ -11,9 +11,13 @@ import {
 import { useTranslation } from 'react-i18next'
 import {
   CheckOutlined,
+  CopyOutlined,
   DisconnectOutlined,
   FileTextOutlined,
   LinkOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  RightOutlined,
   StopOutlined,
   ZoomInOutlined,
   ZoomOutOutlined,
@@ -23,7 +27,6 @@ import {
   Flex,
   Input,
   Modal,
-  Popover,
   Radio,
   Segmented,
   Slider,
@@ -34,6 +37,7 @@ import {
 } from 'antd'
 
 import { AuthenticatedMediaImage } from '@/shared/media'
+import { DetailModal } from '@/shared/ui'
 
 import type { FileCheck, ProductionTask } from '../api/productionApi'
 import { formatCustomization } from './inspectionReference'
@@ -82,6 +86,8 @@ export function ArtworkInspector({
   const [scaledPan, setScaledPan] = useState({ x: 0, y: 0 })
   const [originalZoom, setOriginalZoom] = useState(100)
   const [scaledZoom, setScaledZoom] = useState(100)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [copiedKey, setCopiedKey] = useState<string | null>(null)
 
   const [rejectModalOpen, setRejectModalOpen] = useState(false)
   const [selectedPresets, setSelectedPresets] = useState<string[]>([])
@@ -108,6 +114,58 @@ export function ArtworkInspector({
     () => formatCustomization(task?.customization?.customerInputs),
     [task?.customization?.customerInputs],
   )
+  const hasSidebarContent = Boolean(task && (customizationEntries.length > 0 || task.csNote))
+
+  const handleCopyValue = useCallback(async (key: string, val: string) => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(val)
+      } else {
+        const textArea = document.createElement('textarea')
+        textArea.value = val
+        document.body.appendChild(textArea)
+        textArea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textArea)
+      }
+      setCopiedKey(key)
+      setTimeout(() => {
+        setCopiedKey((prev) => (prev === key ? null : prev))
+      }, 1500)
+    } catch {
+      // ignore
+    }
+  }, [])
+
+  const handleCopyAll = useCallback(async () => {
+    const lines: string[] = []
+    if (task?.csNote) {
+      lines.push(`CS Note: ${task.csNote}`)
+    }
+    for (const [key, val] of customizationEntries) {
+      lines.push(`${key}: ${val}`)
+    }
+    const fullText = lines.join('\n')
+    if (!fullText) return
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(fullText)
+      } else {
+        const textArea = document.createElement('textarea')
+        textArea.value = fullText
+        document.body.appendChild(textArea)
+        textArea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textArea)
+      }
+      setCopiedKey('__all__')
+      setTimeout(() => {
+        setCopiedKey((prev) => (prev === '__all__' ? null : prev))
+      }, 1500)
+    } catch {
+      // ignore
+    }
+  }, [customizationEntries, task])
 
   const resetView = useCallback(() => {
     setOriginalPan({ x: 0, y: 0 })
@@ -228,6 +286,9 @@ export function ArtworkInspector({
       } else if (e.code === 'Space') {
         e.preventDefault()
         resetView()
+      } else if (e.key === 'i' || e.key === 'I') {
+        e.preventDefault()
+        setSidebarOpen((prev) => !prev)
       }
     }
     window.addEventListener('keydown', handleKeyDown)
@@ -274,14 +335,15 @@ export function ArtworkInspector({
   const zoomDisplay = isSync ? `${scaledZoom}%` : `${originalZoom}% · ${scaledZoom}%`
 
   return (
-    <Modal
+    <DetailModal
       open
-      width="96vw"
+      width="min(1600px, 96vw)"
+      allowModeToggle={false}
+      allowMaximize
       centered
-      style={{ top: 12, paddingBottom: 12 }}
       styles={{
         body: {
-          height: 'calc(94vh - 76px)',
+          height: 'calc(90vh - 80px)',
           minHeight: 0,
           display: 'flex',
           flexDirection: 'column',
@@ -297,72 +359,23 @@ export function ArtworkInspector({
             </span>
             <Tag color="blue">{check.slotKey}</Tag>
           </Space>
-          {task && (customizationEntries.length > 0 || task.csNote) ? (
-            <Popover
+          {hasSidebarContent ? (
+            <Tooltip
               title={
-                <Flex justify="space-between" align="center" gap={12}>
-                  <Typography.Text strong>{t('portal.production.customerInputs')}</Typography.Text>
-                  <Tag color="cyan">{customizationEntries.length}</Tag>
-                </Flex>
+                sidebarOpen
+                  ? t('portal.production.hideCustomerInputs', 'Hide inputs')
+                  : t('portal.production.showCustomerInputs', 'Show inputs')
               }
-              content={
-                <div style={{ maxWidth: 360, maxHeight: 280, overflowY: 'auto' }}>
-                  {task.csNote && (
-                    <div
-                      style={{
-                        marginBottom: 8,
-                        padding: '6px 10px',
-                        background: 'var(--ant-color-warning-bg)',
-                        borderRadius: 6,
-                        border: '1px solid var(--ant-color-warning-border)',
-                      }}
-                    >
-                      <Typography.Text
-                        strong
-                        style={{
-                          fontSize: 11,
-                          display: 'block',
-                          color: 'var(--ant-color-warning-text)',
-                        }}
-                      >
-                        CS Note:
-                      </Typography.Text>
-                      <Typography.Text style={{ fontSize: 12 }}>{task.csNote}</Typography.Text>
-                    </div>
-                  )}
-                  {customizationEntries.length > 0 ? (
-                    <div style={{ display: 'grid', gap: 6 }}>
-                      {customizationEntries.map(([label, value]) => (
-                        <div
-                          key={`${label}-${value}`}
-                          style={{
-                            fontSize: 12,
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            gap: 12,
-                            borderBottom: '1px solid var(--ant-color-border-secondary)',
-                            paddingBottom: 4,
-                          }}
-                        >
-                          <span style={{ color: 'var(--ant-color-text-secondary)' }}>{label}:</span>
-                          <strong style={{ textAlign: 'right' }}>{value}</strong>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                      -
-                    </Typography.Text>
-                  )}
-                </div>
-              }
-              trigger="click"
-              placement="bottomRight"
             >
-              <Button size="small" icon={<FileTextOutlined />}>
+              <Button
+                size="small"
+                type={sidebarOpen ? 'default' : 'primary'}
+                icon={sidebarOpen ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />}
+                onClick={() => setSidebarOpen((prev) => !prev)}
+              >
                 {t('portal.production.customerInputs')} ({customizationEntries.length})
               </Button>
-            </Popover>
+            </Tooltip>
           ) : null}
         </Flex>
       }
@@ -491,141 +504,282 @@ export function ArtworkInspector({
         </Space>
       </div>
 
-      {/* Main Inspection Canvas Container */}
-      <div className={styles.canvasContainer}>
-        {viewMode === 'sideBySide' ? (
-          <div className={styles.inspector}>
-            {/* Original */}
-            <div
-              className={`${styles.inspectPanel} ${bgClass}`}
-              onWheel={(e) => handleWheelOn('original', e)}
-              onPointerDown={(e) => handlePointerDownOn('original', e)}
-              onPointerMove={handlePointerMove}
-              onPointerUp={handlePointerUp}
-            >
-              <div className={styles.inspectPanelBadge}>
-                <span className={styles.badgeDot} />
-                {t('portal.production.original')} ({originalLabel})
+      {/* Main Inspection Workspace */}
+      <div className={styles.inspectWorkspace}>
+        <div className={styles.canvasContainer}>
+          {viewMode === 'sideBySide' ? (
+            <div className={styles.inspector}>
+              {/* Original */}
+              <div
+                className={`${styles.inspectPanel} ${bgClass}`}
+                onWheel={(e) => handleWheelOn('original', e)}
+                onPointerDown={(e) => handlePointerDownOn('original', e)}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+              >
+                <div className={styles.inspectPanelBadge}>
+                  <span className={styles.badgeDot} />
+                  {t('portal.production.original')} ({originalLabel})
+                </div>
+                {originalUrl ? (
+                  <AuthenticatedMediaImage
+                    downloadUrl={originalUrl}
+                    alt={t('portal.production.original')}
+                    style={originalTransformStyle}
+                    draggable={false}
+                  />
+                ) : (
+                  <Typography.Text type="secondary">
+                    {t(
+                      'portal.production.customerArtworkMissing',
+                      'Customer artwork is not linked',
+                    )}
+                  </Typography.Text>
+                )}
               </div>
-              {originalUrl ? (
-                <AuthenticatedMediaImage
-                  downloadUrl={originalUrl}
-                  alt={t('portal.production.original')}
-                  style={originalTransformStyle}
-                  draggable={false}
-                />
-              ) : (
-                <Typography.Text type="secondary">
-                  {t('portal.production.customerArtworkMissing', 'Customer artwork is not linked')}
-                </Typography.Text>
-              )}
-            </div>
 
-            {/* Scaled Output */}
+              {/* Scaled Output */}
+              <div
+                className={`${styles.inspectPanel} ${bgClass}`}
+                onWheel={(e) => handleWheelOn('scaled', e)}
+                onPointerDown={(e) => handlePointerDownOn('scaled', e)}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+              >
+                <div className={styles.inspectPanelBadge}>
+                  <span className={`${styles.badgeDot} ${styles.badgeDotSuccess}`} />
+                  {t('portal.production.scaled')} (Scaled Output)
+                </div>
+                {scaledUrl ? (
+                  <AuthenticatedMediaImage
+                    downloadUrl={scaledUrl}
+                    alt={t('portal.production.scaled')}
+                    style={scaledTransformStyle}
+                    draggable={false}
+                  />
+                ) : (
+                  <Typography.Text type="secondary">
+                    {t('portal.production.fileMissing')}
+                  </Typography.Text>
+                )}
+              </div>
+            </div>
+          ) : viewMode === 'split' ? (
+            /* Split Screen Slider Canvas with Direct Dragging */
             <div
-              className={`${styles.inspectPanel} ${bgClass}`}
+              ref={canvasRef}
+              className={`${styles.singleInspectCanvas} ${bgClass}`}
               onWheel={(e) => handleWheelOn('scaled', e)}
-              onPointerDown={(e) => handlePointerDownOn('scaled', e)}
+              onPointerDown={(e) => handlePointerDownOn('both', e)}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
             >
-              <div className={styles.inspectPanelBadge}>
-                <span className={`${styles.badgeDot} ${styles.badgeDotSuccess}`} />
-                {t('portal.production.scaled')} (Scaled Output)
+              {/* Original Layer (full width, clipped) */}
+              <div
+                className={styles.splitLayerOriginal}
+                style={{ clipPath: `polygon(0 0, ${splitPos}% 0, ${splitPos}% 100%, 0 100%)` }}
+              >
+                {originalUrl ? (
+                  <AuthenticatedMediaImage
+                    downloadUrl={originalUrl}
+                    alt={t('portal.production.original')}
+                    style={originalTransformStyle}
+                  />
+                ) : null}
               </div>
-              {scaledUrl ? (
-                <AuthenticatedMediaImage
-                  downloadUrl={scaledUrl}
-                  alt={t('portal.production.scaled')}
-                  style={scaledTransformStyle}
-                  draggable={false}
-                />
-              ) : (
-                <Typography.Text type="secondary">
-                  {t('portal.production.fileMissing')}
+
+              {/* Scaled Layer (full width, right clipped) */}
+              <div
+                className={styles.splitLayerScaled}
+                style={{
+                  clipPath: `polygon(${splitPos}% 0, 100% 0, 100% 100%, ${splitPos}% 100%)`,
+                }}
+              >
+                {scaledUrl ? (
+                  <AuthenticatedMediaImage
+                    downloadUrl={scaledUrl}
+                    alt={t('portal.production.scaled')}
+                    style={scaledTransformStyle}
+                  />
+                ) : null}
+              </div>
+
+              {/* Interactive Divider Track Handle */}
+              <div
+                className={styles.splitSliderTrack}
+                style={{ left: `${splitPos}%` }}
+                onPointerDown={handleSplitPointerDown}
+                onPointerMove={handleSplitPointerMove}
+                onPointerUp={handleSplitPointerUp}
+              />
+            </div>
+          ) : (
+            /* Overlay Opacity Canvas */
+            <div
+              className={`${styles.singleInspectCanvas} ${bgClass}`}
+              onWheel={(e) => handleWheelOn('scaled', e)}
+              onPointerDown={(e) => handlePointerDownOn('both', e)}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+            >
+              {/* Original (Base Layer) */}
+              <div className={styles.splitLayerOriginal}>
+                {originalUrl ? (
+                  <AuthenticatedMediaImage
+                    downloadUrl={originalUrl}
+                    alt={t('portal.production.original')}
+                    style={originalTransformStyle}
+                  />
+                ) : null}
+              </div>
+
+              {/* Scaled (Overlay Layer with Opacity) */}
+              <div className={styles.splitLayerScaled} style={{ opacity: opacity / 100 }}>
+                {scaledUrl ? (
+                  <AuthenticatedMediaImage
+                    downloadUrl={scaledUrl}
+                    alt={t('portal.production.scaled')}
+                    style={scaledTransformStyle}
+                  />
+                ) : null}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {sidebarOpen && hasSidebarContent ? (
+          <aside
+            className={styles.inspectSidebar}
+            aria-label={t('portal.production.customerInputs')}
+          >
+            <div className={styles.sidebarHeader}>
+              <Flex align="center" gap={8} style={{ minWidth: 0 }}>
+                <FileTextOutlined style={{ color: 'var(--ant-color-primary)' }} />
+                <Typography.Text strong className={styles.sidebarHeaderTitle}>
+                  {t('portal.production.customerInputs')}
                 </Typography.Text>
+                <Tag color="cyan" style={{ margin: 0, fontSize: 11 }}>
+                  {customizationEntries.length}
+                </Tag>
+              </Flex>
+              <Flex align="center" gap={4}>
+                <Tooltip
+                  title={
+                    copiedKey === '__all__'
+                      ? t('portal.production.copied', 'Copied')
+                      : t('portal.production.copyAll', 'Copy all')
+                  }
+                >
+                  <Button
+                    type="text"
+                    size="small"
+                    className={styles.copyBtn}
+                    icon={
+                      copiedKey === '__all__' ? (
+                        <CheckOutlined style={{ color: '#52c41a' }} />
+                      ) : (
+                        <CopyOutlined />
+                      )
+                    }
+                    onClick={handleCopyAll}
+                    aria-label={t('portal.production.copyAll', 'Copy all')}
+                  />
+                </Tooltip>
+                <Tooltip title={t('portal.production.hideCustomerInputs', 'Hide inputs')}>
+                  <Button
+                    type="text"
+                    size="small"
+                    className={styles.copyBtn}
+                    icon={<RightOutlined />}
+                    onClick={() => setSidebarOpen(false)}
+                    aria-label="Collapse sidebar"
+                  />
+                </Tooltip>
+              </Flex>
+            </div>
+
+            <div className={styles.sidebarContent}>
+              {task?.csNote ? (
+                <div className={styles.csNoteBox}>
+                  <div className={styles.csNoteHeader}>
+                    <span className={styles.csNoteLabel}>CS Note</span>
+                    <Tooltip
+                      title={
+                        copiedKey === '__csNote__'
+                          ? t('portal.production.copied', 'Copied')
+                          : t('portal.production.copy', 'Copy')
+                      }
+                    >
+                      <Button
+                        type="text"
+                        size="small"
+                        className={styles.copyBtn}
+                        icon={
+                          copiedKey === '__csNote__' ? (
+                            <CheckOutlined style={{ color: '#52c41a' }} />
+                          ) : (
+                            <CopyOutlined />
+                          )
+                        }
+                        onClick={() => handleCopyValue('__csNote__', task.csNote!)}
+                        aria-label="Copy CS note"
+                      />
+                    </Tooltip>
+                  </div>
+                  <div className={styles.csNoteText}>{task.csNote}</div>
+                </div>
+              ) : null}
+
+              {customizationEntries.length > 0 ? (
+                <div className={styles.customizationList}>
+                  {customizationEntries.map(([label, value]) => {
+                    const isCopied = copiedKey === label
+                    return (
+                      <div key={label} className={styles.customizationItem}>
+                        <div className={styles.customizationLabelRow}>
+                          <span className={styles.customizationKey} title={label}>
+                            {label}
+                          </span>
+                          <Tooltip
+                            title={
+                              isCopied
+                                ? t('portal.production.copied', 'Copied')
+                                : t('portal.production.copy', 'Copy')
+                            }
+                          >
+                            <Button
+                              type="text"
+                              size="small"
+                              className={styles.copyBtn}
+                              icon={
+                                isCopied ? (
+                                  <CheckOutlined style={{ color: '#52c41a' }} />
+                                ) : (
+                                  <CopyOutlined />
+                                )
+                              }
+                              onClick={() => handleCopyValue(label, value)}
+                              aria-label={`Copy ${label}`}
+                            />
+                          </Tooltip>
+                        </div>
+                        <div className={styles.customizationVal} title={value}>
+                          {value}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className={styles.sidebarEmpty}>
+                  <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                    {t('portal.production.noCustomizationInputs', 'No customization inputs')}
+                  </Typography.Text>
+                </div>
               )}
             </div>
-          </div>
-        ) : viewMode === 'split' ? (
-          /* Split Screen Slider Canvas with Direct Dragging */
-          <div
-            ref={canvasRef}
-            className={`${styles.singleInspectCanvas} ${bgClass}`}
-            onWheel={(e) => handleWheelOn('scaled', e)}
-            onPointerDown={(e) => handlePointerDownOn('both', e)}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-          >
-            {/* Original Layer (full width, clipped) */}
-            <div
-              className={styles.splitLayerOriginal}
-              style={{ clipPath: `polygon(0 0, ${splitPos}% 0, ${splitPos}% 100%, 0 100%)` }}
-            >
-              {originalUrl ? (
-                <AuthenticatedMediaImage
-                  downloadUrl={originalUrl}
-                  alt={t('portal.production.original')}
-                  style={originalTransformStyle}
-                />
-              ) : null}
-            </div>
-
-            {/* Scaled Layer (full width, right clipped) */}
-            <div
-              className={styles.splitLayerScaled}
-              style={{ clipPath: `polygon(${splitPos}% 0, 100% 0, 100% 100%, ${splitPos}% 100%)` }}
-            >
-              {scaledUrl ? (
-                <AuthenticatedMediaImage
-                  downloadUrl={scaledUrl}
-                  alt={t('portal.production.scaled')}
-                  style={scaledTransformStyle}
-                />
-              ) : null}
-            </div>
-
-            {/* Interactive Divider Track Handle */}
-            <div
-              className={styles.splitSliderTrack}
-              style={{ left: `${splitPos}%` }}
-              onPointerDown={handleSplitPointerDown}
-              onPointerMove={handleSplitPointerMove}
-              onPointerUp={handleSplitPointerUp}
-            />
-          </div>
-        ) : (
-          /* Overlay Opacity Canvas */
-          <div
-            className={`${styles.singleInspectCanvas} ${bgClass}`}
-            onWheel={(e) => handleWheelOn('scaled', e)}
-            onPointerDown={(e) => handlePointerDownOn('both', e)}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-          >
-            {/* Original (Base Layer) */}
-            <div className={styles.splitLayerOriginal}>
-              {originalUrl ? (
-                <AuthenticatedMediaImage
-                  downloadUrl={originalUrl}
-                  alt={t('portal.production.original')}
-                  style={originalTransformStyle}
-                />
-              ) : null}
-            </div>
-
-            {/* Scaled (Overlay Layer with Opacity) */}
-            <div className={styles.splitLayerScaled} style={{ opacity: opacity / 100 }}>
-              {scaledUrl ? (
-                <AuthenticatedMediaImage
-                  downloadUrl={scaledUrl}
-                  alt={t('portal.production.scaled')}
-                  style={scaledTransformStyle}
-                />
-              ) : null}
-            </div>
-          </div>
-        )}
+          </aside>
+        ) : null}
       </div>
 
       {/* QC Fixed Footer Guide and Action Bar */}
@@ -653,6 +807,11 @@ export function ArtworkInspector({
             <span>
               <kbd>Space</kbd> {t('portal.production.resetView')}
             </span>
+            {hasSidebarContent ? (
+              <span>
+                <kbd>I</kbd> {t('portal.production.customerInputs')}
+              </span>
+            ) : null}
           </div>
 
           <div className={styles.inspectBottomRow}>
@@ -716,6 +875,6 @@ export function ArtworkInspector({
           onChange={(e) => setRejectNote(e.target.value)}
         />
       </Modal>
-    </Modal>
+    </DetailModal>
   )
 }

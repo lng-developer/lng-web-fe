@@ -2,9 +2,9 @@ import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AppstoreOutlined, LinkOutlined, SettingOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Card, Flex, Form, Input, InputNumber, Modal, Select, Switch, Tabs } from 'antd'
+import { Card, Flex, Form, Input, InputNumber, Select, Switch, Tabs } from 'antd'
 
-import { FormActions, useFeedbackToast, ZoomableImage } from '@/shared/ui'
+import { DetailModal, FormActions, useFeedbackToast, ZoomableImage } from '@/shared/ui'
 
 import { listProductTypeGroups } from '../../catalog/api/catalogApi'
 import {
@@ -338,10 +338,11 @@ export function VendorProductEditorModal({
   ]
 
   return (
-    <Modal
+    <DetailModal
       className={styles.editorDrawer}
       destroyOnClose
       open={open}
+      allowMaximize
       title={t(item ? 'vendors.editProductTitle' : 'vendors.createProductTitle')}
       width="min(1200px, 88vw)"
       style={{ top: 40 }}
@@ -366,6 +367,6 @@ export function VendorProductEditorModal({
       >
         <Tabs items={tabItems} defaultActiveKey="identity" />
       </Form>
-    </Modal>
+    </DetailModal>
   )
 }

@@ -78,6 +78,10 @@
     "copy": "Copy",
     "retry": "Retry",
     "noMatchingResults": "No matching results found",
+    "maximize": "Maximize",
+    "restore": "Restore",
+    "switchToDrawer": "Switch to side panel",
+    "switchToModal": "Switch to modal dialog",
     "table": {
       "viewDetails": "View details"
     }
@@ -520,7 +524,8 @@
       },
       "team": "Team",
       "department": "Department",
-      "unnamed": "Unnamed"
+      "unnamed": "Unnamed",
+      "financialStatus": "Financial status"
     },
     "metrics": {
       "revenue": "Revenue",
@@ -617,7 +622,8 @@
     },
     "adsEmployee": {
       "ranking": "Employee ranking",
-      "trend": "Employee trend"
+      "trend": "Employee trend",
+      "dailyTable": "Daily advertising performance"
     },
     "operations": {
       "orders": "Order items",
@@ -915,7 +921,15 @@
     "help": {
       "semanticSampleValue": "Enter the option value, not its label.",
       "semanticSampleLabel": "Enter an option label to test this rule.",
-      "recheckAutoMatch": "Re-run mapping and apply a confident vendor match."
+      "recheckAutoMatch": "Re-run mapping and apply a confident vendor match.",
+      "regexHelpTip": "Regex tip: Use (...) to capture the value you want to keep, and put $1 in Normalized value to extract it.",
+      "regexValuesHelp": "Enter regex pattern. Wrap the part you want to keep in (...). Example: ^size\\s+(.+)$",
+      "regexNormalizedHelp": "Use $1 to extract the value captured in (...), or enter a fixed value.",
+      "regexPresetsTitle": "Common Regex Presets:",
+      "presetRemoveSize": "Strip 'size ' prefix",
+      "presetRemovePack": "Strip '- Pack / Pcs' suffix",
+      "presetExtractInch": "Strip 'in / inch' units",
+      "presetExtractColor": "Extract base color (Black/White...)"
     },
     "states": {
       "ready": "Ready",
@@ -1271,7 +1285,20 @@
       "integrationAndData": "Integrations & Data",
       "integrationDesc": "Sales channels, payment gateways & listings operational",
       "otherIssuesLabel": "Other pending tasks:",
-      "viewCustomers": "View customers"
+      "viewCustomers": "View customers",
+      "cost": "Cost",
+      "channel": "Channel",
+      "marginHeader": "Margin",
+      "missingCostItemsAlert": "{{count}} items missing cost",
+      "revenueOverview": "Revenue overview",
+      "viewReports": "View reports",
+      "latestData": "Latest data: {{date}}",
+      "costAndFees": "Cost & fees",
+      "ordersCount": "{{count}} orders",
+      "missingCostNotice": "{{count}} items missing cost",
+      "profitMargin": "{{percent}}% margin",
+      "margin": "margin",
+      "avgOrderValue": "AOV"
     },
     "accessDenied": "You do not have permission to access operations dashboard.",
     "metrics": {
@@ -1452,7 +1479,29 @@
         "supportNote": "Need help? Contact IT Support at",
         "footerNotice": "All information can be updated anytime in HR Settings.",
         "submitCta": "Complete setup",
-        "changeAvatar": "Change photo"
+        "changeAvatar": "Change photo",
+        "employment": "Job & Contract",
+        "compensation": "Agreed Compensation",
+        "dependants": "Dependants",
+        "managedByHrTitle": "Employee records managed by HR",
+        "managedByHrDesc": "Role, department, contract type, and employment details are set and verified by the Human Resources department.",
+        "readOnlyBadge": "Read-only",
+        "compensationAgreedNotice": "Fixed salary and allowances based on the employment contract",
+        "hideAmount": "Hide amount",
+        "showAmount": "Show amount",
+        "totalAgreedPackage": "Total agreed compensation package",
+        "viewPayslipsTitle": "View monthly payslips",
+        "viewPayslipsDesc": "Track working days, overtime, KPI bonuses, insurance and tax deductions, and take-home net pay.",
+        "goToPayroll": "Go to Payslips",
+        "fullNameNote": "Full legal name · Contact HR to adjust",
+        "dependantsTitle": "Family tax deduction dependants",
+        "dependantsDesc": "Register eligible dependants (children, parents) for family circumstance personal income tax relief.",
+        "addDependant": "Add dependant",
+        "noDependants": "No dependants registered yet.",
+        "dependantNamePlaceholder": "Dependant full name",
+        "dependantDob": "Date of birth",
+        "dependantGender": "Gender",
+        "dependantRelation": "Relationship"
       }
     },
     "accessExplorer": {
@@ -3750,7 +3799,13 @@
       "size": "Size",
       "color": "Color",
       "backgroundColor": "Background",
-      "customerInputs": "customer inputs",
+      "customerInputs": "Customer inputs",
+      "hideCustomerInputs": "Hide inputs",
+      "showCustomerInputs": "Show inputs",
+      "copy": "Copy",
+      "copyAll": "Copy all",
+      "copied": "Copied",
+      "noCustomizationInputs": "No customization inputs",
       "customerArtwork": "Customer artwork",
       "customizationArtwork": "Customization artwork",
       "productInput": "Product & input",
@@ -4502,7 +4557,12 @@
         "CONNECTED": "Connected",
         "DISCONNECTED": "Disconnected"
       },
-      "testConnection": "Test connection"
+      "testConnection": "Test connection",
+      "baseCost": "Base cost",
+      "cheapest": "Cheapest",
+      "cheapestVendor": "Cheapest vendor",
+      "priceRange": "Price range",
+      "variantsCount": "{{count}} variants"
     },
     "extensions": {
       "metrics": {
@@ -5135,7 +5195,8 @@
     "activeNow": "Active now",
     "noSearchResults": "No results found",
     "startConversation": "Start a conversation",
-    "deletedUser": "Deleted user"
+    "deletedUser": "Deleted user",
+    "members": "members"
   },
   "systemDashboard": {
     "title": "System dashboard",
@@ -5195,5 +5256,14 @@
     "defaultAction": "Action completed",
     "actionFailed": "Action failed",
     "actionSucceeded": "Action succeeded"
+  },
+  "notificationAlerts": {
+    "newMessageFrom": "New message from {{sender}}",
+    "newMessage": "New message",
+    "importantNotification": "Important notification",
+    "openChat": "Open chat",
+    "viewDetail": "View details",
+    "titleFlashMessage": "🔔 New message!",
+    "titleFlashNotification": "🔔 New notification!"
   }
 }

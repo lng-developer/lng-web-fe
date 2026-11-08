@@ -12,8 +12,10 @@ import {
   InputNumber,
   Modal,
   Select,
+  Space,
   Switch,
   Table,
+  Tag,
   Tooltip,
 } from 'antd'
 
@@ -32,6 +34,16 @@ import type { ProductTypeGroup, ProductTypeGroupInput } from '../api/catalogApi'
 import { useProductTypesQuery } from '../hooks'
 
 const PAGE_SIZE = DEFAULT_PAGE_SIZE
+
+function formatVendorPrice(amount?: number | null, currency = 'USD') {
+  if (amount == null || amount <= 0) return '—'
+  return new Intl.NumberFormat(undefined, {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount / 100)
+}
 
 function VendorProductAssignmentModal({
   productTypeGroup,
@@ -131,17 +143,40 @@ function ProductTypeVendorProducts({
         ],
       }),
   })
+
+  const items = useMemo(() => products.data?.items ?? [], [products.data?.items])
+
+  const pricingStats = useMemo(() => {
+    const activeWithCost = items.filter(
+      (p) => p.status === 'ACTIVE' && p.baseCostAmount != null && p.baseCostAmount > 0,
+    )
+    if (!activeWithCost.length) return null
+
+    const minCost = Math.min(...activeWithCost.map((p) => p.baseCostAmount!))
+    const maxCost = Math.max(...activeWithCost.map((p) => p.baseCostAmount!))
+    const cheapest = activeWithCost.filter((p) => p.baseCostAmount === minCost)
+    const cheapestVendorNames = [...new Set(cheapest.map((p) => p.vendor?.name).filter(Boolean))]
+    const currency = activeWithCost[0]?.currency || 'USD'
+
+    return {
+      minCost,
+      maxCost,
+      currency,
+      cheapestVendorNames,
+    }
+  }, [items])
+
   const columns: TableColumnsType<VendorProduct> = useMemo(
     () => [
       {
         title: t('portal.vendors.vendor'),
-        width: 200,
+        width: 180,
         render: (_, product) => <TableTextCell value={product.vendor?.name} fallback="-" />,
       },
       {
         title: t('portal.vendors.code'),
         dataIndex: 'code',
-        width: 180,
+        width: 170,
         render: (value) => <TableTextCell code value={value} />,
       },
       {
@@ -153,13 +188,78 @@ function ProductTypeVendorProducts({
       {
         title: t('portal.vendors.externalProductId'),
         dataIndex: 'externalProductId',
-        width: 160,
+        width: 150,
         render: (value) => <TableTextCell value={value} fallback="-" />,
+      },
+      {
+        title: t('portal.vendors.baseCost', { defaultValue: 'Base cost' }),
+        dataIndex: 'baseCostAmount',
+        width: 160,
+        sorter: (a, b) => (a.baseCostAmount ?? 0) - (b.baseCostAmount ?? 0),
+        defaultSortOrder: 'ascend',
+        render: (value: number | undefined, product) => {
+          const hasCost = value != null && value > 0
+          if (!hasCost) return <TableTextCell fallback="—" />
+
+          const isCheapest =
+            product.status === 'ACTIVE' &&
+            pricingStats?.minCost != null &&
+            value === pricingStats.minCost
+
+          const priceStr = formatVendorPrice(value, product.currency)
+          const tooltipContent = (
+            <div style={{ fontSize: 12, lineHeight: 1.4 }}>
+              <div>
+                <strong>{t('portal.vendors.baseCost', { defaultValue: 'Base cost' })}:</strong>{' '}
+                {priceStr} {product.currency || 'USD'}
+              </div>
+              {product.costCenterCount > 0 ? (
+                <div style={{ color: 'var(--ant-color-text-secondary)', marginTop: 2 }}>
+                  {t('portal.vendors.variantsCount', {
+                    count: product.costCenterCount,
+                    defaultValue: `${product.costCenterCount} variants`,
+                  })}
+                </div>
+              ) : null}
+            </div>
+          )
+
+          return (
+            <Tooltip title={tooltipContent}>
+              <Flex align="center" gap={6} style={{ cursor: 'default' }}>
+                <span
+                  style={{
+                    fontWeight: isCheapest ? 700 : 500,
+                    color: isCheapest ? 'var(--ant-color-success, #16a34a)' : 'inherit',
+                    fontSize: 13,
+                  }}
+                >
+                  {priceStr}
+                </span>
+                {isCheapest ? (
+                  <Tag
+                    color="success"
+                    style={{
+                      margin: 0,
+                      fontWeight: 600,
+                      fontSize: 11,
+                      padding: '0 6px',
+                      borderRadius: 4,
+                      lineHeight: '18px',
+                    }}
+                  >
+                    🏆 {t('portal.vendors.cheapest', { defaultValue: 'Rẻ nhất' })}
+                  </Tag>
+                ) : null}
+              </Flex>
+            </Tooltip>
+          )
+        },
       },
       {
         title: t('portal.vendors.statusLabel'),
         dataIndex: 'status',
-        width: 120,
+        width: 110,
         align: 'center',
         render: (value, product) => {
           const active = value === 'ACTIVE'
@@ -191,17 +291,72 @@ function ProductTypeVendorProducts({
         },
       },
     ],
-    [canCreate, t, updateStatus],
+    [canCreate, pricingStats, t, updateStatus],
   )
 
   if (products.isError) return <div role="alert">{t('portal.vendors.branchUnavailable')}</div>
 
   return (
     <>
-      {canCreate ? (
-        <Flex justify="flex-end" style={{ marginBottom: 8 }}>
+      <Flex
+        align="center"
+        justify="space-between"
+        wrap="wrap"
+        gap={8}
+        style={{
+          marginBottom: 10,
+          padding: '6px 12px',
+          background: pricingStats
+            ? 'var(--ant-color-success-bg, #f6ffed)'
+            : 'var(--ant-color-fill-quaternary, #f8fafc)',
+          border: `1px solid ${
+            pricingStats
+              ? 'var(--ant-color-success-border, #b7eb8f)'
+              : 'var(--ant-color-border-secondary, #e2e8f0)'
+          }`,
+          borderRadius: 6,
+        }}
+      >
+        {pricingStats ? (
+          <Space size={8} wrap align="center">
+            <span
+              style={{
+                fontWeight: 600,
+                color: 'var(--ant-color-success-text, #135200)',
+                fontSize: 12.5,
+              }}
+            >
+              🏆 {t('portal.vendors.cheapestVendor', { defaultValue: 'Vendor rẻ nhất' })}:
+            </span>
+            {pricingStats.cheapestVendorNames.map((name) => (
+              <Tag key={name} color="success" style={{ fontWeight: 600, margin: 0, fontSize: 12 }}>
+                {name}
+              </Tag>
+            ))}
+            <span
+              style={{ fontWeight: 700, color: 'var(--ant-color-success, #389e0d)', fontSize: 13 }}
+            >
+              {formatVendorPrice(pricingStats.minCost, pricingStats.currency)}
+            </span>
+            {pricingStats.maxCost > pricingStats.minCost ? (
+              <span style={{ color: 'var(--ant-color-text-secondary)', fontSize: 12 }}>
+                ({t('portal.vendors.priceRange', { defaultValue: 'Khoảng giá' })}:{' '}
+                {formatVendorPrice(pricingStats.minCost, pricingStats.currency)} ~{' '}
+                {formatVendorPrice(pricingStats.maxCost, pricingStats.currency)})
+              </span>
+            ) : null}
+          </Space>
+        ) : (
+          <span style={{ color: 'var(--ant-color-text-secondary)', fontSize: 12.5 }}>
+            {t('portal.catalog.master.vendorProductsForProductType', {
+              name: productTypeGroup.name,
+            })}
+          </span>
+        )}
+        {canCreate ? (
           <Button
-            type="link"
+            type="primary"
+            size="small"
             icon={<PlusOutlined />}
             aria-label={t('portal.catalog.master.addVendorProductFor', {
               name: productTypeGroup.name,
@@ -210,11 +365,11 @@ function ProductTypeVendorProducts({
           >
             {t('portal.vendors.addProduct')}
           </Button>
-        </Flex>
-      ) : null}
+        ) : null}
+      </Flex>
       <Table
         columns={columns}
-        dataSource={products.data?.items ?? []}
+        dataSource={items}
         loading={products.isLoading}
         locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
         pagination={false}

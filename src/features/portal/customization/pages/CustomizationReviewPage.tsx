@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate, useRouteLoaderData } from 'react-router-dom'
 import { CheckOutlined, ReloadOutlined, ShopOutlined } from '@ant-design/icons'
 import type { TableColumnsType } from 'antd'
-import { Button, Descriptions, Input, Modal, Select, Space, Typography } from 'antd'
+import { Button, Descriptions, Input, Select, Space, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
@@ -12,6 +12,7 @@ import {
   CopyableOrderId,
   CopyableSku,
   DataFreshness,
+  DetailModal,
   FilterBar,
   MetricCard,
   SearchInput,
@@ -233,9 +234,11 @@ export const CustomizationReviewPage = () => {
           }}
         />
       </SectionCard>
-      <Modal
+      <DetailModal
         width={920}
         open={Boolean(selected)}
+        allowModeToggle
+        allowMaximize
         title={t('customization.modal.title')}
         onCancel={() => setSelected(undefined)}
         footer={null}
@@ -351,7 +354,7 @@ export const CustomizationReviewPage = () => {
             </Button>
           </Space>
         ) : null}
-      </Modal>
+      </DetailModal>
     </section>
   )
 }

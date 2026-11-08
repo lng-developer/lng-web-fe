@@ -1,28 +1,14 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
-import {
-  LockOutlined,
-  ReloadOutlined,
-  SafetyCertificateOutlined,
-  UserOutlined,
-} from '@ant-design/icons'
-import {
-  Avatar,
-  Button,
-  DatePicker,
-  Descriptions,
-  Form,
-  Input,
-  InputNumber,
-  Space,
-  Typography,
-} from 'antd'
+import { LockOutlined, ReloadOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
+import { Button, DatePicker, Descriptions, Form, Input, InputNumber, Space, Typography } from 'antd'
 import dayjs from 'dayjs'
 
 import { AccessDeniedResult } from '@/shared/auth/AccessDeniedResult'
 import { hasAnyPermission } from '@/shared/auth/permissions'
 import {
+  EmployeeAvatar,
   FeedbackAlert,
   FormattedDateTime,
   LoadingState,
@@ -81,7 +67,6 @@ export function AccountDetailPage() {
   }
 
   const { account } = data
-  const initials = account.email ? account.email.charAt(0).toUpperCase() : 'U'
 
   return (
     <section className={styles.page}>
@@ -107,13 +92,7 @@ export function AccountDetailPage() {
 
       {/* Profile Hero */}
       <div className={styles.profileHero}>
-        <Avatar
-          size={56}
-          style={{ backgroundColor: 'var(--ant-color-primary)', flexShrink: 0 }}
-          icon={<UserOutlined />}
-        >
-          {initials}
-        </Avatar>
+        <EmployeeAvatar size={56} name={account.email} />
         <div className={styles.profileInfo}>
           <Typography.Text className={styles.profileEmail}>{account.email}</Typography.Text>
           <div className={styles.profileMeta}>

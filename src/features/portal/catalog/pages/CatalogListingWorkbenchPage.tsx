@@ -30,6 +30,7 @@ import {
   MetricCard,
   StatusTag,
   useFeedbackToast,
+  DetailModal,
 } from '@/shared/ui'
 
 import { getListing, type Listing, type PsdPriority } from '../api/catalogApi'
@@ -586,20 +587,28 @@ export function CatalogListingWorkbenchPage(props: {
         onClose={() => setEditing(undefined)}
         onSubmit={(input) => save.mutate(input)}
       />
-      <Modal
+      <DetailModal
         open={Boolean(previewing)}
         footer={null}
         title={previewing?.title}
-        onCancel={() => setPreviewing(undefined)}
+        width="min(900px, 85vw)"
+        allowModeToggle={false}
+        allowMaximize
+        onClose={() => setPreviewing(undefined)}
       >
         {previewing?.previewImageUrl || previewing?.productImageUrl ? (
           <img
             src={previewing.previewImageUrl || previewing.productImageUrl || undefined}
             alt={previewing.title}
-            style={{ display: 'block', width: '100%' }}
+            style={{
+              display: 'block',
+              width: '100%',
+              maxHeight: 'calc(80vh - 100px)',
+              objectFit: 'contain',
+            }}
           />
         ) : null}
-      </Modal>
+      </DetailModal>
       <Modal
         open={Boolean(requestingPsd)}
         title={t('portal.catalog.psd.request')}

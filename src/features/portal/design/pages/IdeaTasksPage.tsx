@@ -38,7 +38,7 @@ import { downloadMediaAsset } from '@/shared/media'
 import {
   DateRangePicker,
   type DateRangeValue,
-  EmployeeAvatar,
+  EmployeeIdentity,
   FileUpload,
   FormattedDateTime,
   StatusTag,
@@ -528,14 +528,15 @@ export function IdeaTasksPage() {
         width: 160,
         render: (_, record) =>
           record.assignedDesigner ? (
-            <Space size={6}>
-              <EmployeeAvatar
-                name={record.assignedDesigner.fullName || 'Designer'}
-                avatarUrl={record.assignedDesigner.avatarUrl}
-                size="small"
-              />
-              <Text>{record.assignedDesigner.fullName || '-'}</Text>
-            </Space>
+            <EmployeeIdentity
+              size="small"
+              mode="code"
+              name={record.assignedDesigner.fullName}
+              employeeCode={
+                (record.assignedDesigner as { employeeCode?: string | null })?.employeeCode
+              }
+              avatarUrl={record.assignedDesigner.avatarUrl}
+            />
           ) : (
             <Text type="secondary">
               {t('portal.design.unassigned', { defaultValue: 'Unassigned' })}

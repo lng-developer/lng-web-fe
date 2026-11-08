@@ -7,7 +7,6 @@ import {
   Form,
   Input,
   InputNumber,
-  Modal,
   Radio,
   Select,
   Skeleton,
@@ -17,7 +16,13 @@ import {
 
 import { loadDepartments, loadTeams } from '@/features/organization/api/organizationApi'
 import { getPermissions } from '@/shared/auth/session'
-import { DateTimePicker, FeedbackAlert, FormActions, useFeedbackToast } from '@/shared/ui'
+import {
+  DetailModal,
+  DateTimePicker,
+  FeedbackAlert,
+  FormActions,
+  useFeedbackToast,
+} from '@/shared/ui'
 
 import {
   type EmployeeProfile,
@@ -612,14 +617,15 @@ export function StaffEditorModal({
     : [['identity', 'personal'], ['employment', 'contract', 'dependants'], ['compensation']]
 
   return (
-    <Modal
+    <DetailModal
       open
+      allowMaximize
       title={isCreate ? t('hr.addStaff') : readOnly ? t('hr.profile') : t('hr.editProfile')}
       width={isCreate ? 1180 : 'calc(100vw - 32px)'}
       style={isCreate ? undefined : { maxWidth: 1700 }}
       wrapClassName={`${styles.staffEditorModal} ${isCreate ? styles.staffCreateModal : ''}`}
       footer={null}
-      afterOpenChange={(open) => open && setContentReady(true)}
+      afterOpenChange={(isOpen: boolean) => isOpen && setContentReady(true)}
       onCancel={onClose}
     >
       {!contentReady || loading ? (
@@ -661,6 +667,6 @@ export function StaffEditorModal({
           </Form.Item>
         </Form>
       )}
-    </Modal>
+    </DetailModal>
   )
 }

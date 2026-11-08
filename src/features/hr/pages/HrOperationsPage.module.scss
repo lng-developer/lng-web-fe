@@ -299,10 +299,82 @@
 }
 
 .payrollWorkspace {
-  display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(360px, 0.75fr);
+  display: flex;
+  flex-direction: column;
   gap: 16px;
-  align-items: start;
+  width: 100%;
+}
+
+.payrollTabsContainer {
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+  background: var(--ant-color-bg-container);
+  box-shadow: 0 4px 16px rgb(15 23 42 / 4%);
+  padding: 16px 20px 20px;
+}
+
+.payrollSubToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.payrollFilters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.payrollStatChips {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.payrollStatChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  border: 1px solid var(--ant-color-border-secondary);
+  background: var(--ant-color-fill-quaternary);
+
+  span {
+    color: var(--ant-color-text-secondary);
+  }
+
+  strong {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.payrollStatChipSuccess {
+  border-color: color-mix(in srgb, var(--ant-color-success) 35%, var(--ant-color-border));
+  background: color-mix(in srgb, var(--ant-color-success-bg) 60%, var(--ant-color-bg-container));
+
+  strong {
+    color: var(--ant-color-success);
+  }
+}
+
+.payrollStatChipWarning {
+  border-color: color-mix(in srgb, var(--ant-color-warning) 35%, var(--ant-color-border));
+  background: color-mix(in srgb, var(--ant-color-warning-bg) 60%, var(--ant-color-bg-container));
+
+  strong {
+    color: var(--ant-color-warning);
+  }
+}
+
+.payrollTableRowClickable {
+  cursor: pointer;
 }
 
 .payrollPrimary,

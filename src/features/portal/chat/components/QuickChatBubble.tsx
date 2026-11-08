@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { CloseOutlined, TeamOutlined, UserOutlined } from '@ant-design/icons'
+import { CloseOutlined, TeamOutlined } from '@ant-design/icons'
 import { Avatar, Badge, Tooltip } from 'antd'
 
 import type { ChatConversation, ChatParticipant } from '@/features/portal/chat/api/chatApi'
 import { conversationTitle } from './chatViewUtils'
+import { EmployeeAvatar } from '@/shared/ui'
 
 import styles from './ChatShell.module.scss'
 
@@ -36,6 +37,9 @@ export function QuickChatBubble({
     ? conversationTitle(conversation, participantById, currentAccountId)
     : chatLabel
 
+  const otherId = conversation?.participantAccountIds?.find((id) => id !== currentAccountId)
+  const otherParticipant = otherId ? participantById.get(otherId) : undefined
+
   const displayCount = unreadCount || (isUnread ? 1 : 0)
 
   return (
@@ -66,11 +70,16 @@ export function QuickChatBubble({
             size="small"
             offset={[-4, 4]}
           >
-            <Avatar
-              size={48}
-              icon={conversation?.type === 'DIRECT' ? <UserOutlined /> : <TeamOutlined />}
-              className={styles.chatBubbleAvatar}
-            />
+            {conversation?.type === 'DIRECT' ? (
+              <EmployeeAvatar
+                size={48}
+                name={title || ''}
+                avatarUrl={otherParticipant?.avatarUrl}
+                className={styles.chatBubbleAvatar}
+              />
+            ) : (
+              <Avatar size={48} icon={<TeamOutlined />} className={styles.chatBubbleAvatar} />
+            )}
           </Badge>
         </button>
       </Tooltip>

@@ -18,7 +18,13 @@ import {
 } from '@/features/portal/reports/api/reportApi'
 import { getPermissions } from '@/shared/auth/session'
 
-import { formatCompactNumber, formatDashboardDate, numberOf } from './operationsDashboardFormatters'
+import {
+  formatCompactNumber,
+  formatCurrency,
+  formatDashboardDate,
+  formatSalesChannel,
+  numberOf,
+} from './operationsDashboardFormatters'
 
 export type ChartDatum = { label: string; value: number }
 
@@ -31,11 +37,16 @@ export type TimelinePoint = {
 }
 
 export type CashFlowRow = {
+  id: string
   date: string
   displayDate: string
+  channel: string | null
+  rawChannel: string | null
+  itemCount: number
   revenueAmount: number
   costAmount: number | null
   grossProfitAmount: number | null
+  grossMarginPercent: number | null
   missingCostCount: number
   currency: string | null
 }
@@ -214,19 +225,34 @@ export function useOperationsDashboard(
     return []
   }, [finance.data])
 
-  const cashFlowRows: CashFlowRow[] = useMemo(
-    () =>
-      (finance.data ?? []).map((row) => ({
+  const cashFlowRows: CashFlowRow[] = useMemo(() => {
+    if (!finance.data || finance.data.length === 0) return []
+
+    return finance.data.map((row, index) => {
+      const rowProfit = row.netProfitAmount ?? row.grossProfitAmount ?? null
+      const marginPercent =
+        row.grossMarginBps != null
+          ? Number((row.grossMarginBps / 100).toFixed(1))
+          : rowProfit !== null && row.revenueAmount > 0
+            ? Number(((rowProfit / row.revenueAmount) * 100).toFixed(1))
+            : null
+
+      return {
+        id: `${row.date}-${row.salesChannelCode || 'channel'}-${index}`,
         date: row.date,
         displayDate: dayjs(row.date).format('D MMM'),
+        channel: row.salesChannelCode ? formatSalesChannel(row.salesChannelCode) : null,
+        rawChannel: row.salesChannelCode ?? null,
+        itemCount: row.itemCount || 0,
         revenueAmount: row.revenueAmount,
         costAmount: row.totalCostAmount ?? null,
-        grossProfitAmount: row.netProfitAmount ?? row.grossProfitAmount ?? null,
+        grossProfitAmount: rowProfit,
+        grossMarginPercent: marginPercent,
         missingCostCount: row.missingCostCount,
         currency: row.currency,
-      })),
-    [finance.data],
-  )
+      }
+    })
+  }, [finance.data])
 
   // Channel distribution for Donut Chart (100% real data)
   const channelBreakdown: ChannelDatum[] = useMemo(() => {
@@ -241,12 +267,16 @@ export function useOperationsDashboard(
     const totalVal = Object.values(rawChannels).reduce((s, v) => s + v, 0)
     if (totalVal > 0) {
       const palette = ['#ff7a1a', '#2563eb', '#10b981', '#f59e0b', '#8b5cf6']
-      return Object.entries(rawChannels).map(([k, val], i) => ({
-        name: k,
-        value: val >= 100 ? Math.round(val / 100) : val,
-        percent: Math.round((val / totalVal) * 100),
-        color: palette[i % palette.length],
-      }))
+      return Object.entries(rawChannels).map(([k, val], i) => {
+        const cleanName =
+          k === 'AMAZON' ? 'Amazon' : k === 'ETSY' ? 'Etsy' : k.charAt(0) + k.slice(1).toLowerCase()
+        return {
+          name: cleanName,
+          value: val >= 100 ? Math.round(val / 100) : val,
+          percent: Math.round((val / totalVal) * 100),
+          color: palette[i % palette.length],
+        }
+      })
     }
 
     return []
@@ -274,11 +304,38 @@ export function useOperationsDashboard(
     })
   }, [allRecentOrders, searchQuery, selectedStatus])
 
-  const revenueFormatted = new Intl.NumberFormat(undefined, {
-    style: 'currency',
-    currency: finance.data?.[0]?.currency || 'USD',
-    maximumFractionDigits: 0,
-  }).format(financeRevenue / 100)
+  const currency = finance.data?.[0]?.currency || 'USD'
+  const revenueFormatted = formatCurrency(financeRevenue / 100, currency)
+
+  const hasCostData = (finance.data ?? []).some(
+    (row) => row.totalCostAmount != null || (row.baseCostAmount != null && row.baseCostAmount > 0),
+  )
+  const totalCostAmount = hasCostData
+    ? (finance.data ?? []).reduce(
+        (sum, row) => sum + (row.totalCostAmount ?? row.baseCostAmount ?? 0),
+        0,
+      )
+    : null
+  const totalCostFormatted =
+    totalCostAmount != null ? formatCurrency(totalCostAmount / 100, currency) : '—'
+
+  const hasGrossProfit = (finance.data ?? []).some((row) => row.grossProfitAmount != null)
+  const grossProfitAmount = hasGrossProfit
+    ? (finance.data ?? []).reduce((sum, row) => sum + (row.grossProfitAmount ?? 0), 0)
+    : null
+  const grossProfitFormatted =
+    grossProfitAmount != null ? formatCurrency(grossProfitAmount / 100, currency) : '—'
+
+  const grossMarginPercent =
+    financeRevenue > 0 && grossProfitAmount != null
+      ? Math.round((grossProfitAmount / financeRevenue) * 100)
+      : null
+
+  const avgOrderValueFormatted =
+    displayedOrderTotal > 0 && financeRevenue > 0
+      ? formatCurrency(Math.round(financeRevenue / displayedOrderTotal / 100), currency)
+      : '—'
+
   const latestDailyPoint = timelinePoints[timelinePoints.length - 1]
   const latestDataLabel = latestDailyPoint?.displayDate || null
   const missingCostItemCount = (finance.data ?? []).reduce(
@@ -353,7 +410,12 @@ export function useOperationsDashboard(
       orderBars,
       orderStatus,
       listingTotal,
+      currency,
       revenueFormatted,
+      totalCostFormatted,
+      grossProfitFormatted,
+      grossMarginPercent,
+      avgOrderValueFormatted,
       latestDataLabel,
       missingCostItemCount,
       newCustomerCount: rawCustomerCount,

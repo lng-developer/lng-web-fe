@@ -20,7 +20,6 @@ import {
   Form,
   Input,
   InputNumber,
-  Modal,
   Select,
   Space,
   Switch,
@@ -31,7 +30,7 @@ import {
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { printMethodSelectOptions } from '@/shared/constants/printMethods'
-import { FormActions, StatusTag, useFeedbackToast } from '@/shared/ui'
+import { DetailModal, FormActions, StatusTag, useFeedbackToast } from '@/shared/ui'
 
 import {
   createVendorCostCenter,
@@ -940,10 +939,11 @@ export function VendorCostCenterEditorModal({
   }
 
   return (
-    <Modal
+    <DetailModal
       className={styles.editorDrawer}
       destroyOnClose
       open={open}
+      allowMaximize
       title={t(item ? 'vendors.editCostCenterTitle' : 'vendors.createCostCenterTitle')}
       width="min(1280px, 90vw)"
       style={{ top: 40 }}
@@ -951,6 +951,6 @@ export function VendorCostCenterEditorModal({
       footer={formActions}
     >
       {formContent}
-    </Modal>
+    </DetailModal>
   )
 }

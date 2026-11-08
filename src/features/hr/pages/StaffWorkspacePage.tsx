@@ -9,7 +9,6 @@ import {
   LoginOutlined,
   LogoutOutlined,
   RestOutlined,
-  UserOutlined,
   WarningOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -17,6 +16,7 @@ import { Avatar, Button, Empty, Modal, Space, Typography } from 'antd'
 import dayjs from 'dayjs'
 
 import {
+  EmployeeAvatar,
   FeedbackAlert,
   MetricCard,
   MonthPicker,
@@ -165,7 +165,10 @@ export function StaffWorkspacePage({ view = 'dashboard' }: { view?: 'dashboard' 
         <>
           <div className={styles.toolbar}>
             <Space>
-              <Avatar size={48} icon={<UserOutlined />} />
+              <EmployeeAvatar
+                size={48}
+                name={data?.profile.fullName || data?.profile.employeeCode}
+              />
               <div>
                 <Typography.Title level={4}>{data?.profile.fullName}</Typography.Title>
                 <Typography.Text type="secondary">

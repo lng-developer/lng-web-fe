@@ -9,7 +9,7 @@ import {
   SafetyOutlined,
 } from '@ant-design/icons'
 import type { TableColumnsType } from 'antd'
-import { Button, Descriptions, Modal, Result, Select, Space, Typography } from 'antd'
+import { Button, Descriptions, Result, Select, Space, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { AccessDeniedResult } from '@/shared/auth/AccessDeniedResult'
@@ -25,6 +25,7 @@ import {
   SearchInput,
   StatusTag,
   TableTextCell,
+  DetailModal,
 } from '@/shared/ui'
 
 import { type AuditEvent, type AuditFilters } from '../api/auditApi'
@@ -316,12 +317,13 @@ export function AuditLogPage() {
         emptyText={t('audit.empty')}
       />
 
-      <Modal
+      <DetailModal
         open={Boolean(selected)}
-        width={900}
+        width="min(1000px, 90vw)"
+        drawerWidth="min(720px, 60vw)"
         title={t('audit.detailTitle')}
         footer={null}
-        onCancel={() => setSelected(undefined)}
+        onClose={() => setSelected(undefined)}
       >
         {detail.isLoading ? (
           <Result status="info" title={t('audit.loadingDetail')} />
@@ -388,7 +390,7 @@ export function AuditLogPage() {
             </pre>
           </>
         ) : null}
-      </Modal>
+      </DetailModal>
     </section>
   )
 }

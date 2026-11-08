@@ -1,6 +1,7 @@
+import { DetailModal } from '@/shared/ui'
 import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Collapse, Form, Input, InputNumber, Modal, Select, Space, Typography } from 'antd'
+import { Button, Collapse, Form, Input, InputNumber, Select, Space, Typography } from 'antd'
 
 import type { CreateListingInput, Listing, UpdateListingInput } from '../api/catalogApi'
 import styles from './CatalogListingEditorModal.module.scss'
@@ -125,9 +126,10 @@ export function CatalogListingEditorModal({
   )
 
   return (
-    <Modal
+    <DetailModal
       destroyOnClose
       open={open}
+      allowMaximize
       width="min(1280px, 90vw)"
       style={{ top: 40 }}
       className={styles.modal}
@@ -248,6 +250,6 @@ export function CatalogListingEditorModal({
           ]}
         />
       </Form>
-    </Modal>
+    </DetailModal>
   )
 }

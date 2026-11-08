@@ -78,6 +78,10 @@
     "copy": "Sao chép",
     "retry": "Thử lại",
     "noMatchingResults": "Không tìm thấy kết quả phù hợp",
+    "maximize": "Phóng to",
+    "restore": "Thu nhỏ",
+    "switchToDrawer": "Chuyển sang bảng bên phải",
+    "switchToModal": "Chuyển sang hộp thoại nổi",
     "table": {
       "viewDetails": "Xem chi tiết"
     }
@@ -520,6 +524,7 @@
       },
       "team": "Nhóm",
       "department": "Phòng ban",
+      "financialStatus": "Trạng thái tài chính",
       "unnamed": "Chưa đặt tên"
     },
     "metrics": {
@@ -617,7 +622,8 @@
     },
     "adsEmployee": {
       "ranking": "Xếp hạng nhân viên",
-      "trend": "Xu hướng nhân viên"
+      "trend": "Xu hướng nhân viên",
+      "dailyTable": "Báo cáo quảng cáo theo ngày"
     },
     "operations": {
       "orders": "Sản phẩm trong đơn",
@@ -915,7 +921,15 @@
     "help": {
       "semanticSampleValue": "Nhập giá trị thực tế của option, không nhập nhãn.",
       "semanticSampleLabel": "Nhập nhãn option để kiểm tra quy tắc này.",
-      "recheckAutoMatch": "Chạy lại ánh xạ và áp dụng ứng viên vendor đủ tin cậy."
+      "recheckAutoMatch": "Chạy lại ánh xạ và áp dụng ứng viên vendor đủ tin cậy.",
+      "regexHelpTip": "Mẹo Regex: Dùng cặp ngoặc (...) để nhốt phần muốn giữ lại, và điền $1 vào ô Giá trị chuẩn hóa để trích xuất ra.",
+      "regexValuesHelp": "Nhập biểu thức chính quy. Đặt phần muốn lấy trong (...). Ví dụ: ^size\\s+(.+)$",
+      "regexNormalizedHelp": "Dùng $1 để lấy giá trị được giữ trong (...), hoặc gõ một giá trị cố định.",
+      "regexPresetsTitle": "Mẫu Regex thông dụng:",
+      "presetRemoveSize": "Xóa chữ 'size ' ở đầu",
+      "presetRemovePack": "Xóa đuôi '- Pack / Pcs'",
+      "presetExtractInch": "Bỏ đơn vị đo 'in / inch'",
+      "presetExtractColor": "Lọc màu cơ bản (Black/White...)"
     },
     "states": {
       "ready": "Sẵn sàng",
@@ -1234,6 +1248,19 @@
       "grossProfit": "Lợi nhuận gộp",
       "revenueByChannel": "Doanh thu theo kênh",
       "revenueAndProfit": "Doanh thu & Lợi nhuận",
+      "cost": "Chi phí",
+      "channel": "Kênh",
+      "marginHeader": "Biên LN",
+      "missingCostItemsAlert": "{{count}} order items thiếu giá vốn",
+      "revenueOverview": "Tổng quan doanh thu",
+      "viewReports": "Xem báo cáo",
+      "latestData": "Dữ liệu mới nhất: {{date}}",
+      "costAndFees": "Giá vốn & phí",
+      "ordersCount": "{{count}} đơn",
+      "missingCostNotice": "{{count}} mục thiếu giá vốn",
+      "profitMargin": "{{percent}}% biên LN",
+      "margin": "biên LN",
+      "avgOrderValue": "AOV",
       "addProduct": "Thêm sản phẩm",
       "salesByChannel": "Doanh thu theo sàn",
       "targetTrendDesc": "{{approved}} đã duyệt trên {{total}} listing",
@@ -1452,7 +1479,29 @@
         "supportNote": "Cần hỗ trợ? Liên hệ bộ phận IT qua",
         "footerNotice": "Bạn có thể chỉnh sửa lại thông tin này bất kỳ lúc nào trong Cài đặt hồ sơ.",
         "submitCta": "Hoàn tất thiết lập",
-        "changeAvatar": "Đổi ảnh đại diện"
+        "changeAvatar": "Đổi ảnh đại diện",
+        "employment": "Công việc & Hợp đồng",
+        "compensation": "Lương & Phụ cấp thỏa thuận",
+        "dependants": "Người phụ thuộc",
+        "managedByHrTitle": "Thông tin nhân sự do Công ty & HR quản trị",
+        "managedByHrDesc": "Các thông tin về chức vụ, phòng ban, loại hình nhân sự và hợp đồng lao động do phòng Nhân sự thiết lập và phê duyệt theo hồ sơ.",
+        "readOnlyBadge": "Chỉ xem",
+        "compensationAgreedNotice": "Mức lương và phụ cấp cố định theo thỏa thuận trong hợp đồng lao động",
+        "hideAmount": "Ẩn số tiền",
+        "showAmount": "Hiện số tiền",
+        "totalAgreedPackage": "Tổng thu nhập thỏa thuận cố định",
+        "viewPayslipsTitle": "Xem phiếu lương chi tiết từng tháng",
+        "viewPayslipsDesc": "Theo dõi ngày công thực tế, làm thêm giờ OT, thưởng KPI, trích trừ bảo hiểm, thuế TNCN và số tiền thực nhận Net.",
+        "goToPayroll": "Đi đến Phiếu lương",
+        "fullNameNote": "Họ tên theo giấy tờ pháp lý · Liên hệ HR để điều chỉnh",
+        "dependantsTitle": "Người phụ thuộc giảm trừ gia cảnh",
+        "dependantsDesc": "Đăng ký danh sách người phụ thuộc (con cái, cha mẹ) để làm thủ tục giảm trừ gia cảnh khi quyết toán thuế TNCN.",
+        "addDependant": "Thêm người phụ thuộc",
+        "noDependants": "Chưa có người phụ thuộc nào được đăng ký.",
+        "dependantNamePlaceholder": "Họ và tên người phụ thuộc",
+        "dependantDob": "Ngày sinh",
+        "dependantGender": "Giới tính",
+        "dependantRelation": "Mối quan hệ"
       }
     },
     "accessExplorer": {
@@ -3751,7 +3800,13 @@
       "size": "Kích thước",
       "color": "Màu sắc",
       "backgroundColor": "Màu nền",
-      "customerInputs": "dữ liệu tùy chỉnh",
+      "customerInputs": "Dữ liệu tùy biến",
+      "hideCustomerInputs": "Ẩn dữ liệu",
+      "showCustomerInputs": "Hiện dữ liệu",
+      "copy": "Sao chép",
+      "copyAll": "Sao chép tất cả",
+      "copied": "Đã sao chép",
+      "noCustomizationInputs": "Không có dữ liệu tùy biến",
       "customerArtwork": "Artwork khách hàng",
       "customizationArtwork": "Artwork tùy chỉnh",
       "productInput": "Sản phẩm và file gốc",
@@ -4502,7 +4557,12 @@
         "CONNECTED": "Đã kết nối",
         "DISCONNECTED": "Mất kết nối"
       },
-      "testConnection": "Kiểm tra kết nối"
+      "testConnection": "Kiểm tra kết nối",
+      "baseCost": "Chi phí gốc",
+      "cheapest": "Rẻ nhất",
+      "cheapestVendor": "Vendor rẻ nhất",
+      "priceRange": "Khoảng giá",
+      "variantsCount": "{{count}} biến thể"
     },
     "extensions": {
       "metrics": {
@@ -5086,6 +5146,15 @@
     "all": "Tất cả",
     "unread": "Chưa đọc"
   },
+  "notificationAlerts": {
+    "newMessageFrom": "Tin nhắn mới từ {{sender}}",
+    "newMessage": "Tin nhắn mới",
+    "importantNotification": "Thông báo quan trọng",
+    "openChat": "Mở hội thoại",
+    "viewDetail": "Xem ngay",
+    "titleFlashMessage": "🔔 Có tin nhắn mới!",
+    "titleFlashNotification": "🔔 Có thông báo mới!"
+  },
   "chat": {
     "newMessage": "Tin nhắn mới",
     "backToConversations": "Quay lại hội thoại",
@@ -5133,6 +5202,7 @@
     "syncTeamsTooltip": "Đồng bộ tin nhắn mới từ Microsoft Teams",
     "directChat": "Trò chuyện trực tiếp",
     "activeNow": "Đang hoạt động",
+    "members": "thành viên",
     "noSearchResults": "Không tìm thấy kết quả",
     "startConversation": "Bắt đầu cuộc trò chuyện",
     "deletedUser": "Người dùng đã xóa"

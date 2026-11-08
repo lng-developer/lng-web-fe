@@ -1,7 +1,7 @@
-import { Alert, Modal, Space, Typography } from 'antd'
+import { Alert, Space, Typography } from 'antd'
 import { useTranslation } from 'react-i18next'
 
-import { FormattedDateTime, humanizeCode, StatusTag } from '@/shared/ui'
+import { DetailDrawer, FormattedDateTime, humanizeCode, StatusTag } from '@/shared/ui'
 
 import type { ExtensionCommand } from '../api/integrationApi'
 import styles from '../pages/IntegrationWorkbenchPage.module.scss'
@@ -14,14 +14,14 @@ export interface ExtensionCommandDrawerProps {
 export function ExtensionCommandDrawer({ command, onClose }: ExtensionCommandDrawerProps) {
   const { t } = useTranslation()
   return (
-    <Modal
+    <DetailDrawer
       title="Task details"
       open={Boolean(command)}
-      onCancel={onClose}
+      onClose={onClose}
       footer={null}
-      width="min(1000px, 85vw)"
-      style={{ top: 40 }}
-      destroyOnClose
+      width="min(1200px, 90vw)"
+      allowModeToggle
+      allowMaximize
     >
       {command ? (
         <div className={styles.commandTimeline}>
@@ -90,6 +90,6 @@ export function ExtensionCommandDrawer({ command, onClose }: ExtensionCommandDra
           ) : null}
         </div>
       ) : null}
-    </Modal>
+    </DetailDrawer>
   )
 }

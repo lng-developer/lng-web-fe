@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/features/portal/orders/api/orderApi', () => ({
@@ -220,10 +220,16 @@ describe('OperationsDashboardPage', () => {
     renderWithTestProviders(<OperationsDashboardPage />)
 
     expect(await screen.findByText('Doanh thu & Lợi nhuận')).toBeVisible()
-    expect(screen.getByRole('columnheader', { name: 'Ngày' })).toBeVisible()
-    expect(screen.getByRole('columnheader', { name: 'Doanh thu' })).toBeVisible()
-    expect(screen.getByRole('columnheader', { name: 'Chi phí' })).toBeVisible()
-    expect(screen.getByRole('columnheader', { name: 'Lợi nhuận gộp' })).toBeVisible()
+    const cashFlowSection = screen.getByRole('region', { name: 'Phân tích đơn hàng' })
+    expect(within(cashFlowSection).getByRole('columnheader', { name: 'Ngày' })).toBeVisible()
+    expect(within(cashFlowSection).getByRole('columnheader', { name: 'Kênh' })).toBeVisible()
+    expect(within(cashFlowSection).getByRole('columnheader', { name: 'SL' })).toBeVisible()
+    expect(within(cashFlowSection).getByRole('columnheader', { name: 'Doanh thu' })).toBeVisible()
+    expect(within(cashFlowSection).getByRole('columnheader', { name: 'Chi phí' })).toBeVisible()
+    expect(
+      within(cashFlowSection).getByRole('columnheader', { name: 'Lợi nhuận gộp' }),
+    ).toBeVisible()
+    expect(within(cashFlowSection).getByRole('columnheader', { name: 'Biên LN' })).toBeVisible()
   })
 
   it('marks cost and profit as unavailable when finance data has missing costs', async () => {
@@ -293,5 +299,48 @@ describe('OperationsDashboardPage', () => {
       'href',
       '/portal/integrations',
     )
+  })
+
+  it('renders revenue overview card and channel breakdown with financial data', async () => {
+    setPermissions(['ORDERS:READ', 'CATALOG:READ', 'REPORTS:READ', 'FINANCE:READ'])
+    setGlobalPermissions(['ORDERS:READ', 'CATALOG:READ', 'REPORTS:READ', 'FINANCE:READ'])
+    vi.mocked(listFinanceDailyProfit).mockResolvedValue([
+      {
+        date: '2026-11-06',
+        salesChannelCode: 'AMAZON',
+        marketplaceCode: 'US',
+        currency: 'USD',
+        itemCount: 20,
+        revenueAmount: 217100,
+        baseCostAmount: 100000,
+        totalCostAmount: 110000,
+        grossProfitAmount: 107100,
+        grossMarginBps: 4930,
+        missingCostCount: 0,
+      },
+      {
+        date: '2026-11-07',
+        salesChannelCode: 'ETSY',
+        marketplaceCode: 'US',
+        currency: 'USD',
+        itemCount: 2,
+        revenueAmount: 19800,
+        baseCostAmount: 9000,
+        totalCostAmount: 10000,
+        grossProfitAmount: 9800,
+        grossMarginBps: 4949,
+        missingCostCount: 0,
+      },
+    ])
+
+    renderWithTestProviders(<OperationsDashboardPage />)
+
+    expect(await screen.findByText('Tổng quan doanh thu')).toBeVisible()
+    expect(await screen.findByText('Doanh thu theo kênh')).toBeVisible()
+    expect((await screen.findAllByText('Amazon')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('Etsy')).length).toBeGreaterThan(0)
+    expect(screen.getAllByText('$2,369').length).toBeGreaterThan(0)
+    expect(screen.getByText('(92%)')).toBeVisible()
+    expect(screen.getByText('(8%)')).toBeVisible()
   })
 })

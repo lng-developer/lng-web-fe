@@ -65,6 +65,7 @@ export type ChatParticipant = {
   employeeCode?: string | null
   status?: string
   presence?: 'ONLINE' | 'OFFLINE'
+  avatarUrl?: string | null
 }
 
 export type CreateConversationInput = {

@@ -24,8 +24,19 @@ export {
   MonthPicker,
   YearPicker,
 } from './DateTimePicker'
-export { DetailDrawer, type DetailDrawerProps } from './DetailDrawer'
-export { EmployeeAvatar, type EmployeeAvatarProps } from './EmployeeAvatar'
+export {
+  DetailDrawer,
+  type DetailDrawerProps,
+  DetailModal,
+  type DetailModalProps,
+} from './DetailDrawer'
+export {
+  EmployeeAvatar,
+  type EmployeeAvatarProps,
+  EmployeeIdentity,
+  type EmployeeIdentityMode,
+  type EmployeeIdentityProps,
+} from './EmployeeAvatar'
 export { EmptyState, type EmptyStateProps } from './EmptyState'
 export { FeedbackAlert, type FeedbackAlertProps } from './FeedbackAlert'
 export { FileUpload, type FileUploadProps } from './FileUpload'

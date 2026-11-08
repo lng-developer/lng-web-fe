@@ -1,14 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Outlet, useLoaderData, useLocation, useNavigate } from 'react-router-dom'
-import { MenuOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons'
-import { useIsFetching, useQueryClient } from '@tanstack/react-query'
-import { Button, Drawer, Grid, Input, Layout, Select, Space, Tooltip, Typography } from 'antd'
+import { MenuOutlined, ReloadOutlined } from '@ant-design/icons'
+import { useIsFetching, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Button, Drawer, Grid, Layout, Select, Space, Tooltip, Typography } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { getUnreadCount } from '@/features/notifications/api/notificationApi'
 import { NotificationCenter } from '@/features/notifications/components/NotificationCenter'
+import { getChatUnreadCount } from '@/features/portal/chat/api/chatApi'
+import { chatKeys } from '@/features/portal/chat/api/chatKeys'
 import { ChatShell } from '@/features/portal/chat/components/ChatShell'
+import { useDocumentTitleBadge } from '@/shared/hooks/useDocumentTitleBadge'
 import { LanguageSwitch } from '@/shared/i18n/LanguageSwitch'
+import { useTitleFlashStore } from '@/shared/notification'
 import { ThemeSwitch } from '@/shared/theme/ThemeSwitch'
 import { ContentErrorBoundary } from '@/shared/ui'
 
@@ -20,32 +25,17 @@ import {
   hasFinanceAccess,
   getContextNavigation,
   getCoreForPath,
-  type NavigationGroup,
 } from './appNavigation'
 import styles from './AppShell.module.scss'
 import { isCompactBreakpoint } from './appShellResponsive'
 import { AppSidebar } from './AppSidebar'
 import { getRememberedCoreRoute, rememberCoreRoute } from './coreRouteMemory'
 import { LegacySidebar } from './LegacySidebar'
-import { formatDocumentTitle, resolvePageTitle } from './pageTitle'
+import { NavigationSearch } from './NavigationSearch'
+import { resolvePageTitle } from './pageTitle'
 import { getSidebarRouteState } from './sidebarRouteState'
 
 const { Content, Header } = Layout
-
-function uniqueNavigationGroups(groups: NavigationGroup[]) {
-  const seenItems = new Set<string>()
-  return groups
-    .map((group) => ({
-      ...group,
-      items: group.items.filter((item) => {
-        const key = `${item.key}:${item.path}`
-        if (seenItems.has(key)) return false
-        seenItems.add(key)
-        return true
-      }),
-    }))
-    .filter(({ items }) => items.length)
-}
 
 export function AppShell() {
   const { t } = useTranslation()
@@ -54,7 +44,6 @@ export function AppShell() {
   const screens = Grid.useBreakpoint()
   const [collapsed, setCollapsed] = useState(false)
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false)
-  const [navigationSearch, setNavigationSearch] = useState('')
   const location = useLocation()
   const navigate = useNavigate()
   const account = useLoaderData() as CurrentAccount
@@ -73,13 +62,6 @@ export function AppShell() {
       system: getContextNavigation('system', account),
     }),
     [account],
-  )
-  const searchableGroups = useMemo(
-    () =>
-      navigationSearch.trim()
-        ? uniqueNavigationGroups(cores.flatMap(({ key }) => getContextNavigation(key, account)))
-        : groups,
-    [account, cores, groups, navigationSearch],
   )
   const { selectedKey } = getSidebarRouteState(location.pathname, groups)
   const isPortalWorkbench =
@@ -106,13 +88,30 @@ export function AppShell() {
   useEffect(() => {
     if (routeCore) rememberCoreRoute(routeCore, location.pathname, groups)
   }, [groups, location.pathname, routeCore])
-  useEffect(() => {
-    document.title = formatDocumentTitle(pageTitle, t('app.name', { defaultValue: 'LNG Web' }))
-  }, [pageTitle, t])
+  const { data: chatUnreadData } = useQuery({
+    queryKey: chatKeys.unread,
+    queryFn: getChatUnreadCount,
+    refetchInterval: 30_000,
+  })
+  const { data: notiUnreadData } = useQuery({
+    queryKey: ['notifications', 'unread-count'],
+    queryFn: getUnreadCount,
+    refetchInterval: 60_000,
+  })
+  const totalUnread = (chatUnreadData?.unreadCount ?? 0) + (notiUnreadData?.unreadCount ?? 0)
+  const flashMessage = useTitleFlashStore((s) => s.flashMessage)
+  const clearFlashMessage = useTitleFlashStore((s) => s.clearFlashMessage)
+
+  useDocumentTitleBadge({
+    pageTitle,
+    appName: t('app.name', { defaultValue: 'LNG Web' }),
+    unreadCount: totalUnread,
+    flashMessage,
+    onClearFlash: clearFlashMessage,
+  })
 
   const changeCore = useCallback(
     (core: AppCoreKey) => {
-      setNavigationSearch('')
       const target = getRememberedCoreRoute(core, getContextNavigation(core, account))
       if (target) navigate(target)
     },
@@ -157,11 +156,11 @@ export function AppShell() {
           <AppSidebar
             accountLabel={account.account.email}
             coreLabel={t(`shell.cores.${activeCore}`)}
-            groups={searchableGroups}
+            groups={groups}
             selectedKey={selectedKey}
             collapsed={false}
             embedded
-            navigationSearch={navigationSearch}
+            navigationSearch=""
             onNavigate={handleCloseMobileNavigation}
           />
         </Drawer>
@@ -195,14 +194,7 @@ export function AppShell() {
                 {pageTitle}
               </Typography.Text>
             </div>
-            <Input
-              value={navigationSearch}
-              onChange={(event) => setNavigationSearch(event.target.value)}
-              allowClear
-              prefix={<SearchOutlined />}
-              placeholder={t('shell.searchPlaceholder')}
-              className={styles.navSearch}
-            />
+            <NavigationSearch account={account} className={styles.navSearch} />
           </div>
           <Space size={14} className={styles.headerActions}>
             <Tooltip title={t('shell.refresh')}>

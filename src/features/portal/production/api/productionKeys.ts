@@ -8,7 +8,7 @@ export const productionKeys = {
   summary: (params: Omit<ProductionParams, 'page' | 'limit'>) =>
     [...productionKeys.all, 'summary', params] as const,
   queueSummaries: () => [...productionKeys.all, 'queue-summary'] as const,
-  queueSummary: (params: Pick<ProductionParams, 'search' | 'salesChannelCode'>) =>
+  queueSummary: (params: Pick<ProductionParams, 'search' | 'salesChannelCode' | 'designType'>) =>
     [...productionKeys.all, 'queue-summary', params] as const,
   detail: (id: string) => [...productionKeys.all, 'detail', id] as const,
   scaleAssignees: () => [...productionKeys.all, 'scale-assignees'] as const,

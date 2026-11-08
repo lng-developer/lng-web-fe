@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
@@ -112,4 +112,53 @@ test('keeps Personal payroll on the employee payslip even with payroll read perm
   )
 
   expect(await screen.findByRole('heading', { name: 'My payslips' })).toBeVisible()
+})
+
+test('renders tabs and opens payslip drawer in management workspace', async () => {
+  setPermissions(['HR_PAYROLL:READ'])
+  vi.mocked(listPayrollResults).mockResolvedValue({
+    items: [
+      {
+        id: 'res-1',
+        payrollRunId: 'run-1',
+        profileId: 'prof-1',
+        employee: { fullName: 'Tran Thi B', employeeCode: 'EMP002' },
+        baseSalary: 15000000,
+        workDays: 22,
+        grossIncome: 15000000,
+        totalDeductions: 1500000,
+        netIncome: 13500000,
+        status: 'DRAFT',
+      },
+    ],
+    pagination: { page: 1, limit: 100, total: 1, totalPages: 1 },
+    summary: {
+      total: 1,
+      statusCounts: { DRAFT: 1 },
+      amounts: {
+        grossIncome: 15000000,
+        totalDeductions: 1500000,
+        netIncome: 13500000,
+        unpaidNetIncome: 13500000,
+        paidNetIncome: 0,
+      },
+    },
+  })
+
+  render(
+    <MemoryRouter>
+      <AppProviders>
+        <PayrollPage workspace="management" />
+      </AppProviders>
+    </MemoryRouter>,
+  )
+
+  expect(await screen.findByRole('tab', { name: /Staff payroll/i })).toBeVisible()
+  expect(screen.getByRole('tab', { name: /Periods/i })).toBeVisible()
+  expect(screen.getByRole('tab', { name: /Adjustments/i })).toBeVisible()
+  expect(screen.getByPlaceholderText(/Tìm kiếm nhân viên/i)).toBeInTheDocument()
+
+  expect((await screen.findAllByText('Tran Thi B')).length).toBeGreaterThan(0)
+  fireEvent.click((await screen.findAllByText('Tran Thi B'))[0])
+  expect(await screen.findByText(/Phiếu lương chi tiết/i)).toBeVisible()
 })

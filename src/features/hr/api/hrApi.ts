@@ -138,6 +138,12 @@ export type PersonalProfileInput = {
   taxIdentification?: string | null
   socialInsuranceNumber?: string | null
   bankAccount?: { bankName?: string | null; accountNumber?: string | null }
+  dependantDetails?: Array<{
+    name: string
+    relation: string
+    dob?: string | null
+    gender?: string | null
+  }>
 }
 
 const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data

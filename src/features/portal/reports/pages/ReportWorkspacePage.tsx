@@ -296,30 +296,36 @@ export function ReportWorkspacePage() {
             })),
           )
         : null}
-      {select(
-        'teamId',
-        t('reports.filters.team'),
-        (filterOptions?.teams || []).map((row) => ({
-          value: row.id,
-          label: row.name || row.code || t('reports.filters.unnamed'),
-        })),
-      )}
-      {select(
-        'departmentId',
-        t('reports.filters.department'),
-        (filterOptions?.departments || []).map((row) => ({
-          value: row.id,
-          label: row.name || row.code || t('reports.filters.unnamed'),
-        })),
-      )}
-      {select(
-        'financialStatus',
-        'Financial status',
-        ['ACTIVE', 'CANCELLED', 'PARTIALLY_REFUNDED', 'REFUNDED'].map((value) => ({
-          value,
-          label: value.replaceAll('_', ' '),
-        })),
-      )}
+      {!isAdsView
+        ? select(
+            'teamId',
+            t('reports.filters.team'),
+            (filterOptions?.teams || []).map((row) => ({
+              value: row.id,
+              label: row.name || row.code || t('reports.filters.unnamed'),
+            })),
+          )
+        : null}
+      {!isAdsView
+        ? select(
+            'departmentId',
+            t('reports.filters.department'),
+            (filterOptions?.departments || []).map((row) => ({
+              value: row.id,
+              label: row.name || row.code || t('reports.filters.unnamed'),
+            })),
+          )
+        : null}
+      {!isAdsView
+        ? select(
+            'financialStatus',
+            t('reports.filters.financialStatus'),
+            ['ACTIVE', 'CANCELLED', 'PARTIALLY_REFUNDED', 'REFUNDED'].map((value) => ({
+              value,
+              label: value.replaceAll('_', ' '),
+            })),
+          )
+        : null}
       <div className={styles.dateFilter}>
         <DateRangePicker
           value={{ dateFrom: filters.dateFrom, dateTo: filters.dateTo }}
@@ -642,6 +648,7 @@ export function ReportWorkspacePage() {
       <ReportAdsEmployeeTab
         data={adsSellerDaily.data}
         isPending={adsSellerDaily.isPending}
+        dates={reportDates}
         filterBar={filterBar}
       />
     ) : activeTab === 'sales-profit' ? (

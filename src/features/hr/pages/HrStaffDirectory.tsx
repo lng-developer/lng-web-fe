@@ -1,16 +1,10 @@
 import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
-import {
-  DeleteOutlined,
-  EditOutlined,
-  ReloadOutlined,
-  TeamOutlined,
-  UserOutlined,
-} from '@ant-design/icons'
+import { DeleteOutlined, EditOutlined, ReloadOutlined, TeamOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Avatar, Button, Space, Tag, Tooltip } from 'antd'
+import { Button, Space, Tag, Tooltip } from 'antd'
 
-import { StatusTag } from '@/shared/ui'
+import { EmployeeAvatar, StatusTag } from '@/shared/ui'
 
 import { type EmployeeProfile, loadEmployeeAvatar } from '../api/hrApi'
 import styles from './HrWorkspacePage.module.scss'
@@ -161,9 +155,10 @@ function StaffAvatar({ profile }: { profile: EmployeeProfile }) {
   })
 
   return (
-    <Avatar
-      src={avatar.data ?? (!profile.avatarAssetId ? profile.avatarUrl : undefined)}
-      icon={<UserOutlined />}
+    <EmployeeAvatar
+      size={38}
+      name={profile.fullName || profile.employeeCode}
+      avatarUrl={avatar.data ?? (!profile.avatarAssetId ? profile.avatarUrl : undefined)}
     />
   )
 }

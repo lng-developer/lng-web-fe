@@ -12,6 +12,7 @@ type AuthenticatedMediaUrlState = {
 }
 
 const isDirectExternalUrl = (downloadUrl: string) => {
+  if (downloadUrl.startsWith('data:') || downloadUrl.startsWith('blob:')) return true
   if (!/^https?:\/\//i.test(downloadUrl)) return false
   try {
     const next = new URL(downloadUrl)

@@ -10,6 +10,7 @@ import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
   CopyableOrderId,
+  DetailModal,
   DataFreshness,
   DateRangePicker,
   FeedbackAlert,
@@ -422,13 +423,13 @@ export function ShipmentWorkbenchPage({
           }
         />
       </div>
-      <Modal
+      <DetailModal
         destroyOnClose
-        width="min(1200px, 88vw)"
-        style={{ top: 40 }}
+        width="min(1280px, 92vw)"
+        drawerWidth="min(800px, 60vw)"
         open={Boolean(selectedId)}
         title={t('portal.shipments.detail')}
-        onCancel={handleCloseDrawer}
+        onClose={handleCloseDrawer}
         loading={detail.isLoading}
         footer={
           canWrite && detail.data ? (
@@ -523,7 +524,7 @@ export function ShipmentWorkbenchPage({
             ) : null}
           </div>
         ) : null}
-      </Modal>
+      </DetailModal>
       <Modal
         open={editMode === 'tracking'}
         title={t('portal.shipments.editTracking')}

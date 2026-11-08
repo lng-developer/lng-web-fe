@@ -1,3 +1,4 @@
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -9,13 +10,11 @@ import { AppProviders } from '@/app/providers/AppProviders'
 import { PngTasksPage } from '@/features/portal/design/pages/PngTasksPage'
 import {
   listProductionTasks,
-  summarizeProductionTasks,
+  summarizeProductionQueueCounts,
 } from '@/features/portal/production/api/productionApi'
 
 vi.mock('react-router-dom', async (importOriginal) => ({
   ...(await importOriginal<typeof import('react-router-dom')>()),
-  useSearchParams: () => [new URLSearchParams(''), vi.fn()],
-  useParams: () => ({}),
   useRouteLoaderData: () => ({
     account: { id: '6a339b5a033e2ff7753522c3' },
     permissions: ['PRODUCTION:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW'],
@@ -37,6 +36,7 @@ vi.mock('@/features/portal/production/api/productionApi', () => ({
       {
         id: 'prod-task-1',
         status: 'NEED_SCALE',
+        designType: 'CUSTOM_IMAGE',
         orderItem: {
           externalOrderId: '112-9999999-0000001',
           salesChannelCode: 'AMAZON',
@@ -63,12 +63,23 @@ vi.mock('@/features/portal/production/api/productionApi', () => ({
   }),
   summarizeProductionQueueCounts: vi.fn().mockResolvedValue({
     scaleQueue: 1,
+    needScale: 1,
+    qcRejected: 0,
+    qcPending: 0,
     qcQueue: 0,
+    ready: 0,
+    sent: 0,
     blocked: 0,
   }),
   listScaleAssignees: vi.fn().mockResolvedValue({ items: [] }),
   assignProductionTask: vi.fn(),
+  bulkAssignProductionTasks: vi.fn(),
   claimProductionTask: vi.fn(),
+  exportProductionQcTasks: vi.fn(),
+  exportProductionTasksCsv: vi.fn(),
+  getProductionTask: vi.fn(),
+  recheckPsdBlockedTasks: vi.fn(),
+  submitProductionQc: vi.fn(),
   submitScaleForQc: vi.fn(),
   updateDesignNote: vi.fn(),
   uploadScaledOutput: vi.fn(),
@@ -79,28 +90,42 @@ describe('PngTasksPage', () => {
     vi.clearAllMocks()
   })
 
-  it('renders PngTasksPage with PNG Tasks title, order listing, and filters', async () => {
+  it('renders PngTasksPage synchronized with Scale workbench, order listing, and scale filters', async () => {
     render(
       <AppProviders>
-        <PngTasksPage />
+        <MemoryRouter initialEntries={['/portal/design/png-tasks?salesChannelCode=amazon']}>
+          <Routes>
+            <Route path="/portal/design/png-tasks" element={<PngTasksPage />} />
+          </Routes>
+        </MemoryRouter>
       </AppProviders>,
     )
 
     expect(await screen.findByText('112-9999999-0000001')).toBeInTheDocument()
     expect(screen.getByText('All')).toBeInTheDocument()
-    expect(screen.getByText('Need Scale')).toBeInTheDocument()
-    expect(screen.getAllByText('Shop').length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/need scale/i).length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Evermood LLC').length).toBeGreaterThan(0)
     expect(screen.queryByText('ASIN Type')).not.toBeInTheDocument()
     expect(listProductionTasks).toHaveBeenCalledWith(
-      expect.objectContaining({ designType: 'CUSTOM_IMAGE' }),
+      expect.objectContaining({
+        view: 'SCALE',
+        designType: 'CUSTOM_IMAGE',
+        salesChannelCode: 'AMAZON',
+      }),
     )
-    expect(summarizeProductionTasks).toHaveBeenCalledWith(
-      expect.objectContaining({ designType: 'CUSTOM_IMAGE', status: undefined }),
+    expect(summarizeProductionQueueCounts).toHaveBeenCalledWith(
+      expect.objectContaining({ designType: 'CUSTOM_IMAGE', salesChannelCode: 'AMAZON' }),
     )
-    fireEvent.click(screen.getByText('Pending Assignment'))
+
+    fireEvent.click(screen.getByRole('button', { name: /need scale/i }))
     await waitFor(() =>
       expect(listProductionTasks).toHaveBeenLastCalledWith(
-        expect.objectContaining({ designType: 'CUSTOM_IMAGE', unassigned: true }),
+        expect.objectContaining({
+          view: 'SCALE',
+          status: 'NEED_SCALE',
+          designType: 'CUSTOM_IMAGE',
+          salesChannelCode: 'AMAZON',
+        }),
       ),
     )
   })

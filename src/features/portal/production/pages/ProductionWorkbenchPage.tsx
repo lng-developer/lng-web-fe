@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useParams, useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Button, Modal } from 'antd'
+import { Button, Tag } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
@@ -12,8 +12,11 @@ import { canUseScopedPermission, hasScopedPermission } from '@/shared/auth/permi
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
   CopyableOrderId,
+  DetailModal,
+  EmployeeIdentity,
   FeedbackAlert,
   FormattedDateTime,
+  humanizeCode,
   StatusTag,
   type DateRangeValue,
   type UiButtonTabItem,
@@ -95,9 +98,11 @@ function tone(status: string) {
 export function ProductionWorkbenchPage({
   account: accountProp,
   dedicatedTab: dedicatedTabProp,
+  designType: designTypeProp,
 }: {
   readonly account?: CurrentAccount
   readonly dedicatedTab?: ProductionTab
+  readonly designType?: 'CUSTOM_IMAGE' | 'NORMAL' | 'UNCLASSIFIED'
 }) {
   const { t } = useTranslation()
   const loadedAccount = useRouteLoaderData('workspace') as CurrentAccount | undefined
@@ -211,15 +216,26 @@ export function ProductionWorkbenchPage({
     [account, canWriteProductionTask, currentAccountId],
   )
   const isScaleTab = tab === 'need_scale' || tab === 'qc_rejected' || tab === 'unclassified'
+  const hasTeamDesignReview = hasScopedPermission(account, 'DESIGN:REVIEW', 'team')
+  const hasScopedDesignReview =
+    hasTeamDesignReview || hasScopedPermission(account, 'DESIGN:REVIEW', 'shop')
   const canAssignScale =
     viewMode === 'scale' &&
     (isScaleTab || tab === 'all' || tab === 'blocked') &&
-    (allowed.has('PRODUCTION:WRITE') || allowed.has('PRODUCTION:SCALE_ASSIGN'))
+    (allowed.has('PRODUCTION:WRITE') ||
+      allowed.has('PRODUCTION:SCALE_ASSIGN') ||
+      allowed.has('DESIGN:REVIEW') ||
+      hasScopedDesignReview)
   const canAssignProductionTask = useCallback(
     (task: ProductionTask) =>
       canWriteProductionTask(task) ||
       hasScopedPermission(account, 'PRODUCTION:SCALE_ASSIGN', 'team') ||
       canUseScopedPermission(account, 'PRODUCTION:SCALE_ASSIGN', {
+        scopeType: 'shop',
+        scopeId: task.shopId ?? task.shop?.id,
+      }) ||
+      hasScopedPermission(account, 'DESIGN:REVIEW', 'team') ||
+      canUseScopedPermission(account, 'DESIGN:REVIEW', {
         scopeType: 'shop',
         scopeId: task.shopId ?? task.shop?.id,
       }),
@@ -299,25 +315,38 @@ export function ProductionWorkbenchPage({
       psdReadyOnly: tab !== 'blocked' && psdReadyOnly,
       ...createdDates,
       scaleDifficultyLevel,
-      designType: filterDesignType,
+      designType: designTypeProp ?? filterDesignType,
       status: filterStatus,
       qcStatus: filterQcStatus,
       view: filterView,
     }
-  }, [createdDates, deferredSearch, salesChannelCode, scaleDifficultyLevel, tab, viewMode])
+  }, [
+    createdDates,
+    deferredSearch,
+    designTypeProp,
+    salesChannelCode,
+    scaleDifficultyLevel,
+    tab,
+    viewMode,
+  ])
   const params = useMemo(() => ({ ...filters, page, limit: pageSize }), [filters, page, pageSize])
   const summaryFilters = useMemo(
     () => ({
       search: deferredSearch || undefined,
       salesChannelCode,
       scaleDifficultyLevel,
+      designType: designTypeProp,
       ...createdDates,
     }),
-    [createdDates, deferredSearch, salesChannelCode, scaleDifficultyLevel],
+    [createdDates, deferredSearch, designTypeProp, salesChannelCode, scaleDifficultyLevel],
   )
   const queueFilters = useMemo(
-    () => ({ search: deferredSearch || undefined, salesChannelCode }),
-    [deferredSearch, salesChannelCode],
+    () => ({
+      search: deferredSearch || undefined,
+      salesChannelCode,
+      designType: designTypeProp,
+    }),
+    [deferredSearch, designTypeProp, salesChannelCode],
   )
   const tasks = useQuery({
     queryKey: productionKeys.list(params),
@@ -924,12 +953,17 @@ export function ProductionWorkbenchPage({
       )
     }
     if (viewMode === 'scale') {
+      if (designTypeProp === 'CUSTOM_IMAGE') {
+        return items.filter(
+          (task) => task.designType === 'CUSTOM_IMAGE' && task.status !== 'CANCELLED',
+        )
+      }
       return items.filter(
         (task) => task.designType !== 'CUSTOM_IMAGE' && task.status !== 'CANCELLED',
       )
     }
     return items
-  }, [displayedTasks?.items, viewMode])
+  }, [designTypeProp, displayedTasks?.items, viewMode])
   const expandedRowKeys = useMemo(() => rows.map((row) => row.id), [rows])
   const selectedTasks = useMemo(
     () => rows.filter((row) => selectedRowKeys.map(String).includes(row.id)),
@@ -944,8 +978,28 @@ export function ProductionWorkbenchPage({
       },
       {
         title: t('portal.production.columns.shop'),
-        width: 150,
+        width: 140,
         render: (_, row) => row.shop?.name || '-',
+      },
+      {
+        title: t('common.channel', { defaultValue: 'Channel' }),
+        width: 100,
+        align: 'center',
+        render: (_, row) => {
+          const channel = row.orderItem?.salesChannelCode
+          return channel ? (
+            <Tag color={channel === 'AMAZON' ? 'orange' : 'volcano'}>{channel}</Tag>
+          ) : (
+            '-'
+          )
+        },
+      },
+      {
+        title: t('portal.production.designType', { defaultValue: 'Design Type' }),
+        width: 120,
+        align: 'center',
+        render: (_, row) =>
+          row.designType ? <Tag color="magenta">{humanizeCode(row.designType)}</Tag> : '-',
       },
       {
         title: t('portal.production.requiredSlots'),
@@ -982,12 +1036,19 @@ export function ProductionWorkbenchPage({
         width: 138,
         render: (_, row) => {
           if (row.assignedDesigner?.fullName || row.assignedDesigner?.employeeCode) {
-            return row.assignedDesigner.fullName || row.assignedDesigner.employeeCode
+            return (
+              <EmployeeIdentity
+                size="small"
+                mode="code"
+                name={row.assignedDesigner.fullName}
+                employeeCode={row.assignedDesigner.employeeCode}
+              />
+            )
           }
           if (
             !row.assignedDesignUserId &&
             (row.status === 'NEED_SCALE' || row.status === 'QC_REJECTED') &&
-            allowed.has('DESIGN:WORK')
+            (allowed.has('DESIGN:WORK') || allowed.has('PRODUCTION:SCALE_WORK'))
           ) {
             return (
               <Button
@@ -1024,19 +1085,19 @@ export function ProductionWorkbenchPage({
   )
   return (
     <section className={styles.page}>
-      <Modal
+      <DetailModal
         open={Boolean(targetId)}
         loading={target.isLoading}
-        onCancel={() => selectTarget(undefined)}
+        onClose={() => selectTarget(undefined)}
         footer={null}
-        width="90vw"
+        width="min(1440px, 94vw)"
         title={t('notifications.openResource')}
       >
         {target.isError ? (
           <FeedbackAlert type="error" title={t('notifications.resourceUnavailable')} />
         ) : null}
         {target.data ? renderExpandedRow(target.data) : null}
-      </Modal>
+      </DetailModal>
       {tasks.error || summary.error ? (
         <FeedbackAlert type="error" title={t('portal.production.unavailable')} />
       ) : null}

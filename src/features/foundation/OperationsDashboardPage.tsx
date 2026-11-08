@@ -21,7 +21,13 @@ import { AccessDeniedResult } from '@/shared/auth/AccessDeniedResult'
 import { DateRangePicker, FeedbackAlert, SectionCard } from '@/shared/ui'
 
 import styles from './FoundationPage.module.scss'
-import { MiniBars, SummaryLineChart, TrafficSourcesDonut } from './OperationsDashboardCharts'
+import {
+  MiniBars,
+  RevenueOverviewWidget,
+  SummaryLineChart,
+  TrafficSourcesDonut,
+} from './OperationsDashboardCharts'
+import { formatCurrency } from './operationsDashboardFormatters'
 import { RecentOrdersTable, TopSellersPodium } from './OperationsDashboardLists'
 import { useOperationsDashboard } from './useOperationsDashboard'
 
@@ -243,6 +249,7 @@ export function OperationsDashboardPage() {
                   subLabel={t('foundation.portalDashboard.revenue', {
                     defaultValue: 'Revenue',
                   })}
+                  currency={value.currency}
                 />
               </SectionCard>
             </section>
@@ -261,18 +268,25 @@ export function OperationsDashboardPage() {
                     <thead>
                       <tr>
                         <th>{t('common.date')}</th>
+                        <th>{t('foundation.portalDashboard.channel', { defaultValue: 'Kênh' })}</th>
+                        <th>{t('foundation.portalDashboard.quantity', { defaultValue: 'SL' })}</th>
                         <th>
                           {t('foundation.portalDashboard.revenue', { defaultValue: 'Doanh thu' })}
                         </th>
                         <th>{t('foundation.portalDashboard.cost', { defaultValue: 'Chi phí' })}</th>
                         <th>{t('foundation.portalDashboard.grossProfit')}</th>
+                        <th>
+                          {t('foundation.portalDashboard.marginHeader', {
+                            defaultValue: 'Biên LN',
+                          })}
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {value.cashFlowRows.length === 0 ? (
                         <tr>
                           <td
-                            colSpan={4}
+                            colSpan={7}
                             style={{ textAlign: 'center', padding: '24px 0', color: '#94a3b8' }}
                           >
                             {t('foundation.portalDashboard.noData')}
@@ -280,24 +294,73 @@ export function OperationsDashboardPage() {
                         </tr>
                       ) : (
                         value.cashFlowRows
-                          .slice(-6)
+                          .slice(-10)
                           .reverse()
                           .map((row) => {
                             const formatAmount = (amount: number | null) =>
                               amount === null
                                 ? '—'
-                                : new Intl.NumberFormat(undefined, {
-                                    style: 'currency',
-                                    currency: row.currency || 'USD',
-                                    maximumFractionDigits: 0,
-                                  }).format(amount / 100)
+                                : formatCurrency(amount / 100, row.currency || 'USD')
+
+                            const isPositive =
+                              row.grossProfitAmount !== null && row.grossProfitAmount > 0
+                            const isNegative =
+                              row.grossProfitAmount !== null && row.grossProfitAmount < 0
+
+                            const isMarginPositive =
+                              row.grossMarginPercent !== null && row.grossMarginPercent > 0
+                            const isMarginNegative =
+                              row.grossMarginPercent !== null && row.grossMarginPercent < 0
 
                             return (
-                              <tr key={row.date}>
+                              <tr key={row.id}>
                                 <td>{row.displayDate}</td>
+                                <td>
+                                  {row.channel ? (
+                                    <span
+                                      className={
+                                        row.rawChannel?.toUpperCase() === 'AMAZON'
+                                          ? styles.channelBadgeAmazon
+                                          : row.rawChannel?.toUpperCase() === 'ETSY'
+                                            ? styles.channelBadgeEtsy
+                                            : styles.channelBadgeNeutral
+                                      }
+                                    >
+                                      {row.channel}
+                                    </span>
+                                  ) : (
+                                    '—'
+                                  )}
+                                </td>
+                                <td>{row.itemCount > 0 ? row.itemCount : '—'}</td>
                                 <td>{formatAmount(row.revenueAmount)}</td>
                                 <td>{formatAmount(row.costAmount)}</td>
-                                <td>{formatAmount(row.grossProfitAmount)}</td>
+                                <td
+                                  className={
+                                    isPositive
+                                      ? styles.profitCellPositive
+                                      : isNegative
+                                        ? styles.profitCellNegative
+                                        : styles.profitCellNeutral
+                                  }
+                                >
+                                  {isPositive
+                                    ? `+${formatAmount(row.grossProfitAmount)}`
+                                    : formatAmount(row.grossProfitAmount)}
+                                </td>
+                                <td
+                                  className={
+                                    isMarginPositive
+                                      ? styles.profitCellPositive
+                                      : isMarginNegative
+                                        ? styles.profitCellNegative
+                                        : styles.profitCellNeutral
+                                  }
+                                >
+                                  {row.grossMarginPercent !== null
+                                    ? `${isMarginPositive ? '+' : ''}${row.grossMarginPercent}%`
+                                    : '—'}
+                                </td>
                               </tr>
                             )
                           })
@@ -306,8 +369,14 @@ export function OperationsDashboardPage() {
                   </table>
                 </div>
                 {value.missingCostItemCount > 0 ? (
-                  <div role="status" style={{ marginTop: 12, color: '#b45309' }}>
-                    {value.missingCostItemCount} order items thiếu giá vốn
+                  <div role="status" className={styles.missingCostAlertRow}>
+                    <span aria-hidden="true">⚠️</span>
+                    <span>
+                      {t('foundation.portalDashboard.missingCostItemsAlert', {
+                        count: value.missingCostItemCount,
+                        defaultValue: `${value.missingCostItemCount} order items thiếu giá vốn`,
+                      })}
+                    </span>
                   </div>
                 ) : null}
               </SectionCard>
@@ -346,13 +415,17 @@ export function OperationsDashboardPage() {
               </Button>
             }
           >
-            <div className={styles.targetTrendSentence}>
-              <strong>{value.revenueFormatted}</strong>
-              <span>{t('foundation.portalDashboard.revenue', { defaultValue: 'Doanh thu' })}</span>
-              {value.latestDataLabel ? (
-                <span>Dữ liệu mới nhất: {value.latestDataLabel}</span>
-              ) : null}
-            </div>
+            <RevenueOverviewWidget
+              revenue={value.revenueFormatted}
+              grossProfit={value.grossProfitFormatted}
+              totalCost={value.totalCostFormatted}
+              marginPercent={value.grossMarginPercent}
+              orderCount={value.displayedOrderTotal}
+              avgOrderValue={value.avgOrderValueFormatted}
+              latestDate={value.latestDataLabel}
+              missingCostCount={value.missingCostItemCount}
+              canFinance={value.canFinance}
+            />
           </SectionCard>
 
           {/* Top sellers podium */}

@@ -17,7 +17,6 @@ import {
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  Avatar,
   Button,
   Checkbox,
   DatePicker,
@@ -49,6 +48,7 @@ import { hasAnyPermission } from '@/shared/auth/permissions'
 import { modalQueryOptions } from '@/shared/query/modalQuery'
 import {
   ConfirmDangerModal,
+  EmployeeAvatar,
   EmptyState,
   FeedbackAlert,
   PageHeader,
@@ -1142,7 +1142,6 @@ export function AccessExplorerPage() {
                 />
               ) : (
                 paginatedAccounts.map((account) => {
-                  const initials = account.email ? account.email.charAt(0).toUpperCase() : 'U'
                   const isSelected = inspectedAccountId === account.id
                   const globalRoles = roleCodesForScope(account, 'global')
                   const teamRoles = roleCodesForScope(account, 'team')
@@ -1185,9 +1184,7 @@ export function AccessExplorerPage() {
                         <span />
                       )}
                       <div className={styles.accountIdentity}>
-                        <Avatar size={32} className={styles.avatar}>
-                          {initials}
-                        </Avatar>
+                        <EmployeeAvatar size={32} name={account.email} className={styles.avatar} />
                         <Typography.Text strong className={styles.emailText}>
                           {account.email}
                         </Typography.Text>
@@ -1317,9 +1314,11 @@ export function AccessExplorerPage() {
               {/* Header: Identity Bar + Meta */}
               <div className={styles.inspectorHeader}>
                 <div className={styles.inspectorIdentityRow}>
-                  <Avatar size={36} className={styles.inspectorAvatar}>
-                    {inspectedAccount.email.charAt(0).toUpperCase()}
-                  </Avatar>
+                  <EmployeeAvatar
+                    size={36}
+                    name={inspectedAccount.email}
+                    className={styles.inspectorAvatar}
+                  />
                   <div className={styles.inspectorIdentityText}>
                     <div className={styles.inspectorTitleRow}>
                       <Typography.Title level={3} className={styles.inspectorTitle}>

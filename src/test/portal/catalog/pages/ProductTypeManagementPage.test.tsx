@@ -8,13 +8,11 @@ vi.mock('@/app/common/CoreDataTable', async () => ({
 import { AppProviders } from '@/app/providers/AppProviders'
 import { listProductTypeGroups } from '@/features/portal/catalog/api/catalogApi'
 import { ProductTypeManagementPage } from '@/features/portal/catalog/pages/ProductTypeManagementPage'
-import {
-  listVendorProducts,
-  updateVendorProduct,
-} from '@/features/portal/vendors/api/vendorApi'
+import { listVendorProducts, updateVendorProduct } from '@/features/portal/vendors/api/vendorApi'
 import { setGlobalPermissions, setPermissions } from '@/shared/auth/session'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import i18n from '@/shared/i18n/i18n'
+import { queryClient } from '@/shared/query/queryClient'
 
 vi.mock('@/features/portal/catalog/api/catalogApi', () => ({
   listProductTypeGroups: vi.fn().mockResolvedValue({
@@ -33,6 +31,7 @@ vi.mock('@/features/portal/vendors/api/vendorApi', () => ({
 describe('ProductTypeManagementPage', () => {
   afterEach(cleanup)
   beforeEach(async () => {
+    queryClient.clear()
     vi.clearAllMocks()
     i18n.addResourceBundle(
       'en',
@@ -151,9 +150,7 @@ describe('ProductTypeManagementPage', () => {
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(await screen.findByText('Acrylic Photo Car Visor Clip')).toBeVisible()
-    expect(
-      screen.getByRole('table', { name: 'Vendor products for Shirt' }),
-    ).toBeVisible()
+    expect(screen.getByRole('table', { name: 'Vendor products for Shirt' })).toBeVisible()
     fireEvent.click(screen.getByRole('button', { name: 'Add vendor product for Shirt' }))
     fireEvent.mouseDown(await screen.findByLabelText('Vendor product'))
     fireEvent.click(await screen.findByText('Merchize · CERAMIC-MUG · Ceramic Mug'))
@@ -195,7 +192,9 @@ describe('ProductTypeManagementPage', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Open vendor products for Shirt' }))
     fireEvent.click(
-      await screen.findByRole('switch', { name: 'Deactivate vendor product Acrylic Photo Car Visor Clip' }),
+      await screen.findByRole('switch', {
+        name: 'Deactivate vendor product Acrylic Photo Car Visor Clip',
+      }),
     )
 
     await waitFor(() =>
@@ -230,5 +229,47 @@ describe('ProductTypeManagementPage', () => {
         search: 'shirt',
       }),
     )
+  })
+  it('renders base cost column and highlights the cheapest vendor', async () => {
+    vi.mocked(listVendorProducts).mockResolvedValue({
+      items: [
+        {
+          code: 'PRODUCT_LNG',
+          id: 'vp-1',
+          name: 'LNG T-Shirt',
+          status: 'ACTIVE',
+          baseCostAmount: 383,
+          currency: 'USD',
+          costCenterCount: 10,
+          vendor: { id: 'v-1', name: 'LNG Group' },
+        },
+        {
+          code: 'PRODUCT_BEEFUL',
+          id: 'vp-2',
+          name: 'Beeful T-Shirt',
+          status: 'ACTIVE',
+          baseCostAmount: 669,
+          currency: 'USD',
+          costCenterCount: 8,
+          vendor: { id: 'v-2', name: 'Beeful' },
+        },
+      ],
+      pagination: { total: 2 },
+    } as never)
+
+    render(
+      <AppProviders>
+        <ProductTypeManagementPage canManage />
+      </AppProviders>,
+    )
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Open vendor products for Shirt' }))
+
+    expect((await screen.findAllByText('LNG Group')).length).toBeGreaterThan(0)
+    expect(screen.getByText('Beeful')).toBeVisible()
+    expect(screen.getByText('Base cost')).toBeVisible()
+    expect(screen.getAllByText('$3.83').length).toBeGreaterThan(0)
+    expect(screen.getByText('$6.69')).toBeVisible()
+    expect(screen.getAllByText(/Cheapest/i).length).toBeGreaterThan(0)
   })
 })

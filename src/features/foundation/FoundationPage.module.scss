@@ -1075,10 +1075,14 @@
 
 .cashFlowTable th,
 .cashFlowTable td {
-  padding: 10px 8px;
+  padding: 8px 10px;
   border-bottom: 1px solid var(--ant-color-border-secondary, #e2e8f0);
   text-align: right;
   white-space: nowrap;
+}
+
+.cashFlowTable tr:hover td {
+  background: var(--ant-color-fill-quaternary, #f8fafc);
 }
 
 .cashFlowTable th {
@@ -1090,11 +1094,105 @@
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .cashFlowTable th:first-child,
 .cashFlowTable td:first-child {
   text-align: left;
+  font-weight: 500;
+}
+
+.cashFlowTable th:nth-child(2),
+.cashFlowTable td:nth-child(2) {
+  text-align: left;
+}
+
+.channelBadgeAmazon {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #c2410c;
+  background: rgba(255, 122, 26, 0.1);
+  border: 1px solid rgba(255, 122, 26, 0.28);
+}
+
+[data-theme='dark'] .channelBadgeAmazon {
+  color: #fb923c;
+  background: rgba(255, 122, 26, 0.16);
+  border-color: rgba(255, 122, 26, 0.38);
+}
+
+.channelBadgeEtsy {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #1d4ed8;
+  background: rgba(37, 99, 235, 0.1);
+  border: 1px solid rgba(37, 99, 235, 0.28);
+}
+
+[data-theme='dark'] .channelBadgeEtsy {
+  color: #60a5fa;
+  background: rgba(37, 99, 235, 0.16);
+  border-color: rgba(37, 99, 235, 0.38);
+}
+
+.channelBadgeNeutral {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--ant-color-text-secondary);
+  background: var(--ant-color-fill-quaternary);
+  border: 1px solid var(--ant-color-border-secondary);
+}
+
+.profitCellPositive {
+  color: #10b981;
+  font-weight: 600;
+}
+
+[data-theme='dark'] .profitCellPositive {
+  color: #34d399;
+}
+
+.profitCellNegative {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+[data-theme='dark'] .profitCellNegative {
+  color: #f87171;
+}
+
+.profitCellNeutral {
+  color: var(--ant-color-text-secondary);
+}
+
+.missingCostAlertRow {
+  margin-top: 10px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #d97706;
+  background: rgba(245, 158, 11, 0.08);
+  border-radius: 6px;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
 }
 
 .dashboardEqualHeightCard:global(.ant-card) {
@@ -1298,8 +1396,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  justify-content: center;
+  gap: 16px;
   width: 100%;
+  height: 100%;
   padding: 4px 0;
 }
 
@@ -1325,10 +1425,11 @@
 }
 
 .donutCenterText strong {
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 22px;
+  font-weight: 800;
   color: var(--ant-color-text);
   line-height: 1.1;
+  letter-spacing: -0.02em;
 }
 
 .donutCenterText small {
@@ -1337,22 +1438,23 @@
   margin-top: 2px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  font-weight: 600;
 }
 
 .donutLegendGrid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
   width: 100%;
-  padding-top: 10px;
+  padding-top: 14px;
   border-top: 1px dashed var(--ant-color-border-secondary);
 }
 
 .donutLegendItem {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
 }
 
 .donutLegendDot {
@@ -1360,19 +1462,202 @@
   height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
+  margin-top: 5px;
 }
 
-.donutLegendValue {
-  font-weight: 600;
-  color: var(--ant-color-text);
-  margin-right: 2px;
+.donutLegendMeta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
 }
 
 .donutLegendName {
+  font-size: 12px;
+  font-weight: 500;
   color: var(--ant-color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.donutLegendStats {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.donutLegendValue {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ant-color-text);
+}
+
+.donutLegendPercent {
+  font-size: 11px;
+  color: var(--ant-color-text-tertiary);
+  font-weight: 500;
+}
+
+/* Revenue Overview Widget */
+.revenueOverviewWrap {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  gap: 14px;
+  padding: 4px 0;
+}
+
+.revenueOverviewHero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.revenueOverviewAmount {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--ant-color-text);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.revenueOverviewLabel {
+  font-size: 12px;
+  color: var(--ant-color-text-secondary);
+  margin-top: 3px;
+  font-weight: 500;
+}
+
+.revenueFreshnessTag {
+  font-size: 11px;
+  color: var(--ant-color-text-tertiary);
+  background: var(--ant-color-fill-quaternary);
+  border: 1px solid var(--ant-color-border-secondary);
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.revenueCompositionWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.revenueCompositionBar {
+  display: flex;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--ant-color-fill-quaternary);
+}
+
+.revenueCompositionProfit {
+  background: #10b981;
+  height: 100%;
+  border-radius: 4px 0 0 4px;
+}
+
+.revenueCompositionCost {
+  background: #94a3b8;
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+}
+
+.revenueCompositionLegend {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--ant-color-text-secondary);
+}
+
+.revenueCompositionLegend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.revenueDotProfit {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  display: inline-block;
+}
+
+.revenueDotCost {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #94a3b8;
+  display: inline-block;
+}
+
+.revenueGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.revenueGridItem {
+  background: var(--ant-color-fill-quaternary);
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.revenueGridLabel {
+  font-size: 11px;
+  color: var(--ant-color-text-tertiary);
+  font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.revenueGridValue {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ant-color-text);
+  line-height: 1.2;
+}
+
+.revenueGridProfit {
+  color: #10b981;
+}
+
+[data-theme='dark'] .revenueGridProfit {
+  color: #34d399;
+}
+
+.revenueGridSub {
+  font-size: 10px;
+  color: var(--ant-color-text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.missingCostNotice {
+  font-size: 11px;
+  color: #d97706;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  background: rgba(245, 158, 11, 0.1);
+  border-radius: 6px;
+  border: 1px solid rgba(245, 158, 11, 0.2);
 }
 
 /* Semi-circular Target Gauge */

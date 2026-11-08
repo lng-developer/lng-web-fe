@@ -1,7 +1,13 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { DownloadOutlined, PlayCircleOutlined, SendOutlined } from '@ant-design/icons'
+import {
+  DownloadOutlined,
+  PlayCircleOutlined,
+  PlusOutlined,
+  SearchOutlined,
+  SendOutlined,
+} from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import {
@@ -29,6 +35,7 @@ import {
   MetricCard,
   MonthPicker,
   PageHeader,
+  DetailDrawer,
   SectionCard,
   useFeedbackToast,
 } from '@/shared/ui'
@@ -68,7 +75,7 @@ export function PayrollEmployeeCell({
   return (
     <Space>
       <EmployeeAvatar
-        name={employee?.fullName || employee?.employeeCode}
+        name={employee?.fullName || employee?.employeeCode || fallbackLabel}
         avatarUrl={employee?.avatarUrl}
         size={36}
       />
@@ -105,6 +112,10 @@ export function PayrollPage({ workspace = 'personal' }: { workspace?: 'personal'
   const canPay = isManagement && permissions.has('HR_PAYROLL:PAY')
   const [month, setMonth] = useState(dayjs())
   const [editor, setEditor] = useState<'run' | 'adjustment' | 'settings'>()
+  const [selectedResult, setSelectedResult] = useState<PayrollResult | null>(null)
+  const [activeTab, setActiveTab] = useState<string>('staff')
+  const [searchText, setSearchText] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'DRAFT' | 'FINALIZED' | 'PAID'>('ALL')
   const [form] = Form.useForm()
   const [settingsForm] = Form.useForm()
   const toast = useFeedbackToast()
@@ -261,13 +272,23 @@ export function PayrollPage({ workspace = 'personal' }: { workspace?: 'personal'
     [payrollSummary?.amounts, resultItems],
   )
 
-  const statusRows = useMemo(() => {
-    const counts = payrollSummary?.statusCounts ?? {}
-    return ['DRAFT', 'FINALIZED', 'PAID'].map((st) => ({
-      status: st,
-      count: counts[st] ?? resultItems.filter((item) => item.status === st).length,
-    }))
-  }, [payrollSummary?.statusCounts, resultItems])
+  const filteredResultItems = useMemo(() => {
+    let list = resultItems
+    if (statusFilter !== 'ALL') {
+      list = list.filter((item) => item.status === statusFilter)
+    }
+    if (searchText.trim()) {
+      const q = searchText.trim().toLowerCase()
+      list = list.filter((item) => {
+        const name = (item.employee?.fullName || '').toLowerCase()
+        const code = (item.employee?.employeeCode || '').toLowerCase()
+        const dept = (item.employee?.departmentName || '').toLowerCase()
+        const team = (item.employee?.teamName || '').toLowerCase()
+        return name.includes(q) || code.includes(q) || dept.includes(q) || team.includes(q)
+      })
+    }
+    return list
+  }, [resultItems, statusFilter, searchText])
 
   const latestRun = runs.data?.items?.[0]
 
@@ -494,82 +515,161 @@ export function PayrollPage({ workspace = 'personal' }: { workspace?: 'personal'
       </div>
 
       <div className={styles.payrollWorkspace}>
-        <div className={styles.payrollPrimary}>
-          <SectionCard
-            title={t(
-              canRead ? 'hrOperations.payroll.staffPayroll' : 'hrOperations.payroll.myPayroll',
-            )}
-          >
-            <CoreDataTable
-              size="small"
-              rowKey="id"
-              loading={results.isLoading}
-              dataSource={resultItems}
-              scroll={{ x: 'max-content', y: 'calc(100vh - 430px)' }}
-              pagination={{
-                defaultPageSize: DEFAULT_PAGE_SIZE,
-                pageSizeOptions: PAGE_SIZE_OPTIONS,
-                hideOnSinglePage: false,
-                showSizeChanger: true,
-              }}
-              columns={columns}
-            />
-          </SectionCard>
-        </div>
-
-        <aside className={styles.payrollSide}>
-          <SectionCard title={t('hrOperations.payroll.resultSummary')}>
-            <div className={styles.payrollBreakdown}>
-              {statusRows.map((item) => (
-                <div
-                  className={`${styles.payrollBreakdownRow} ${styles[`payrollStatus${item.status}`]}`}
-                  key={item.status}
-                >
+        <div className={styles.payrollTabsContainer}>
+          <Tabs
+            activeKey={activeTab}
+            onChange={setActiveTab}
+            items={[
+              {
+                key: 'staff',
+                label: (
                   <span>
-                    <Tag>{payrollStatus(item.status)}</Tag>
+                    {t('hrOperations.payroll.staffPayroll')} ({filteredResultItems.length})
                   </span>
-                  <strong>{item.count}</strong>
-                </div>
-              ))}
-              <div className={styles.payrollBreakdownMoney}>
-                <span>{t('hrOperations.payroll.paidNet')}</span>
-                <strong>{money(payrollSummary?.amounts.paidNetIncome)}</strong>
-              </div>
-              <div className={styles.payrollBreakdownMoney}>
-                <span>{t('hrOperations.payroll.unpaidNet')}</span>
-                <strong>{money(payrollSummary?.amounts.unpaidNetIncome)}</strong>
-              </div>
-            </div>
-          </SectionCard>
+                ),
+                children: (
+                  <div>
+                    <div className={styles.payrollSubToolbar}>
+                      <div className={styles.payrollFilters}>
+                        <Input
+                          placeholder={t('hrOperations.payroll.searchPlaceholder', {
+                            defaultValue: 'Tìm kiếm nhân viên, mã NV, phòng ban...',
+                          })}
+                          prefix={
+                            <SearchOutlined style={{ color: 'var(--ant-color-text-tertiary)' }} />
+                          }
+                          allowClear
+                          value={searchText}
+                          onChange={(e) => setSearchText(e.target.value)}
+                          style={{ width: 280 }}
+                        />
+                        <Select
+                          value={statusFilter}
+                          onChange={setStatusFilter}
+                          style={{ width: 170 }}
+                          options={[
+                            {
+                              value: 'ALL',
+                              label: `${t('hrOperations.common.all', { defaultValue: 'Tất cả' })} (${resultItems.length})`,
+                            },
+                            {
+                              value: 'DRAFT',
+                              label: `${payrollStatus('DRAFT')} (${payrollSummary?.statusCounts?.DRAFT ?? resultItems.filter((r) => r.status === 'DRAFT').length})`,
+                            },
+                            {
+                              value: 'FINALIZED',
+                              label: `${payrollStatus('FINALIZED')} (${payrollSummary?.statusCounts?.FINALIZED ?? resultItems.filter((r) => r.status === 'FINALIZED').length})`,
+                            },
+                            {
+                              value: 'PAID',
+                              label: `${payrollStatus('PAID')} (${payrollSummary?.statusCounts?.PAID ?? resultItems.filter((r) => r.status === 'PAID').length})`,
+                            },
+                          ]}
+                        />
+                      </div>
+                      <div className={styles.payrollStatChips}>
+                        <div
+                          className={`${styles.payrollStatChip} ${styles.payrollStatChipSuccess}`}
+                        >
+                          <span>
+                            {t('hrOperations.payroll.paidNet', { defaultValue: 'Đã chi trả' })}:
+                          </span>
+                          <strong>{money(payrollSummary?.amounts.paidNetIncome)}</strong>
+                        </div>
+                        <div
+                          className={`${styles.payrollStatChip} ${styles.payrollStatChipWarning}`}
+                        >
+                          <span>
+                            {t('hrOperations.payroll.unpaidNet', { defaultValue: 'Chưa chi trả' })}:
+                          </span>
+                          <strong>{money(payrollSummary?.amounts.unpaidNetIncome)}</strong>
+                        </div>
+                      </div>
+                    </div>
 
-          <SectionCard title={t('hrOperations.payroll.periods')}>
-            <CoreDataTable
-              size="small"
-              rowKey="id"
-              loading={runs.isLoading}
-              dataSource={runs.data?.items}
-              pagination={false}
-              columns={periodColumns}
-            />
-          </SectionCard>
-
-          <SectionCard title={t('hrOperations.payroll.adjustments')}>
-            <CoreDataTable
-              size="small"
-              rowKey="id"
-              loading={adjustments.isLoading}
-              dataSource={adjustments.data?.items}
-              scroll={{ x: 'max-content', y: 'calc(100vh - 430px)' }}
-              pagination={{
-                defaultPageSize: DEFAULT_PAGE_SIZE,
-                pageSizeOptions: PAGE_SIZE_OPTIONS,
-                hideOnSinglePage: false,
-                showSizeChanger: true,
-              }}
-              columns={adjustmentColumns}
-            />
-          </SectionCard>
-        </aside>
+                    <CoreDataTable
+                      size="middle"
+                      rowKey="id"
+                      loading={results.isLoading}
+                      dataSource={filteredResultItems}
+                      scroll={{ x: 'max-content', y: 'calc(100vh - 430px)' }}
+                      onRow={(record) => ({
+                        onClick: () => setSelectedResult(record),
+                        className: styles.payrollTableRowClickable,
+                      })}
+                      pagination={{
+                        defaultPageSize: DEFAULT_PAGE_SIZE,
+                        pageSizeOptions: PAGE_SIZE_OPTIONS,
+                        hideOnSinglePage: false,
+                        showSizeChanger: true,
+                        showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`,
+                      }}
+                      columns={columns}
+                    />
+                  </div>
+                ),
+              },
+              {
+                key: 'periods',
+                label: (
+                  <span>
+                    {t('hrOperations.payroll.periods')} ({runs.data?.items?.length ?? 0})
+                  </span>
+                ),
+                children: (
+                  <CoreDataTable
+                    size="middle"
+                    rowKey="id"
+                    loading={runs.isLoading}
+                    dataSource={runs.data?.items}
+                    pagination={false}
+                    columns={periodColumns}
+                  />
+                ),
+              },
+              {
+                key: 'adjustments',
+                label: (
+                  <span>
+                    {t('hrOperations.payroll.adjustments')} ({adjustments.data?.items?.length ?? 0})
+                  </span>
+                ),
+                children: (
+                  <div>
+                    <div className={styles.payrollSubToolbar}>
+                      <Typography.Text type="secondary">
+                        {t('hrOperations.payroll.adjustmentsSubLabel', {
+                          defaultValue:
+                            'Các khoản phụ cấp, thưởng và giảm trừ được áp dụng trong kỳ lương này.',
+                        })}
+                      </Typography.Text>
+                      {canWrite && (
+                        <Button type="primary" icon={<PlusOutlined />} onClick={openAdjustment}>
+                          {t('hrOperations.payroll.addBulkAdjustment')}
+                        </Button>
+                      )}
+                    </div>
+                    <CoreDataTable
+                      size="middle"
+                      rowKey="id"
+                      loading={adjustments.isLoading}
+                      dataSource={adjustments.data?.items}
+                      scroll={{ x: 'max-content', y: 'calc(100vh - 430px)' }}
+                      pagination={{
+                        defaultPageSize: DEFAULT_PAGE_SIZE,
+                        pageSizeOptions: PAGE_SIZE_OPTIONS,
+                        hideOnSinglePage: false,
+                        showSizeChanger: true,
+                        showTotal: (total, range) => `${range[0]}-${range[1]} / ${total}`,
+                      }}
+                      columns={adjustmentColumns}
+                    />
+                  </div>
+                ),
+              },
+            ]}
+          />
+        </div>
       </div>
       <Modal
         width={editor === 'adjustment' ? 760 : 520}
@@ -892,6 +992,36 @@ export function PayrollPage({ workspace = 'personal' }: { workspace?: 'personal'
           </Space>
         </Form>
       </Modal>
+      <DetailDrawer
+        title={
+          <Space>
+            <span>
+              {t('hrOperations.payroll.payslipDetail', { defaultValue: 'Phiếu lương chi tiết' })}
+            </span>
+            {selectedResult?.employee?.fullName && (
+              <Tag color="blue">{selectedResult.employee.fullName}</Tag>
+            )}
+            {selectedResult?.employee?.employeeCode && (
+              <Tag>{selectedResult.employee.employeeCode}</Tag>
+            )}
+          </Space>
+        }
+        width="min(1280px, 92vw)"
+        drawerWidth={760}
+        open={Boolean(selectedResult)}
+        onClose={() => setSelectedResult(null)}
+        destroyOnClose
+        allowModeToggle
+        allowMaximize
+      >
+        {selectedResult && (
+          <PayslipStatement
+            result={selectedResult}
+            periodLabel={month.format('MM/YYYY')}
+            formatMoney={money}
+          />
+        )}
+      </DetailDrawer>
     </section>
   )
 }

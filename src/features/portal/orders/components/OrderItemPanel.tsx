@@ -15,7 +15,13 @@ import {
 import { Button, Descriptions, Dropdown, type MenuProps, Space, Tooltip, Typography } from 'antd'
 
 import { AuthenticatedMediaImage, downloadMediaAsset } from '@/shared/media'
-import { CopyableAsin, CopyableListingId, CopyableSku, StatusTag } from '@/shared/ui'
+import {
+  CopyableAsin,
+  CopyableListingId,
+  CopyableSku,
+  EmployeeIdentity,
+  StatusTag,
+} from '@/shared/ui'
 
 import type { OrderWorkbenchItem } from '../api/orderApi'
 import { FulfillmentInlineEditor } from '../pages/FulfillmentInlineEditor'
@@ -375,9 +381,17 @@ export const OrderItemPanel = memo(function OrderItemPanel({
             {
               key: 'seller',
               label: t('orders.fields.seller'),
-              children: displayValue(
-                [item.seller?.employeeCode, item.seller?.name].filter(Boolean).join(' · '),
-              ),
+              children:
+                item.seller?.name || item.seller?.employeeCode ? (
+                  <EmployeeIdentity
+                    size="small"
+                    mode="inline"
+                    name={item.seller.name}
+                    employeeCode={item.seller.employeeCode}
+                  />
+                ) : (
+                  '—'
+                ),
             },
           ]}
         />
@@ -394,29 +408,38 @@ export const OrderItemPanel = memo(function OrderItemPanel({
           </div>
           <div>
             <Typography.Text type="secondary">{t('orders.fields.seller')}</Typography.Text>
-            <span className={styles.sellerChip}>
-              {displayValue(
-                [item.seller?.employeeCode, item.seller?.name].filter(Boolean).join(' · '),
-              )}
-            </span>
+            {item.seller?.name || item.seller?.employeeCode ? (
+              <div style={{ marginTop: 2 }}>
+                <EmployeeIdentity
+                  size="small"
+                  mode="inline"
+                  name={item.seller.name}
+                  employeeCode={item.seller.employeeCode}
+                />
+              </div>
+            ) : (
+              <span className={styles.sellerChip}>—</span>
+            )}
           </div>
           {item.production?.scaleBy ? (
             <div>
               <Typography.Text type="secondary">{t('orders.fields.scaleBy')}</Typography.Text>
-              <span className={styles.sellerChip}>
-                {displayValue(
-                  [
-                    typeof item.production.scaleBy === 'object'
-                      ? item.production.scaleBy?.employeeCode
-                      : null,
+              <div style={{ marginTop: 2 }}>
+                <EmployeeIdentity
+                  size="small"
+                  mode="inline"
+                  name={
                     typeof item.production.scaleBy === 'object'
                       ? item.production.scaleBy?.name
-                      : null,
-                  ]
-                    .filter(Boolean)
-                    .join(' · '),
-                )}
-              </span>
+                      : null
+                  }
+                  employeeCode={
+                    typeof item.production.scaleBy === 'object'
+                      ? item.production.scaleBy?.employeeCode
+                      : null
+                  }
+                />
+              </div>
             </div>
           ) : null}
         </div>

@@ -6,10 +6,9 @@ import {
   PaperClipOutlined,
   SendOutlined,
   TeamOutlined,
-  UserOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Avatar, Badge, Button, Empty, Input, Upload, type UploadFile } from 'antd'
+import { Alert, Avatar, Button, Empty, Input, Upload, type UploadFile } from 'antd'
 
 import {
   type ChatConversation,
@@ -23,6 +22,7 @@ import {
   useTeamsChatSync,
 } from '@/features/portal/chat/api/chatQueries'
 import { uploadMediaAsset } from '@/features/portal/media/api/mediaApi'
+import { EmployeeAvatar } from '@/shared/ui'
 
 import { ChatAttachments } from './ChatAttachments'
 import { ChatReplyQuote } from './ChatReplyQuote'
@@ -81,6 +81,10 @@ export function QuickChatBox({
   })
 
   const otherId = conversation?.participantAccountIds.find((id) => id !== currentAccountId)
+  const otherParticipant = otherId ? participantById.get(otherId) : undefined
+  const isOnline = otherParticipant?.presence === 'ONLINE'
+  const isGroup = conversation?.type !== 'DIRECT'
+
   useTeamsChatSync(
     conversationId,
     !isMinimized &&
@@ -154,13 +158,43 @@ export function QuickChatBox({
     >
       <div className={styles.quickChatHeader}>
         <div className={styles.quickChatHeaderInfo}>
-          <Badge dot={isUnread} offset={[-2, 28]}>
-            <Avatar
-              size={30}
-              icon={conversation?.type === 'DIRECT' ? <UserOutlined /> : <TeamOutlined />}
-            />
-          </Badge>
-          <strong className={styles.quickChatTitle}>{title}</strong>
+          <div className={styles.quickChatHeaderAvatarWrapper}>
+            {!isGroup ? (
+              <EmployeeAvatar
+                size={34}
+                name={title}
+                avatarUrl={otherParticipant?.avatarUrl}
+                className={styles.headerAvatar}
+              />
+            ) : (
+              <Avatar size={34} icon={<TeamOutlined />} className={styles.headerAvatarGroup} />
+            )}
+            {!isGroup ? (
+              isOnline ? (
+                <span className={styles.onlineDot} title={t('chat.activeNow')} />
+              ) : isUnread ? (
+                <span className={styles.unreadDot} />
+              ) : null
+            ) : isUnread ? (
+              <span className={styles.unreadDot} />
+            ) : null}
+          </div>
+          <div className={styles.quickChatHeaderInfoText}>
+            <strong className={styles.quickChatTitle} title={title}>
+              {title}
+            </strong>
+            <span
+              className={
+                !isGroup && isOnline ? styles.quickChatSubtitleActive : styles.quickChatSubtitle
+              }
+            >
+              {!isGroup
+                ? isOnline
+                  ? t('chat.activeNow')
+                  : t('chat.offline')
+                : `${conversation?.participantAccountIds?.length ?? 0} ${t('chat.members')}`}
+            </span>
+          </div>
         </div>
         <div className={styles.quickChatHeaderActions}>
           <Button
@@ -191,17 +225,52 @@ export function QuickChatBox({
       </div>
       <div className={styles.quickChatBody}>
         <div className={styles.quickChatMessages}>
-          {messageItems.map((message) => {
+          {messageItems.map((message, index) => {
             const isOwn = message.senderAccountId === currentAccountId
-            const showSenderName = !isOwn && conversation?.type !== 'DIRECT'
-            const senderName = showSenderName
-              ? participantLabel(participantById.get(message.senderAccountId))
-              : null
+            const prev = index > 0 ? messageItems[index - 1] : null
+            const next = index < messageItems.length - 1 ? messageItems[index + 1] : null
+
+            const isSameSenderAsPrev = Boolean(
+              prev &&
+              prev.senderAccountId === message.senderAccountId &&
+              Math.abs(new Date(message.createdAt).getTime() - new Date(prev.createdAt).getTime()) <
+                10 * 60 * 1000,
+            )
+            const isSameSenderAsNext = Boolean(
+              next &&
+              next.senderAccountId === message.senderAccountId &&
+              Math.abs(new Date(next.createdAt).getTime() - new Date(message.createdAt).getTime()) <
+                10 * 60 * 1000,
+            )
+
+            const isFirstInGroup = !isSameSenderAsPrev
+            const isLastInGroup = !isSameSenderAsNext
+
+            let bubbleCornerClass = ''
+            if (isOwn) {
+              if (isFirstInGroup && isLastInGroup) bubbleCornerClass = styles.bubbleOwnSingle
+              else if (isFirstInGroup && !isLastInGroup) bubbleCornerClass = styles.bubbleOwnFirst
+              else if (!isFirstInGroup && !isLastInGroup) bubbleCornerClass = styles.bubbleOwnMiddle
+              else bubbleCornerClass = styles.bubbleOwnLast
+            } else {
+              if (isFirstInGroup && isLastInGroup) bubbleCornerClass = styles.bubbleOtherSingle
+              else if (isFirstInGroup && !isLastInGroup) bubbleCornerClass = styles.bubbleOtherFirst
+              else if (!isFirstInGroup && !isLastInGroup)
+                bubbleCornerClass = styles.bubbleOtherMiddle
+              else bubbleCornerClass = styles.bubbleOtherLast
+            }
+
+            const marginClass = isLastInGroup
+              ? styles.messageLastInGroup
+              : styles.messageConsecutive
+            const showSenderName = !isOwn && conversation?.type !== 'DIRECT' && isFirstInGroup
+            const senderParticipant = participantById.get(message.senderAccountId)
+            const senderName = showSenderName ? participantLabel(senderParticipant) : null
 
             return (
               <div
                 key={message.id}
-                className={`${messageStyles.message} ${isOwn ? styles.quickMessageGroupOwn : styles.quickMessageGroupOther}`}
+                className={`${messageStyles.message} ${isOwn ? styles.quickMessageGroupOwn : styles.quickMessageGroupOther} ${marginClass}`}
                 tabIndex={-1}
                 onPointerDown={(event) => {
                   if (event.pointerType === 'touch') event.currentTarget.focus()
@@ -210,12 +279,32 @@ export function QuickChatBox({
                 {senderName ? (
                   <span className={styles.quickMessageSender}>{senderName}</span>
                 ) : null}
-                <div className={isOwn ? styles.quickMessageOwn : styles.quickMessageOther}>
-                  {message.replyToMessageId ? (
-                    <ChatReplyQuote quote={message.replyToMessage} participants={participantById} />
+                <div className={styles.messageRow}>
+                  {!isOwn ? (
+                    isLastInGroup ? (
+                      <EmployeeAvatar
+                        size={28}
+                        name={participantLabel(senderParticipant)}
+                        avatarUrl={senderParticipant?.avatarUrl}
+                        className={styles.messageAvatar}
+                      />
+                    ) : (
+                      <div className={styles.messageAvatarSpacer} aria-hidden="true" />
+                    )
                   ) : null}
-                  {message.body}
-                  <ChatAttachments message={message} />
+                  <div
+                    className={`${isOwn ? styles.quickMessageOwn : styles.quickMessageOther} ${bubbleCornerClass}`}
+                  >
+                    {message.replyToMessageId ? (
+                      <ChatReplyQuote
+                        quote={message.replyToMessage}
+                        participants={participantById}
+                        isOwn={isOwn}
+                      />
+                    ) : null}
+                    {message.body}
+                    <ChatAttachments message={message} />
+                  </div>
                 </div>
                 {!message.deletedAt ? (
                   <ChatReplyAction
@@ -283,6 +372,7 @@ export function QuickChatBox({
               icon={<PaperClipOutlined />}
               type="text"
               shape="circle"
+              className={styles.quickChatAttachBtn}
               disabled={quickSend.isPending}
             />
           </Upload>
@@ -305,7 +395,7 @@ export function QuickChatBox({
             icon={<SendOutlined />}
             shape="circle"
             type="primary"
-            className={styles.quickChatSendButton}
+            className={`${styles.quickChatSendButton} ${canSend ? styles.quickChatSendButtonActive : ''}`}
             onClick={() => quickSend.mutate()}
           />
         </div>

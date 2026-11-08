@@ -1,9 +1,9 @@
 import { useTranslation } from 'react-i18next'
 import { FileOutlined } from '@ant-design/icons'
-import { Descriptions, Modal, Space, Typography } from 'antd'
+import { Descriptions, Space, Typography } from 'antd'
 
 import { AuthenticatedMediaImage } from '@/shared/media'
-import { FormattedDateTime, StatusTag } from '@/shared/ui'
+import { DetailDrawer, FormattedDateTime, StatusTag } from '@/shared/ui'
 
 import type { MediaAsset } from '../api/mediaApi'
 
@@ -25,12 +25,15 @@ export function MediaAssetDetailModal({
 }) {
   const { t } = useTranslation()
   return (
-    <Modal
+    <DetailDrawer
       open={Boolean(asset)}
       footer={null}
       title={t('media.detail.title')}
-      onCancel={onClose}
+      onClose={onClose}
       destroyOnHidden
+      width="min(1000px, 88vw)"
+      allowModeToggle
+      allowMaximize
     >
       {asset ? (
         <Space direction="vertical" size={20} style={{ width: '100%' }}>
@@ -75,6 +78,6 @@ export function MediaAssetDetailModal({
           </Descriptions>
         </Space>
       ) : null}
-    </Modal>
+    </DetailDrawer>
   )
 }

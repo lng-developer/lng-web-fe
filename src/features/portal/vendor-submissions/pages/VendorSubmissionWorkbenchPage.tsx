@@ -16,6 +16,7 @@ import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
   CopyableOrderId,
+  DetailModal,
   CopyableSku,
   DataFreshness,
   DateRangePicker,
@@ -451,13 +452,13 @@ export function VendorSubmissionWorkbenchPage({
           }
         />
       </div>
-      <Modal
+      <DetailModal
         destroyOnClose
         width="min(1360px, 92vw)"
-        style={{ top: 40 }}
+        drawerWidth="min(860px, 65vw)"
         open={Boolean(selectedId)}
         title={t('portal.vendorSubmissions.detail')}
-        onCancel={handleCloseDrawer}
+        onClose={handleCloseDrawer}
         loading={detail.isLoading}
         footer={
           detail.data ? (
@@ -593,7 +594,7 @@ export function VendorSubmissionWorkbenchPage({
             <Timeline items={timelineItems} />
           </div>
         ) : null}
-      </Modal>
+      </DetailModal>
       <Modal
         open={Boolean(payloadId)}
         width={760}

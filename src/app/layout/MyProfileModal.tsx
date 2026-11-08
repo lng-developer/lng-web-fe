@@ -1,9 +1,9 @@
 import { useTranslation } from 'react-i18next'
-import { UserOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Alert, Avatar, Button, Descriptions, Modal, Skeleton, Space, Tag, Typography } from 'antd'
+import { Alert, Button, Descriptions, Skeleton, Space, Tag, Typography } from 'antd'
 
 import { loadEmployeeAvatar, loadMyEmployeeProfile } from '@/features/hr/api/hrApi'
+import { DetailModal, EmployeeAvatar } from '@/shared/ui'
 
 import styles from './MyProfileModal.module.scss'
 
@@ -23,9 +23,10 @@ export function MyProfileModal({ open, onClose }: { open: boolean; onClose: () =
   })
 
   return (
-    <Modal
+    <DetailModal
       destroyOnHidden
       open={open}
+      allowMaximize
       width={760}
       title={t('shell.account.myProfile')}
       footer={<Button onClick={onClose}>{t('shell.account.close')}</Button>}
@@ -47,12 +48,12 @@ export function MyProfileModal({ open, onClose }: { open: boolean; onClose: () =
       {profile.data && (
         <Space className={styles.profile} orientation="vertical" size={20}>
           <div className={styles.identity}>
-            <Avatar
+            <EmployeeAvatar
               size={64}
-              src={
+              name={profile.data.fullName}
+              avatarUrl={
                 avatar.data ?? (!profile.data.avatarAssetId ? profile.data.avatarUrl : undefined)
               }
-              icon={<UserOutlined />}
             />
             <div>
               <Typography.Title level={4}>{profile.data.fullName || emptyValue}</Typography.Title>
@@ -115,6 +116,6 @@ export function MyProfileModal({ open, onClose }: { open: boolean; onClose: () =
           />
         </Space>
       )}
-    </Modal>
+    </DetailModal>
   )
 }

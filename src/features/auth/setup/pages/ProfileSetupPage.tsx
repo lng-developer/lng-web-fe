@@ -1,20 +1,29 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import {
+  ArrowRightOutlined,
   BankOutlined,
   ContactsOutlined,
+  DeleteOutlined,
+  DollarOutlined,
+  EyeInvisibleOutlined,
+  EyeOutlined,
   IdcardOutlined,
+  LockOutlined,
+  PlusOutlined,
   SaveOutlined,
+  SolutionOutlined,
+  TeamOutlined,
   UploadOutlined,
   UserOutlined,
 } from '@ant-design/icons'
 import {
   Alert,
-  Avatar,
   Button,
   Col,
   Divider,
+  Empty,
   Form,
   Input,
   Row,
@@ -22,11 +31,11 @@ import {
   Skeleton,
   Tabs,
   Tag,
+  Tooltip,
   Typography,
   Upload,
 } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
-import { getAccount } from '@/shared/auth/session'
 
 import {
   loadMyEmployeeProfile,
@@ -35,13 +44,32 @@ import {
   uploadMyEmployeeAvatar,
 } from '@/features/hr/api/hrApi'
 import { ApiError } from '@/shared/api'
-import { DateTimePicker, SectionCard, useFeedbackToast } from '@/shared/ui'
+import { getAccount } from '@/shared/auth/session'
+import { DateTimePicker, EmployeeAvatar, SectionCard, useFeedbackToast } from '@/shared/ui'
 
 import { SetupLayout } from '../components/SetupLayout'
 import styles from './ProfileSetupPage.module.scss'
 
-type ProfileValues = Omit<PersonalProfileInput, 'birthDate'> & { birthDate?: Dayjs | string | null }
-type ProfileTabKey = 'personal' | 'emergency' | 'legal-bank'
+type DependantFormValue = {
+  name: string
+  relation: string
+  dob?: Dayjs | string | null
+  gender?: string | null
+}
+
+type ProfileValues = Omit<PersonalProfileInput, 'birthDate' | 'dependantDetails'> & {
+  birthDate?: Dayjs | string | null
+  dependantDetails?: DependantFormValue[]
+}
+
+type ProfileTabKey =
+  | 'personal'
+  | 'employment'
+  | 'compensation'
+  | 'emergency'
+  | 'legal-bank'
+  | 'dependants'
+
 type DuplicateProfileField =
   | 'identityCard'
   | 'personalEmail'
@@ -66,13 +94,30 @@ function getDuplicateProfileField(cause: unknown) {
     : undefined
 }
 
-const bankOptions = ['VCB', 'BIDV', 'CTG', 'AGR', 'TCB', 'MB', 'ACB', 'VPB', 'TPB', 'STB'].map(
-  (value) => ({ label: value, value }),
-)
+const bankOptions = [
+  'VCB',
+  'BIDV',
+  'CTG',
+  'AGR',
+  'TCB',
+  'MB',
+  'ACB',
+  'VPB',
+  'TPB',
+  'STB',
+  'HDB',
+  'VIB',
+  'SHB',
+  'EIB',
+  'MSB',
+  'OCB',
+  'LPB',
+].map((value) => ({ label: value, value }))
 
 function tabKeyForField(name: readonly (string | number)[]): ProfileTabKey {
   const [field] = name
   if (field === 'emergencyContact') return 'emergency'
+  if (field === 'dependantDetails') return 'dependants'
   if (
     field === 'identityCard' ||
     field === 'taxIdentification' ||
@@ -83,9 +128,9 @@ function tabKeyForField(name: readonly (string | number)[]): ProfileTabKey {
   return 'personal'
 }
 
-function serializeBirthDate(value: ProfileValues['birthDate']) {
+function serializeBirthDate(value?: Dayjs | string | null) {
   if (!value) return null
-  return typeof value === 'string' ? value : value.format('YYYY-MM-DD')
+  return typeof value === 'string' ? value.slice(0, 10) : value.format('YYYY-MM-DD')
 }
 
 export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
@@ -101,6 +146,7 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
   const [avatarFile, setAvatarFile] = useState<File>()
   const [avatarPreview, setAvatarPreview] = useState<string>()
   const [submitting, setSubmitting] = useState(false)
+  const [hideSalary, setHideSalary] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -123,6 +169,12 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
           taxIdentification: value.taxIdentification,
           socialInsuranceNumber: value.socialInsuranceNumber,
           bankAccount: value.bankAccount || {},
+          dependantDetails: (value.dependantDetails || []).map((d) => ({
+            name: d.name,
+            relation: d.relation,
+            gender: d.gender,
+            dob: d.dob ? dayjs(d.dob) : null,
+          })),
         })
       })
       .catch((cause) => {
@@ -155,8 +207,22 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
     try {
       if (avatarFile) await uploadMyEmployeeAvatar(avatarFile)
       await updateMyPersonalProfile({
-        ...values,
+        phoneNumber: values.phoneNumber,
+        address: values.address,
+        personalEmail: values.personalEmail,
+        gender: values.gender,
         birthDate: serializeBirthDate(values.birthDate),
+        emergencyContact: values.emergencyContact,
+        identityCard: values.identityCard || null,
+        taxIdentification: values.taxIdentification || null,
+        socialInsuranceNumber: values.socialInsuranceNumber || null,
+        bankAccount: values.bankAccount || {},
+        dependantDetails: (values.dependantDetails || []).map((d) => ({
+          name: d.name,
+          relation: d.relation,
+          dob: serializeBirthDate(d.dob),
+          gender: d.gender || null,
+        })),
       })
       showFeedbackToast('success', t('actionFeedback.updated'))
       navigate(
@@ -187,6 +253,27 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
     }
   }
 
+  const formatCurrency = (amount?: number | null, currency = 'VND') => {
+    if (hideSalary) return '•••••••• ₫'
+    const formatted = new Intl.NumberFormat('vi-VN').format(amount || 0)
+    return `${formatted} ${currency === 'VND' ? '₫' : currency}`
+  }
+
+  const formatDate = (date?: string | null) => {
+    if (!date) return '-'
+    return dayjs(date).format('DD/MM/YYYY')
+  }
+
+  const totalAgreedSalary = useMemo(() => {
+    if (!profile) return 0
+    const base = profile.baseSalary || 0
+    const lunch = profile.allowances?.lunch || 0
+    const fuel = profile.allowances?.fuel || 0
+    const other = profile.allowances?.other || 0
+    const responsibility = profile.responsibilityAllowance || 0
+    return base + lunch + fuel + other + responsibility
+  }, [profile])
+
   const required = [{ required: true, whitespace: true, message: t('auth.setup.required') }]
   const phoneRules = [
     ...required,
@@ -208,6 +295,19 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
       children: (
         <SectionCard title={t('auth.setup.profile.personal')}>
           <Row gutter={16}>
+            <Col span={24}>
+              <Form.Item label={t('hr.fullName')}>
+                <Input
+                  disabled
+                  value={profile?.fullName || ''}
+                  suffix={
+                    <Tooltip title={t('auth.setup.profile.fullNameNote')}>
+                      <LockOutlined style={{ color: 'rgba(0, 0, 0, 0.45)' }} />
+                    </Tooltip>
+                  }
+                />
+              </Form.Item>
+            </Col>
             <Col xs={24} sm={12}>
               <Form.Item name="gender" label={t('hr.gender')}>
                 <Select
@@ -245,6 +345,202 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
             </Col>
           </Row>
         </SectionCard>
+      ),
+    },
+    {
+      key: 'employment',
+      label: (
+        <span>
+          <SolutionOutlined style={{ marginRight: 6 }} />
+          {t('auth.setup.profile.employment')}
+          <Tag color="default" style={{ marginLeft: 6, fontSize: 10, lineHeight: '16px' }}>
+            <LockOutlined style={{ marginRight: 2 }} />
+            {t('auth.setup.profile.readOnlyBadge')}
+          </Tag>
+        </span>
+      ),
+      children: (
+        <>
+          <div className={styles.readOnlyNotice}>
+            <LockOutlined style={{ color: 'var(--ant-color-primary)' }} />
+            <span>{t('auth.setup.profile.managedByHrDesc')}</span>
+          </div>
+
+          <SectionCard title={t('hr.employmentInformation')}>
+            <div className={styles.infoGrid}>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>{t('hr.employeeCode')}</span>
+                <span className={styles.infoValue}>
+                  <Tag color="blue">{profile?.employeeCode || '-'}</Tag>
+                </span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>{t('hr.workEmail')}</span>
+                <span className={styles.infoValue}>{profile?.workEmail || '-'}</span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>{t('hr.department')}</span>
+                <span className={styles.infoValue}>{profile?.department?.name || '-'}</span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>{t('hr.team')}</span>
+                <span className={styles.infoValue}>{profile?.team?.name || '-'}</span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>{t('hr.jobTitle')}</span>
+                <span className={styles.infoValue}>{profile?.jobTitle || '-'}</span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>{t('hr.jobLevel')}</span>
+                <span className={styles.infoValue}>{profile?.jobLevel || '-'}</span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>{t('hr.employmentType')}</span>
+                <span className={styles.infoValue}>
+                  {profile?.employmentType
+                    ? t(`hr.employmentTypes.${profile.employmentType}`, profile.employmentType)
+                    : '-'}
+                </span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>{t('hr.workMode')}</span>
+                <span className={styles.infoValue}>
+                  {profile?.workMode
+                    ? t(`hr.workModes.${profile.workMode}`, profile.workMode)
+                    : '-'}
+                </span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>{t('hr.status')}</span>
+                <span className={styles.infoValue}>
+                  {profile?.status ? (
+                    <Tag color={profile.status === 'ACTIVE' ? 'success' : 'warning'}>
+                      {t(`hr.statuses.${profile.status}`, profile.status)}
+                    </Tag>
+                  ) : (
+                    '-'
+                  )}
+                </span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>{t('hr.startDate')}</span>
+                <span className={styles.infoValue}>{formatDate(profile?.startDate)}</span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>{t('hr.probationEndDate')}</span>
+                <span className={styles.infoValue}>{formatDate(profile?.probationEndDate)}</span>
+              </div>
+            </div>
+          </SectionCard>
+
+          <div style={{ marginTop: 16 }}>
+            <SectionCard title={t('hr.contractInformation')}>
+              <div className={styles.infoGrid}>
+                <div className={styles.infoItem}>
+                  <span className={styles.infoLabel}>{t('hr.contractType')}</span>
+                  <span className={styles.infoValue}>{profile?.contractType || '-'}</span>
+                </div>
+                <div className={styles.infoItem}>
+                  <span className={styles.infoLabel}>{t('hr.contractNumber')}</span>
+                  <span className={styles.infoValue}>{profile?.contractNumber || '-'}</span>
+                </div>
+                <div className={styles.infoItem}>
+                  <span className={styles.infoLabel}>{t('hr.contractStartDate')}</span>
+                  <span className={styles.infoValue}>{formatDate(profile?.contractStartDate)}</span>
+                </div>
+                <div className={styles.infoItem}>
+                  <span className={styles.infoLabel}>{t('hr.contractEndDate')}</span>
+                  <span className={styles.infoValue}>{formatDate(profile?.contractEndDate)}</span>
+                </div>
+              </div>
+            </SectionCard>
+          </div>
+        </>
+      ),
+    },
+    {
+      key: 'compensation',
+      label: (
+        <span>
+          <DollarOutlined style={{ marginRight: 6 }} />
+          {t('auth.setup.profile.compensation')}
+          <Tag color="default" style={{ marginLeft: 6, fontSize: 10, lineHeight: '16px' }}>
+            <LockOutlined style={{ marginRight: 2 }} />
+            {t('auth.setup.profile.readOnlyBadge')}
+          </Tag>
+        </span>
+      ),
+      children: (
+        <>
+          <div className={styles.salaryHighlight}>
+            <div>
+              <div className={styles.infoLabel}>
+                {t('auth.setup.profile.totalAgreedPackage')} ({profile?.baseCurrency || 'VND'})
+              </div>
+              <div className={styles.salaryTotal}>
+                {formatCurrency(totalAgreedSalary, profile?.baseCurrency || 'VND')}
+              </div>
+            </div>
+            <Button
+              icon={hideSalary ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+              onClick={() => setHideSalary((prev) => !prev)}
+            >
+              {hideSalary ? t('auth.setup.profile.showAmount') : t('auth.setup.profile.hideAmount')}
+            </Button>
+          </div>
+
+          <SectionCard title={t('hr.compensation')}>
+            <div className={styles.infoGrid}>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>{t('hr.baseSalary')}</span>
+                <span className={styles.infoValue}>
+                  {formatCurrency(profile?.baseSalary, profile?.baseCurrency || 'VND')}
+                </span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>{t('hr.lunchAllowance')}</span>
+                <span className={styles.infoValue}>
+                  {formatCurrency(profile?.allowances?.lunch, profile?.baseCurrency || 'VND')}
+                </span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>{t('hr.fuelAllowance')}</span>
+                <span className={styles.infoValue}>
+                  {formatCurrency(profile?.allowances?.fuel, profile?.baseCurrency || 'VND')}
+                </span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>{t('hr.responsibilityAllowance')}</span>
+                <span className={styles.infoValue}>
+                  {formatCurrency(profile?.responsibilityAllowance, profile?.baseCurrency || 'VND')}
+                </span>
+              </div>
+              <div className={styles.infoItem}>
+                <span className={styles.infoLabel}>{t('hr.otherAllowance')}</span>
+                <span className={styles.infoValue}>
+                  {formatCurrency(profile?.allowances?.other, profile?.baseCurrency || 'VND')}
+                </span>
+              </div>
+            </div>
+          </SectionCard>
+
+          <div className={styles.payrollBanner}>
+            <div>
+              <Typography.Text strong>{t('auth.setup.profile.viewPayslipsTitle')}</Typography.Text>
+              <br />
+              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                {t('auth.setup.profile.viewPayslipsDesc')}
+              </Typography.Text>
+            </div>
+            <Button
+              icon={<ArrowRightOutlined />}
+              type="primary"
+              onClick={() => navigate('/hr/me/payroll')}
+            >
+              {t('auth.setup.profile.goToPayroll')}
+            </Button>
+          </div>
+        </>
       ),
     },
     {
@@ -348,6 +644,84 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
         </SectionCard>
       ),
     },
+    {
+      key: 'dependants',
+      label: (
+        <span>
+          <TeamOutlined style={{ marginRight: 6 }} />
+          {t('auth.setup.profile.dependants')}
+        </span>
+      ),
+      children: (
+        <SectionCard title={t('auth.setup.profile.dependantsTitle')}>
+          <Typography.Paragraph type="secondary" style={{ fontSize: 13 }}>
+            {t('auth.setup.profile.dependantsDesc')}
+          </Typography.Paragraph>
+
+          <Form.List name="dependantDetails">
+            {(fields, { add, remove }) => (
+              <div className={styles.dependantList}>
+                {fields.length === 0 ? (
+                  <Empty
+                    description={t('auth.setup.profile.noDependants')}
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  />
+                ) : null}
+
+                {fields.map((field) => (
+                  <div key={field.key} className={styles.dependantRow}>
+                    <Form.Item name={[field.name, 'name']} rules={required}>
+                      <Input placeholder={t('auth.setup.profile.dependantNamePlaceholder')} />
+                    </Form.Item>
+                    <Form.Item name={[field.name, 'relation']} rules={required}>
+                      <Select
+                        placeholder={t('auth.setup.profile.dependantRelation')}
+                        options={relationships.map((value) => ({
+                          value,
+                          label: t(`auth.setup.profile.relationships.${value}`),
+                        }))}
+                      />
+                    </Form.Item>
+                    <Form.Item name={[field.name, 'dob']}>
+                      <DateTimePicker
+                        mode="date"
+                        placeholder={t('auth.setup.profile.dependantDob')}
+                        style={{ width: '100%' }}
+                      />
+                    </Form.Item>
+                    <Form.Item name={[field.name, 'gender']}>
+                      <Select
+                        allowClear
+                        placeholder={t('auth.setup.profile.dependantGender')}
+                        options={genders.map((value) => ({
+                          value,
+                          label: t(`hr.genders.${value}`),
+                        }))}
+                      />
+                    </Form.Item>
+                    <Button
+                      danger
+                      type="text"
+                      icon={<DeleteOutlined />}
+                      onClick={() => remove(field.name)}
+                    />
+                  </div>
+                ))}
+
+                <Button
+                  type="dashed"
+                  icon={<PlusOutlined />}
+                  style={{ width: '100%', marginTop: 8 }}
+                  onClick={() => add()}
+                >
+                  {t('auth.setup.profile.addDependant')}
+                </Button>
+              </div>
+            )}
+          </Form.List>
+        </SectionCard>
+      ),
+    },
   ]
 
   const content = (
@@ -357,7 +731,12 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
       {profile && (
         <div className={styles.workspace}>
           <aside className={styles.identity}>
-            <Avatar size={96} src={avatarPreview || profile.avatarUrl} icon={<UserOutlined />} />
+            <EmployeeAvatar
+              size={96}
+              name={profile.fullName}
+              avatarUrl={avatarPreview || profile.avatarUrl}
+              icon={<UserOutlined />}
+            />
             <Upload
               accept="image/jpeg,image/png,image/webp"
               beforeUpload={selectAvatar}
@@ -365,24 +744,32 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
                 avatarFile ? [{ uid: 'avatar', name: avatarFile.name, status: 'done' }] : []
               }
               maxCount={1}
+              showUploadList={false}
               onRemove={() => {
                 setAvatarFile(undefined)
                 setAvatarPreview(undefined)
               }}
             >
-              <Button icon={<UploadOutlined />}>{t('hr.uploadAvatar')}</Button>
+              <Button icon={<UploadOutlined />} size="small">
+                {t('hr.uploadAvatar')}
+              </Button>
             </Upload>
             {avatarError && <Alert type="error" message={avatarError} style={{ marginTop: 8 }} />}
             <div className={styles.identityText}>
               <Typography.Title level={4} style={{ margin: 0, textAlign: 'center' }}>
                 {profile.fullName}
               </Typography.Title>
-              <Tag color="blue" style={{ marginTop: 4 }}>
+              <Tag color="blue" style={{ marginTop: 4, fontWeight: 600 }}>
                 {profile.employeeCode}
               </Tag>
-              <Typography.Text type="secondary">
-                {t('hr.workEmail')}: {profile.workEmail || getAccount()?.email || '-'}
+              <Typography.Text type="secondary" style={{ fontSize: 13 }}>
+                {profile.workEmail || getAccount()?.email || '-'}
               </Typography.Text>
+              {profile.jobTitle ? (
+                <Tag color="geekblue" style={{ marginTop: 4 }}>
+                  {profile.jobTitle}
+                </Tag>
+              ) : null}
               <Typography.Text type="secondary" style={{ fontSize: 12, marginTop: 4 }}>
                 {profile.department?.name || '-'} · {profile.team?.name || '-'}
               </Typography.Text>
@@ -448,3 +835,5 @@ export function ProfileSetupPage({ embedded = false }: { embedded?: boolean }) {
     </SetupLayout>
   )
 }
+
+export default ProfileSetupPage

@@ -1,9 +1,9 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Col, Divider, Form, Input, Modal, Row, Select } from 'antd'
+import { Col, Divider, Form, Input, Row, Select } from 'antd'
 
-import { DateTimePicker, FormActions, useFeedbackToast } from '@/shared/ui'
+import { DetailModal, DateTimePicker, FormActions, useFeedbackToast } from '@/shared/ui'
 
 import {
   createLeaveRequest,
@@ -82,9 +82,10 @@ export function TimeRequestEditorModal({
       )
 
   return (
-    <Modal
+    <DetailModal
       destroyOnHidden
       open={Boolean(kind)}
+      allowMaximize
       title={title}
       footer={null}
       width={520}
@@ -202,6 +203,6 @@ export function TimeRequestEditorModal({
           )}
         </Form.Item>
       </Form>
-    </Modal>
+    </DetailModal>
   )
 }

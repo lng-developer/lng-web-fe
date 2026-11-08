@@ -41,8 +41,112 @@
   border-top: 1px solid var(--ant-color-border-secondary);
 }
 
+.readOnlyNotice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  background: var(--ant-color-fill-quaternary, #f9fafb);
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--ant-color-text-secondary);
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 14px 20px;
+  padding: 8px 0;
+}
+
+.infoItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.infoLabel {
+  font-size: 12px;
+  color: var(--ant-color-text-secondary);
+  font-weight: 500;
+}
+
+.infoValue {
+  font-size: 13.5px;
+  color: var(--ant-color-text);
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.salaryHighlight {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: var(--ant-color-primary-bg, #eff6ff);
+  border: 1px solid var(--ant-color-primary-border, #bfdbfe);
+  border-radius: 10px;
+  margin-bottom: 16px;
+}
+
+.salaryTotal {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ant-color-primary, #1d4ed8);
+  letter-spacing: -0.02em;
+}
+
+.payrollBanner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  margin-top: 16px;
+  background: var(--ant-color-fill-quaternary, #f9fafb);
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 10px;
+  gap: 12px;
+}
+
+.dependantList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dependantRow {
+  display: grid;
+  grid-template-columns: minmax(140px, 1.8fr) minmax(110px, 1.2fr) minmax(130px, 1.4fr) minmax(
+      90px,
+      1fr
+    ) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 14px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+  background: var(--ant-color-bg-container);
+}
+
+.dependantRow :global(.ant-form-item) {
+  margin-bottom: 0;
+}
+
 @media (max-width: 800px) {
   .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .salaryHighlight,
+  .payrollBanner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .dependantRow {
     grid-template-columns: 1fr;
   }
 }

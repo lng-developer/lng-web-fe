@@ -16,7 +16,7 @@ import { Empty, Spin } from 'antd'
 import dayjs from 'dayjs'
 
 import { modalQueryOptions } from '@/shared/query/modalQuery'
-import { EmployeeAvatar, FeedbackAlert, PopupModal, type PopupModalAnchor } from '@/shared/ui'
+import { EmployeeIdentity, FeedbackAlert, PopupModal, type PopupModalAnchor } from '@/shared/ui'
 
 import { listOrderItemTimeline, listOrderTimeline } from '../api/orderApi'
 import { orderKeys } from '../api/orderKeys'
@@ -271,8 +271,11 @@ export const OrderTimelineModal = memo(function OrderTimelineModal({
 
                         {actorName && (
                           <div className={styles.actorRow}>
-                            <EmployeeAvatar name={actorName} size={18} />
-                            <span className={styles.actorName}>{actorName}</span>
+                            <EmployeeIdentity
+                              size={20}
+                              name={event.actor?.displayName}
+                              employeeCode={event.actor?.employeeCode}
+                            />
                           </div>
                         )}
                       </div>

@@ -18,7 +18,7 @@ export function NavigationSearch({
   onNavigate,
   className,
 }: {
-  account: CurrentAccount
+  account?: CurrentAccount
   onNavigate?: () => void
   className?: string
 }) {
@@ -50,7 +50,7 @@ export function NavigationSearch({
     if (!open || !listRef.current) return
     const activeEl = listRef.current.children[safeActiveIndex] as HTMLElement | undefined
     if (activeEl) {
-      activeEl.scrollIntoView({ block: 'nearest' })
+      activeEl.scrollIntoView?.({ block: 'nearest' })
     }
   }, [safeActiveIndex, open])
 
@@ -139,6 +139,7 @@ export function NavigationSearch({
                 tabIndex={0}
                 aria-selected={isSelected}
                 className={`${styles.resultItem} ${isSelected ? styles.resultItemActive : ''}`}
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => handleSelectItem(item)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {

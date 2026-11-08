@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EditOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons'
-import { Button, Card, Descriptions, Empty, List, Modal, Pagination, Space, Typography } from 'antd'
+import { Button, Card, Descriptions, Empty, List, Pagination, Space, Typography } from 'antd'
 
-import { CopyableSku, FilterBar, SearchInput, StatusTag } from '@/shared/ui'
+import { CopyableSku, DetailModal, FilterBar, SearchInput, StatusTag } from '@/shared/ui'
 
 import { VendorCostCenter, VendorProduct } from '../api/vendorApi'
 import styles from './VendorWorkspacePage.module.scss'
@@ -90,17 +90,16 @@ export function VendorWorkspaceCostCenterDrawer({
     : []
 
   return (
-    <Modal
+    <DetailModal
       title={
         product
           ? t('portal.vendors.productCostCenters', { name: product.name })
           : t('portal.vendors.costCenters')
       }
       destroyOnClose
-      width="min(1440px, calc(100vw - 32px))"
-      style={{ top: 40 }}
+      width="min(1440px, 94vw)"
       open={open}
-      onCancel={onClose}
+      onClose={onClose}
       footer={null}
       styles={{ body: { padding: 0 } }}
     >
@@ -341,6 +340,6 @@ export function VendorWorkspaceCostCenterDrawer({
           )}
         </div>
       ) : null}
-    </Modal>
+    </DetailModal>
   )
 }

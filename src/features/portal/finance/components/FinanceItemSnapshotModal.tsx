@@ -2,9 +2,9 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { ReloadOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Button, Descriptions, Modal, Space, Spin, Typography } from 'antd'
+import { Button, Descriptions, Space, Spin, Typography } from 'antd'
 
-import { FormattedDateTime } from '@/shared/ui'
+import { DetailDrawer, FormattedDateTime } from '@/shared/ui'
 
 import { getOrderItemFinanceSnapshot } from '../api/financeApi'
 import styles from '../pages/FinanceWorkspacePage.module.scss'
@@ -35,14 +35,15 @@ export const FinanceItemSnapshotModal: React.FC<FinanceItemSnapshotModalProps> =
   })
 
   return (
-    <Modal
-      width="min(1280px, 90vw)"
-      style={{ top: 40 }}
+    <DetailDrawer
+      width="min(1360px, 92vw)"
       open={Boolean(selectedItemId)}
       title={t('finance.detail.itemSnapshot')}
-      onCancel={onClose}
+      onClose={onClose}
       destroyOnClose
       footer={null}
+      allowModeToggle
+      allowMaximize
     >
       {itemDetail.isLoading ? (
         <Spin />
@@ -174,6 +175,6 @@ export const FinanceItemSnapshotModal: React.FC<FinanceItemSnapshotModalProps> =
           ) : null}
         </Space>
       ) : null}
-    </Modal>
+    </DetailDrawer>
   )
 }

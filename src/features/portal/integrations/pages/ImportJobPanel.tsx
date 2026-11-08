@@ -354,14 +354,15 @@ function ImportJobPanelForJob({
   return (
     <>
       {presentation === 'panel' ? (
-        <Modal
+        <DetailDrawer
           destroyOnClose
           open={open}
-          width="min(1360px, 92vw)"
-          style={{ top: 40 }}
+          width="min(1500px, 94vw)"
           title={`${t('portal.integrations.panel.title', { defaultValue: 'Import job' })} ${jobId ?? ''}`}
-          onCancel={onClose}
+          onClose={onClose}
           footer={retryAction ?? null}
+          allowModeToggle
+          allowMaximize
         >
           <aside
             aria-label={t('portal.integrations.panel.detailRegion', {
@@ -374,14 +375,15 @@ function ImportJobPanelForJob({
               {t('portal.integrations.panel.viewRawRecords', { defaultValue: 'View raw records' })}
             </Button>
           </aside>
-          <Modal
+          <DetailDrawer
             destroyOnClose
             open={rawDrawerOpen}
             title={t('portal.integrations.panel.rawRecords', { defaultValue: 'Raw records' })}
-            width="min(1440px, 94vw)"
-            style={{ top: 40 }}
+            width="min(1560px, 95vw)"
+            onClose={() => setRawDrawerOpen(false)}
             footer={null}
-            onCancel={() => setRawDrawerOpen(false)}
+            allowModeToggle
+            allowMaximize
           >
             <CoreDataTable
               tableLayout="fixed"
@@ -397,12 +399,12 @@ function ImportJobPanelForJob({
                 onChange: setRawPage,
               }}
             />
-          </Modal>
-        </Modal>
+          </DetailDrawer>
+        </DetailDrawer>
       ) : (
         <DetailDrawer
           open={open}
-          width="min(1360px, 92vw)"
+          width="min(1500px, 94vw)"
           title={`${t('portal.integrations.panel.title', { defaultValue: 'Import job' })} ${jobId ?? ''}`}
           onClose={onClose}
           footer={retryAction}

@@ -28,7 +28,8 @@ export function ReportTrendChart({
   const width = 1000
   const height = 220
   const padding = 16
-  const max = Math.max(...data.map((point) => point.value), 1)
+  const maxValue = Math.max(...data.map((point) => point.value), 0)
+  const max = maxValue > 0 ? maxValue : 1
   const x = (index: number) =>
     data.length === 1 ? width / 2 : padding + (index / (data.length - 1)) * (width - padding * 2)
   const y = (value: number) => height - padding - (value / max) * (height - padding * 2)
@@ -97,10 +98,21 @@ export function ReportTrendChart({
                 opacity={0.4}
                 fontSize={10}
               >
-                {formatValue(Math.round(max * (1 - ratio)))}
+                {maxValue > 0 ? formatValue(Math.round(max * (1 - ratio))) : ''}
               </text>
             </g>
           ))}
+          {maxValue === 0 && (
+            <text
+              x={padding + 4}
+              y={height - padding - 4}
+              fill="currentColor"
+              opacity={0.4}
+              fontSize={10}
+            >
+              {formatValue(0)}
+            </text>
+          )}
           <path d={area} className={styles.trendArea} />
           <polyline
             points={points}

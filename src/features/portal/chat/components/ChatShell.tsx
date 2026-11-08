@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { MessageOutlined, SearchOutlined, TeamOutlined, UserOutlined } from '@ant-design/icons'
+import { ExpandOutlined, MessageOutlined, SearchOutlined, TeamOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Avatar, Badge, Button, Empty, Input, Popover, Typography } from 'antd'
+import { Avatar, Badge, Button, Empty, Input, Popover, Tooltip, Typography } from 'antd'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
@@ -18,11 +18,11 @@ import {
 import { chatConversationOptions, receiveChatMessage } from '@/features/portal/chat/api/chatQueries'
 import { chatKeys } from '@/features/portal/chat/api/chatKeys'
 import { type ChatSocket, createChatSocket } from '@/features/portal/chat/realtime/chatSocket'
+import { requestDesktopNotificationPermission, useNotificationAlerts } from '@/shared/notification'
+import { EmployeeAvatar } from '@/shared/ui'
 import {
-  conversationInitials,
   conversationTitle,
   formatRelativeTime,
-  getInitials,
   matchesConversationSearch,
   matchesParticipantSearch,
   messagePreviewText,
@@ -42,6 +42,7 @@ type ChatShellProps = {
 
 export function ChatShell({ account }: ChatShellProps) {
   const { t } = useTranslation()
+  const { alertImportantNotification } = useNotificationAlerts()
   const queryClient = useQueryClient()
   const location = useLocation()
   const navigate = useNavigate()
@@ -55,6 +56,15 @@ export function ChatShell({ account }: ChatShellProps) {
   const chatSocketRef = useRef<ChatSocket | null>(null)
   const openQuickConversationIdsRef = useRef<string[]>([])
   const minimizedQuickConversationIdsRef = useRef<string[]>([])
+  const openQuickChatRef = useRef<(conversation: ChatConversation, markRead?: boolean) => void>(
+    () => {},
+  )
+  const openQuickChatByIdRef = useRef<(conversationId: string) => void>(() => {})
+  const participantByIdRef = useRef<Map<string, ChatParticipant>>(new Map())
+  const alertImportantNotificationRef = useRef(alertImportantNotification)
+  useEffect(() => {
+    alertImportantNotificationRef.current = alertImportantNotification
+  }, [alertImportantNotification])
   const chatLabel = t('shell.navigation.chat')
   const isChatWorkspace = location.pathname === '/portal/chat'
   const overlayRoot = typeof document === 'undefined' ? null : document.body
@@ -145,7 +155,7 @@ export function ChatShell({ account }: ChatShellProps) {
     })
     socket.on('disconnect', () => setSocketReady(false))
     socket.on('connect_error', () => setSocketReady(false))
-    socket.on('message.created', ({ message }) => {
+    socket.on('message.created', ({ message, conversation }) => {
       const isActivelyOpen =
         openQuickConversationIdsRef.current.includes(message.conversationId) &&
         !minimizedQuickConversationIdsRef.current.includes(message.conversationId)
@@ -156,6 +166,25 @@ export function ChatShell({ account }: ChatShellProps) {
         message.senderAccountId !== account.account.id
       ) {
         markQuickConversationRead(message.conversationId)
+      } else if (message.senderAccountId !== account.account.id) {
+        const sender = participantByIdRef.current?.get(message.senderAccountId)
+        const senderName = sender ? participantLabel(sender) : t('chat.newMessage')
+        const snippet = message.body?.trim() || t('chat.newMessage')
+
+        alertImportantNotificationRef.current?.({
+          id: `chat-${message.id}`,
+          title: t('notificationAlerts.newMessageFrom', { sender: senderName }),
+          message: snippet,
+          actionText: t('notificationAlerts.openChat'),
+          flashText: t('notificationAlerts.titleFlashMessage'),
+          onAction: () => {
+            if (conversation) {
+              openQuickChatRef.current?.(conversation)
+            } else {
+              openQuickChatByIdRef.current?.(message.conversationId)
+            }
+          },
+        })
       }
 
       receiveChatMessage(queryClient, message)
@@ -165,7 +194,7 @@ export function ChatShell({ account }: ChatShellProps) {
       chatSocketRef.current = null
       setSocketReady(false)
     }
-  }, [account.account.id, markQuickConversationRead, queryClient])
+  }, [account.account.id, markQuickConversationRead, queryClient, t])
 
   useEffect(() => {
     if (!openQuickConversationIds.length || !chatSocketRef.current) return
@@ -195,6 +224,9 @@ export function ChatShell({ account }: ChatShellProps) {
       ),
     [chatParticipants.data?.items],
   )
+  useEffect(() => {
+    participantByIdRef.current = participantById
+  }, [participantById])
   const recentConversations = useMemo(
     () => chatConversations.data?.items ?? [],
     [chatConversations.data?.items],
@@ -261,21 +293,51 @@ export function ChatShell({ account }: ChatShellProps) {
   const hasUnreadFromOthers = unreadConversations.length > 0 || unreadCount > 0
   const unreadConversation = unreadConversations[0] ?? null
 
-  const openQuickChat = (conversation: ChatConversation, markRead = true) => {
-    setIsChatPreviewOpen(false)
-    setPreviewSearch('')
-    setOpenQuickConversationIds((prev) => {
-      const withoutIt = prev.filter((id) => id !== conversation.id)
-      const next = [...withoutIt, conversation.id]
-      const maxWindows = typeof window !== 'undefined' && window.innerWidth < 1024 ? 2 : 3
-      return next.length > maxWindows ? next.slice(-maxWindows) : next
-    })
-    setMinimizedQuickConversationIds((prev) => prev.filter((id) => id !== conversation.id))
-    setActiveQuickConversationId(conversation.id)
-    if (markRead) {
-      markConversationAsRead(conversation.id)
+  const openQuickChat = useCallback(
+    (conversation: ChatConversation, markRead = true) => {
+      setIsChatPreviewOpen(false)
+      setPreviewSearch('')
+      setOpenQuickConversationIds((prev) => {
+        const withoutIt = prev.filter((id) => id !== conversation.id)
+        const next = [...withoutIt, conversation.id]
+        const maxWindows = typeof window !== 'undefined' && window.innerWidth < 1024 ? 2 : 3
+        return next.length > maxWindows ? next.slice(-maxWindows) : next
+      })
+      setMinimizedQuickConversationIds((prev) => prev.filter((id) => id !== conversation.id))
+      setActiveQuickConversationId(conversation.id)
+      if (markRead) {
+        markConversationAsRead(conversation.id)
+      }
+    },
+    [markConversationAsRead],
+  )
+
+  useEffect(() => {
+    openQuickChatRef.current = openQuickChat
+  }, [openQuickChat])
+
+  const openQuickChatById = (conversationId: string) => {
+    const existing = (chatConversations.data?.items ?? []).find((c) => c.id === conversationId)
+    if (existing) {
+      openQuickChat(existing)
+    } else {
+      setIsChatPreviewOpen(false)
+      setPreviewSearch('')
+      setOpenQuickConversationIds((prev) => {
+        const withoutIt = prev.filter((id) => id !== conversationId)
+        const next = [...withoutIt, conversationId]
+        const maxWindows = typeof window !== 'undefined' && window.innerWidth < 1024 ? 2 : 3
+        return next.length > maxWindows ? next.slice(-maxWindows) : next
+      })
+      setMinimizedQuickConversationIds((prev) => prev.filter((id) => id !== conversationId))
+      setActiveQuickConversationId(conversationId)
+      markConversationAsRead(conversationId)
     }
   }
+
+  useEffect(() => {
+    openQuickChatByIdRef.current = openQuickChatById
+  })
 
   const handleToggleMinimize = (conversationId: string) => {
     setMinimizedQuickConversationIds((prev) =>
@@ -317,87 +379,120 @@ export function ChatShell({ account }: ChatShellProps) {
   const chatPreview = (
     <div ref={chatPreviewRef} className={styles.chatPreview}>
       <div className={styles.chatPreviewHeader}>
-        <Typography.Title level={4}>{t('chat.title')}</Typography.Title>
-        <Button
-          aria-label={t('chat.openWorkspace', 'Open chat')}
-          icon={<MessageOutlined />}
-          shape="circle"
-          type="text"
-          onClick={() => {
-            setIsChatPreviewOpen(false)
-            navigate('/portal/chat')
-          }}
+        <div className={styles.chatPreviewTitleGroup}>
+          <Typography.Title level={4} className={styles.chatPreviewTitle}>
+            {t('chat.title')}
+          </Typography.Title>
+        </div>
+        <div className={styles.chatPreviewHeaderActions}>
+          <Tooltip title={t('chat.openWorkspace', 'Open chat')}>
+            <Button
+              aria-label={t('chat.openWorkspace', 'Open chat')}
+              icon={<ExpandOutlined />}
+              shape="circle"
+              type="text"
+              className={styles.chatActionCircleBtn}
+              onClick={() => {
+                setIsChatPreviewOpen(false)
+                navigate('/portal/chat')
+              }}
+            />
+          </Tooltip>
+        </div>
+      </div>
+      <div className={styles.chatPreviewSearchWrapper}>
+        <Input
+          aria-label={t('chat.searchMessenger')}
+          className={styles.chatPreviewSearch}
+          placeholder={t('chat.searchMessenger')}
+          prefix={<SearchOutlined className={styles.chatSearchIcon} />}
+          value={previewSearch}
+          onChange={(e) => setPreviewSearch(e.target.value)}
+          allowClear
         />
       </div>
-      <Input
-        aria-label={t('chat.searchMessenger')}
-        className={styles.chatPreviewSearch}
-        placeholder={t('chat.searchMessenger')}
-        prefix={<SearchOutlined />}
-        value={previewSearch}
-        onChange={(e) => setPreviewSearch(e.target.value)}
-        allowClear
-      />
       <div className={styles.chatPreviewList}>
         {filteredConversations.length > 0 || matchingOtherParticipants.length > 0 ? (
           <>
             {filteredConversations.slice(0, CHAT_PREVIEW_LIMIT).map((conversation) => {
-              const initials = conversationInitials(
+              const otherParticipantId = conversation.participantAccountIds?.find(
+                (id) => id !== account.account.id,
+              )
+              const otherParticipant = otherParticipantId
+                ? participantById.get(otherParticipantId)
+                : undefined
+              const isOnline =
+                conversation.type === 'DIRECT' && otherParticipant?.presence === 'ONLINE'
+              const hasUnread = Boolean(conversation.hasUnreadFromOthers)
+              const title = conversationTitle(
                 conversation,
                 participantById,
                 account.account.id,
+                t('chat.deletedUser'),
               )
+
               return (
                 <button
-                  className={styles.chatPreviewItem}
+                  className={`${styles.chatPreviewItem} ${hasUnread ? styles.chatPreviewItemUnread : ''}`}
                   key={conversation.id}
                   type="button"
                   onClick={() => openQuickChat(conversation)}
                 >
-                  <Badge dot={conversation.hasUnreadFromOthers} offset={[-2, 40]}>
-                    <Avatar
-                      size={50}
-                      style={{
-                        backgroundColor: '#f1f5f9',
-                        color: '#334155',
-                        fontWeight: 600,
-                        fontSize: 16,
-                        border: '1px solid #e2e8f0',
-                      }}
-                    >
-                      {conversation.type === 'TEAM' ? (
-                        <TeamOutlined style={{ color: '#2563eb' }} />
-                      ) : initials ? (
-                        initials
-                      ) : (
-                        <UserOutlined style={{ color: '#64748b' }} />
-                      )}
-                    </Avatar>
-                  </Badge>
+                  <div className={styles.avatarWrapper}>
+                    {conversation.type === 'TEAM' ? (
+                      <Avatar size={48} className={styles.chatAvatar}>
+                        <TeamOutlined className={styles.teamIcon} />
+                      </Avatar>
+                    ) : (
+                      <EmployeeAvatar
+                        size={48}
+                        className={styles.chatAvatar}
+                        name={title}
+                        avatarUrl={otherParticipant?.avatarUrl}
+                      />
+                    )}
+                    {isOnline ? (
+                      <span
+                        className={styles.onlineBadge}
+                        aria-label={t('chat.online', 'Online')}
+                      />
+                    ) : null}
+                  </div>
                   <span className={styles.chatPreviewText}>
                     <span className={styles.chatPreviewHeaderRow}>
-                      <strong>
-                        {conversationTitle(
-                          conversation,
-                          participantById,
-                          account.account.id,
-                          t('chat.deletedUser'),
-                        )}
-                      </strong>
+                      <span className={styles.chatTitleGroup}>
+                        <span className={hasUnread ? styles.chatTitleUnread : styles.chatTitle}>
+                          {title}
+                        </span>
+                        {otherParticipant?.employeeCode ? (
+                          <span className={styles.employeeCodeTag}>
+                            {otherParticipant.employeeCode}
+                          </span>
+                        ) : null}
+                      </span>
                       {conversation.lastMessageAt ? (
-                        <span className={styles.chatPreviewTime}>
+                        <span
+                          className={`${styles.chatPreviewTime} ${hasUnread ? styles.chatTimeUnread : ''}`}
+                        >
                           {formatRelativeTime(conversation.lastMessageAt, timeLabels)}
                         </span>
                       ) : null}
                     </span>
-                    <span className={styles.chatPreviewSnippet}>
-                      {messagePreviewText(
-                        conversation,
-                        participantById,
-                        account.account.id,
-                        t('chat.noMessages'),
-                        t('chat.you'),
-                      )}
+                    <span className={styles.chatPreviewSnippetRow}>
+                      <span
+                        className={`${styles.chatPreviewSnippet} ${hasUnread ? styles.chatSnippetUnread : ''}`}
+                      >
+                        {messagePreviewText(
+                          conversation,
+                          participantById,
+                          account.account.id,
+                          t('chat.noMessages'),
+                          t('chat.you'),
+                        )}
+                      </span>
+                      {hasUnread ? (
+                        <span className={styles.chatUnreadDot} aria-hidden="true" />
+                      ) : null}
                     </span>
                   </span>
                 </button>
@@ -409,7 +504,8 @@ export function ChatShell({ account }: ChatShellProps) {
                   <div className={styles.chatPreviewSectionTitle}>{t('chat.people')}</div>
                 ) : null}
                 {matchingOtherParticipants.map((participant) => {
-                  const pInitials = getInitials(participantLabel(participant))
+                  const isOnline = participant.presence === 'ONLINE'
+                  const pName = participantLabel(participant)
                   return (
                     <button
                       className={styles.chatPreviewItem}
@@ -417,32 +513,37 @@ export function ChatShell({ account }: ChatShellProps) {
                       type="button"
                       onClick={() => handleSelectParticipant(participant)}
                     >
-                      <Badge
-                        status={participant.presence === 'ONLINE' ? 'success' : 'default'}
-                        offset={[-2, 40]}
-                        dot
-                      >
-                        <Avatar
-                          size={50}
-                          style={{
-                            backgroundColor: '#f1f5f9',
-                            color: '#334155',
-                            fontWeight: 600,
-                            fontSize: 16,
-                            border: '1px solid #e2e8f0',
-                          }}
-                        >
-                          {pInitials || <UserOutlined style={{ color: '#64748b' }} />}
-                        </Avatar>
-                      </Badge>
+                      <div className={styles.avatarWrapper}>
+                        <EmployeeAvatar
+                          size={48}
+                          className={styles.chatAvatar}
+                          name={pName}
+                          avatarUrl={participant.avatarUrl}
+                        />
+                        {isOnline ? (
+                          <span
+                            className={styles.onlineBadge}
+                            aria-label={t('chat.online', 'Online')}
+                          />
+                        ) : null}
+                      </div>
                       <span className={styles.chatPreviewText}>
                         <span className={styles.chatPreviewHeaderRow}>
-                          <strong>{participantLabel(participant)}</strong>
+                          <span className={styles.chatTitleGroup}>
+                            <span className={styles.chatTitle}>{pName}</span>
+                            {participant.employeeCode ? (
+                              <span className={styles.employeeCodeTag}>
+                                {participant.employeeCode}
+                              </span>
+                            ) : null}
+                          </span>
                         </span>
-                        <span className={styles.chatPreviewSnippet}>
-                          {participant.email ||
-                            participant.employeeCode ||
-                            t('chat.startConversation')}
+                        <span className={styles.chatPreviewSnippetRow}>
+                          <span className={styles.chatPreviewSnippet}>
+                            {participant.email ||
+                              participant.employeeCode ||
+                              t('chat.startConversation')}
+                          </span>
                         </span>
                       </span>
                     </button>
@@ -452,21 +553,27 @@ export function ChatShell({ account }: ChatShellProps) {
             ) : null}
           </>
         ) : previewSearch.trim() ? (
-          <Empty description={t('chat.noSearchResults')} />
+          <div className={styles.emptyContainer}>
+            <Empty description={t('chat.noSearchResults')} />
+          </div>
         ) : (
-          <Empty description={t('chat.emptyMessages')} />
+          <div className={styles.emptyContainer}>
+            <Empty description={t('chat.emptyMessages')} />
+          </div>
         )}
       </div>
-      <Link
-        className={styles.chatPreviewAllLink}
-        to="/portal/chat"
-        onClick={() => {
-          setIsChatPreviewOpen(false)
-          setPreviewSearch('')
-        }}
-      >
-        {t('chat.viewAll')}
-      </Link>
+      <div className={styles.chatPreviewFooter}>
+        <Link
+          className={styles.chatPreviewAllLink}
+          to="/portal/chat"
+          onClick={() => {
+            setIsChatPreviewOpen(false)
+            setPreviewSearch('')
+          }}
+        >
+          {t('chat.viewAll')}
+        </Link>
+      </div>
     </div>
   )
 
@@ -507,7 +614,10 @@ export function ChatShell({ account }: ChatShellProps) {
                 icon={<MessageOutlined />}
                 shape="circle"
                 type="text"
-                onClick={() => setIsChatPreviewOpen((open) => !open)}
+                onClick={() => {
+                  void requestDesktopNotificationPermission()
+                  setIsChatPreviewOpen((open) => !open)
+                }}
               />
             </Badge>
           </Popover>
@@ -519,7 +629,10 @@ export function ChatShell({ account }: ChatShellProps) {
               icon={<MessageOutlined />}
               shape="circle"
               type="text"
-              onClick={() => setIsChatPreviewOpen((open) => !open)}
+              onClick={() => {
+                void requestDesktopNotificationPermission()
+                setIsChatPreviewOpen((open) => !open)
+              }}
             />
           </Badge>
         )}

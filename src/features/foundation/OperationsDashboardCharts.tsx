@@ -16,7 +16,11 @@ import {
 import { Popover } from 'antd'
 
 import styles from './FoundationPage.module.scss'
-import { formatChartNumber, formatCompactNumber } from './operationsDashboardFormatters'
+import {
+  formatChartNumber,
+  formatCompactNumber,
+  formatCurrency,
+} from './operationsDashboardFormatters'
 import { type ChannelDatum, type ChartDatum, type TimelinePoint } from './useOperationsDashboard'
 
 function ChartMetricDetails({ item, total }: { item: ChartDatum; total: number }) {
@@ -249,14 +253,21 @@ export const TrafficSourcesDonut = memo(function TrafficSourcesDonut({
   data,
   totalLabel,
   subLabel,
+  currency = 'USD',
 }: {
   data: ChannelDatum[]
   totalLabel: string
   subLabel: string
+  currency?: string
 }) {
   const chartData = useMemo(() => {
+    if (!data.length || data.every((d) => d.value === 0)) {
+      return [{ name: 'Empty', value: 1, color: 'var(--ant-color-fill-tertiary, #e2e8f0)' }]
+    }
     return data.map((d) => ({ name: d.name, value: d.value, color: d.color }))
   }, [data])
+
+  const isEmpty = !data.length || data.every((d) => d.value === 0)
 
   return (
     <div className={styles.donutContainer}>
@@ -269,7 +280,7 @@ export const TrafficSourcesDonut = memo(function TrafficSourcesDonut({
               cy="50%"
               innerRadius={52}
               outerRadius={78}
-              paddingAngle={3}
+              paddingAngle={isEmpty ? 0 : 3}
               dataKey="value"
               stroke="transparent"
             >
@@ -289,11 +300,167 @@ export const TrafficSourcesDonut = memo(function TrafficSourcesDonut({
         {data.map((item) => (
           <div className={styles.donutLegendItem} key={item.name}>
             <span className={styles.donutLegendDot} style={{ background: item.color }} />
-            <span className={styles.donutLegendValue}>{item.value}</span>
-            <span className={styles.donutLegendName}>{item.name}</span>
+            <div className={styles.donutLegendMeta}>
+              <span className={styles.donutLegendName}>{item.name}</span>
+              <div className={styles.donutLegendStats}>
+                <span className={styles.donutLegendValue}>
+                  {formatCurrency(item.value, currency)}
+                </span>
+                <span className={styles.donutLegendPercent}>({item.percent}%)</span>
+              </div>
+            </div>
           </div>
         ))}
       </div>
+    </div>
+  )
+})
+
+export interface RevenueOverviewWidgetProps {
+  revenue: string
+  grossProfit: string
+  totalCost: string
+  marginPercent: number | null
+  orderCount: number
+  avgOrderValue: string
+  latestDate: string | null
+  missingCostCount: number
+  canFinance: boolean
+}
+
+export const RevenueOverviewWidget = memo(function RevenueOverviewWidget({
+  revenue,
+  grossProfit,
+  totalCost,
+  marginPercent,
+  orderCount,
+  avgOrderValue,
+  latestDate,
+  missingCostCount,
+  canFinance,
+}: RevenueOverviewWidgetProps) {
+  const { t } = useTranslation()
+
+  if (!canFinance) {
+    return (
+      <div className={styles.revenueOverviewWrap}>
+        <div className={styles.revenueOverviewHero}>
+          <div>
+            <div className={styles.revenueOverviewAmount}>—</div>
+            <div className={styles.revenueOverviewLabel}>
+              {t('foundation.portalDashboard.totalRevenue', { defaultValue: 'Tổng doanh thu' })}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const profitWidth = marginPercent != null ? Math.max(0, Math.min(100, marginPercent)) : null
+  const costWidth = profitWidth != null ? 100 - profitWidth : null
+
+  return (
+    <div className={styles.revenueOverviewWrap}>
+      {/* Top Hero Section: Revenue Amount & Freshness Tag */}
+      <div className={styles.revenueOverviewHero}>
+        <div>
+          <div className={styles.revenueOverviewAmount}>{revenue}</div>
+          <div className={styles.revenueOverviewLabel}>
+            {t('foundation.portalDashboard.totalRevenue', { defaultValue: 'Tổng doanh thu' })}
+          </div>
+        </div>
+        {latestDate ? (
+          <span className={styles.revenueFreshnessTag}>
+            {t('foundation.portalDashboard.latestData', {
+              date: latestDate,
+              defaultValue: `Dữ liệu mới nhất: ${latestDate}`,
+            })}
+          </span>
+        ) : null}
+      </div>
+
+      {/* Visual Revenue Composition Bar (Gross Profit vs Cost) */}
+      {profitWidth != null && costWidth != null ? (
+        <div className={styles.revenueCompositionWrap}>
+          <div className={styles.revenueCompositionBar}>
+            <div
+              className={styles.revenueCompositionProfit}
+              style={{ width: `${profitWidth}%` }}
+              title={`${t('foundation.portalDashboard.grossProfit', { defaultValue: 'Lợi nhuận gộp' })}: ${profitWidth}%`}
+            />
+            <div
+              className={styles.revenueCompositionCost}
+              style={{ width: `${costWidth}%` }}
+              title={`${t('foundation.portalDashboard.totalCost', { defaultValue: 'Tổng chi phí' })}: ${costWidth}%`}
+            />
+          </div>
+          <div className={styles.revenueCompositionLegend}>
+            <span>
+              <i className={styles.revenueDotProfit} />
+              {t('foundation.portalDashboard.grossProfit', { defaultValue: 'Lợi nhuận gộp' })}:{' '}
+              <strong>{profitWidth}%</strong>
+            </span>
+            <span>
+              <i className={styles.revenueDotCost} />
+              {t('foundation.portalDashboard.totalCost', { defaultValue: 'Chi phí' })}:{' '}
+              <strong>{costWidth}%</strong>
+            </span>
+          </div>
+        </div>
+      ) : null}
+
+      {/* 3 High-density KPI Metric Tiles */}
+      <div className={styles.revenueGrid}>
+        <div className={styles.revenueGridItem}>
+          <span className={styles.revenueGridLabel}>
+            {t('foundation.portalDashboard.grossProfit', { defaultValue: 'Lợi nhuận gộp' })}
+          </span>
+          <strong className={`${styles.revenueGridValue} ${styles.revenueGridProfit}`}>
+            {grossProfit}
+          </strong>
+          <span className={styles.revenueGridSub}>
+            {marginPercent != null
+              ? `${marginPercent}% ${t('foundation.portalDashboard.margin', { defaultValue: 'biên LN' })}`
+              : '—'}
+          </span>
+        </div>
+
+        <div className={styles.revenueGridItem}>
+          <span className={styles.revenueGridLabel}>
+            {t('foundation.portalDashboard.totalCost', { defaultValue: 'Chi phí' })}
+          </span>
+          <strong className={styles.revenueGridValue}>{totalCost}</strong>
+          <span className={styles.revenueGridSub}>
+            {t('foundation.portalDashboard.costAndFees', { defaultValue: 'Giá vốn & phí' })}
+          </span>
+        </div>
+
+        <div className={styles.revenueGridItem}>
+          <span className={styles.revenueGridLabel}>
+            {t('foundation.portalDashboard.avgOrderValue', { defaultValue: 'AOV' })}
+          </span>
+          <strong className={styles.revenueGridValue}>{avgOrderValue}</strong>
+          <span className={styles.revenueGridSub}>
+            {t('foundation.portalDashboard.ordersCount', {
+              count: orderCount,
+              defaultValue: `${orderCount} đơn`,
+            })}
+          </span>
+        </div>
+      </div>
+
+      {/* Warning status if missing cost items exist */}
+      {missingCostCount > 0 ? (
+        <div className={styles.missingCostNotice} role="status">
+          <span aria-hidden="true">⚠️</span>
+          <span>
+            {t('foundation.portalDashboard.missingCostNotice', {
+              count: missingCostCount,
+              defaultValue: `${missingCostCount} sản phẩm thiếu giá vốn`,
+            })}
+          </span>
+        </div>
+      ) : null}
     </div>
   )
 })

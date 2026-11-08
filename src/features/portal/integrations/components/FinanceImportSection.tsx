@@ -33,6 +33,7 @@ import type { Shop } from '@/features/portal/shops/api/shopApi'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
   CopyableOrderId,
+  DetailDrawer,
   DateRangePicker,
   FilterBar,
   FormattedDateTime,
@@ -409,14 +410,15 @@ export function FinanceImportSection({
       ) : (
         <Alert type="info" showIcon message={permissionHint} />
       )}
-      <Modal
+      <DetailDrawer
         open={Boolean(selectedBatch)}
         title={currentBatch?.originalFilename || title}
-        width="min(1360px, 92vw)"
-        style={{ top: 40 }}
-        onCancel={() => setSelectedBatch(undefined)}
+        width="min(1450px, 94vw)"
+        onClose={() => setSelectedBatch(undefined)}
         footer={null}
         destroyOnClose
+        allowModeToggle
+        allowMaximize
       >
         {currentBatch ? (
           <Space direction="vertical" size={8} style={{ width: '100%', marginBottom: 16 }}>
@@ -573,7 +575,7 @@ export function FinanceImportSection({
           }}
           scroll={{ x: 800 }}
         />
-      </Modal>
+      </DetailDrawer>
       {sourceType === 'TRANSACTIONS' && canRead ? (
         <section style={{ marginTop: 16 }}>
           <Typography.Title level={5}>

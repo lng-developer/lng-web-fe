@@ -1,12 +1,15 @@
 import '@testing-library/jest-dom/vitest'
 
 import { cleanup } from '@testing-library/react'
+import { notification } from 'antd'
 import { afterEach, vi } from 'vitest'
 
 import i18n from '@/shared/i18n/i18n'
 
 afterEach(async () => {
   cleanup()
+  notification.destroy()
+  document.body.querySelectorAll('.ant-notification').forEach((el) => el.remove())
   vi.useRealTimers()
   window.localStorage.clear()
   await i18n.changeLanguage('en')

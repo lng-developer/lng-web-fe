@@ -1,17 +1,18 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ExperimentOutlined, SlidersOutlined, ThunderboltOutlined } from '@ant-design/icons'
 import {
   Alert,
   Button,
   Checkbox,
   Col,
   Collapse,
-  Divider,
   Form,
   Input,
   InputNumber,
   Row,
   Select,
+  Tag,
   Typography,
 } from 'antd'
 
@@ -25,6 +26,7 @@ import type {
   RulePreviewResult,
 } from '../api/mappingApi'
 import { RuleImpactSamples } from './RuleImpactSamples'
+import styles from './RuleEditorPanel.module.scss'
 
 type Field = {
   name: string
@@ -85,7 +87,7 @@ const fields: Record<MappingRuleType, Field[]> = {
       required: true,
       kind: 'tags',
     },
-    { name: 'matchType', kind: 'select', options: ['EXACT', 'CONTAINS'] },
+    { name: 'matchType', kind: 'select', options: ['EXACT', 'CONTAINS', 'REGEX'] },
   ],
   valueAliases: [
     {
@@ -95,6 +97,7 @@ const fields: Record<MappingRuleType, Field[]> = {
       options: ['SIZE', 'COLOR', 'PRODUCT_TYPE', 'STYLE', 'MATERIAL', 'OTHER'],
     },
     { name: 'matchValues', required: true, kind: 'tags' },
+    { name: 'matchType', kind: 'select', options: ['EXACT', 'CONTAINS', 'REGEX'] },
     { name: 'normalizedValue', required: true },
   ],
   vendorRouting: [
@@ -175,7 +178,11 @@ function initialValues(type: MappingRuleType, rule?: MappingRule): MappingRuleIn
   const baseDefaults =
     type === 'skuNormalize'
       ? { status: 'ACTIVE', priority: 100, patternType: 'SEGMENT' }
-      : { status: 'ACTIVE', priority: 100 }
+      : type === 'valueAliases'
+        ? { status: 'ACTIVE', priority: 100, matchType: 'EXACT' }
+        : type === 'semanticRules'
+          ? { status: 'ACTIVE', priority: 100, matchType: 'CONTAINS' }
+          : { status: 'ACTIVE', priority: 100 }
   const values: MappingRuleInput = rule ? { ...baseDefaults, ...rule } : baseDefaults
   if (
     ['semanticRules', 'valueAliases'].includes(type) &&
@@ -186,6 +193,49 @@ function initialValues(type: MappingRuleType, rule?: MappingRule): MappingRuleIn
   }
   return normalizeValues(type, values)
 }
+
+type RegexPreset = {
+  key: string
+  labelKey: string
+  pattern: string
+  normalizedValue: string
+  sample?: string
+  semanticRole?: string
+}
+
+const REGEX_PRESETS: RegexPreset[] = [
+  {
+    key: 'removeSize',
+    labelKey: 'presetRemoveSize',
+    pattern: '^size\\s+(.+)$',
+    normalizedValue: '$1',
+    sample: 'size XL',
+    semanticRole: 'SIZE',
+  },
+  {
+    key: 'removePack',
+    labelKey: 'presetRemovePack',
+    pattern: '^(.+)\\s*-\\s*\\d+\\s*(?:pack|packs|pcs)$',
+    normalizedValue: '$1',
+    sample: 'White - 2 Packs',
+  },
+  {
+    key: 'extractInch',
+    labelKey: 'presetExtractInch',
+    pattern: '^(\\d+(?:\\.\\d+)?)\\s*(?:in|inch|")?$',
+    normalizedValue: '$1 IN',
+    sample: '8inch',
+    semanticRole: 'SIZE',
+  },
+  {
+    key: 'extractColor',
+    labelKey: 'presetExtractColor',
+    pattern: '.*(Black|White|Navy).*',
+    normalizedValue: '$1',
+    sample: 'Heather Black',
+    semanticRole: 'COLOR',
+  },
+]
 
 export function RuleEditorPanel({
   canWrite,
@@ -225,6 +275,22 @@ export function RuleEditorPanel({
   const productTypeGroupId = Form.useWatch('productTypeGroupId', form)
   const outputAction = Form.useWatch('outputAction', form)
   const semanticRole = Form.useWatch('semanticRole', form)
+  const matchType = Form.useWatch('matchType', form)
+  const isRegex = matchType === 'REGEX'
+
+  const applyRegexPreset = (preset: RegexPreset) => {
+    form.setFieldsValue({
+      matchType: 'REGEX',
+      matchValues: [preset.pattern],
+      normalizedValue: preset.normalizedValue,
+      ...(preset.semanticRole ? { semanticRole: preset.semanticRole } : {}),
+    })
+    if (preset.sample) {
+      setSampleSku(preset.sample)
+    }
+    setDirty(true)
+    onDirtyChange(true)
+  }
   const supportsSamplePreview = [
     'skuNormalize',
     'skuConfig',
@@ -311,35 +377,51 @@ export function RuleEditorPanel({
     setAcknowledged(false)
   }
 
-  const renderField = (field: Field) => (
-    <Col key={field.name} xs={24} md={12}>
-      <Form.Item
-        name={field.name}
-        label={t(field.labelKey ?? `mapping.fields.${field.name}`)}
-        rules={field.required ? [{ required: true }] : undefined}
-      >
-        {referenceOptions(field.name) ? (
-          <Select
-            allowClear={!field.required}
-            showSearch
-            optionFilterProp="label"
-            options={referenceOptions(field.name)}
-          />
-        ) : field.kind === 'select' ? (
-          <Select options={field.options?.map((value) => ({ value, label: value }))} />
-        ) : field.kind === 'number' ? (
-          <InputNumber style={{ width: '100%' }} />
-        ) : field.kind === 'tags' ? (
-          <Select mode="tags" tokenSeparators={[',']} />
-        ) : (
-          <Input />
-        )}
-      </Form.Item>
-    </Col>
-  )
+  const renderField = (field: Field) => {
+    const isRegexField =
+      isRegex && (field.name === 'matchValues' || field.name === 'normalizedValue')
+    const extraHelp = isRegexField
+      ? field.name === 'matchValues'
+        ? t('mapping.help.regexValuesHelp')
+        : t('mapping.help.regexNormalizedHelp')
+      : undefined
+    const placeholder = isRegexField
+      ? field.name === 'matchValues'
+        ? '^size\\s+(.+)$'
+        : '$1'
+      : undefined
+
+    return (
+      <Col key={field.name} xs={24} md={12}>
+        <Form.Item
+          name={field.name}
+          label={t(field.labelKey ?? `mapping.fields.${field.name}`)}
+          rules={field.required ? [{ required: true }] : undefined}
+          extra={extraHelp}
+        >
+          {referenceOptions(field.name) ? (
+            <Select
+              allowClear={!field.required}
+              showSearch
+              optionFilterProp="label"
+              options={referenceOptions(field.name)}
+            />
+          ) : field.kind === 'select' ? (
+            <Select options={field.options?.map((value) => ({ value, label: value }))} />
+          ) : field.kind === 'number' ? (
+            <InputNumber style={{ width: '100%' }} />
+          ) : field.kind === 'tags' ? (
+            <Select mode="tags" tokenSeparators={[',']} placeholder={placeholder} />
+          ) : (
+            <Input placeholder={placeholder} />
+          )}
+        </Form.Item>
+      </Col>
+    )
+  }
 
   return (
-    <div style={{ minHeight: 0, overflow: 'auto', paddingRight: 4 }}>
+    <div className={styles.container}>
       {!canWrite ? (
         <Alert
           type="info"
@@ -349,85 +431,137 @@ export function RuleEditorPanel({
         />
       ) : null}
 
-      <Form
-        form={form}
-        disabled={!canWrite}
-        layout="vertical"
-        initialValues={initialValues(type, rule)}
-        onValuesChange={() => {
-          setDirty(true)
-          setPreview(undefined)
-          setConflicts(undefined)
-          setAcknowledged(false)
-          onDirtyChange(true)
-        }}
-      >
-        {/* Rule-type specific fields */}
-        <Divider plain style={{ fontSize: 12, margin: '0 0 16px' }}>
-          {t('mapping.sections.ruleFields', { defaultValue: 'Rule Definition' })}
-        </Divider>
-        <Row gutter={[16, 0]}>
-          {displayedFields.filter((field) => !field.advanced).map(renderField)}
-        </Row>
-        {displayedFields.some((field) => field.advanced) ? (
-          <Collapse
-            ghost
-            items={[
-              {
-                key: 'conditions',
-                label: t('mapping.sections.additionalConditions'),
-                children: (
-                  <Row gutter={[16, 0]}>
-                    {displayedFields.filter((field) => field.advanced).map(renderField)}
-                  </Row>
-                ),
-              },
-            ]}
-          />
-        ) : null}
-      </Form>
+      {/* Rule-type specific fields card */}
+      <div className={styles.formCard}>
+        <div className={styles.cardHeader}>
+          <span className={styles.cardTitle}>
+            <SlidersOutlined />
+            {t('mapping.sections.ruleFields', { defaultValue: 'Rule Definition' })}
+          </span>
+          <span className={styles.cardExtra}>{type}</span>
+        </div>
 
-      {/* Unsaved indicator */}
-      {dirty ? (
-        <Typography.Text type="warning" style={{ fontSize: 12 }}>
-          ● {t('mapping.feedback.unsaved')}
-        </Typography.Text>
-      ) : null}
+        <Form
+          form={form}
+          disabled={!canWrite}
+          layout="vertical"
+          initialValues={initialValues(type, rule)}
+          onValuesChange={() => {
+            setDirty(true)
+            setPreview(undefined)
+            setConflicts(undefined)
+            setAcknowledged(false)
+            onDirtyChange(true)
+          }}
+        >
+          {isRegex && (
+            <div className={styles.regexPresetsCard}>
+              <div className={styles.presetsTitle}>
+                <ThunderboltOutlined />
+                <span>{t('mapping.help.regexPresetsTitle')}</span>
+              </div>
+              <div className={styles.presetsTags}>
+                {REGEX_PRESETS.map((preset) => (
+                  <Tag
+                    key={preset.key}
+                    color="blue"
+                    className={styles.presetTag}
+                    onClick={() => applyRegexPreset(preset)}
+                  >
+                    ⚡ {t(`mapping.help.${preset.labelKey}`)}
+                  </Tag>
+                ))}
+              </div>
+              <Alert
+                type="info"
+                showIcon
+                className={styles.regexTipAlert}
+                message={t('mapping.help.regexHelpTip')}
+              />
+            </div>
+          )}
+          <Row gutter={[16, 0]}>
+            {displayedFields.filter((field) => !field.advanced).map(renderField)}
+          </Row>
+          {displayedFields.some((field) => field.advanced) ? (
+            <Collapse
+              ghost
+              style={{ marginTop: 8 }}
+              items={[
+                {
+                  key: 'conditions',
+                  label: t('mapping.sections.additionalConditions'),
+                  children: (
+                    <Row gutter={[16, 0]}>
+                      {displayedFields.filter((field) => field.advanced).map(renderField)}
+                    </Row>
+                  ),
+                },
+              ]}
+            />
+          ) : null}
+        </Form>
+      </div>
 
       {supportsSamplePreview ? (
-        <>
-          <Form.Item
-            label={t(
-              type === 'semanticRules'
-                ? 'mapping.fields.sampleLabel'
-                : `mapping.fields.${type === 'skuNormalize' ? 'sampleSku' : 'sampleValue'}`,
-            )}
-            htmlFor="mapping-rule-sample-sku"
-            extra={type === 'semanticRules' ? t('mapping.help.semanticSampleLabel') : undefined}
-          >
-            <Input
-              id="mapping-rule-sample-sku"
-              value={sampleSku || initialSampleSku}
-              placeholder={
-                type === 'semanticRules' ? semanticSamplePlaceholder(semanticRole) : undefined
-              }
-              onChange={(event) => setSampleSku(event.target.value)}
-            />
-          </Form.Item>
-          <Button
-            disabled={!canWrite}
-            onClick={() =>
-              void inspectSkuCleanup().catch((error) =>
-                setPreviewError(normalizeApiError(error).message),
-              )
-            }
-          >
-            {t('mapping.actions.previewChanges')}
-          </Button>
-        </>
+        <div className={styles.formCard}>
+          <div className={styles.cardHeader}>
+            <span className={styles.cardTitle}>
+              <ExperimentOutlined />
+              {t('mapping.sections.testSample', { defaultValue: 'Test Rule with Sample SKU' })}
+            </span>
+          </div>
+          <Form layout="vertical">
+            <div className={styles.sampleSkuRow}>
+              <Form.Item
+                className={styles.sampleSkuField}
+                label={t(
+                  type === 'semanticRules'
+                    ? 'mapping.fields.sampleLabel'
+                    : `mapping.fields.${type === 'skuNormalize' ? 'sampleSku' : 'sampleValue'}`,
+                )}
+                htmlFor="mapping-rule-sample-sku"
+                extra={type === 'semanticRules' ? t('mapping.help.semanticSampleLabel') : undefined}
+              >
+                <Input
+                  id="mapping-rule-sample-sku"
+                  value={sampleSku || initialSampleSku}
+                  placeholder={
+                    type === 'semanticRules' ? semanticSamplePlaceholder(semanticRole) : undefined
+                  }
+                  onChange={(event) => setSampleSku(event.target.value)}
+                />
+              </Form.Item>
+              <Button
+                className={styles.previewBtn}
+                disabled={!canWrite}
+                onClick={() =>
+                  void inspectSkuCleanup().catch((error) =>
+                    setPreviewError(normalizeApiError(error).message),
+                  )
+                }
+              >
+                {t('mapping.actions.previewChanges')}
+              </Button>
+            </div>
+          </Form>
+          {previewError ? (
+            <Alert type="error" showIcon message={previewError} style={{ marginTop: 12 }} />
+          ) : null}
+          {preview || conflicts ? (
+            <div style={{ marginTop: 14 }}>
+              <RuleImpactSamples conflicts={conflicts} preview={preview} />
+            </div>
+          ) : null}
+        </div>
       ) : null}
-      {previewError ? <Alert type="error" showIcon message={previewError} /> : null}
-      {preview || conflicts ? <RuleImpactSamples conflicts={conflicts} preview={preview} /> : null}
+
+      {!supportsSamplePreview && previewError ? (
+        <Alert type="error" showIcon message={previewError} style={{ marginBottom: 12 }} />
+      ) : null}
+      {!supportsSamplePreview && (preview || conflicts) ? (
+        <RuleImpactSamples conflicts={conflicts} preview={preview} />
+      ) : null}
 
       {/* Conflict ack */}
       {hasWarning && !exactConflict ? (
@@ -441,19 +575,19 @@ export function RuleEditorPanel({
       ) : null}
 
       {/* Actions */}
-      <div
-        style={{
-          display: 'flex',
-          gap: 10,
-          marginTop: 20,
-          paddingTop: 16,
-          borderTop: '1px solid var(--ant-color-border)',
-        }}
-      >
+      <div className={styles.actionBar}>
+        <div>
+          {dirty ? (
+            <Typography.Text type="warning" style={{ fontSize: 12 }}>
+              ● {t('mapping.feedback.unsaved')}
+            </Typography.Text>
+          ) : null}
+        </div>
         <Button
           disabled={!canWrite}
           type="primary"
           loading={saving}
+          className={styles.saveBtn}
           onClick={() =>
             void save().catch((error) => setPreviewError(normalizeApiError(error).message))
           }

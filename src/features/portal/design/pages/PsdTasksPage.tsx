@@ -28,6 +28,7 @@ import {
   DATA_COLORS,
   DateRangePicker,
   type DateRangeValue,
+  EmployeeIdentity,
   FileUpload,
   StatusPill,
   UiTabLabel,
@@ -662,16 +663,29 @@ export function PsdTasksPage() {
         title: t('portal.design.assignedTo', { defaultValue: 'Assigned' }),
         key: 'assignedDesigner',
         width: 150,
-        align: 'center',
         render: (_, record) => {
           const assignedName =
             record.assignedDesigner?.fullName ||
             (record.assignedDesigner as { name?: string })?.name ||
             (record.assignedDesigner as { full_name?: string })?.full_name ||
-            'Pending assign'
+            null
           return (
-            <Space orientation="vertical">
-              <StatusPill title={assignedName} color={DATA_COLORS.purple} />
+            <Space orientation="vertical" size={2}>
+              {assignedName ? (
+                <EmployeeIdentity
+                  size="small"
+                  mode="code"
+                  name={assignedName}
+                  employeeCode={
+                    (record.assignedDesigner as { employeeCode?: string | null })?.employeeCode
+                  }
+                  avatarUrl={(record.assignedDesigner as { avatarUrl?: string | null })?.avatarUrl}
+                />
+              ) : (
+                <Typography.Text type="secondary" style={{ fontSize: 13 }}>
+                  {t('portal.design.unassigned', { defaultValue: 'Pending assign' })}
+                </Typography.Text>
+              )}
               {canWrite && record.status === 'ASSIGNED' ? (
                 <Button
                   size="small"

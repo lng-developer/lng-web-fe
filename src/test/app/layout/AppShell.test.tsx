@@ -312,7 +312,7 @@ describe('AppShell', () => {
     )
 
     expect(await screen.findByRole('heading', { name: 'Orders test page' })).toBeVisible()
-    expect(document.title).toBe('Orders | LNG Web')
+    expect(document.title).toBe('(1) Orders | LNG Web')
   })
 
   it('allows the Catalog workspace to use the page vertical scrollbar', async () => {
@@ -404,7 +404,7 @@ describe('AppShell', () => {
 
     expect(await screen.findByRole('heading', { name: 'Monitoring test page' })).toBeVisible()
     await waitFor(() => {
-      expect(document.title).toBe('Monitoring | LNG Web')
+      expect(document.title).toBe('(1) Monitoring | LNG Web')
     })
   })
 })

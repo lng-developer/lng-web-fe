@@ -1,9 +1,9 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Button, Divider, Form, Input, InputNumber, Modal, Select, Space, Switch } from 'antd'
+import { Button, Divider, Form, Input, InputNumber, Select, Space, Switch } from 'antd'
 
-import { useFeedbackToast } from '@/shared/ui'
+import { DetailModal, useFeedbackToast } from '@/shared/ui'
 
 import { createVendor, updateVendor, type Vendor, type VendorInput } from '../api/vendorApi'
 import { vendorKeys } from '../api/vendorKeys'
@@ -49,9 +49,10 @@ export function VendorEditorModal({ item, open, onCancel, onSaved }: VendorEdito
   const close = onCancel
 
   return (
-    <Modal
+    <DetailModal
       destroyOnHidden
       footer={null}
+      allowMaximize
       open={open}
       title={t(item ? 'vendors.editVendorTitle' : 'vendors.createVendorTitle')}
       onCancel={close}
@@ -114,6 +115,6 @@ export function VendorEditorModal({ item, open, onCancel, onSaved }: VendorEdito
           </Button>
         </Space>
       </Form>
-    </Modal>
+    </DetailModal>
   )
 }

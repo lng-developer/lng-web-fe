@@ -18,6 +18,15 @@ describe('pageTitle', () => {
       expect(formatDocumentTitle(null, 'LNG Web')).toBe('LNG Web')
       expect(formatDocumentTitle()).toBe('LNG Web')
     })
+
+    it('formats unread count badge in document title', () => {
+      expect(formatDocumentTitle('Orders', 'LNG Web', 3)).toBe('(3) Orders | LNG Web')
+      expect(formatDocumentTitle('Orders', 'LNG Web', 99)).toBe('(99) Orders | LNG Web')
+      expect(formatDocumentTitle('Orders', 'LNG Web', 150)).toBe('(99+) Orders | LNG Web')
+      expect(formatDocumentTitle('', 'LNG Web', 5)).toBe('(5) LNG Web')
+      expect(formatDocumentTitle('Orders', 'LNG Web', 0)).toBe('Orders | LNG Web')
+      expect(formatDocumentTitle('Orders', 'LNG Web', -1)).toBe('Orders | LNG Web')
+    })
   })
 
   describe('resolvePageTitle', () => {
