@@ -87,7 +87,9 @@ describe('ReportAdsEmployeeTab performance safeguards', () => {
 
     // Table should now be rendered (AntD table uses multiple tables for fixed header/body)
     expect(screen.getAllByRole('table').length).toBeGreaterThan(0)
-    expect(screen.getByRole('heading', { name: 'Daily ads by employee' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Daily advertising performance' }),
+    ).toBeInTheDocument()
     expect(screen.getAllByText('01/09').length).toBeGreaterThan(0)
     expect(screen.getAllByText('02/09').length).toBeGreaterThan(0)
   })

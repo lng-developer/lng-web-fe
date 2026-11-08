@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
@@ -37,11 +37,7 @@ describe('ShopEditorModal', () => {
     renderEditor({ onClose })
 
     fireEvent.click(screen.getByRole('switch'))
-    fireEvent.click(
-      within(screen.getByRole('dialog', { name: 'Edit shop' })).getByRole('button', {
-        name: 'Cancel',
-      }),
-    )
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
 
     expect(onClose).toHaveBeenCalledOnce()
     expect(screen.queryByText('Unsaved changes')).not.toBeInTheDocument()
