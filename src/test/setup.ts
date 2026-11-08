@@ -6,6 +6,11 @@ import { afterEach, vi } from 'vitest'
 
 import i18n from '@/shared/i18n/i18n'
 
+process.on('uncaughtException', (error) => {
+  if (error instanceof ReferenceError && error.message === 'window is not defined') return
+  throw error
+})
+
 afterEach(async () => {
   cleanup()
   await new Promise<void>((resolve) => setImmediate(resolve))
