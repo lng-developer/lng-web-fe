@@ -60,7 +60,11 @@ const blockedTask: Awaited<ReturnType<typeof listProductionTasks>>['items'][numb
   readyAt: null,
   updatedAt: '2026-08-27T00:00:00.000Z',
   orderItem: { externalOrderId: '113-2183249-0763446' },
-  seller: { name: 'Nguyen Seller', employeeCode: 'J2523' },
+  seller: {
+    name: 'Nguyen Seller',
+    employeeCode: 'J2523',
+    avatarUrl: '/api/hr/employee-profiles/6ad097233d3775a03d8c4d13/avatar',
+  },
   shop: undefined,
   qcPreviewFileChecks: undefined,
 }
