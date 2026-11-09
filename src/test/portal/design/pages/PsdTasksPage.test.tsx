@@ -60,6 +60,7 @@ vi.mock('@/features/portal/design/api/designApi', async (importOriginal) => {
             sku: 'SKU-TEST-001',
             asin: 'B001TESTASIN',
             salesChannelCode: 'AMAZON',
+            seller: { name: 'Nguyen Duc Son', employeeCode: 'J2504' },
           },
           createdAt: '2026-09-18T10:00:00.000Z',
           updatedAt: '2026-09-18T10:00:00.000Z',
@@ -290,5 +291,16 @@ describe('PsdTasksPage', () => {
     expect(getDesignSummary).toHaveBeenCalledWith(
       expect.objectContaining({ salesChannelCode: 'AMAZON' }),
     )
+  })
+
+  it('renders seller using EmployeeIdentity with employee code in table', async () => {
+    render(
+      <AppProviders>
+        <PsdTasksPage />
+      </AppProviders>,
+    )
+    await screen.findByText('B001TESTASIN')
+    expect(screen.getByText('J2504')).toBeInTheDocument()
+    expect(screen.getByText('DS')).toBeInTheDocument()
   })
 })

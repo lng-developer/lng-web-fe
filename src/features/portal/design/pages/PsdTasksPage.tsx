@@ -45,6 +45,7 @@ import {
   type DesignTask,
   type DesignTaskPriority,
   formatTaskSeller,
+  getTaskSellerIdentity,
   getDesignSummary,
   listDesignAssignees,
   listDesignTasks,
@@ -794,6 +795,18 @@ export function PsdTasksPage() {
         width: 160,
         align: 'center',
         render: (_, record) => {
+          const seller = getTaskSellerIdentity(record)
+          if (seller?.name || seller?.employeeCode) {
+            return (
+              <EmployeeIdentity
+                size="small"
+                mode="code"
+                name={seller.name}
+                employeeCode={seller.employeeCode}
+                avatarUrl={seller.avatarUrl}
+              />
+            )
+          }
           const sellerName = formatTaskSeller(record)
           return <StatusPill title={sellerName} color={DATA_COLORS.process} />
         },
