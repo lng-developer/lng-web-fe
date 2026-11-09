@@ -77,7 +77,7 @@ describe('orderPresentation', () => {
     } = orderPresentation
 
     expect(formatTimelineEventLabel('ORDER_STATUS_CHANGED', t)).toBe('Trạng thái đơn hàng thay đổi')
-    expect(formatTimelineEventLabel('PRODUCTION_SCALE_SUBMITTED_QC', t)).toBe(
+    expect(formatTimelineEventLabel('PRODUCTION_SCALE_SUBMITTED_QC')).toBe(
       'Production Scale Submitted QC',
     )
     expect(formatTimelineBlockerLabel('OPEN_CASE', t)).toBe('Open Case')
@@ -85,5 +85,98 @@ describe('orderPresentation', () => {
     expect(formatCaseTypeLabel('REFUND', t)).toBe('Hoàn tiền')
     expect(formatCaseTypeLabel('RETURN', t)).toBe('Return')
     expect(formatCaseSeverityLabel('HIGH', t)).toBe('High')
+  })
+
+  it('computes bottleneck stage and breakdown for single and multi-item orders', () => {
+    const translations: Record<string, string> = {
+      'orders.statuses.QC_PENDING': 'Chờ QC',
+      'orders.statuses.IN_SCALE': 'Đang Scale',
+      'orders.statuses.NEED_PSD': 'Thiếu file PSD',
+      'orders.statuses.READY_TO_SEND_VENDOR': 'Sẵn sàng gửi vendor',
+      'orders.statuses.QC_REJECTED': 'QC từ chối',
+      'orders.statuses.CANCELLED': 'Đã hủy',
+    }
+    const t: Translate = (key, options) => translations[key] ?? options?.defaultValue ?? key
+    const { getOrderBottleneckStage } = orderPresentation
+
+    // Empty items
+    expect(getOrderBottleneckStage([], t)).toBeNull()
+
+    // Single item
+    const single = getOrderBottleneckStage(
+      [{ item: { id: '1', sku: 'SKU-1' }, workflow: { stage: 'QC_PENDING' } }],
+      t,
+    )
+    expect(single?.bottleneckStage).toBe('QC_PENDING')
+    expect(single?.displayLabel).toBe('Chờ QC')
+    expect(single?.isMixed).toBe(false)
+    expect(single?.tone).toBe('pending')
+
+    // 2 items with identical stage
+    const sameStage = getOrderBottleneckStage(
+      [
+        { item: { id: '1', sku: 'SKU-1' }, workflow: { stage: 'IN_SCALE' } },
+        { item: { id: '2', sku: 'SKU-2' }, workflow: { stage: 'IN_SCALE' } },
+      ],
+      t,
+    )
+    expect(sameStage?.bottleneckStage).toBe('IN_SCALE')
+    expect(sameStage?.displayLabel).toBe('Đang Scale')
+    expect(sameStage?.isMixed).toBe(false)
+    expect(sameStage?.tone).toBe('processing')
+
+    // 2 items with mixed stages: NEED_PSD (rank 70) vs READY_TO_SEND_VENDOR (rank 120)
+    const mixed = getOrderBottleneckStage(
+      [
+        { item: { id: '1', sku: 'SKU-A' }, workflow: { stage: 'NEED_PSD' } },
+        { item: { id: '2', sku: 'SKU-B' }, workflow: { stage: 'READY_TO_SEND_VENDOR' } },
+      ],
+      t,
+    )
+    expect(mixed?.bottleneckStage).toBe('NEED_PSD')
+    expect(mixed?.displayLabel).toBe('Thiếu file PSD (1/2)')
+    expect(mixed?.isMixed).toBe(true)
+    expect(mixed?.tone).toBe('pending')
+    expect(mixed?.itemsBreakdown).toEqual([
+      {
+        id: '1',
+        sku: 'SKU-A',
+        stage: 'NEED_PSD',
+        stageLabel: 'Thiếu file PSD',
+        isBottleneck: true,
+      },
+      {
+        id: '2',
+        sku: 'SKU-B',
+        stage: 'READY_TO_SEND_VENDOR',
+        stageLabel: 'Sẵn sàng gửi vendor',
+        isBottleneck: false,
+      },
+    ])
+
+    // 3 items with 2 at the critical bottleneck stage
+    const threeItems = getOrderBottleneckStage(
+      [
+        { item: { id: '1', sku: 'SKU-1' }, workflow: { stage: 'QC_REJECTED' } },
+        { item: { id: '2', sku: 'SKU-2' }, workflow: { stage: 'QC_PENDING' } },
+        { item: { id: '3', sku: 'SKU-3' }, workflow: { stage: 'QC_REJECTED' } },
+      ],
+      t,
+    )
+    expect(threeItems?.bottleneckStage).toBe('QC_REJECTED')
+    expect(threeItems?.displayLabel).toBe('QC từ chối (2/3)')
+    expect(threeItems?.tone).toBe('critical')
+
+    // Mixed active and cancelled items: active item should be the bottleneck
+    const withCancelled = getOrderBottleneckStage(
+      [
+        { item: { id: '1', sku: 'SKU-1' }, workflow: { stage: 'CANCELLED' } },
+        { item: { id: '2', sku: 'SKU-2' }, workflow: { stage: 'QC_PENDING' } },
+      ],
+      t,
+    )
+    expect(withCancelled?.bottleneckStage).toBe('QC_PENDING')
+    expect(withCancelled?.displayLabel).toBe('Chờ QC (1/2)')
+    expect(withCancelled?.tone).toBe('pending')
   })
 })
