@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import type { ImportBatch } from '@/features/portal/finance/api/financeApi'
+import { EXTENSION_API_BASE_URLS } from '@/features/portal/integrations/components/extensionHelpers'
 
 vi.mock('@/shared/ui', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/shared/ui')>()
@@ -284,6 +285,9 @@ function renderWorkbench(path: string, currentAccount = account()) {
 }
 
 describe('IntegrationWorkbenchPage', () => {
+  it('shows the same production API base URL used by the extension', () => {
+    expect(EXTENSION_API_BASE_URLS.production).toBe('https://ecomatrix.lngmerch.co')
+  })
   afterEach(cleanup)
 
   it('keeps each top-level workflow in its own accessible workbench region', async () => {

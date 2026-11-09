@@ -84,7 +84,8 @@
     "switchToModal": "Chuyển sang hộp thoại nổi",
     "table": {
       "viewDetails": "Xem chi tiết"
-    }
+    },
+    "seller": "Seller"
   },
   "language": {
     "label": "Ngôn ngữ",
@@ -3915,7 +3916,8 @@
         "files": "File",
         "scaleDifficulty": "Độ khó scale",
         "status": "Trạng thái",
-        "updated": "Cập nhật"
+        "updated": "Cập nhật",
+        "seller": "Seller"
       },
       "statuses": {
         "BLOCKED": "Đang chặn",

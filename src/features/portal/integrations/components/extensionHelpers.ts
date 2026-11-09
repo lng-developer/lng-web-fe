@@ -17,8 +17,8 @@ export interface CreateExtensionCommandInput {
 
 export const EXTENSION_API_BASE_URLS: Record<ExtensionTokenEnvironment, string> = {
   local: 'http://localhost:3000',
-  development: 'https://dev-api.lngmerch.co',
-  production: '',
+  development: 'https://ecomatrix.lngmerch.co',
+  production: 'https://ecomatrix.lngmerch.co',
 }
 
 export const EXTENSION_ENVIRONMENT_LABELS: Record<string, string> = {
