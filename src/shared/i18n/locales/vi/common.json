@@ -5055,8 +5055,20 @@
       "READY_TO_SEND_VENDOR": "Sẵn sàng gửi vendor",
       "SENT_TO_VENDOR": "Đã gửi vendor",
       "TRACKING_PENDING": "Chờ tracking",
-      "CONFIRMED": "Đã xác nhận"
-    }
+      "CONFIRMED": "Đã xác nhận",
+      "OPEN_CASE": "Có Case mở",
+      "NEED_ADDRESS": "Thiếu/Lỗi địa chỉ",
+      "NEED_CUSTOMER_IMAGE": "Thiếu ảnh khách",
+      "NEEDS_ATTENTION": "Cần chú ý",
+      "NEED_CUSTOMIZATION": "Chờ customization",
+      "NEED_MAPPING": "Chờ mapping",
+      "NEED_TEMPLATE": "Thiếu template",
+      "NEED_PSD": "Thiếu file PSD",
+      "READY_FOR_SCALE": "Chờ giao Scale",
+      "IN_SCALE": "Đang Scale",
+      "QC_PENDING": "Chờ QC"
+    },
+    "itemBreakdownTitle": "Chi tiết theo item ({{count}} items):"
   },
   "audit": {
     "title": "Nhật ký hệ thống",

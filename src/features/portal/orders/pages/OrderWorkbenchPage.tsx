@@ -43,7 +43,12 @@ import { downloadOrdersCsv, type OrderWorkbenchRow } from '../api/orderApi'
 import { type OrderModal, useOrderActionStore } from '../hooks/useOrderActionStore'
 import { useOrderSummaryQuery } from '../hooks/useOrderSummaryQuery'
 import { useOrderWorkbenchQuery } from '../hooks/useOrderWorkbenchQuery'
-import { formatMinorMoney, formatOrderStatusLabel, orderStatusTone } from './orderPresentation'
+import {
+  formatMinorMoney,
+  formatOrderStatusLabel,
+  getOrderBottleneckStage,
+  orderStatusTone,
+} from './orderPresentation'
 import { OrderWorkbenchExpandedRow } from './OrderWorkbenchExpandedRow'
 import { OrderWorkbenchFilterBar } from './OrderWorkbenchFilterBar'
 import styles from './OrderWorkbenchPage.module.scss'
@@ -298,25 +303,73 @@ export const OrderWorkbenchPage = () => {
       },
       {
         title: t('orders.columns.status'),
-        width: 150,
-        render: (_, row) => (
-          <Space size={4}>
-            <StatusTag status={orderStatusTone(row.order?.status)}>
-              {formatOrderStatusLabel(row.order?.status, t)}
-            </StatusTag>
-            <Tooltip title={t('orders.actions.viewHistory')}>
-              <Button
-                type="text"
-                size="small"
-                aria-label={t('orders.actions.viewHistory')}
-                icon={<HistoryOutlined />}
-                onClick={(event) =>
-                  row.order?.id && openOrderModal(event, row.order.id, 'timeline')
-                }
-              />
-            </Tooltip>
-          </Space>
-        ),
+        width: 160,
+        render: (_, row) => {
+          const isMacroTerminalOrHold = [
+            'SHIPPED',
+            'DELIVERED',
+            'CANCELLED',
+            'REFUNDED',
+            'FAILED',
+            'ON_HOLD',
+          ].includes(row.order?.status ?? '')
+
+          const bottleneck =
+            !isMacroTerminalOrHold && row.items?.length
+              ? getOrderBottleneckStage(row.items, t)
+              : null
+
+          const tagStatus = bottleneck ? bottleneck.tone : orderStatusTone(row.order?.status)
+          const tagLabel = bottleneck
+            ? bottleneck.displayLabel
+            : formatOrderStatusLabel(row.order?.status, t)
+
+          const statusTag = <StatusTag status={tagStatus}>{tagLabel}</StatusTag>
+
+          return (
+            <Space size={4}>
+              {bottleneck && bottleneck.totalItems > 1 ? (
+                <Tooltip
+                  title={
+                    <div style={{ maxWidth: 320, padding: '2px 0' }}>
+                      <div style={{ fontWeight: 600, marginBottom: 4 }}>
+                        {t('orders.itemBreakdownTitle', {
+                          defaultValue: `Chi tiết theo item (${bottleneck.totalItems} items):`,
+                          count: bottleneck.totalItems,
+                        })}
+                      </div>
+                      {bottleneck.itemsBreakdown.map((item, idx) => (
+                        <div key={item.id || idx} style={{ fontSize: 12, lineHeight: '18px' }}>
+                          • <span style={{ fontWeight: 500 }}>{item.sku}</span>: {item.stageLabel}
+                          {item.isBottleneck && (
+                            <span style={{ color: '#faad14', marginLeft: 4 }} title="Bottleneck">
+                              ⚠️
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  }
+                >
+                  {statusTag}
+                </Tooltip>
+              ) : (
+                statusTag
+              )}
+              <Tooltip title={t('orders.actions.viewHistory')}>
+                <Button
+                  type="text"
+                  size="small"
+                  aria-label={t('orders.actions.viewHistory')}
+                  icon={<HistoryOutlined />}
+                  onClick={(event) =>
+                    row.order?.id && openOrderModal(event, row.order.id, 'timeline')
+                  }
+                />
+              </Tooltip>
+            </Space>
+          )
+        },
       },
       {
         title: t('orders.columns.orderedAt'),

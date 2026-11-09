@@ -5055,8 +5055,20 @@
       "READY_TO_SEND_VENDOR": "Ready to send vendor",
       "SENT_TO_VENDOR": "Sent to vendor",
       "TRACKING_PENDING": "Tracking pending",
-      "CONFIRMED": "Confirmed"
-    }
+      "CONFIRMED": "Confirmed",
+      "OPEN_CASE": "Open case",
+      "NEED_ADDRESS": "Address issue",
+      "NEED_CUSTOMER_IMAGE": "Need customer image",
+      "NEEDS_ATTENTION": "Needs attention",
+      "NEED_CUSTOMIZATION": "Need customization",
+      "NEED_MAPPING": "Need mapping",
+      "NEED_TEMPLATE": "Need template",
+      "NEED_PSD": "Need PSD",
+      "READY_FOR_SCALE": "Ready for scale",
+      "IN_SCALE": "In scale",
+      "QC_PENDING": "QC pending"
+    },
+    "itemBreakdownTitle": "Item status breakdown ({{count}} items):"
   },
   "audit": {
     "title": "Audit log",

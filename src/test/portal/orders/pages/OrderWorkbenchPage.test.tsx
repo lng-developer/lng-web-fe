@@ -273,4 +273,65 @@ describe('OrderWorkbenchPage', () => {
   it('keeps stable shop and vendor filters cached longer than order rows', () => {
     expect(orderWorkbenchSource.match(/staleTime: 5 \* 60_000/g)).toHaveLength(2)
   })
+
+  it('renders the bottleneck stage and item count for orders with multiple items', async () => {
+    vi.mocked(listOrderWorkbench).mockResolvedValue({
+      items: [
+        {
+          order: {
+            ...workbenchRow.order,
+            id: 'order-multi-item',
+            externalOrderId: '112-9999999-0000001',
+            status: 'PROCESSING',
+          },
+          items: [
+            {
+              item: { id: 'it-1', sku: 'SKU-001', quantity: 1, status: 'PROCESSING' },
+              workflow: { stage: 'QC_PENDING', owner: 'SCALE', blockers: [], nextActions: [] },
+            } as unknown as OrderWorkbenchRow['items'][number],
+            {
+              item: { id: 'it-2', sku: 'SKU-002', quantity: 1, status: 'PROCESSING' },
+              workflow: {
+                stage: 'READY_TO_SEND_VENDOR',
+                owner: 'VENDOR',
+                blockers: [],
+                nextActions: [],
+              },
+            } as unknown as OrderWorkbenchRow['items'][number],
+          ],
+        },
+      ],
+      pagination: { total: 1, page: 1, limit: 20 },
+    })
+
+    renderPage()
+
+    expect(await screen.findByText('QC pending (1/2)')).toBeVisible()
+  })
+
+  it('preserves macro terminal status for shipped orders even with items', async () => {
+    vi.mocked(listOrderWorkbench).mockResolvedValue({
+      items: [
+        {
+          order: {
+            ...workbenchRow.order,
+            id: 'order-shipped',
+            externalOrderId: '112-9999999-0000002',
+            status: 'SHIPPED',
+          },
+          items: [
+            {
+              item: { id: 'it-1', sku: 'SKU-001', quantity: 1, status: 'SHIPPED' },
+              workflow: { stage: 'SHIPPED', owner: 'SYSTEM', blockers: [], nextActions: [] },
+            } as unknown as OrderWorkbenchRow['items'][number],
+          ],
+        },
+      ],
+      pagination: { total: 1, page: 1, limit: 20 },
+    })
+
+    renderPage()
+
+    expect(await screen.findByText('Shipped')).toBeVisible()
+  })
 })
