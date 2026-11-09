@@ -60,6 +60,7 @@ const blockedTask: Awaited<ReturnType<typeof listProductionTasks>>['items'][numb
   readyAt: null,
   updatedAt: '2026-08-27T00:00:00.000Z',
   orderItem: { externalOrderId: '113-2183249-0763446' },
+  seller: { name: 'Nguyen Seller', employeeCode: 'J2523' },
   shop: undefined,
   qcPreviewFileChecks: undefined,
 }
@@ -172,6 +173,8 @@ describe('ProductionWorkbenchPage', () => {
       })
       renderPage('/portal/production/scale', designer)
       await screen.findByText('113-2183249-0763446')
+      expect(screen.getByText('Nguyen Seller')).toBeInTheDocument()
+      expect(screen.getByText('J2523')).toBeInTheDocument()
       await screen.findByText('Task context')
       expect(screen.getByText('No output files yet')).toBeInTheDocument()
       const label = String(i18n.t('portal.production.addManualSlot'))

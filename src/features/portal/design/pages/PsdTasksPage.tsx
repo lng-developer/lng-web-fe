@@ -611,19 +611,47 @@ export function PsdTasksPage() {
       {
         title:
           salesChannelCode === 'ETSY'
-            ? 'Listing ID'
+            ? t('portal.design.listingId', { defaultValue: 'Listing ID' })
             : salesChannelCode === 'AMAZON'
-              ? 'ASIN'
-              : 'ASIN / Listing ID',
+              ? t('portal.design.asin', { defaultValue: 'ASIN' })
+              : `${t('portal.design.asin', { defaultValue: 'ASIN' })} / ${t('portal.design.listingId', { defaultValue: 'Listing ID' })}`,
         key: 'asin',
         width: 130,
         align: 'center',
         render: (_, record) => {
-          const asin =
-            record.listing?.asin ||
-            record.listing?.etsyListingId ||
-            (record as { asin?: string }).asin
-          return <StatusPill title={asin || '-'} color={DATA_COLORS.pending} />
+          const rawChannel = String(
+            record.listing?.salesChannelCode || salesChannelCode || '',
+          ).toUpperCase()
+          const isEtsy =
+            rawChannel === 'ETSY' || Boolean(record.listing?.etsyListingId && !record.listing?.asin)
+          const identifier = isEtsy
+            ? record.listing?.etsyListingId ||
+              record.listing?.asin ||
+              (record as { asin?: string }).asin
+            : record.listing?.asin ||
+              (record as { asin?: string }).asin ||
+              record.listing?.etsyListingId
+          const url = identifier
+            ? isEtsy
+              ? `https://www.etsy.com/listing/${encodeURIComponent(identifier)}`
+              : `https://www.amazon.com/dp/${encodeURIComponent(identifier)}`
+            : null
+          const pill = <StatusPill title={identifier || '-'} color={DATA_COLORS.pending} />
+
+          return url ? (
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Open ${identifier}`}
+              onClick={(event) => event.stopPropagation()}
+              style={{ display: 'inline-flex', textDecoration: 'none' }}
+            >
+              {pill}
+            </a>
+          ) : (
+            pill
+          )
         },
       },
       {
