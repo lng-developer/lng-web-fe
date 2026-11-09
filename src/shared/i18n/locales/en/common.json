@@ -84,7 +84,8 @@
     "switchToModal": "Switch to modal dialog",
     "table": {
       "viewDetails": "View details"
-    }
+    },
+    "seller": "Seller"
   },
   "language": {
     "label": "Language",
@@ -3916,7 +3917,8 @@
         "files": "Files",
         "scaleDifficulty": "Scale difficulty",
         "status": "Status",
-        "updated": "Updated"
+        "updated": "Updated",
+        "seller": "Seller"
       },
       "statuses": {
         "BLOCKED": "Blocked",

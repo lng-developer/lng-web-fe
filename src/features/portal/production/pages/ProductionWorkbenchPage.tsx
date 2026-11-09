@@ -982,6 +982,21 @@ export function ProductionWorkbenchPage({
         render: (_, row) => row.shop?.name || '-',
       },
       {
+        title: t('portal.production.columns.seller', { defaultValue: 'Seller' }),
+        width: 170,
+        render: (_, row) => {
+          if (!row.seller?.name && !row.seller?.employeeCode) return '-'
+          return (
+            <EmployeeIdentity
+              size="small"
+              mode="auto"
+              name={row.seller.name}
+              employeeCode={row.seller.employeeCode}
+            />
+          )
+        },
+      },
+      {
         title: t('common.channel', { defaultValue: 'Channel' }),
         width: 100,
         align: 'center',

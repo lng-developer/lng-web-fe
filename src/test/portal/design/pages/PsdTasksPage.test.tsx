@@ -188,6 +188,18 @@ describe('PsdTasksPage', () => {
     expect(screen.queryByPlaceholderText('ASIN Type')).not.toBeInTheDocument()
   })
 
+  it('links the ASIN to the Amazon product page', async () => {
+    render(
+      <AppProviders>
+        <PsdTasksPage />
+      </AppProviders>,
+    )
+
+    const asinLink = await screen.findByRole('link', { name: 'Open B001TESTASIN' })
+    expect(asinLink).toHaveAttribute('href', 'https://www.amazon.com/dp/B001TESTASIN')
+    expect(asinLink).toHaveAttribute('target', '_blank')
+  })
+
   it('lets a designer replace or remove the selected PSD before submitting', async () => {
     mockTaskStatus = 'IN_PROGRESS'
     render(
