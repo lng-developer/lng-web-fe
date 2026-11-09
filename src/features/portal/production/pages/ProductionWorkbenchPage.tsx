@@ -992,6 +992,7 @@ export function ProductionWorkbenchPage({
               mode="auto"
               name={row.seller.name}
               employeeCode={row.seller.employeeCode}
+              avatarUrl={row.seller.avatarUrl}
             />
           )
         },

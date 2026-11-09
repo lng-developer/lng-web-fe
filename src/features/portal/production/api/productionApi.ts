@@ -101,7 +101,7 @@ export type ProductionTask = {
     psdTemplateAssetId?: string | null
   } | null
   order?: { id?: string | null }
-  seller?: { name?: string | null; employeeCode?: string | null } | null
+  seller?: { name?: string | null; employeeCode?: string | null; avatarUrl?: string | null } | null
   shop?: { id?: string | null; name?: string | null }
   shopId?: string | null
   shopName?: string | null
