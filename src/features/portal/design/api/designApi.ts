@@ -86,15 +86,23 @@ export type DesignTask = {
     fullName?: string | null
     name?: string | null
     employeeCode?: string | null
+    avatarUrl?: string | null
   } | null
   requestedBy?: {
     id?: string | null
     fullName?: string | null
     employeeCode?: string | null
+    avatarUrl?: string | null
   } | null
   asinType?: string | null
   asin_type?: string | null
-  createdBy?: { id: string; fullName?: string | null; full_name?: string | null } | null
+  createdBy?: {
+    id: string
+    fullName?: string | null
+    full_name?: string | null
+    employeeCode?: string | null
+    avatarUrl?: string | null
+  } | null
   createdAt: string
   updatedAt: string
 }
@@ -106,17 +114,25 @@ export function parseEmployeeCodeFromSku(sku?: string | null): string | null {
   return match ? match[1].toUpperCase() : null
 }
 
-export function formatTaskSeller(task: DesignTask): string {
+export type TaskSellerIdentity = {
+  name?: string | null
+  employeeCode?: string | null
+  avatarUrl?: string | null
+}
+
+export function getTaskSellerIdentity(task: DesignTask): TaskSellerIdentity | null {
   const codeFromSku = parseEmployeeCodeFromSku(task.listing?.sku)
   const listingSeller = task.listing?.seller
 
   if (listingSeller) {
     if (!codeFromSku || !listingSeller.employeeCode || listingSeller.employeeCode === codeFromSku) {
-      if (listingSeller.name && listingSeller.employeeCode) {
-        return `${listingSeller.name} (${listingSeller.employeeCode})`
+      if (listingSeller.name || listingSeller.employeeCode) {
+        return {
+          name: listingSeller.name || null,
+          employeeCode: listingSeller.employeeCode || codeFromSku || null,
+          avatarUrl: task.seller?.avatarUrl || null,
+        }
       }
-      if (listingSeller.name) return listingSeller.name
-      if (listingSeller.employeeCode) return listingSeller.employeeCode
     }
   }
 
@@ -130,28 +146,59 @@ export function formatTaskSeller(task: DesignTask): string {
 
   if (!isShopPlaceholder && task.seller) {
     if (!codeFromSku || !task.seller.employeeCode || task.seller.employeeCode === codeFromSku) {
-      const name = task.seller.fullName || task.seller.name
-      const code = task.seller.employeeCode
-      if (name && code && name !== code) return `${name} (${code})`
-      if (name) return name
-      if (code) return code
+      const name = task.seller.fullName || task.seller.name || null
+      const code = task.seller.employeeCode || codeFromSku || null
+      if (name || code) {
+        return {
+          name,
+          employeeCode: code,
+          avatarUrl: task.seller.avatarUrl || null,
+        }
+      }
     }
   }
 
-  if (codeFromSku) return codeFromSku
+  if (codeFromSku) {
+    return {
+      name: null,
+      employeeCode: codeFromSku,
+      avatarUrl: null,
+    }
+  }
 
   if (task.requestedBy) {
-    const name = task.requestedBy.fullName
-    const code = task.requestedBy.employeeCode
-    if (name && code && name !== code) return `${name} (${code})`
-    if (name) return name
-    if (code) return code
+    const name = task.requestedBy.fullName || null
+    const code = task.requestedBy.employeeCode || null
+    if (name || code) {
+      return {
+        name,
+        employeeCode: code,
+        avatarUrl: task.requestedBy.avatarUrl || null,
+      }
+    }
   }
 
   const createdByName =
-    task.createdBy?.fullName || (task.createdBy as { full_name?: string })?.full_name
-  if (createdByName) return createdByName
+    task.createdBy?.fullName || (task.createdBy as { full_name?: string })?.full_name || null
+  if (createdByName) {
+    return {
+      name: createdByName,
+      employeeCode: (task.createdBy as { employeeCode?: string | null })?.employeeCode || null,
+      avatarUrl: (task.createdBy as { avatarUrl?: string | null })?.avatarUrl || null,
+    }
+  }
 
+  return null
+}
+
+export function formatTaskSeller(task: DesignTask): string {
+  const identity = getTaskSellerIdentity(task)
+  if (identity) {
+    if (identity.name && identity.employeeCode && identity.name !== identity.employeeCode) {
+      return `${identity.name} (${identity.employeeCode})`
+    }
+    return identity.name || identity.employeeCode || '-'
+  }
   return '-'
 }
 export type DesignListParams = {
