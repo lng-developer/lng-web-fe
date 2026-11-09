@@ -56,6 +56,7 @@ import {
   deleteDesignTask,
   type DesignTask,
   formatTaskSeller,
+  getTaskSellerIdentity,
   getDesignSummary,
   listDesignAssignees,
   listDesignTasks,
@@ -548,8 +549,20 @@ export function IdeaTasksPage() {
         key: 'seller',
         width: 150,
         render: (_, record) => {
+          const seller = getTaskSellerIdentity(record)
+          if (seller?.name || seller?.employeeCode) {
+            return (
+              <EmployeeIdentity
+                size="small"
+                mode="code"
+                name={seller.name}
+                employeeCode={seller.employeeCode}
+                avatarUrl={seller.avatarUrl}
+              />
+            )
+          }
           const sellerName = formatTaskSeller(record)
-          return <Text>{sellerName}</Text>
+          return sellerName === '-' ? '-' : <Text>{sellerName}</Text>
         },
       },
       {

@@ -15,6 +15,7 @@ import {
   cancelDesignTask,
   createDesignTask,
   formatTaskSeller,
+  getTaskSellerIdentity,
   getDesignSummary,
   getDesignWorkload,
   listDesignSubmissions,
@@ -322,5 +323,46 @@ describe('designApi', () => {
         updatedAt: '2026-01-01',
       }),
     ).toBe('J2608')
+  })
+
+  it('extracts task seller identity for EmployeeIdentity rendering', () => {
+    const identity = getTaskSellerIdentity({
+      id: 'task-seller-identity',
+      taskType: 'PSD_TEMPLATE',
+      status: 'APPROVED',
+      priority: 'NORMAL',
+      listing: {
+        sku: 'J2504-SHIRT-01',
+        title: 'Shirt',
+        psdStatus: null,
+        productTypeName: null,
+        seller: { name: 'Nguyễn Đức Sơn', employeeCode: 'J2504' },
+      },
+      listingVariantId: null,
+      internalTemplate: null,
+      targetListingId: null,
+      assignedDesignerId: null,
+      assignedDesigner: null,
+      shop: { id: 'shop-1', name: 'US Shop' },
+      brief: null,
+      expectedOutputs: [],
+      referenceAssetCount: 0,
+      latestSubmission: null,
+      seller: {
+        id: 'seller-id',
+        name: 'Nguyễn Đức Sơn',
+        fullName: 'Nguyễn Đức Sơn',
+        employeeCode: 'J2504',
+        avatarUrl: 'https://cdn.example.com/son.png',
+      },
+      createdAt: '2026-01-01',
+      updatedAt: '2026-01-01',
+    })
+
+    expect(identity).toEqual({
+      name: 'Nguyễn Đức Sơn',
+      employeeCode: 'J2504',
+      avatarUrl: 'https://cdn.example.com/son.png',
+    })
   })
 })

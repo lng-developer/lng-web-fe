@@ -75,6 +75,7 @@ describe('IdeaTasksPage', () => {
     expect(screen.getByText('Create Idea Task')).toBeInTheDocument()
     expect(screen.getByPlaceholderText(/Search/)).toBeInTheDocument()
     expect(screen.getByText('Demo Seller')).toBeInTheDocument()
+    expect(screen.getByText('DS')).toBeInTheDocument()
     expect(screen.getByText('T-Shirt')).toBeInTheDocument()
     expect(screen.queryByPlaceholderText('Shop')).not.toBeInTheDocument()
     expect(screen.queryByPlaceholderText('ASIN Type')).not.toBeInTheDocument()

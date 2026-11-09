@@ -329,6 +329,7 @@ describe('VendorIntegrationModal', () => {
       </AppProviders>,
     )
 
+    expect(await screen.findByDisplayValue('https://vendor.example')).toBeInTheDocument()
     fireEvent.mouseDown(await screen.findByRole('combobox', { name: /Integration mode/ }))
     fireEvent.click(await screen.findByText('Manual'))
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
