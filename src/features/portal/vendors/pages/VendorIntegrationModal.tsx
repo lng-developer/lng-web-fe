@@ -157,8 +157,11 @@ export function VendorIntegrationModal({
           providerKey: values.mode === 'GENERIC_API' ? 'CUSTOM' : connectionValues.providerKey,
         }).filter(
           ([key, value]) =>
-            !secretFields.includes(key as (typeof secretFields)[number]) ||
-            (allowedSecrets.has(key as never) && Boolean(value)),
+            value !== undefined &&
+            value !== null &&
+            value !== '' &&
+            (!secretFields.includes(key as (typeof secretFields)[number]) ||
+              (allowedSecrets.has(key as never) && Boolean(value))),
         ),
       ) as VendorIntegrationConfigInput
       return updateVendorIntegrationConfig(vendorId, input)
@@ -237,7 +240,7 @@ export function VendorIntegrationModal({
         layout="vertical"
         onFinish={(values) => save.mutate(values)}
       >
-        <Tabs defaultActiveKey="connection" destroyOnHidden>
+        <Tabs defaultActiveKey="connection">
           <Tabs.TabPane key="connection" tab={t('vendors.integrationTabs.connection')}>
             <Form.Item
               label={t('vendors.integrationMode')}
