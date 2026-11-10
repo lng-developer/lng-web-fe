@@ -2,7 +2,12 @@ import { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
 
 export type ShipmentStatus =
-  'TRACKING_PENDING' | 'SHIPPED' | 'DELIVERED' | 'EXCEPTION' | 'RETURNED' | 'CANCELLED'
+  | 'TRACKING_PENDING'
+  | 'SHIPPED'
+  | 'DELIVERED'
+  | 'EXCEPTION'
+  | 'RETURNED'
+  | 'CANCELLED'
 export type Shipment = {
   id: string
   vendorSubmissionId: string
@@ -27,7 +32,10 @@ export type ShipmentParams = {
   limit: number
   shopId?: string
   status?: ShipmentStatus
+  provider?: string
+  carrier?: string
   externalOrderId?: string
+  vendorExternalOrderId?: string
   trackingNumber?: string
   dateFrom?: string
   dateTo?: string
