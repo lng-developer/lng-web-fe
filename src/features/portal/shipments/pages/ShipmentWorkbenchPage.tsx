@@ -2,12 +2,14 @@ import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
 import { DownloadOutlined, EditOutlined, SyncOutlined } from '@ant-design/icons'
+import { useQuery } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Descriptions, Input, Modal, Select, Space, Timeline, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
-import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
+import { listShops } from '@/features/portal/shops/api/shopApi'
+import { shopKeys } from '@/features/portal/shops/api/shopKeys'
 import {
   CopyableOrderId,
   DetailModal,
@@ -17,6 +19,7 @@ import {
   FilterBar,
   FormattedDateTime,
   MetricCard,
+  SearchInput,
   StatusTag,
   TableTextCell,
   useFeedbackToast,
@@ -49,6 +52,13 @@ const STATUSES: ShipmentStatus[] = [
   'RETURNED',
   'CANCELLED',
 ]
+
+const PROVIDERS = ['LNG_GROUP', 'MANGOTEE', 'MERCHIZE', 'LENFUL', 'PRINTWAY', 'MERCHFOX']
+
+const CARRIERS = ['USPS', 'UPS', 'FEDEX', 'DHL']
+
+const DEFAULT_SHIPMENT_PAGE_SIZE = 50
+
 function tone(status: ShipmentStatus) {
   if (status === 'DELIVERED') return 'operational'
   if (status === 'SHIPPED') return 'processing'
@@ -67,11 +77,15 @@ export function ShipmentWorkbenchPage({
   const account = accountProp ?? loadedAccount
   const toast = useFeedbackToast()
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
+  const [pageSize, setPageSize] = useState(DEFAULT_SHIPMENT_PAGE_SIZE)
+  const [shopId, setShopId] = useState<string>()
+  const [provider, setProvider] = useState<string>()
+  const [filterCarrier, setFilterCarrier] = useState<string>()
   const [status, setStatus] = useState<ShipmentStatus>()
   const [externalOrderId, setExternalOrderId] = useState('')
   const [trackingNumber, setTrackingNumber] = useState('')
   const [dates, setDates] = useState<{ dateFrom?: string; dateTo?: string }>({})
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [selectedId, setSelectedId] = useResourceSelection()
   const [editMode, setEditMode] = useState<'tracking' | 'status'>()
   const [carrier, setCarrier] = useState('')
@@ -81,6 +95,15 @@ export function ShipmentWorkbenchPage({
     'DELIVERED' | 'EXCEPTION' | 'RETURNED' | 'CANCELLED'
   >('DELIVERED')
   const [note, setNote] = useState('')
+
+  const shops = useQuery({
+    queryKey: shopKeys.list({ page: 1, limit: 100 }),
+    queryFn: () => listShops({ page: 1, limit: 100 }),
+  })
+  const shopOptions = useMemo(
+    () => (shops.data?.items ?? []).map((shop) => ({ value: shop.id, label: shop.name })),
+    [shops.data?.items],
+  )
 
   const permissions = useMemo(
     () =>
@@ -95,22 +118,38 @@ export function ShipmentWorkbenchPage({
     () => ({
       page,
       limit: pageSize,
+      shopId,
       status,
+      provider,
+      carrier: filterCarrier,
       externalOrderId: externalOrderId || undefined,
       trackingNumber: trackingNumber || undefined,
       ...dates,
     }),
-    [page, pageSize, status, externalOrderId, trackingNumber, dates],
+    [
+      page,
+      pageSize,
+      shopId,
+      status,
+      provider,
+      filterCarrier,
+      externalOrderId,
+      trackingNumber,
+      dates,
+    ],
   )
 
   const filters = useMemo(
     () => ({
+      shopId,
       status,
+      provider,
+      carrier: filterCarrier,
       externalOrderId: params.externalOrderId,
       trackingNumber: params.trackingNumber,
       ...dates,
     }),
-    [status, params.externalOrderId, params.trackingNumber, dates],
+    [shopId, status, provider, filterCarrier, params.externalOrderId, params.trackingNumber, dates],
   )
 
   const shipments = useShipmentsQuery(params)
@@ -271,6 +310,12 @@ export function ShipmentWorkbenchPage({
         ),
       },
       {
+        title: t('portal.shipments.columns.shipDate'),
+        dataIndex: 'shippedAt',
+        width: 140,
+        render: (value) => <FormattedDateTime value={value} />,
+      },
+      {
         title: t('portal.shipments.columns.updated'),
         dataIndex: 'updatedAt',
         width: 150,
@@ -340,7 +385,20 @@ export function ShipmentWorkbenchPage({
           columns={columns}
           dataSource={shipments.data?.items ?? []}
           loading={shipments.isLoading}
-          onRow={(row) => ({ onClick: () => setSelectedId(row.id) })}
+          rowSelection={{
+            selectedRowKeys,
+            onChange: setSelectedRowKeys,
+            preserveSelectedRowKeys: true,
+          }}
+          onRow={(row) => ({
+            onClick: (event) => {
+              const target = event.target as HTMLElement | null
+              if (target?.closest('.ant-checkbox-wrapper') || target?.closest('.ant-btn')) {
+                return
+              }
+              setSelectedId(row.id)
+            },
+          })}
           pagination={{
             current: page,
             pageSize,
@@ -351,10 +409,11 @@ export function ShipmentWorkbenchPage({
               setPageSize(nextPageSize)
             },
           }}
-          scroll={{ x: 1_100 }}
+          scroll={{ x: 1_288 }}
           toolbar={
             <FilterBar
               label={t('portal.shipments.filters')}
+              className={styles.filterBar}
               contentClassName={styles.filters}
               actions={
                 <DataFreshness
@@ -364,21 +423,51 @@ export function ShipmentWorkbenchPage({
                 />
               }
             >
-              <Input.Search
-                allowClear
+              <SearchInput
                 className={styles.searchControl}
                 placeholder={t('portal.shipments.externalOrderId')}
                 value={externalOrderId}
-                onChange={(event) => setExternalOrderId(event.target.value)}
-                onSearch={() => setPage(1)}
+                onSearchChange={(value) => {
+                  setExternalOrderId(value)
+                  setPage(1)
+                }}
               />
-              <Input.Search
-                allowClear
+              <SearchInput
                 className={styles.searchControl}
                 placeholder={t('portal.shipments.trackingNumber')}
                 value={trackingNumber}
-                onChange={(event) => setTrackingNumber(event.target.value)}
-                onSearch={() => setPage(1)}
+                onSearchChange={(value) => {
+                  setTrackingNumber(value)
+                  setPage(1)
+                }}
+              />
+              <Select
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                className={styles.filterControl}
+                placeholder={t('portal.shipments.allShops')}
+                options={shopOptions}
+                value={shopId}
+                loading={shops.isLoading}
+                onChange={(value) => {
+                  setShopId(value)
+                  setPage(1)
+                }}
+              />
+              <Select
+                allowClear
+                className={styles.filterControl}
+                placeholder={t('portal.shipments.allProviders')}
+                options={PROVIDERS.map((value) => ({
+                  value,
+                  label: value,
+                }))}
+                value={provider}
+                onChange={(value) => {
+                  setProvider(value)
+                  setPage(1)
+                }}
               />
               <Select
                 allowClear
@@ -391,6 +480,20 @@ export function ShipmentWorkbenchPage({
                 value={status}
                 onChange={(value) => {
                   setStatus(value)
+                  setPage(1)
+                }}
+              />
+              <Select
+                allowClear
+                className={styles.filterControl}
+                placeholder={t('portal.shipments.allCarriers')}
+                options={CARRIERS.map((value) => ({
+                  value,
+                  label: value,
+                }))}
+                value={filterCarrier}
+                onChange={(value) => {
+                  setFilterCarrier(value)
                   setPage(1)
                 }}
               />
@@ -460,6 +563,11 @@ export function ShipmentWorkbenchPage({
                       {t(`portal.shipments.statuses.${detail.data.status}`)}
                     </StatusTag>
                   ),
+                },
+                {
+                  key: 'shipDate',
+                  label: t('portal.shipments.columns.shipDate'),
+                  children: <FormattedDateTime value={detail.data.shippedAt} />,
                 },
                 {
                   key: 'order',

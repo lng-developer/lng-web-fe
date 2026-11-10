@@ -4077,6 +4077,10 @@
       "updateFailed": "Shipment update failed",
       "noSelection": "Select a shipment first",
       "allStatuses": "All statuses",
+      "allShops": "All shops",
+      "allProviders": "All providers",
+      "allCarriers": "All carriers",
+      "vendorOrderId": "Vendor order ID",
       "detail": "Shipment detail",
       "note": "Note",
       "recheck": "Recheck",
@@ -4133,6 +4137,7 @@
         "provider": "Provider",
         "tracking": "Tracking",
         "status": "Status",
+        "shipDate": "Ship date",
         "updated": "Updated",
         "action": "Action"
       },

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
@@ -94,7 +94,7 @@ describe('ReportAdsEmployeeTab performance safeguards', () => {
     expect(screen.getAllByText('02/09').length).toBeGreaterThan(0)
   })
 
-  it('supports toggling trend metric between spend, sales, orders, clicks', () => {
+  it('renders employee ranking and trend based purely on Ad spend', () => {
     const sampleRows: AdsSellerDaily[] = [
       {
         date: '2026-09-01',
@@ -118,46 +118,59 @@ describe('ReportAdsEmployeeTab performance safeguards', () => {
       </AppProviders>,
     )
 
-    // Check trend metric buttons (Ad spend)
-    const trendSpendBtn = screen.getAllByRole('button', { name: 'Ad spend' })
-    expect(trendSpendBtn.length).toBeGreaterThan(0)
-
-    // Can toggle to Orders
-    const ordersBtn = screen.getByRole('button', { name: 'Orders' })
-    fireEvent.click(ordersBtn)
-    expect(screen.getByText(/Orders trend/i)).toBeInTheDocument()
-
-    // Can toggle to Clicks
-    const clicksBtn = screen.getByRole('button', { name: 'Clicks' })
-    fireEvent.click(clicksBtn)
-    expect(screen.getByText(/Clicks trend/i)).toBeInTheDocument()
+    // Check Employee ranking card exists
+    expect(screen.getByRole('heading', { name: 'Employee ranking' })).toBeInTheDocument()
+    // Check Employee trend card exists and renders chart
+    expect(screen.getByRole('heading', { name: 'Employee trend' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Employee trend')).toBeInTheDocument()
   })
 
-  it('defaults to spend trend for sellers with 0 sales and non-zero spend', () => {
-    const zeroSalesRows: AdsSellerDaily[] = [
+  it('does not render ROAS, Attributed sales, CPA, Orders, or Clicks in the two summary panels', () => {
+    const sampleRows: AdsSellerDaily[] = [
       {
         date: '2026-09-01',
-        sellerEmployeeCode: 'yennth',
-        sellerName: 'Yen Nguyen',
+        sellerEmployeeCode: 'seller-1',
+        sellerName: 'Alice',
         currency: 'USD',
-        spendAmount: 23702,
-        attributedSalesAmount: 0,
-        impressions: 500,
-        clicks: 50,
-        attributedOrdersCount: 0,
-        cpaAmount: null,
+        spendAmount: 2000,
+        attributedSalesAmount: 6000,
+        impressions: 200,
+        clicks: 20,
+        attributedOrdersCount: 4,
+        cpaAmount: 500,
         ctrBps: 1000,
-        conversionBps: 0,
+        conversionBps: 2000,
       },
     ]
 
     render(
       <AppProviders>
-        <ReportAdsEmployeeTab data={zeroSalesRows} isPending={false} dates={['2026-09-01']} />
+        <ReportAdsEmployeeTab data={sampleRows} isPending={false} dates={['2026-09-01']} />
       </AppProviders>,
     )
 
-    // Should default to Spend trend because sales is 0
-    expect(screen.getByText(/Ad spend trend/i)).toBeInTheDocument()
+    const rankingCard = screen
+      .getByRole('heading', { name: 'Employee ranking' })
+      .closest('.ant-card')
+    expect(rankingCard).not.toBeNull()
+    const rankingText = rankingCard?.textContent || ''
+    expect(rankingText).not.toContain('ROAS')
+    expect(rankingText).not.toContain('CPA')
+    expect(rankingText).not.toContain('Attributed sales')
+    expect(
+      within(rankingCard as HTMLElement).getByRole('button', { name: 'Ad spend' }),
+    ).toBeInTheDocument()
+
+    const trendCard = screen.getByRole('heading', { name: 'Employee trend' }).closest('.ant-card')
+    expect(trendCard).not.toBeNull()
+    const trendText = trendCard?.textContent || ''
+    expect(trendText).not.toContain('Attributed sales')
+    expect(trendText).not.toContain('Orders')
+    expect(trendText).not.toContain('Clicks')
+    expect(trendText).not.toContain('ROAS')
+    expect(trendText).not.toContain('CPA')
+    expect(
+      within(trendCard as HTMLElement).getByRole('button', { name: 'Ad spend' }),
+    ).toBeInTheDocument()
   })
 })

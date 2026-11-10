@@ -14,6 +14,14 @@
 .filters {
   flex: 1 1 auto;
 }
+.filterBar {
+  min-height: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
 .trackingSync {
   flex: 0 0 auto;
   display: grid;
@@ -35,14 +43,32 @@
 .trackingSyncSelect {
   width: 160px;
 }
-.searchControl {
-  width: 280px;
+.searchControl:global(.ant-input-affix-wrapper) {
+  width: 175px !important;
+  min-width: 150px !important;
+  max-width: 220px !important;
+  border-radius: 6px !important;
+  border: 1px solid var(--ant-color-border) !important;
+  background: var(--ant-color-bg-container) !important;
+  color: var(--ant-color-text) !important;
+  box-shadow: none !important;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: var(--ant-color-primary) !important;
+  }
+
+  &:focus,
+  &:focus-within {
+    border-color: var(--ant-color-primary) !important;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--ant-color-primary) 20%, transparent) !important;
+  }
 }
 .filterControl {
-  width: 190px;
+  width: 135px;
 }
 .dateControl {
-  width: 280px;
+  width: 230px;
 
   :global(.ant-picker) {
     width: 100%;

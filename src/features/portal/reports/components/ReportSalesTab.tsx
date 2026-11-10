@@ -58,8 +58,7 @@ type SalesSummary = {
 type SellerMatrixMetricKey =
   | 'orders'
   | 'revenue'
-  | 'fulfillmentCost'
-  | 'fee'
+  | 'totalCost'
   | 'adSpend'
   | 'discount'
   | 'grossProfit'
@@ -98,8 +97,7 @@ const METRIC_STYLES: Record<
 > = {
   orders: {},
   revenue: { isBold: true },
-  fulfillmentCost: {},
-  fee: {},
+  totalCost: {},
   adSpend: {},
   discount: {},
   grossProfit: { isBold: true },
@@ -320,14 +318,9 @@ export function ReportSalesTab({
       { key: 'orders', label: t('reports.columns.orders'), value: (row) => row.orderCount },
       { key: 'revenue', label: t('reports.columns.revenue'), value: (row) => row.revenueAmount },
       {
-        key: 'fulfillmentCost',
-        label: t('reports.columns.fulfillmentCost'),
+        key: 'totalCost',
+        label: t('reports.columns.totalCost'),
         value: (row) => row.totalCostAmount,
-      },
-      {
-        key: 'fee',
-        label: t('reports.columns.marketplaceFee'),
-        value: (row) => row.marketplaceFeeAmount,
       },
       { key: 'adSpend', label: t('reports.columns.spend'), value: (row) => row.adSpendAmount || 0 },
       { key: 'discount', label: t('reports.columns.discount'), value: (row) => row.discountAmount },
@@ -531,7 +524,7 @@ export function ReportSalesTab({
             <MetricCard
               icon={<DollarOutlined />}
               variant="warning"
-              label={t('reports.columns.fulfillmentCost')}
+              label={t('reports.columns.totalCost')}
               value={
                 summary.totalCostAmount === null
                   ? '—'

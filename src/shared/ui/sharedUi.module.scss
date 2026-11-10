@@ -501,11 +501,12 @@
 }
 
 .filterBarBorderless {
-  border: 1px solid var(--ant-color-border);
-  border-radius: 8px;
-  padding: 6px 10px;
-  background: var(--ant-color-bg-container);
-  box-shadow: 0 1px 2px rgb(15 23 42 / 4%);
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  min-height: auto !important;
 }
 
 .filterBarContent {

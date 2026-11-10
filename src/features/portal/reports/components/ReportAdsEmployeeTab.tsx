@@ -19,9 +19,6 @@ interface ReportAdsEmployeeTabProps {
   filterBar?: ReactNode
 }
 
-type RankingMetric = 'roas' | 'sales' | 'spend' | 'cpa'
-type TrendMetric = 'spend' | 'sales' | 'orders' | 'clicks'
-
 type SellerSummary = {
   key: string
   sellerEmployeeCode: string
@@ -195,75 +192,33 @@ function AdsSummaryReport({
   dates: string[]
 }) {
   const { t } = useTranslation()
-  const [rankingMetric, setRankingMetric] = useState<RankingMetric>('roas')
   const [selectedSellerKey, setSelectedSellerKey] = useState<string | null>(null)
   const summaries = useMemo(() => summarizeSellers(rows, currency), [currency, rows])
   const sortedSummaries = useMemo(
-    () =>
-      [...summaries].sort(
-        (left, right) => rankingValue(right, rankingMetric) - rankingValue(left, rankingMetric),
-      ),
-    [rankingMetric, summaries],
+    () => [...summaries].sort((left, right) => rankingValue(right) - rankingValue(left)),
+    [summaries],
   )
   const selectedSummary =
     summaries.find((summary) => summary.key === selectedSellerKey) || sortedSummaries[0]
 
-  // Trend metric state: intelligently default to 'spend' if seller has spend but 0 sales
-  const [userTrendMetric, setUserTrendMetric] = useState<TrendMetric | null>(null)
-
-  const activeTrendMetric: TrendMetric = useMemo(() => {
-    if (userTrendMetric) return userTrendMetric
-    if (rankingMetric === 'spend') return 'spend'
-    if (rankingMetric === 'sales') return 'sales'
-    if (rankingMetric === 'cpa') return 'spend'
-    // rankingMetric === 'roas': if sales is 0 but spend > 0, show spend
-    if (
-      selectedSummary &&
-      selectedSummary.attributedSalesAmount === 0 &&
-      selectedSummary.spendAmount > 0
-    ) {
-      return 'spend'
-    }
-    return 'sales'
-  }, [userTrendMetric, rankingMetric, selectedSummary])
-
   const trend = useMemo(
-    () =>
-      selectedSummary
-        ? summarizeDailyTrend(rows, selectedSummary.key, currency, activeTrendMetric, dates)
-        : [],
-    [currency, rows, selectedSummary, activeTrendMetric, dates],
+    () => (selectedSummary ? summarizeDailyTrend(rows, selectedSummary.key, currency, dates) : []),
+    [currency, rows, selectedSummary, dates],
   )
 
-  const scale = Math.max(
-    ...sortedSummaries.map((summary) => Math.abs(rankingValue(summary, rankingMetric))),
-    1,
-  )
+  const scale = Math.max(...sortedSummaries.map((summary) => Math.abs(rankingValue(summary))), 1)
 
   const formatTrendValue = (value: number) => {
-    if (activeTrendMetric === 'spend' || activeTrendMetric === 'sales') {
-      return formatReportMoney(value, currency)
-    }
-    return value.toLocaleString()
+    return formatReportMoney(value, currency)
   }
 
   return (
     <div className={styles.twoColumns}>
       <SectionCard title={t('reports.adsEmployee.ranking')}>
         <div className={styles.adsRankingTabs}>
-          {(['roas', 'sales', 'spend', 'cpa'] as RankingMetric[]).map((metric) => (
-            <Button
-              key={metric}
-              size="small"
-              type={rankingMetric === metric ? 'primary' : 'text'}
-              onClick={() => {
-                setRankingMetric(metric)
-                setUserTrendMetric(null)
-              }}
-            >
-              {rankingLabel(metric, t)}
-            </Button>
-          ))}
+          <Button size="small" type="primary">
+            {t('reports.columns.spend')}
+          </Button>
         </div>
         <div className={styles.adsRankingRows}>
           {sortedSummaries.map((summary, index) => (
@@ -281,11 +236,11 @@ function AdsSummaryReport({
               <span className={styles.adsRankingTrack}>
                 <span
                   style={{
-                    width: `${(Math.abs(rankingValue(summary, rankingMetric)) / scale) * 100}%`,
+                    width: `${(Math.abs(rankingValue(summary)) / scale) * 100}%`,
                   }}
                 />
               </span>
-              <strong>{formatRankingValue(summary, rankingMetric, currency)}</strong>
+              <strong>{formatRankingValue(summary, currency)}</strong>
             </button>
           ))}
         </div>
@@ -307,29 +262,14 @@ function AdsSummaryReport({
               <Typography.Text strong style={{ fontSize: 14 }}>
                 {selectedSummary.sellerName || selectedSummary.sellerEmployeeCode}
               </Typography.Text>
-              <Space size="small" wrap>
-                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                  {t('reports.columns.sales')}:{' '}
-                  <Typography.Text strong style={{ color: 'var(--ant-color-primary)' }}>
-                    {formatReportMoney(selectedSummary.attributedSalesAmount, currency)}
-                  </Typography.Text>
+              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                {t('reports.columns.spend')}:{' '}
+                <Typography.Text strong>
+                  {formatReportMoney(selectedSummary.spendAmount, currency)}
                 </Typography.Text>
-                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                  {t('reports.columns.spend')}:{' '}
-                  <Typography.Text strong>
-                    {formatReportMoney(selectedSummary.spendAmount, currency)}
-                  </Typography.Text>
-                </Typography.Text>
-                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                  {t('reports.columns.orders')}:{' '}
-                  <Typography.Text strong>
-                    {selectedSummary.attributedOrdersCount.toLocaleString()}
-                  </Typography.Text>
-                </Typography.Text>
-              </Space>
+              </Typography.Text>
             </div>
 
-            {/* Metric selector for trend chart */}
             <div
               style={{
                 display: 'flex',
@@ -338,38 +278,11 @@ function AdsSummaryReport({
                 marginBottom: 12,
               }}
             >
-              <Space size={4}>
-                <Button
-                  size="small"
-                  type={activeTrendMetric === 'spend' ? 'primary' : 'text'}
-                  onClick={() => setUserTrendMetric('spend')}
-                >
-                  {t('reports.columns.spend')}
-                </Button>
-                <Button
-                  size="small"
-                  type={activeTrendMetric === 'sales' ? 'primary' : 'text'}
-                  onClick={() => setUserTrendMetric('sales')}
-                >
-                  {t('reports.columns.sales')}
-                </Button>
-                <Button
-                  size="small"
-                  type={activeTrendMetric === 'orders' ? 'primary' : 'text'}
-                  onClick={() => setUserTrendMetric('orders')}
-                >
-                  {t('reports.columns.orders')}
-                </Button>
-                <Button
-                  size="small"
-                  type={activeTrendMetric === 'clicks' ? 'primary' : 'text'}
-                  onClick={() => setUserTrendMetric('clicks')}
-                >
-                  {t('reports.columns.clicks')}
-                </Button>
-              </Space>
+              <Button size="small" type="primary">
+                {t('reports.columns.spend')}
+              </Button>
               <Typography.Text type="secondary" style={{ fontSize: 11 }}>
-                {trendMetricLabel(activeTrendMetric, t)}
+                {`${t('reports.columns.spend')} trend`}
               </Typography.Text>
             </div>
 
@@ -602,7 +515,6 @@ function summarizeDailyTrend(
   rows: AdsSellerDaily[],
   sellerKey: string,
   currency: string,
-  metric: TrendMetric,
   dates: string[],
 ) {
   const daily = new Map<string, number>()
@@ -611,50 +523,17 @@ function summarizeDailyTrend(
   }
   rows.forEach((row) => {
     if (`${row.sellerEmployeeCode}-${currency}` !== sellerKey || !row.date) return
-    let val = 0
-    if (metric === 'spend') val = row.spendAmount
-    else if (metric === 'sales') val = row.attributedSalesAmount
-    else if (metric === 'orders') val = row.attributedOrdersCount
-    else if (metric === 'clicks') val = row.clicks
-    daily.set(row.date, (daily.get(row.date) || 0) + val)
+    daily.set(row.date, (daily.get(row.date) || 0) + row.spendAmount)
   })
   return [...daily.entries()]
     .map(([label, value]) => ({ label, value }))
     .sort((left, right) => left.label.localeCompare(right.label))
 }
 
-function rankingValue(summary: SellerSummary, metric: RankingMetric) {
-  if (metric === 'sales') return summary.attributedSalesAmount
-  if (metric === 'spend') return summary.spendAmount
-  if (metric === 'cpa')
-    return summary.attributedOrdersCount > 0
-      ? -summary.spendAmount / summary.attributedOrdersCount
-      : Number.NEGATIVE_INFINITY
-  return summary.spendAmount > 0 ? summary.attributedSalesAmount / summary.spendAmount : 0
+function rankingValue(summary: SellerSummary) {
+  return summary.spendAmount
 }
 
-function rankingLabel(metric: RankingMetric, t: (key: string) => string) {
-  if (metric === 'sales') return t('reports.columns.sales')
-  if (metric === 'spend') return t('reports.columns.spend')
-  if (metric === 'cpa') return t('reports.columns.cpa')
-  return t('reports.columns.roas')
-}
-
-function trendMetricLabel(metric: TrendMetric, t: (key: string) => string) {
-  if (metric === 'spend') return `${t('reports.columns.spend')} trend`
-  if (metric === 'sales') return `${t('reports.columns.sales')} trend`
-  if (metric === 'orders') return `${t('reports.columns.orders')} trend`
-  return `${t('reports.columns.clicks')} trend`
-}
-
-function formatRankingValue(summary: SellerSummary, metric: RankingMetric, currency: string) {
-  if (metric === 'sales') return formatReportMoney(summary.attributedSalesAmount, currency)
-  if (metric === 'spend') return formatReportMoney(summary.spendAmount, currency)
-  if (metric === 'cpa')
-    return summary.attributedOrdersCount > 0
-      ? formatReportMoney(summary.spendAmount / summary.attributedOrdersCount, currency)
-      : '—'
-  return summary.spendAmount > 0
-    ? `${(summary.attributedSalesAmount / summary.spendAmount).toFixed(2)}x`
-    : '—'
+function formatRankingValue(summary: SellerSummary, currency: string) {
+  return formatReportMoney(summary.spendAmount, currency)
 }
