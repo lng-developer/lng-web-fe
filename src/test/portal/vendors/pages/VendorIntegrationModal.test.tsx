@@ -114,14 +114,55 @@ describe('VendorIntegrationModal', () => {
     await waitFor(() => expect(updateVendorIntegrationConfig).toHaveBeenCalled())
     expect(vi.mocked(updateVendorIntegrationConfig).mock.calls[0][1]).toMatchObject({
       mode: 'GENERIC_API',
-      adapterKey: null,
     })
+    expect(vi.mocked(updateVendorIntegrationConfig).mock.calls[0][1]).not.toHaveProperty(
+      'adapterKey',
+    )
     expect(vi.mocked(updateVendorIntegrationConfig).mock.calls[0][1]).not.toHaveProperty(
       'accessToken',
     )
     expect(JSON.stringify(vi.mocked(updateVendorIntegrationConfig).mock.calls)).not.toContain(
       'secret',
     )
+  })
+
+  it('preserves auth type when saving after switching from credentials to connection', async () => {
+    vi.mocked(getVendorIntegrationConfig).mockResolvedValue({
+      accessTokenConfigured: false,
+      authType: 'API_KEY',
+      baseUrl: 'https://vendor.example',
+      expiresAt: null,
+      id: 'integration-1',
+      lastCheckedAt: null,
+      lastError: null,
+      metadata: {},
+      passwordConfigured: false,
+      providerKey: 'MERCHIZE',
+      refreshTokenConfigured: false,
+      status: 'DISCONNECTED',
+      usernameConfigured: false,
+      vendorId: 'vendor-1',
+    })
+    vi.mocked(updateVendorIntegrationConfig).mockResolvedValue({} as never)
+
+    render(
+      <AppProviders>
+        <VendorIntegrationModal open vendorId="vendor-1" onCancel={vi.fn()} onSaved={vi.fn()} />
+      </AppProviders>,
+    )
+
+    fireEvent.click(await screen.findByRole('tab', { name: 'Credentials' }))
+    fireEvent.change(await screen.findByLabelText('Access token'), {
+      target: { value: 'new-token' },
+    })
+    fireEvent.click(screen.getByRole('tab', { name: 'Connection' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    await waitFor(() => expect(updateVendorIntegrationConfig).toHaveBeenCalled())
+    expect(vi.mocked(updateVendorIntegrationConfig).mock.calls[0][1]).toMatchObject({
+      authType: 'API_KEY',
+      accessToken: 'new-token',
+    })
   })
 
   it('looks up a Lenful order only when the operator searches', async () => {
