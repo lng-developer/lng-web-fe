@@ -4,7 +4,7 @@ import { useRouteLoaderData } from 'react-router-dom'
 import { DownloadOutlined, EditOutlined, SyncOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Button, Descriptions, Input, Modal, Select, Space, Timeline, Typography } from 'antd'
+import { Button, Descriptions, Input, Modal, Select, Space, Tag, Timeline, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
@@ -269,19 +269,64 @@ export function ShipmentWorkbenchPage({
     setEditMode(undefined)
   }, [])
 
+  const rows = useMemo(() => {
+    const items = shipments.data?.items ?? []
+    const map = new Map<string, Shipment & { bundledShipments: Shipment[] }>()
+    for (const ship of items) {
+      const key = ship.externalOrderId || ship.id
+      const existing = map.get(key)
+      if (!existing) {
+        map.set(key, {
+          ...ship,
+          bundledShipments: [ship],
+        })
+      } else {
+        existing.bundledShipments.push(ship)
+      }
+    }
+    return Array.from(map.values())
+  }, [shipments.data?.items])
+
   const columns: TableColumnsType<Shipment> = useMemo(
     () => [
       {
         title: t('portal.shipments.columns.order'),
         dataIndex: 'externalOrderId',
         width: 176,
-        render: (value) => <CopyableOrderId value={value} />,
+        render: (value, row) => {
+          const all: Shipment[] = (row as unknown as { bundledShipments?: Shipment[] })
+            .bundledShipments || [row]
+          return (
+            <Space size={6} wrap={false} align="center">
+              <CopyableOrderId value={value} />
+              {all.length > 1 ? (
+                <Tag color="blue" style={{ marginInlineEnd: 0, fontWeight: 500 }}>
+                  {all.length} items
+                </Tag>
+              ) : null}
+            </Space>
+          )
+        },
       },
       {
         title: t('portal.shipments.columns.vendorOrder'),
         dataIndex: 'vendorExternalOrderId',
         width: 172,
-        render: (value) => <TableTextCell value={value} fallback="-" />,
+        render: (value, row) => {
+          const all: Shipment[] = (row as unknown as { bundledShipments?: Shipment[] })
+            .bundledShipments || [row]
+          const vendorOrders = Array.from(
+            new Set(all.map((s) => s.vendorExternalOrderId).filter(Boolean)),
+          )
+          if (!vendorOrders.length) return <TableTextCell value={value} fallback="-" />
+          return (
+            <Space direction="vertical" size={2}>
+              {vendorOrders.map((vo) => (
+                <TableTextCell key={vo} value={vo} fallback="-" />
+              ))}
+            </Space>
+          )
+        },
       },
       {
         title: t('portal.shipments.columns.provider'),
@@ -292,22 +337,47 @@ export function ShipmentWorkbenchPage({
       {
         title: t('portal.shipments.columns.tracking'),
         width: 220,
-        render: (_, row) => (
-          <div
-            style={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'flex-start' }}
-          >
-            <TableTextCell code value={row.trackingNumber} fallback="-" />
-            <TableTextCell secondary value={row.carrier} fallback="-" />
-          </div>
-        ),
+        render: (_, row) => {
+          const all: Shipment[] = (row as unknown as { bundledShipments?: Shipment[] })
+            .bundledShipments || [row]
+          const uniqueTrackings = all.filter(
+            (s, idx, arr) => arr.findIndex((x) => x.trackingNumber === s.trackingNumber) === idx,
+          )
+          return (
+            <div
+              style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}
+            >
+              {uniqueTrackings.map((s, idx) => (
+                <div
+                  key={s.id || s.trackingNumber || idx}
+                  style={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+                >
+                  <TableTextCell code value={s.trackingNumber} fallback="-" />
+                  <TableTextCell secondary value={s.carrier} fallback="-" />
+                </div>
+              ))}
+            </div>
+          )
+        },
       },
       {
         title: t('portal.shipments.columns.status'),
         dataIndex: 'status',
         width: 150,
-        render: (value: ShipmentStatus) => (
-          <StatusTag status={tone(value)}>{t(`portal.shipments.statuses.${value}`)}</StatusTag>
-        ),
+        render: (_, row) => {
+          const all: Shipment[] = (row as unknown as { bundledShipments?: Shipment[] })
+            .bundledShipments || [row]
+          const statuses = Array.from(new Set(all.map((s) => s.status)))
+          return (
+            <Space size={4} wrap>
+              {statuses.map((value) => (
+                <StatusTag key={value} status={tone(value)}>
+                  {t(`portal.shipments.statuses.${value}`)}
+                </StatusTag>
+              ))}
+            </Space>
+          )
+        },
       },
       {
         title: t('portal.shipments.columns.shipDate'),
@@ -324,33 +394,59 @@ export function ShipmentWorkbenchPage({
       {
         title: t('portal.shipments.columns.action'),
         width: 110,
-        render: (_, row) =>
-          canWrite ? (
+        render: (_, row) => {
+          const all: Shipment[] = (row as unknown as { bundledShipments?: Shipment[] })
+            .bundledShipments || [row]
+          return canWrite ? (
             <Button
               size="small"
               icon={<SyncOutlined />}
               loading={recheck.isPending}
-              onClick={(event) => handleRecheckRow(event, row.id)}
+              onClick={(event) => {
+                all.forEach((s) => handleRecheckRow(event, s.id))
+              }}
             >
               {t('portal.shipments.recheck')}
             </Button>
-          ) : null,
+          ) : null
+        },
       },
     ],
     [canWrite, handleRecheckRow, recheck.isPending, t],
   )
 
-  const metrics = useMemo(
-    () =>
-      [
-        ['total', summary.data?.total ?? 0],
-        ['trackingPending', summary.data?.trackingPending ?? 0],
-        ['shipped', summary.data?.shipped ?? 0],
-        ['delivered', summary.data?.delivered ?? 0],
-        ['exception', summary.data?.exception ?? 0],
-      ] as const,
-    [summary.data],
-  )
+  const metrics = useMemo(() => {
+    const isFiltered = Boolean(params.externalOrderId || params.trackingNumber)
+    if (isFiltered) {
+      const total = rows.length
+      const trackingPending = rows.filter((r) =>
+        (r.bundledShipments || [r]).some((s) => s.status === 'TRACKING_PENDING'),
+      ).length
+      const shipped = rows.filter((r) =>
+        (r.bundledShipments || [r]).some((s) => s.status === 'SHIPPED'),
+      ).length
+      const delivered = rows.filter((r) =>
+        (r.bundledShipments || [r]).some((s) => s.status === 'DELIVERED'),
+      ).length
+      const exception = rows.filter((r) =>
+        (r.bundledShipments || [r]).some((s) => s.status === 'EXCEPTION'),
+      ).length
+      return [
+        ['total', total],
+        ['trackingPending', trackingPending],
+        ['shipped', shipped],
+        ['delivered', delivered],
+        ['exception', exception],
+      ] as const
+    }
+    return [
+      ['total', summary.data?.total ?? 0],
+      ['trackingPending', summary.data?.trackingPending ?? 0],
+      ['shipped', summary.data?.shipped ?? 0],
+      ['delivered', summary.data?.delivered ?? 0],
+      ['exception', summary.data?.exception ?? 0],
+    ] as const
+  }, [params.externalOrderId, params.trackingNumber, rows, summary.data])
 
   return (
     <section className={styles.page}>
@@ -383,7 +479,7 @@ export function ShipmentWorkbenchPage({
           tableLayout="fixed"
           rowKey="id"
           columns={columns}
-          dataSource={shipments.data?.items ?? []}
+          dataSource={rows}
           loading={shipments.isLoading}
           rowSelection={{
             selectedRowKeys,
@@ -402,7 +498,10 @@ export function ShipmentWorkbenchPage({
           pagination={{
             current: page,
             pageSize,
-            total: shipments.data?.pagination.total,
+            total:
+              params.externalOrderId || params.trackingNumber
+                ? rows.length
+                : shipments.data?.pagination.total,
             showSizeChanger: true,
             onChange: (nextPage, nextPageSize) => {
               setPage(nextPage)

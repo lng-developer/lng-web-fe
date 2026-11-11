@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useParams, useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Button, Tag } from 'antd'
+import { Button, Space, Tag, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
@@ -373,24 +373,102 @@ export function ProductionWorkbenchPage({
   const summaryRows = useMemo(() => tasks.data?.items ?? [], [tasks.data?.items])
   const displaySummary = useMemo(() => {
     if ((summary.data?.total ?? 0) > 0 || summaryRows.length === 0) return summary.data
+    const orderMap = new Map<string, ProductionTask[]>()
+    for (const task of summaryRows) {
+      const orderKey = task.orderItem?.externalOrderId || task.order?.id || task.id
+      const existing = orderMap.get(orderKey)
+      if (!existing) {
+        orderMap.set(orderKey, [task])
+      } else {
+        existing.push(task)
+      }
+    }
+    const orders = Array.from(orderMap.values())
     return {
-      total: tasks.data?.total ?? summaryRows.length,
-      blocked: summaryRows.filter((task) => task.status === 'BLOCKED').length,
-      needScale: summaryRows.filter((task) => task.status === 'NEED_SCALE').length,
-      qcPending: summaryRows.filter((task) => task.status === 'QC_PENDING').length,
-      qcRejected: summaryRows.filter((task) => task.status === 'QC_REJECTED').length,
-      ready: summaryRows.filter((task) => task.status === 'READY_TO_SEND_VENDOR').length,
-      sent: summaryRows.filter((task) => task.status === 'SENT_TO_VENDOR').length,
-      cancelled: summaryRows.filter((task) => task.status === 'CANCELLED').length,
-      scaleQueue: summaryRows.filter((task) => SCALE_STATUSES.includes(task.status)).length,
-      qcQueue: summaryRows.filter((task) => task.qcStatus === 'PENDING').length,
-      unclassified: summaryRows.filter(
-        (task) => !task.designType && SCALE_STATUSES.includes(task.status),
+      total: tasks.data?.total ?? orders.length,
+      blocked: orders.filter((items) => items.some((task) => task.status === 'BLOCKED')).length,
+      needScale: orders.filter((items) => items.some((task) => task.status === 'NEED_SCALE'))
+        .length,
+      qcPending: orders.filter((items) =>
+        items.some((task) => task.status === 'QC_PENDING' || task.qcStatus === 'PENDING'),
+      ).length,
+      qcRejected: orders.filter((items) =>
+        items.some((task) => task.status === 'QC_REJECTED' || task.qcStatus === 'REJECTED'),
+      ).length,
+      ready: orders.filter((items) => items.some((task) => task.status === 'READY_TO_SEND_VENDOR'))
+        .length,
+      sent: orders.filter((items) => items.every((task) => task.status === 'SENT_TO_VENDOR'))
+        .length,
+      cancelled: orders.filter((items) => items.every((task) => task.status === 'CANCELLED'))
+        .length,
+      scaleQueue: orders.filter((items) =>
+        items.some((task) => SCALE_STATUSES.includes(task.status)),
+      ).length,
+      qcQueue: orders.filter((items) => items.some((task) => task.qcStatus === 'PENDING')).length,
+      unclassified: orders.filter((items) =>
+        items.some((task) => !task.designType && SCALE_STATUSES.includes(task.status)),
       ).length,
     }
   }, [summary.data, summaryRows, tasks.data?.total])
-  const queueSummary = useMemo(
-    () => ({
+  const searchOrderSummary = useMemo(() => {
+    if (!deferredSearch) return null
+    const orderMap = new Map<string, ProductionTask[]>()
+    for (const task of summaryRows) {
+      const orderKey = task.orderItem?.externalOrderId || task.order?.id || task.id
+      const existing = orderMap.get(orderKey)
+      if (!existing) {
+        orderMap.set(orderKey, [task])
+      } else {
+        existing.push(task)
+      }
+    }
+
+    const orders = Array.from(orderMap.values())
+    const total = orders.length
+    const blocked = orders.filter((items) => items.some((t) => t.status === 'BLOCKED')).length
+    const needScale = orders.filter((items) => items.some((t) => t.status === 'NEED_SCALE')).length
+    const qcPending = orders.filter((items) =>
+      items.some((t) => t.status === 'QC_PENDING' || t.qcStatus === 'PENDING'),
+    ).length
+    const qcRejected = orders.filter((items) =>
+      items.some((t) => t.status === 'QC_REJECTED' || t.qcStatus === 'REJECTED'),
+    ).length
+    const ready = orders.filter((items) =>
+      items.some((t) => t.status === 'READY_TO_SEND_VENDOR'),
+    ).length
+    const sent = orders.filter((items) => items.every((t) => t.status === 'SENT_TO_VENDOR')).length
+    const cancelled = orders.filter((items) => items.every((t) => t.status === 'CANCELLED')).length
+    const scaleQueue = orders.filter((items) =>
+      items.some((t) => SCALE_STATUSES.includes(t.status)),
+    ).length
+    const qcQueue = orders.filter((items) =>
+      items.some(
+        (t) => t.status !== 'CANCELLED' && (t.qcStatus === 'PENDING' || t.status === 'QC_PENDING'),
+      ),
+    ).length
+    const unclassified = orders.filter((items) =>
+      items.some((t) => !t.designType && SCALE_STATUSES.includes(t.status)),
+    ).length
+
+    return {
+      total,
+      blocked,
+      needScale,
+      qcPending,
+      qcRejected,
+      ready,
+      sent,
+      cancelled,
+      scaleQueue,
+      qcQueue,
+      unclassified,
+    }
+  }, [deferredSearch, summaryRows])
+  const queueSummary = useMemo(() => {
+    if (searchOrderSummary) {
+      return searchOrderSummary
+    }
+    return {
       ...displaySummary,
       total: queueCounts.data?.total ?? displaySummary?.total ?? 0,
       blocked: queueCounts.data?.blocked ?? displaySummary?.blocked ?? 0,
@@ -404,9 +482,8 @@ export function ProductionWorkbenchPage({
       sent: queueCounts.data?.sent ?? displaySummary?.sent ?? 0,
       cancelled: queueCounts.data?.cancelled ?? displaySummary?.cancelled ?? 0,
       unclassified: queueCounts.data?.unclassified ?? displaySummary?.unclassified ?? 0,
-    }),
-    [displaySummary, queueCounts.data],
-  )
+    }
+  }, [displaySummary, queueCounts.data, searchOrderSummary])
   const scaleTabItems = useMemo<UiButtonTabItem<ProductionTab>[]>(() => {
     const scaleTotal =
       (queueSummary.needScale ?? 0) +
@@ -893,7 +970,7 @@ export function ProductionWorkbenchPage({
     (fileCheckId: string) => handleSetInspectionDecision(fileCheckId, 'PASSED'),
     [handleSetInspectionDecision],
   )
-  const renderExpandedRow = useCallback(
+  const renderSingleTaskRow = useCallback(
     (task: ProductionTask) => (
       <ProductionWorkbenchExpandedRow
         task={task}
@@ -940,41 +1017,137 @@ export function ProductionWorkbenchPage({
       viewMode,
     ],
   )
+
+  const renderExpandedRow = useCallback(
+    (rowTask: ProductionTask) => {
+      const orderTasks: ProductionTask[] = (rowTask as unknown as { orderTasks?: ProductionTask[] })
+        .orderTasks || [rowTask]
+
+      if (orderTasks.length <= 1) {
+        return renderSingleTaskRow(orderTasks[0] || rowTask)
+      }
+
+      return (
+        <div className={styles.groupedOrderItems}>
+          {orderTasks.map((task, index) => {
+            const variantSummary = [
+              task.scaleContext?.variantSnapshot?.size || task.scaleContext?.size,
+              task.scaleContext?.variantSnapshot?.color || task.scaleContext?.color,
+            ]
+              .filter(Boolean)
+              .join(' / ')
+            const productTitle =
+              task.orderItem?.title ||
+              task.scaleContext?.vendorProduct?.title ||
+              task.orderItem?.sku ||
+              `Item #${index + 1}`
+
+            return (
+              <div key={task.id} className={styles.groupedTaskItem}>
+                <div className={styles.groupedTaskItemHeader}>
+                  <Space size={8} align="center">
+                    <Tag color="cyan" style={{ marginInlineEnd: 0 }}>
+                      Item #{index + 1}
+                    </Tag>
+                    {variantSummary ? (
+                      <Tag color="default" style={{ marginInlineEnd: 0, fontWeight: 500 }}>
+                        {variantSummary}
+                      </Tag>
+                    ) : null}
+                    <Typography.Text strong style={{ fontSize: 13 }}>
+                      {productTitle}
+                    </Typography.Text>
+                    <StatusTag
+                      status={tone(viewMode === 'qc' || tab === 'qc' ? task.qcStatus : task.status)}
+                    >
+                      {t(
+                        `portal.production.statuses.${
+                          viewMode === 'qc' || tab === 'qc' ? task.qcStatus : task.status
+                        }`,
+                      )}
+                    </StatusTag>
+                  </Space>
+                </div>
+                {renderSingleTaskRow(task)}
+              </div>
+            )
+          })}
+        </div>
+      )
+    },
+    [renderSingleTaskRow, t, tab, viewMode],
+  )
+
   const displayedTasks = useDeferredValue(tasks.data)
   const rows = useMemo(() => {
     const items = displayedTasks?.items ?? []
+    let filtered = items
     if (viewMode === 'qc') {
-      return items.filter(
+      filtered = items.filter(
         (task) =>
           task.qcStatus !== 'NOT_READY' &&
           task.status !== 'NEED_SCALE' &&
           task.status !== 'BLOCKED' &&
           task.status !== 'CANCELLED',
       )
-    }
-    if (viewMode === 'scale') {
+    } else if (viewMode === 'scale') {
       if (designTypeProp === 'CUSTOM_IMAGE') {
-        return items.filter(
+        filtered = items.filter(
           (task) => task.designType === 'CUSTOM_IMAGE' && task.status !== 'CANCELLED',
         )
+      } else {
+        filtered = items.filter(
+          (task) => task.designType !== 'CUSTOM_IMAGE' && task.status !== 'CANCELLED',
+        )
       }
-      return items.filter(
-        (task) => task.designType !== 'CUSTOM_IMAGE' && task.status !== 'CANCELLED',
-      )
     }
-    return items
+
+    const orderMap = new Map<string, ProductionTask & { orderTasks: ProductionTask[] }>()
+    for (const task of filtered) {
+      const orderKey = task.orderItem?.externalOrderId || task.order?.id || task.id
+      const existing = orderMap.get(orderKey)
+      if (!existing) {
+        orderMap.set(orderKey, {
+          ...task,
+          orderTasks: [task],
+        })
+      } else {
+        existing.orderTasks.push(task)
+      }
+    }
+    return Array.from(orderMap.values())
   }, [designTypeProp, displayedTasks?.items, viewMode])
+
   const expandedRowKeys = useMemo(() => rows.map((row) => row.id), [rows])
   const selectedTasks = useMemo(
-    () => rows.filter((row) => selectedRowKeys.map(String).includes(row.id)),
+    () =>
+      rows
+        .filter((row) => selectedRowKeys.map(String).includes(row.id))
+        .flatMap(
+          (row) => (row as unknown as { orderTasks?: ProductionTask[] }).orderTasks || [row],
+        ),
     [rows, selectedRowKeys],
   )
+
   const columns: TableColumnsType<ProductionTask> = useMemo(
     () => [
       {
         title: t('portal.production.columns.order'),
         width: 196,
-        render: (_, row) => <CopyableOrderId value={row.orderItem?.externalOrderId} />,
+        render: (_, row) => {
+          const siblingCount =
+            (row as unknown as { orderTasks?: ProductionTask[] }).orderTasks?.length || 1
+          return (
+            <Space size={6} wrap={false} align="center">
+              <CopyableOrderId value={row.orderItem?.externalOrderId} />
+              {siblingCount > 1 ? (
+                <Tag color="blue" style={{ marginInlineEnd: 0, fontWeight: 500 }}>
+                  {siblingCount} items
+                </Tag>
+              ) : null}
+            </Space>
+          )
+        },
       },
       {
         title: t('portal.production.columns.shop'),
@@ -1014,18 +1187,32 @@ export function ProductionWorkbenchPage({
         title: t('portal.production.designType', { defaultValue: 'Design Type' }),
         width: 120,
         align: 'center',
-        render: (_, row) =>
-          row.designType ? <Tag color="magenta">{humanizeCode(row.designType)}</Tag> : '-',
+        render: (_, row) => {
+          const allTasks = (row as unknown as { orderTasks?: ProductionTask[] }).orderTasks || [row]
+          const types = Array.from(new Set(allTasks.map((t) => t.designType).filter(Boolean)))
+          if (!types.length) return '-'
+          return (
+            <Space size={4} wrap>
+              {types.map((dt) => (
+                <Tag key={dt} color="magenta">
+                  {humanizeCode(dt!)}
+                </Tag>
+              ))}
+            </Space>
+          )
+        },
       },
       {
         title: t('portal.production.requiredSlots'),
         width: 118,
         render: (_, row) => {
-          const checks = row.qcPreviewFileChecks || row.fileChecks || []
+          const allTasks = (row as unknown as { orderTasks?: ProductionTask[] }).orderTasks || [row]
+          const checks = allTasks.flatMap((t) => t.qcPreviewFileChecks || t.fileChecks || [])
           return (
             checks
               .filter((check) => check.required && check.sourceType !== 'PSD_TEMPLATE')
               .map((check) => check.slotLabel || check.slotKey)
+              .filter((v, i, arr) => arr.indexOf(v) === i)
               .join(', ') || '-'
           )
         },
@@ -1033,13 +1220,23 @@ export function ProductionWorkbenchPage({
       {
         title: t('portal.production.blockers'),
         width: 180,
-        render: (_, row) => (row.blockers || []).join(', ') || '-',
+        render: (_, row) => {
+          const allTasks = (row as unknown as { orderTasks?: ProductionTask[] }).orderTasks || [row]
+          const allBlockers = Array.from(new Set(allTasks.flatMap((t) => t.blockers || [])))
+          return allBlockers.join(', ') || (row.blockers || []).join(', ') || '-'
+        },
       },
       {
         title: t('portal.production.columns.scaleDifficulty'),
         width: 96,
         render: (_, row) => {
-          const level = row.scaleContext?.use?.listing?.scaleDifficulty?.level || 'NORMAL'
+          const allTasks = (row as unknown as { orderTasks?: ProductionTask[] }).orderTasks || [row]
+          const hasHard = allTasks.some(
+            (t) => (t.scaleContext?.use?.listing?.scaleDifficulty?.level || 'NORMAL') !== 'NORMAL',
+          )
+          const level = hasHard
+            ? 'HARD'
+            : row.scaleContext?.use?.listing?.scaleDifficulty?.level || 'NORMAL'
           return (
             <StatusTag status={level === 'NORMAL' ? 'pending' : 'critical'}>
               {t(`portal.production.scaleDifficulties.${level}`, { defaultValue: level })}
@@ -1051,28 +1248,52 @@ export function ProductionWorkbenchPage({
         title: t('portal.production.assignedTo'),
         width: 138,
         render: (_, row) => {
-          if (row.assignedDesigner?.fullName || row.assignedDesigner?.employeeCode) {
+          const allTasks = (row as unknown as { orderTasks?: ProductionTask[] }).orderTasks || [row]
+          const designers = allTasks
+            .map((t) => t.assignedDesigner)
+            .filter((d): d is NonNullable<typeof d> => Boolean(d?.fullName || d?.employeeCode))
+            .filter((d, i, arr) => arr.findIndex((x) => x.employeeCode === d.employeeCode) === i)
+
+          if (designers.length > 0) {
             return (
-              <EmployeeIdentity
-                size="small"
-                mode="code"
-                name={row.assignedDesigner.fullName}
-                employeeCode={row.assignedDesigner.employeeCode}
-              />
+              <Space direction="vertical" size={2}>
+                {designers.map((designer, idx) => (
+                  <EmployeeIdentity
+                    key={designer.employeeCode || idx}
+                    size="small"
+                    mode="code"
+                    name={designer.fullName}
+                    employeeCode={designer.employeeCode}
+                  />
+                ))}
+              </Space>
             )
           }
           if (
-            !row.assignedDesignUserId &&
-            (row.status === 'NEED_SCALE' || row.status === 'QC_REJECTED') &&
+            allTasks.some(
+              (t) =>
+                !t.assignedDesignUserId &&
+                (t.status === 'NEED_SCALE' || t.status === 'QC_REJECTED'),
+            ) &&
             (allowed.has('DESIGN:WORK') || allowed.has('PRODUCTION:SCALE_WORK'))
           ) {
+            const isClaiming =
+              claimTask.isPending && allTasks.some((t) => claimTask.variables === t.id)
             return (
               <Button
                 size="small"
                 type="link"
                 style={{ padding: 0, height: 'auto' }}
-                loading={claimTask.isPending && claimTask.variables === row.id}
-                onClick={() => claimTask.mutate(row.id)}
+                loading={isClaiming}
+                onClick={() => {
+                  allTasks
+                    .filter(
+                      (t) =>
+                        !t.assignedDesignUserId &&
+                        (t.status === 'NEED_SCALE' || t.status === 'QC_REJECTED'),
+                    )
+                    .forEach((t) => claimTask.mutate(t.id))
+                }}
               >
                 {t('portal.production.claimShort', { defaultValue: 'Nhận việc' })}
               </Button>
@@ -1085,16 +1306,34 @@ export function ProductionWorkbenchPage({
         title: t('portal.production.columns.status'),
         width: 126,
         render: (_, row) => {
-          const value = viewMode === 'qc' || tab === 'qc' ? row.qcStatus : row.status
+          const allTasks = (row as unknown as { orderTasks?: ProductionTask[] }).orderTasks || [row]
+          const statuses = Array.from(
+            new Set(
+              allTasks.map((t) => (viewMode === 'qc' || tab === 'qc' ? t.qcStatus : t.status)),
+            ),
+          )
           return (
-            <StatusTag status={tone(value)}>{t(`portal.production.statuses.${value}`)}</StatusTag>
+            <Space size={4} wrap>
+              {statuses.map((value) => (
+                <StatusTag key={value} status={tone(value)}>
+                  {t(`portal.production.statuses.${value}`)}
+                </StatusTag>
+              ))}
+            </Space>
           )
         },
       },
       {
         title: t('portal.production.columns.updated'),
         width: 148,
-        render: (_, row) => <FormattedDateTime value={row.updatedAt} />,
+        render: (_, row) => {
+          const allTasks = (row as unknown as { orderTasks?: ProductionTask[] }).orderTasks || [row]
+          const latestUpdated = allTasks.reduce(
+            (max, t) => (new Date(t.updatedAt) > new Date(max) ? t.updatedAt : max),
+            row.updatedAt,
+          )
+          return <FormattedDateTime value={latestUpdated} />
+        },
       },
     ],
     [allowed, claimTask, t, tab, viewMode],
@@ -1165,14 +1404,20 @@ export function ProductionWorkbenchPage({
                     selectedRowKeys,
                     onChange: setSelectedRowKeys,
                     preserveSelectedRowKeys: true,
-                    getCheckboxProps: (row) => ({ disabled: !canAssignProductionTask(row) }),
+                    getCheckboxProps: (row) => {
+                      const allTasks = (row as unknown as { orderTasks?: ProductionTask[] })
+                        .orderTasks || [row]
+                      return {
+                        disabled: !allTasks.some((t) => canAssignProductionTask(t)),
+                      }
+                    },
                   }
                 : undefined
             }
             pagination={{
               current: page,
               pageSize,
-              total: displayedTasks?.total,
+              total: deferredSearch ? rows.length : displayedTasks?.total,
               showSizeChanger: true,
               onChange: handlePageChange,
             }}

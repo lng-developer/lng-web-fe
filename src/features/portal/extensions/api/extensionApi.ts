@@ -8,18 +8,23 @@ export {
   type ExtensionImportDays,
   type ExtensionManagementAgent,
   type ExtensionOrderSchedule,
+  type ExtensionTrackingSchedule,
   type ExtensionScheduleType,
   type UpsertExtensionFinanceScheduleInput,
   type UpsertExtensionOrderScheduleInput,
+  type UpsertExtensionTrackingScheduleInput,
   createExtensionCommand,
   listExtensionAgents,
   listExtensionCommands,
   listExtensionFinanceSchedules,
   listExtensionManagementAgents,
   listExtensionOrderSchedules,
+  listExtensionTrackingSchedules,
   requestExtensionFinanceScheduleNow,
+  requestExtensionTrackingScheduleNow,
   upsertExtensionFinanceSchedule,
   upsertExtensionOrderSchedule,
+  upsertExtensionTrackingSchedule,
 } from '@/features/portal/integrations/api/integrationApi'
 
 export {

@@ -9,7 +9,7 @@ import {
   WarningOutlined,
 } from '@ant-design/icons'
 import type { TableColumnsType } from 'antd'
-import { Button, Descriptions, Input, Modal, Select, Space, Timeline, Typography } from 'antd'
+import { Button, Descriptions, Input, Modal, Select, Space, Tag, Timeline, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
@@ -236,23 +236,77 @@ export function VendorSubmissionWorkbenchPage({
     setReconcileRow(undefined)
   }, [action, reconcileRow, vendorExternalOrderId, t])
 
+  const rows = useMemo(() => {
+    const items = submissions.data?.items ?? []
+    const map = new Map<string, VendorSubmission & { bundledSubmissions: VendorSubmission[] }>()
+    for (const sub of items) {
+      const key = sub.externalOrderId || sub.id
+      const existing = map.get(key)
+      if (!existing) {
+        map.set(key, {
+          ...sub,
+          bundledSubmissions: [sub],
+        })
+      } else {
+        existing.bundledSubmissions.push(sub)
+      }
+    }
+    return Array.from(map.values())
+  }, [submissions.data?.items])
+
   const columns: TableColumnsType<VendorSubmission> = useMemo(
     () => [
       {
         title: t('portal.vendorSubmissions.columns.order'),
         dataIndex: 'externalOrderId',
         width: 176,
-        render: (value) => <CopyableOrderId value={value} />,
+        render: (value, row) => {
+          const all: VendorSubmission[] = (
+            row as unknown as { bundledSubmissions?: VendorSubmission[] }
+          ).bundledSubmissions || [row]
+          return (
+            <Space size={6} wrap={false} align="center">
+              <CopyableOrderId value={value} />
+              {all.length > 1 ? (
+                <Tag color="blue" style={{ marginInlineEnd: 0, fontWeight: 500 }}>
+                  {all.length} items
+                </Tag>
+              ) : null}
+            </Space>
+          )
+        },
       },
       {
         title: t('portal.vendorSubmissions.columns.product'),
         width: 180,
-        render: (_, row) =>
-          row.sku ? (
+        render: (_, row) => {
+          const all: VendorSubmission[] = (
+            row as unknown as { bundledSubmissions?: VendorSubmission[] }
+          ).bundledSubmissions || [row]
+          if (all.length > 1) {
+            return (
+              <Space direction="vertical" size={2}>
+                {all.map((item, idx) =>
+                  item.sku ? (
+                    <CopyableSku key={item.id || idx} strong value={item.sku} />
+                  ) : (
+                    <TableTextCell
+                      key={item.id || idx}
+                      strong
+                      value={item.costCenterCode}
+                      fallback="-"
+                    />
+                  ),
+                )}
+              </Space>
+            )
+          }
+          return row.sku ? (
             <CopyableSku strong value={row.sku} />
           ) : (
             <TableTextCell strong value={row.costCenterCode} fallback="-" />
-          ),
+          )
+        },
       },
       {
         title: t('portal.vendorSubmissions.columns.vendor'),
@@ -265,66 +319,99 @@ export function VendorSubmissionWorkbenchPage({
         title: t('portal.vendorSubmissions.columns.status'),
         dataIndex: 'status',
         width: 128,
-        render: (value: VendorSubmissionStatus) => (
-          <StatusTag status={tone(value)}>
-            {t(`portal.vendorSubmissions.statuses.${value}`)}
-          </StatusTag>
-        ),
+        render: (_, row) => {
+          const all: VendorSubmission[] = (
+            row as unknown as { bundledSubmissions?: VendorSubmission[] }
+          ).bundledSubmissions || [row]
+          const statuses = Array.from(new Set(all.map((item) => item.status)))
+          return (
+            <Space size={4} wrap>
+              {statuses.map((s) => (
+                <StatusTag key={s} status={tone(s)}>
+                  {t(`portal.vendorSubmissions.statuses.${s}`)}
+                </StatusTag>
+              ))}
+            </Space>
+          )
+        },
       },
       {
         title: t('portal.vendorSubmissions.columns.attempts'),
         dataIndex: 'submitAttemptCount',
         width: 90,
+        render: (_, row) => {
+          const all: VendorSubmission[] = (
+            row as unknown as { bundledSubmissions?: VendorSubmission[] }
+          ).bundledSubmissions || [row]
+          return Math.max(...all.map((i) => i.submitAttemptCount || 0))
+        },
       },
       {
         title: t('portal.vendorSubmissions.columns.failure'),
         dataIndex: 'failureReason',
         width: 240,
-        render: (value: string | undefined) => (
-          <TableTextCell
-            value={value}
-            fallback="—"
-            expandable={Boolean(value && value.length > 36)}
-          />
-        ),
+        render: (_, row) => {
+          const all: VendorSubmission[] = (
+            row as unknown as { bundledSubmissions?: VendorSubmission[] }
+          ).bundledSubmissions || [row]
+          const reasons = Array.from(new Set(all.map((i) => i.failureReason).filter(Boolean)))
+          const value = reasons.join('; ')
+          return (
+            <TableTextCell
+              value={value}
+              fallback="—"
+              expandable={Boolean(value && value.length > 36)}
+            />
+          )
+        },
       },
       {
         title: t('portal.vendorSubmissions.columns.action'),
         key: 'action',
         width: 260,
-        render: (_, row) =>
-          canWrite ? (
+        render: (_, row) => {
+          const all: VendorSubmission[] = (
+            row as unknown as { bundledSubmissions?: VendorSubmission[] }
+          ).bundledSubmissions || [row]
+          const anyReady = all.some((i) => i.status === 'READY')
+          const anyFailed = all.some((i) => i.status === 'FAILED')
+          const anyNeedsReview = all.some((i) => i.status === 'NEEDS_REVIEW')
+          const primaryReadyRow = all.find((i) => i.status === 'READY') || row
+          const primaryFailedRow = all.find((i) => i.status === 'FAILED') || row
+          const primaryReviewRow = all.find((i) => i.status === 'NEEDS_REVIEW') || row
+
+          return canWrite ? (
             <Space wrap>
-              {row.status === 'READY' ? (
+              {anyReady ? (
                 <Button
                   size="small"
                   icon={<SendOutlined />}
                   onClick={(event) => {
                     event.stopPropagation()
-                    handleRun('submit', row)
+                    handleRun('submit', primaryReadyRow)
                   }}
                 >
                   {t('portal.vendorSubmissions.actions.submit')}
                 </Button>
               ) : null}
-              {row.status === 'FAILED' ? (
+              {anyFailed ? (
                 <Button
                   size="small"
                   onClick={(event) => {
                     event.stopPropagation()
-                    handleRun('retry', row)
+                    handleRun('retry', primaryFailedRow)
                   }}
                 >
                   {t('portal.vendorSubmissions.actions.returnReady')}
                 </Button>
               ) : null}
-              {row.status === 'NEEDS_REVIEW' ? (
+              {anyNeedsReview ? (
                 <>
                   <Button
                     size="small"
                     onClick={(event) => {
                       event.stopPropagation()
-                      handleRun('found', row)
+                      handleRun('found', primaryReviewRow)
                     }}
                   >
                     {t('portal.vendorSubmissions.actions.remoteFound')}
@@ -333,7 +420,7 @@ export function VendorSubmissionWorkbenchPage({
                     size="small"
                     onClick={(event) => {
                       event.stopPropagation()
-                      handleRun('missing', row)
+                      handleRun('missing', primaryReviewRow)
                     }}
                   >
                     {t('portal.vendorSubmissions.actions.remoteMissing')}
@@ -341,7 +428,8 @@ export function VendorSubmissionWorkbenchPage({
                 </>
               ) : null}
             </Space>
-          ) : null,
+          ) : null
+        },
       },
     ],
     [canWrite, handleRun, t],
@@ -369,6 +457,42 @@ export function VendorSubmissionWorkbenchPage({
     [detail.data?.statusHistory, t],
   )
 
+  const orderSummary = useMemo(() => {
+    if (!externalOrderId && summary.data) {
+      return summary.data
+    }
+    if (externalOrderId) {
+      const total = rows.length
+      const ready = rows.filter(
+        (r) =>
+          r.status === 'READY' || (r.bundledSubmissions || []).some((b) => b.status === 'READY'),
+      ).length
+      const submitted = rows.filter(
+        (r) =>
+          r.status === 'SUBMITTED' ||
+          (r.bundledSubmissions || []).some((b) => b.status === 'SUBMITTED'),
+      ).length
+      const failed = rows.filter(
+        (r) =>
+          r.status === 'FAILED' || (r.bundledSubmissions || []).some((b) => b.status === 'FAILED'),
+      ).length
+      const cancelled = rows.filter(
+        (r) =>
+          r.status === 'CANCELLED' ||
+          (r.bundledSubmissions || []).every((b) => b.status === 'CANCELLED'),
+      ).length
+      return {
+        total,
+        ready,
+        submitted,
+        failed,
+        cancelled,
+        byStatus: {},
+      }
+    }
+    return summary.data
+  }, [externalOrderId, rows, summary.data])
+
   return (
     <section className={styles.page}>
       {submissions.error ? (
@@ -379,7 +503,7 @@ export function VendorSubmissionWorkbenchPage({
           <MetricCard
             key={key}
             label={t(`portal.vendorSubmissions.metrics.${key}`)}
-            value={summary.data?.[key] ?? 0}
+            value={orderSummary?.[key] ?? 0}
             loading={summary.isLoading}
           />
         ))}
@@ -391,13 +515,13 @@ export function VendorSubmissionWorkbenchPage({
           scroll={{ x: 1_100 }}
           rowKey="id"
           columns={columns}
-          dataSource={submissions.data?.items ?? []}
+          dataSource={rows}
           loading={submissions.isLoading}
           onRow={(row) => ({ onClick: () => setSelectedId(row.id) })}
           pagination={{
             current: page,
             pageSize: PAGE_SIZE,
-            total: submissions.data?.pagination.total,
+            total: externalOrderId ? rows.length : submissions.data?.pagination.total,
             showSizeChanger: true,
             onChange: setPage,
           }}

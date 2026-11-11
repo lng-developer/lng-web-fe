@@ -8,6 +8,9 @@ export type ShipmentStatus =
   | 'EXCEPTION'
   | 'RETURNED'
   | 'CANCELLED'
+
+export type MarketplaceConfirmationStatus = 'PENDING' | 'SUBMITTED' | 'CONFIRMED' | 'FAILED'
+
 export type Shipment = {
   id: string
   vendorSubmissionId: string
@@ -24,6 +27,8 @@ export type Shipment = {
   shippedAt: string | null
   deliveredAt: string | null
   note: string | null
+  marketplaceConfirmationStatus?: MarketplaceConfirmationStatus
+  marketplaceConfirmedAt?: string | null
   createdAt: string
   updatedAt: string
 }
@@ -32,6 +37,7 @@ export type ShipmentParams = {
   limit: number
   shopId?: string
   status?: ShipmentStatus
+  marketplaceConfirmationStatus?: MarketplaceConfirmationStatus
   provider?: string
   carrier?: string
   externalOrderId?: string

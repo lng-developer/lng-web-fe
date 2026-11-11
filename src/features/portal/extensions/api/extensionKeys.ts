@@ -5,5 +5,6 @@ export const extensionKeys = {
   commands: (params?: { page?: number; limit?: number }) =>
     [...extensionKeys.all, 'commands', params ?? {}] as const,
   orderSchedules: () => [...extensionKeys.all, 'order-schedules'] as const,
+  trackingSchedules: () => [...extensionKeys.all, 'tracking-schedules'] as const,
   financeSchedules: () => [...extensionKeys.all, 'finance-schedules'] as const,
 }
