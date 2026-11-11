@@ -63,7 +63,7 @@ describe('TrackingUploadPreviewModal', () => {
     await waitFor(() => expect(screen.getByText('114-1234567-1234567')).toBeVisible())
     expect(screen.getByText('USPS')).toBeVisible()
     expect(screen.getByText('9400111899223856928499')).toBeVisible()
-    expect(screen.getByText('Wait for vendor')).toBeVisible()
+    expect(screen.getByText('Missing Info')).toBeVisible()
     expect(screen.getAllByText('-').length).toBeGreaterThan(0)
   })
   it('submits ready tracking rows when agentId is provided', async () => {
