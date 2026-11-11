@@ -27,9 +27,12 @@ import {
   listExtensionFinanceSchedules,
   listExtensionManagementAgents,
   listExtensionOrderSchedules,
+  listExtensionTrackingSchedules,
   requestExtensionFinanceScheduleNow,
+  requestExtensionTrackingScheduleNow,
   upsertExtensionFinanceSchedule,
   upsertExtensionOrderSchedule,
+  upsertExtensionTrackingSchedule,
   type ExtensionCommand,
   type ExtensionCommandType,
   type ExtensionFinanceScheduleSource,
@@ -121,6 +124,13 @@ export function useExtensionHub() {
   const extensionOrderSchedules = useQuery({
     queryKey: extensionKeys.orderSchedules(),
     queryFn: listExtensionOrderSchedules,
+    enabled: canWrite,
+    retry: false,
+  })
+
+  const extensionTrackingSchedules = useQuery({
+    queryKey: extensionKeys.trackingSchedules(),
+    queryFn: listExtensionTrackingSchedules,
     enabled: canWrite,
     retry: false,
   })
@@ -280,6 +290,52 @@ export function useExtensionHub() {
     },
   })
 
+  const saveTrackingSchedule = useMutation({
+    mutationFn: ({
+      agentId,
+      enabled,
+      scheduleType,
+      intervalMinutes,
+      fixedTimes,
+      timezone,
+    }: {
+      agentId: string
+      enabled: boolean
+      scheduleType?: ExtensionScheduleType
+      intervalMinutes?: number
+      fixedTimes?: string[]
+      timezone?: string
+    }) =>
+      upsertExtensionTrackingSchedule(agentId, {
+        enabled,
+        scheduleType,
+        intervalMinutes,
+        fixedTimes,
+        timezone,
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: extensionKeys.trackingSchedules() })
+      showFeedbackToast('success', 'Tracking schedule saved.')
+    },
+  })
+
+  const requestTrackingScheduleNow = useMutation({
+    mutationFn: (agentId: string) => requestExtensionTrackingScheduleNow(agentId),
+    onSuccess: async (data) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: extensionKeys.trackingSchedules() }),
+        queryClient.invalidateQueries({ queryKey: extensionKeys.commands() }),
+      ])
+      showFeedbackToast('success', data.message || 'Tracking upload requested.')
+    },
+    onError: (error) => {
+      showFeedbackToast(
+        'error',
+        error instanceof Error ? error.message : 'Tracking upload request failed.',
+      )
+    },
+  })
+
   const managementAgents = useMemo(
     () => extensionManagementAgents.data?.items ?? [],
     [extensionManagementAgents.data?.items],
@@ -287,6 +343,10 @@ export function useExtensionHub() {
   const schedules = useMemo(
     () => extensionOrderSchedules.data?.items ?? [],
     [extensionOrderSchedules.data?.items],
+  )
+  const trackingSchedules = useMemo(
+    () => extensionTrackingSchedules.data?.items ?? [],
+    [extensionTrackingSchedules.data?.items],
   )
   const financeSchedules = useMemo(
     () => extensionFinanceSchedules.data?.items ?? [],
@@ -304,8 +364,9 @@ export function useExtensionHub() {
   const activeSchedulesCount = useMemo(
     () =>
       schedules.filter((schedule) => schedule.enabled).length +
+      trackingSchedules.filter((schedule) => schedule.enabled).length +
       financeSchedules.filter((schedule) => schedule.enabled).length,
-    [schedules, financeSchedules],
+    [schedules, trackingSchedules, financeSchedules],
   )
   const failedCommandsCount = useMemo(
     () => commands.filter((command) => command.status === 'FAILED').length,
@@ -332,15 +393,19 @@ export function useExtensionHub() {
     revokeToken,
     createCommand,
     saveOrderSchedule,
+    saveTrackingSchedule,
     saveFinanceSchedule,
     requestFinanceScheduleNow,
+    requestTrackingScheduleNow,
     extensionAgents,
     extensionManagementAgents,
     extensionCommands,
     extensionOrderSchedules,
+    extensionTrackingSchedules,
     extensionFinanceSchedules,
     managementAgents,
     schedules,
+    trackingSchedules,
     financeSchedules,
     commands,
     onlineAgentsCount,

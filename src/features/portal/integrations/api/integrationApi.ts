@@ -107,6 +107,21 @@ export type ExtensionFinanceSchedule = {
   lastSuccessfulDate: string | null
   lastError: string | null
 }
+export type ExtensionTrackingSchedule = {
+  id: string
+  shopId: string
+  agentId: string
+  enabled: boolean
+  scheduleType?: ExtensionScheduleType
+  intervalMinutes: number
+  fixedTimes?: string[]
+  timezone?: string
+  nextRunAt: string
+  lastQueuedAt?: string | null
+  lastBatchCount?: number
+  lastError?: string | null
+  updatedAt?: string
+}
 
 export type Pagination = { total: number; page: number; limit: number }
 export type Paginated<T> = { items: T[]; pagination: Pagination }
@@ -441,6 +456,32 @@ export async function requestExtensionFinanceScheduleNow(
     await apiClient.post(
       `${extensionCommandPath}/finance-schedules/${agentId}/${source}/request-now`,
     ),
+  )
+}
+
+export async function listExtensionTrackingSchedules() {
+  return unwrap<{ items: ExtensionTrackingSchedule[] }>(
+    await apiClient.get(`${extensionCommandPath}/tracking-schedules`),
+  )
+}
+export type UpsertExtensionTrackingScheduleInput = {
+  enabled: boolean
+  scheduleType?: ExtensionScheduleType
+  intervalMinutes?: number
+  fixedTimes?: string[]
+  timezone?: string
+}
+export async function upsertExtensionTrackingSchedule(
+  agentId: string,
+  input: UpsertExtensionTrackingScheduleInput,
+) {
+  return unwrap<ExtensionTrackingSchedule>(
+    await apiClient.put(`${extensionCommandPath}/tracking-schedules/${agentId}`, input),
+  )
+}
+export async function requestExtensionTrackingScheduleNow(agentId: string) {
+  return unwrap<{ message: string; batchCount: number; queued: boolean; submissionId?: string }>(
+    await apiClient.post(`${extensionCommandPath}/tracking-schedules/${agentId}/request-now`),
   )
 }
 

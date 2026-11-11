@@ -11,8 +11,10 @@ import {
   ExclamationCircleOutlined,
   FundOutlined,
   InfoCircleOutlined,
+  SendOutlined,
   ShopOutlined,
   ShoppingCartOutlined,
+  SyncOutlined,
   UpOutlined,
 } from '@ant-design/icons'
 import {
@@ -42,6 +44,7 @@ import type {
   ExtensionFinanceScheduleSource,
   ExtensionManagementAgent,
   ExtensionOrderSchedule,
+  ExtensionTrackingSchedule,
   ExtensionScheduleType,
 } from '../api/integrationApi'
 import styles from '../pages/IntegrationWorkbenchPage.module.scss'
@@ -50,12 +53,14 @@ export interface ExtensionAutomationTabProps {
   readonly account: CurrentAccount
   readonly agents: ExtensionManagementAgent[]
   readonly schedules: ExtensionOrderSchedule[]
+  readonly trackingSchedules?: ExtensionTrackingSchedule[]
   readonly financeSchedules: ExtensionFinanceSchedule[]
   readonly isLoading: boolean
   readonly shopNames: Map<string, string>
   readonly canWriteOrders: boolean
   readonly canWriteFinance: boolean
   readonly isSavingSchedule: boolean
+  readonly isSavingTrackingSchedule?: boolean
   readonly isSavingFinanceSchedule: boolean
   readonly isCreatingCommand: boolean
   readonly defaultViewMode?: 'cards' | 'table'
@@ -67,6 +72,15 @@ export interface ExtensionAutomationTabProps {
     fixedTimes?: string[]
     timezone?: string
   }) => void
+  readonly onSaveTrackingSchedule?: (input: {
+    agentId: string
+    enabled: boolean
+    scheduleType?: ExtensionScheduleType
+    intervalMinutes?: number
+    fixedTimes?: string[]
+    timezone?: string
+  }) => void
+  readonly onRequestTrackingScheduleNow?: (agentId: string) => void
   readonly onSaveFinanceSchedule: (input: {
     agentId: string
     source: ExtensionFinanceScheduleSource
@@ -96,6 +110,15 @@ const SETTLEMENT_INTERVAL_OPTIONS: IntervalOption[] = [
 ]
 
 const TRANSACTION_INTERVAL_OPTIONS: IntervalOption[] = [{ value: 1440, label: 'Daily (Every 24h)' }]
+
+const TRACKING_INTERVAL_OPTIONS: IntervalOption[] = [
+  { value: 60, label: 'Every 1 hour' },
+  { value: 120, label: 'Every 2 hours' },
+  { value: 240, label: 'Every 4 hours' },
+  { value: 360, label: 'Every 6 hours' },
+  { value: 720, label: 'Every 12 hours' },
+  { value: 1440, label: 'Daily (Every 24h)' },
+]
 
 function formatCompactScheduleTiming(
   schedule?: {
@@ -138,16 +161,20 @@ export function ExtensionAutomationTab({
   account,
   agents,
   schedules,
+  trackingSchedules = [],
   financeSchedules,
   isLoading,
   shopNames,
   canWriteOrders,
   canWriteFinance,
   isSavingSchedule,
+  isSavingTrackingSchedule = false,
   isSavingFinanceSchedule,
   isCreatingCommand,
   defaultViewMode = 'cards',
   onSaveSchedule,
+  onSaveTrackingSchedule,
+  onRequestTrackingScheduleNow,
   onSaveFinanceSchedule,
   onCreateCommand,
 }: ExtensionAutomationTabProps) {
@@ -177,6 +204,11 @@ export function ExtensionAutomationTab({
   const orderScheduleByAgentId = useMemo(
     () => new Map(schedules.map((schedule) => [schedule.agentId, schedule])),
     [schedules],
+  )
+
+  const trackingScheduleByAgentId = useMemo(
+    () => new Map(trackingSchedules.map((schedule) => [schedule.agentId, schedule])),
+    [trackingSchedules],
   )
 
   const financeScheduleByAgentSource = useMemo(
@@ -314,6 +346,123 @@ export function ExtensionAutomationTab({
     )
   }
 
+  const renderTrackingScheduleRow = (agent: ExtensionManagementAgent) => {
+    const schedule = trackingScheduleByAgentId.get(agent.id)
+    const enabled = schedule?.enabled ?? false
+    const compactTiming = formatCompactScheduleTiming(schedule, 120)
+    const canWrite = canWriteOrders && canWriteOrdersForShop(account, agent.shopId)
+
+    return (
+      <li key="tracking-sync" className={styles.automationScheduleRowCompact}>
+        <div className={styles.scheduleRowLeft}>
+          <div className={styles.scheduleIconAndTitle}>
+            <SendOutlined className={styles.scheduleIconPrimary} />
+            <Typography.Text strong className={styles.taskLabel}>
+              {t('portal.integrations.extension.trackingUpload', {
+                defaultValue: 'Tracking upload',
+              })}
+            </Typography.Text>
+          </div>
+
+          <div className={styles.scheduleMetaCompact}>
+            {enabled ? (
+              <span className={styles.scheduleTimingBadge}>
+                <ClockCircleOutlined
+                  style={{ fontSize: 11, marginRight: 5, color: 'var(--ant-color-primary)' }}
+                />
+                <span>{compactTiming}</span>
+              </span>
+            ) : (
+              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                {t('portal.integrations.extension.disabled', { defaultValue: 'Off' })}
+              </Typography.Text>
+            )}
+
+            <Tooltip title="Daily · Auto-batch unsubmitted ready shipments to Amazon">
+              <InfoCircleOutlined
+                style={{
+                  marginLeft: 5,
+                  fontSize: 12,
+                  color: 'var(--ant-color-text-tertiary)',
+                  cursor: 'help',
+                }}
+              />
+            </Tooltip>
+
+            {schedule?.lastBatchCount !== undefined && schedule?.lastBatchCount > 0 ? (
+              <Tag color="cyan" style={{ margin: 0 }}>
+                {schedule.lastBatchCount} uploaded
+              </Tag>
+            ) : null}
+
+            {schedule?.lastError ? (
+              <Tooltip title={schedule.lastError}>
+                <Tag color="error" icon={<ExclamationCircleOutlined />} style={{ margin: 0 }}>
+                  Error
+                </Tag>
+              </Tooltip>
+            ) : null}
+          </div>
+        </div>
+
+        <div className={styles.scheduleRowRight}>
+          <Switch
+            size="small"
+            checked={enabled}
+            loading={isSavingTrackingSchedule}
+            disabled={!canWrite}
+            onChange={(checked) =>
+              onSaveTrackingSchedule?.({
+                agentId: agent.id,
+                enabled: checked,
+                scheduleType: schedule?.scheduleType,
+                intervalMinutes: schedule?.intervalMinutes ?? 120,
+                fixedTimes: schedule?.fixedTimes,
+                timezone: schedule?.timezone,
+              })
+            }
+          />
+          {canWrite ? (
+            <Space size={4}>
+              {agent.status === 'ONLINE' ? (
+                <Tooltip title="Upload tracking now">
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<SyncOutlined />}
+                    onClick={() => onRequestTrackingScheduleNow?.(agent.id)}
+                  />
+                </Tooltip>
+              ) : null}
+              <ExtensionSchedulePopover
+                iconOnly
+                title="Tracking upload schedule"
+                buttonAriaLabel="Configure tracking upload schedule"
+                enabled={enabled}
+                scheduleType={schedule?.scheduleType}
+                intervalMinutes={schedule?.intervalMinutes ?? 120}
+                intervalOptions={TRACKING_INTERVAL_OPTIONS}
+                fixedTimes={schedule?.fixedTimes}
+                timezone={schedule?.timezone}
+                loading={isSavingTrackingSchedule}
+                onSave={(values) =>
+                  onSaveTrackingSchedule?.({
+                    agentId: agent.id,
+                    enabled: values.enabled ?? enabled,
+                    scheduleType: values.scheduleType,
+                    intervalMinutes: values.intervalMinutes,
+                    fixedTimes: values.fixedTimes,
+                    timezone: values.timezone,
+                  })
+                }
+              />
+            </Space>
+          ) : null}
+        </div>
+      </li>
+    )
+  }
+
   const renderFinanceScheduleRow = (
     agent: ExtensionManagementAgent,
     source: ExtensionFinanceScheduleSource,
@@ -335,7 +484,9 @@ export function ExtensionAutomationTab({
         ? 'Daily · Last 3 completed days (UTC+7) · Initial 30 days in 7-day batches'
         : source === 'SETTLEMENTS'
           ? 'Daily · Newly closed statements only'
-          : undefined
+          : source === 'ADS'
+            ? 'Daily · D-1 · Sunday first run reconciles the previous 7 completed days'
+            : undefined
 
     const icon =
       source === 'ADS' ? (
@@ -483,6 +634,7 @@ export function ExtensionAutomationTab({
 
         <ul className={styles.automationScheduleList}>
           {renderOrderScheduleRow(agent)}
+          {renderTrackingScheduleRow(agent)}
           {agent.provider !== 'ETSY' &&
             renderFinanceScheduleRow(
               agent,

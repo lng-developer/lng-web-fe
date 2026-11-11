@@ -22,13 +22,17 @@ export function ExtensionSchedulesPage() {
     managementAgents,
     extensionManagementAgents,
     extensionOrderSchedules,
+    extensionTrackingSchedules,
     extensionFinanceSchedules,
     schedules,
+    trackingSchedules,
     financeSchedules,
     shopNames,
     shopPlatforms,
     saveOrderSchedule,
+    saveTrackingSchedule,
     saveFinanceSchedule,
+    requestTrackingScheduleNow,
     createCommand,
     activeSchedulesCount,
   } = useExtensionHub()
@@ -69,6 +73,7 @@ export function ExtensionSchedulesPage() {
 
   const handleRefresh = () => {
     extensionOrderSchedules.refetch()
+    extensionTrackingSchedules.refetch()
     extensionFinanceSchedules.refetch()
     extensionManagementAgents.refetch()
   }
@@ -144,15 +149,19 @@ export function ExtensionSchedulesPage() {
         account={account}
         agents={filteredAgents}
         schedules={schedules}
+        trackingSchedules={trackingSchedules}
         financeSchedules={financeSchedules}
         isLoading={isLoading}
         shopNames={shopNames}
         canWriteOrders={canWrite}
         canWriteFinance={canWriteFinance}
         isSavingSchedule={saveOrderSchedule.isPending}
+        isSavingTrackingSchedule={saveTrackingSchedule.isPending}
         isSavingFinanceSchedule={saveFinanceSchedule.isPending}
         isCreatingCommand={createCommand.isPending}
         onSaveSchedule={(input) => saveOrderSchedule.mutate(input)}
+        onSaveTrackingSchedule={(input) => saveTrackingSchedule.mutate(input)}
+        onRequestTrackingScheduleNow={(agentId) => requestTrackingScheduleNow.mutate(agentId)}
         onSaveFinanceSchedule={(input) => saveFinanceSchedule.mutate(input)}
         onCreateCommand={(input) => createCommand.mutate(input)}
       />

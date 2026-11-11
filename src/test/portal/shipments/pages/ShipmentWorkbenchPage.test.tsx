@@ -27,6 +27,12 @@ vi.mock('@/features/portal/shipments/api/shipmentApi', async (importOriginal) =>
   listWebhookLogs: vi.fn(),
 }))
 
+vi.mock('@/features/portal/shops/api/shopApi', () => ({
+  listShops: vi
+    .fn()
+    .mockResolvedValue({ items: [], pagination: { total: 0, page: 1, limit: 100 } }),
+}))
+
 const account: CurrentAccount = {
   account: {
     id: 'shipment-reader',
@@ -109,21 +115,23 @@ describe('ShipmentWorkbenchPage', () => {
     await waitFor(() => expect(listShipments).toHaveBeenCalled())
 
     const table = document.querySelector<HTMLTableElement>('.ant-table-container table')
-    expect(table).toHaveStyle({ width: '1100px', tableLayout: 'fixed' })
+    expect(table).toHaveStyle({ width: '1288px', tableLayout: 'fixed' })
+    expect(table?.querySelector('.ant-table-selection-column')).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Ship date' })).toBeInTheDocument()
   })
 
   it('reloads server data when the shared page-size control changes', async () => {
     renderPage()
 
     await waitFor(() =>
-      expect(listShipments).toHaveBeenCalledWith(expect.objectContaining({ limit: 10, page: 1 })),
+      expect(listShipments).toHaveBeenCalledWith(expect.objectContaining({ limit: 50, page: 1 })),
     )
 
     fireEvent.mouseDown(await screen.findByRole('combobox', { name: 'Rows per page' }))
-    fireEvent.click((await screen.findAllByText('50')).at(-1)!)
+    fireEvent.click((await screen.findAllByText('100')).at(-1)!)
 
     await waitFor(() =>
-      expect(listShipments).toHaveBeenCalledWith(expect.objectContaining({ limit: 50, page: 1 })),
+      expect(listShipments).toHaveBeenCalledWith(expect.objectContaining({ limit: 100, page: 1 })),
     )
   })
 
@@ -133,7 +141,7 @@ describe('ShipmentWorkbenchPage', () => {
     fireEvent.click(await screen.findByTitle('2'))
 
     await waitFor(() =>
-      expect(listShipments).toHaveBeenCalledWith(expect.objectContaining({ limit: 10, page: 2 })),
+      expect(listShipments).toHaveBeenCalledWith(expect.objectContaining({ limit: 50, page: 2 })),
     )
   })
 })

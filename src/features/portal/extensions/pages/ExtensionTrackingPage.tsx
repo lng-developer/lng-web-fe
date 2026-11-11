@@ -22,6 +22,7 @@ interface ShopTrackingStatus {
   platform: string
   agentOnline: boolean
   agentName: string
+  agentId?: string
 }
 
 export function ExtensionTrackingPage() {
@@ -30,10 +31,13 @@ export function ExtensionTrackingPage() {
 
   const [platformFilter, setPlatformFilter] = useState<'ALL' | 'AMAZON' | 'ETSY'>('ALL')
   const [previewShopId, setPreviewShopId] = useState<string>()
+  const [previewAgentId, setPreviewAgentId] = useState<string>()
 
   const trackingRows: ShopTrackingStatus[] = useMemo(() => {
     return shops.map((shop) => {
-      const agent = managementAgents.find((a) => a.shopId === shop.id)
+      const agent =
+        managementAgents.find((a) => a.shopId === shop.id && a.status === 'ONLINE') ||
+        managementAgents.find((a) => a.shopId === shop.id)
       const platform = (shop.salesChannelCode || agent?.provider || 'AMAZON').toUpperCase()
       return {
         shopId: shop.id,
@@ -41,6 +45,7 @@ export function ExtensionTrackingPage() {
         platform,
         agentOnline: agent?.status === 'ONLINE',
         agentName: agent?.label || agent?.clientId || 'No Bot Connected',
+        agentId: agent?.id,
       }
     })
   }, [shops, managementAgents])
@@ -80,7 +85,14 @@ export function ExtensionTrackingPage() {
       key: 'actions',
       width: 180,
       render: (_, row) => (
-        <Button size="small" icon={<EyeOutlined />} onClick={() => setPreviewShopId(row.shopId)}>
+        <Button
+          size="small"
+          icon={<EyeOutlined />}
+          onClick={() => {
+            setPreviewShopId(row.shopId)
+            setPreviewAgentId(row.agentId)
+          }}
+        >
           {t('portal.extensions.tracking.actions.preview', {
             defaultValue: 'Preview Fulfillments',
           })}
@@ -183,7 +195,11 @@ export function ExtensionTrackingPage() {
       {previewShopId ? (
         <TrackingUploadPreviewModal
           shopId={previewShopId}
-          onClose={() => setPreviewShopId(undefined)}
+          agentId={previewAgentId}
+          onClose={() => {
+            setPreviewShopId(undefined)
+            setPreviewAgentId(undefined)
+          }}
         />
       ) : null}
     </div>

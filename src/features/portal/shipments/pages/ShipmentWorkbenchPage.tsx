@@ -2,12 +2,14 @@ import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
 import { DownloadOutlined, EditOutlined, SyncOutlined } from '@ant-design/icons'
+import { useQuery } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Button, Descriptions, Input, Modal, Select, Space, Timeline, Typography } from 'antd'
+import { Button, Descriptions, Input, Modal, Select, Space, Tag, Timeline, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
-import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
+import { listShops } from '@/features/portal/shops/api/shopApi'
+import { shopKeys } from '@/features/portal/shops/api/shopKeys'
 import {
   CopyableOrderId,
   DetailModal,
@@ -17,6 +19,7 @@ import {
   FilterBar,
   FormattedDateTime,
   MetricCard,
+  SearchInput,
   StatusTag,
   TableTextCell,
   useFeedbackToast,
@@ -49,6 +52,13 @@ const STATUSES: ShipmentStatus[] = [
   'RETURNED',
   'CANCELLED',
 ]
+
+const PROVIDERS = ['LNG_GROUP', 'MANGOTEE', 'MERCHIZE', 'LENFUL', 'PRINTWAY', 'MERCHFOX']
+
+const CARRIERS = ['USPS', 'UPS', 'FEDEX', 'DHL']
+
+const DEFAULT_SHIPMENT_PAGE_SIZE = 50
+
 function tone(status: ShipmentStatus) {
   if (status === 'DELIVERED') return 'operational'
   if (status === 'SHIPPED') return 'processing'
@@ -67,11 +77,15 @@ export function ShipmentWorkbenchPage({
   const account = accountProp ?? loadedAccount
   const toast = useFeedbackToast()
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
+  const [pageSize, setPageSize] = useState(DEFAULT_SHIPMENT_PAGE_SIZE)
+  const [shopId, setShopId] = useState<string>()
+  const [provider, setProvider] = useState<string>()
+  const [filterCarrier, setFilterCarrier] = useState<string>()
   const [status, setStatus] = useState<ShipmentStatus>()
   const [externalOrderId, setExternalOrderId] = useState('')
   const [trackingNumber, setTrackingNumber] = useState('')
   const [dates, setDates] = useState<{ dateFrom?: string; dateTo?: string }>({})
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [selectedId, setSelectedId] = useResourceSelection()
   const [editMode, setEditMode] = useState<'tracking' | 'status'>()
   const [carrier, setCarrier] = useState('')
@@ -81,6 +95,15 @@ export function ShipmentWorkbenchPage({
     'DELIVERED' | 'EXCEPTION' | 'RETURNED' | 'CANCELLED'
   >('DELIVERED')
   const [note, setNote] = useState('')
+
+  const shops = useQuery({
+    queryKey: shopKeys.list({ page: 1, limit: 100 }),
+    queryFn: () => listShops({ page: 1, limit: 100 }),
+  })
+  const shopOptions = useMemo(
+    () => (shops.data?.items ?? []).map((shop) => ({ value: shop.id, label: shop.name })),
+    [shops.data?.items],
+  )
 
   const permissions = useMemo(
     () =>
@@ -95,22 +118,38 @@ export function ShipmentWorkbenchPage({
     () => ({
       page,
       limit: pageSize,
+      shopId,
       status,
+      provider,
+      carrier: filterCarrier,
       externalOrderId: externalOrderId || undefined,
       trackingNumber: trackingNumber || undefined,
       ...dates,
     }),
-    [page, pageSize, status, externalOrderId, trackingNumber, dates],
+    [
+      page,
+      pageSize,
+      shopId,
+      status,
+      provider,
+      filterCarrier,
+      externalOrderId,
+      trackingNumber,
+      dates,
+    ],
   )
 
   const filters = useMemo(
     () => ({
+      shopId,
       status,
+      provider,
+      carrier: filterCarrier,
       externalOrderId: params.externalOrderId,
       trackingNumber: params.trackingNumber,
       ...dates,
     }),
-    [status, params.externalOrderId, params.trackingNumber, dates],
+    [shopId, status, provider, filterCarrier, params.externalOrderId, params.trackingNumber, dates],
   )
 
   const shipments = useShipmentsQuery(params)
@@ -230,19 +269,64 @@ export function ShipmentWorkbenchPage({
     setEditMode(undefined)
   }, [])
 
+  const rows = useMemo(() => {
+    const items = shipments.data?.items ?? []
+    const map = new Map<string, Shipment & { bundledShipments: Shipment[] }>()
+    for (const ship of items) {
+      const key = ship.externalOrderId || ship.id
+      const existing = map.get(key)
+      if (!existing) {
+        map.set(key, {
+          ...ship,
+          bundledShipments: [ship],
+        })
+      } else {
+        existing.bundledShipments.push(ship)
+      }
+    }
+    return Array.from(map.values())
+  }, [shipments.data?.items])
+
   const columns: TableColumnsType<Shipment> = useMemo(
     () => [
       {
         title: t('portal.shipments.columns.order'),
         dataIndex: 'externalOrderId',
         width: 176,
-        render: (value) => <CopyableOrderId value={value} />,
+        render: (value, row) => {
+          const all: Shipment[] = (row as unknown as { bundledShipments?: Shipment[] })
+            .bundledShipments || [row]
+          return (
+            <Space size={6} wrap={false} align="center">
+              <CopyableOrderId value={value} />
+              {all.length > 1 ? (
+                <Tag color="blue" style={{ marginInlineEnd: 0, fontWeight: 500 }}>
+                  {all.length} items
+                </Tag>
+              ) : null}
+            </Space>
+          )
+        },
       },
       {
         title: t('portal.shipments.columns.vendorOrder'),
         dataIndex: 'vendorExternalOrderId',
         width: 172,
-        render: (value) => <TableTextCell value={value} fallback="-" />,
+        render: (value, row) => {
+          const all: Shipment[] = (row as unknown as { bundledShipments?: Shipment[] })
+            .bundledShipments || [row]
+          const vendorOrders = Array.from(
+            new Set(all.map((s) => s.vendorExternalOrderId).filter(Boolean)),
+          )
+          if (!vendorOrders.length) return <TableTextCell value={value} fallback="-" />
+          return (
+            <Space direction="vertical" size={2}>
+              {vendorOrders.map((vo) => (
+                <TableTextCell key={vo} value={vo} fallback="-" />
+              ))}
+            </Space>
+          )
+        },
       },
       {
         title: t('portal.shipments.columns.provider'),
@@ -253,22 +337,53 @@ export function ShipmentWorkbenchPage({
       {
         title: t('portal.shipments.columns.tracking'),
         width: 220,
-        render: (_, row) => (
-          <div
-            style={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'flex-start' }}
-          >
-            <TableTextCell code value={row.trackingNumber} fallback="-" />
-            <TableTextCell secondary value={row.carrier} fallback="-" />
-          </div>
-        ),
+        render: (_, row) => {
+          const all: Shipment[] = (row as unknown as { bundledShipments?: Shipment[] })
+            .bundledShipments || [row]
+          const uniqueTrackings = all.filter(
+            (s, idx, arr) => arr.findIndex((x) => x.trackingNumber === s.trackingNumber) === idx,
+          )
+          return (
+            <div
+              style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}
+            >
+              {uniqueTrackings.map((s, idx) => (
+                <div
+                  key={s.id || s.trackingNumber || idx}
+                  style={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+                >
+                  <TableTextCell code value={s.trackingNumber} fallback="-" />
+                  <TableTextCell secondary value={s.carrier} fallback="-" />
+                </div>
+              ))}
+            </div>
+          )
+        },
       },
       {
         title: t('portal.shipments.columns.status'),
         dataIndex: 'status',
         width: 150,
-        render: (value: ShipmentStatus) => (
-          <StatusTag status={tone(value)}>{t(`portal.shipments.statuses.${value}`)}</StatusTag>
-        ),
+        render: (_, row) => {
+          const all: Shipment[] = (row as unknown as { bundledShipments?: Shipment[] })
+            .bundledShipments || [row]
+          const statuses = Array.from(new Set(all.map((s) => s.status)))
+          return (
+            <Space size={4} wrap>
+              {statuses.map((value) => (
+                <StatusTag key={value} status={tone(value)}>
+                  {t(`portal.shipments.statuses.${value}`)}
+                </StatusTag>
+              ))}
+            </Space>
+          )
+        },
+      },
+      {
+        title: t('portal.shipments.columns.shipDate'),
+        dataIndex: 'shippedAt',
+        width: 140,
+        render: (value) => <FormattedDateTime value={value} />,
       },
       {
         title: t('portal.shipments.columns.updated'),
@@ -279,33 +394,59 @@ export function ShipmentWorkbenchPage({
       {
         title: t('portal.shipments.columns.action'),
         width: 110,
-        render: (_, row) =>
-          canWrite ? (
+        render: (_, row) => {
+          const all: Shipment[] = (row as unknown as { bundledShipments?: Shipment[] })
+            .bundledShipments || [row]
+          return canWrite ? (
             <Button
               size="small"
               icon={<SyncOutlined />}
               loading={recheck.isPending}
-              onClick={(event) => handleRecheckRow(event, row.id)}
+              onClick={(event) => {
+                all.forEach((s) => handleRecheckRow(event, s.id))
+              }}
             >
               {t('portal.shipments.recheck')}
             </Button>
-          ) : null,
+          ) : null
+        },
       },
     ],
     [canWrite, handleRecheckRow, recheck.isPending, t],
   )
 
-  const metrics = useMemo(
-    () =>
-      [
-        ['total', summary.data?.total ?? 0],
-        ['trackingPending', summary.data?.trackingPending ?? 0],
-        ['shipped', summary.data?.shipped ?? 0],
-        ['delivered', summary.data?.delivered ?? 0],
-        ['exception', summary.data?.exception ?? 0],
-      ] as const,
-    [summary.data],
-  )
+  const metrics = useMemo(() => {
+    const isFiltered = Boolean(params.externalOrderId || params.trackingNumber)
+    if (isFiltered) {
+      const total = rows.length
+      const trackingPending = rows.filter((r) =>
+        (r.bundledShipments || [r]).some((s) => s.status === 'TRACKING_PENDING'),
+      ).length
+      const shipped = rows.filter((r) =>
+        (r.bundledShipments || [r]).some((s) => s.status === 'SHIPPED'),
+      ).length
+      const delivered = rows.filter((r) =>
+        (r.bundledShipments || [r]).some((s) => s.status === 'DELIVERED'),
+      ).length
+      const exception = rows.filter((r) =>
+        (r.bundledShipments || [r]).some((s) => s.status === 'EXCEPTION'),
+      ).length
+      return [
+        ['total', total],
+        ['trackingPending', trackingPending],
+        ['shipped', shipped],
+        ['delivered', delivered],
+        ['exception', exception],
+      ] as const
+    }
+    return [
+      ['total', summary.data?.total ?? 0],
+      ['trackingPending', summary.data?.trackingPending ?? 0],
+      ['shipped', summary.data?.shipped ?? 0],
+      ['delivered', summary.data?.delivered ?? 0],
+      ['exception', summary.data?.exception ?? 0],
+    ] as const
+  }, [params.externalOrderId, params.trackingNumber, rows, summary.data])
 
   return (
     <section className={styles.page}>
@@ -338,23 +479,40 @@ export function ShipmentWorkbenchPage({
           tableLayout="fixed"
           rowKey="id"
           columns={columns}
-          dataSource={shipments.data?.items ?? []}
+          dataSource={rows}
           loading={shipments.isLoading}
-          onRow={(row) => ({ onClick: () => setSelectedId(row.id) })}
+          rowSelection={{
+            selectedRowKeys,
+            onChange: setSelectedRowKeys,
+            preserveSelectedRowKeys: true,
+          }}
+          onRow={(row) => ({
+            onClick: (event) => {
+              const target = event.target as HTMLElement | null
+              if (target?.closest('.ant-checkbox-wrapper') || target?.closest('.ant-btn')) {
+                return
+              }
+              setSelectedId(row.id)
+            },
+          })}
           pagination={{
             current: page,
             pageSize,
-            total: shipments.data?.pagination.total,
+            total:
+              params.externalOrderId || params.trackingNumber
+                ? rows.length
+                : shipments.data?.pagination.total,
             showSizeChanger: true,
             onChange: (nextPage, nextPageSize) => {
               setPage(nextPage)
               setPageSize(nextPageSize)
             },
           }}
-          scroll={{ x: 1_100 }}
+          scroll={{ x: 1_288 }}
           toolbar={
             <FilterBar
               label={t('portal.shipments.filters')}
+              className={styles.filterBar}
               contentClassName={styles.filters}
               actions={
                 <DataFreshness
@@ -364,21 +522,51 @@ export function ShipmentWorkbenchPage({
                 />
               }
             >
-              <Input.Search
-                allowClear
+              <SearchInput
                 className={styles.searchControl}
                 placeholder={t('portal.shipments.externalOrderId')}
                 value={externalOrderId}
-                onChange={(event) => setExternalOrderId(event.target.value)}
-                onSearch={() => setPage(1)}
+                onSearchChange={(value) => {
+                  setExternalOrderId(value)
+                  setPage(1)
+                }}
               />
-              <Input.Search
-                allowClear
+              <SearchInput
                 className={styles.searchControl}
                 placeholder={t('portal.shipments.trackingNumber')}
                 value={trackingNumber}
-                onChange={(event) => setTrackingNumber(event.target.value)}
-                onSearch={() => setPage(1)}
+                onSearchChange={(value) => {
+                  setTrackingNumber(value)
+                  setPage(1)
+                }}
+              />
+              <Select
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                className={styles.filterControl}
+                placeholder={t('portal.shipments.allShops')}
+                options={shopOptions}
+                value={shopId}
+                loading={shops.isLoading}
+                onChange={(value) => {
+                  setShopId(value)
+                  setPage(1)
+                }}
+              />
+              <Select
+                allowClear
+                className={styles.filterControl}
+                placeholder={t('portal.shipments.allProviders')}
+                options={PROVIDERS.map((value) => ({
+                  value,
+                  label: value,
+                }))}
+                value={provider}
+                onChange={(value) => {
+                  setProvider(value)
+                  setPage(1)
+                }}
               />
               <Select
                 allowClear
@@ -391,6 +579,20 @@ export function ShipmentWorkbenchPage({
                 value={status}
                 onChange={(value) => {
                   setStatus(value)
+                  setPage(1)
+                }}
+              />
+              <Select
+                allowClear
+                className={styles.filterControl}
+                placeholder={t('portal.shipments.allCarriers')}
+                options={CARRIERS.map((value) => ({
+                  value,
+                  label: value,
+                }))}
+                value={filterCarrier}
+                onChange={(value) => {
+                  setFilterCarrier(value)
                   setPage(1)
                 }}
               />
@@ -460,6 +662,11 @@ export function ShipmentWorkbenchPage({
                       {t(`portal.shipments.statuses.${detail.data.status}`)}
                     </StatusTag>
                   ),
+                },
+                {
+                  key: 'shipDate',
+                  label: t('portal.shipments.columns.shipDate'),
+                  children: <FormattedDateTime value={detail.data.shippedAt} />,
                 },
                 {
                   key: 'order',
