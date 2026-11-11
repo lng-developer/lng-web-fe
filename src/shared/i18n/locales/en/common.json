@@ -643,6 +643,7 @@
       "revenue": "Revenue",
       "baseCost": "Product cost",
       "fulfillmentCost": "Fulfillment cost",
+      "totalCost": "Total cost",
       "marketplaceFee": "Marketplace fee",
       "refund": "Refund",
       "discount": "Discount",
