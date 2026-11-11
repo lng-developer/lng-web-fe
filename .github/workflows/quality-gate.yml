@@ -111,11 +111,63 @@ jobs:
           printf '%s\n' "$ECOMATRIX_SSH_PRIVATE_KEY" > "$HOME/.ssh/id_ed25519"
           printf '%s\n' "$ECOMATRIX_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
           chmod 600 "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
-      - name: Deploy build to app directory
+      - name: Upload build to staging release
         env:
           ECOMATRIX_HOST: ${{ secrets.ECOMATRIX_HOST }}
           ECOMATRIX_USER: ${{ secrets.ECOMATRIX_USER }}
+          DEPLOY_SHA: ${{ github.sha }}
+          DEPLOY_RUN_ID: ${{ github.run_id }}
         run: |
           test -n "$ECOMATRIX_HOST"
           test -n "$ECOMATRIX_USER"
-          tar -czf - -C dist . | ssh "$ECOMATRIX_USER@$ECOMATRIX_HOST" 'set -e; rm -rf /srv/lng-web-fe/dist.next; mkdir -p /srv/lng-web-fe/dist.next; tar -xzf - -C /srv/lng-web-fe/dist.next; rm -rf /srv/lng-web-fe/dist.previous; mv /srv/lng-web-fe/dist /srv/lng-web-fe/dist.previous 2>/dev/null || true; mv /srv/lng-web-fe/dist.next /srv/lng-web-fe/dist; rm -rf /srv/lng-web-fe/dist.previous'
+          test -n "$DEPLOY_SHA"
+          test -n "$DEPLOY_RUN_ID"
+          tar -czf - -C dist . | ssh "$ECOMATRIX_USER@$ECOMATRIX_HOST" "set -e; staging=/srv/lng-web-fe/releases/.staging-${DEPLOY_SHA:0:12}-$DEPLOY_RUN_ID; mkdir \"\$staging\"; tar -xzf - -C \"\$staging\""
+
+      - name: Activate build with rollback
+        env:
+          ECOMATRIX_HOST: ${{ secrets.ECOMATRIX_HOST }}
+          ECOMATRIX_USER: ${{ secrets.ECOMATRIX_USER }}
+          DEPLOY_SHA: ${{ github.sha }}
+          DEPLOY_RUN_ID: ${{ github.run_id }}
+        run: |
+          test -n "$DEPLOY_SHA"
+          test -n "$DEPLOY_RUN_ID"
+          ssh "$ECOMATRIX_USER@$ECOMATRIX_HOST" "DEPLOY_SHA=$DEPLOY_SHA DEPLOY_RUN_ID=$DEPLOY_RUN_ID bash -s" <<'REMOTE'
+          set -euo pipefail
+          base=/srv/lng-web-fe
+          current="$base/current"
+          releases="$base/releases"
+          release="$releases/main-${DEPLOY_SHA:0:12}"
+          staging="$releases/.staging-${DEPLOY_SHA:0:12}-${DEPLOY_RUN_ID}"
+          previous=$(readlink -f "$current" || true)
+
+          cleanup() { rm -rf "$staging"; }
+          trap cleanup EXIT
+
+          if [ -d "$release" ]; then
+            rm -rf "$staging"
+          else
+            test -f "$staging/index.html"
+            mv "$staging" "$release"
+          fi
+
+          expected_hash=$(sha256sum "$release/index.html" | awk '{print $1}')
+          ln -sfn "$release" "$base/current.next"
+          mv -Tf "$base/current.next" "$current"
+
+          served_hash=$(curl -ksS --fail --max-time 10 --resolve ecomatrix.lngmerch.co:443:127.0.0.1 https://ecomatrix.lngmerch.co/ | sha256sum | awk '{print $1}')
+          if [ "$served_hash" != "$expected_hash" ]; then
+            if [ -n "$previous" ]; then
+              ln -sfn "$previous" "$base/current.next"
+              mv -Tf "$base/current.next" "$current"
+            fi
+            exit 1
+          fi
+
+          if [ -n "$previous" ]; then
+            ln -sfn "$previous" "$base/previous.next"
+            mv -Tf "$base/previous.next" "$base/previous"
+          fi
+          trap - EXIT
+          REMOTE
