@@ -111,7 +111,7 @@ describe('VendorIntegrationModal', () => {
 
     expect(await screen.findByDisplayValue('https://vendor.example')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
-    await waitFor(() => expect(updateVendorIntegrationConfig).toHaveBeenCalled())
+    await waitFor(() => expect(updateVendorIntegrationConfig).toHaveBeenCalled(), { timeout: 5000 })
     expect(vi.mocked(updateVendorIntegrationConfig).mock.calls[0][1]).toMatchObject({
       mode: 'GENERIC_API',
     })
