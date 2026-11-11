@@ -16,6 +16,7 @@ vi.mock('@/features/portal/extensions/api/extensionApi', () => ({
   listExtensionManagementAgents: vi.fn(),
   listExtensionCommands: vi.fn(),
   listExtensionOrderSchedules: vi.fn(),
+  listExtensionTrackingSchedules: vi.fn(),
   listExtensionFinanceSchedules: vi.fn(),
   createExtensionCommand: vi.fn(),
   createExtensionToken: vi.fn(),
@@ -103,6 +104,7 @@ describe('ExtensionLogsPage', () => {
     })
 
     vi.mocked(extensionApi.listExtensionOrderSchedules).mockResolvedValue({ items: [] })
+    vi.mocked(extensionApi.listExtensionTrackingSchedules).mockResolvedValue({ items: [] })
     vi.mocked(extensionApi.listExtensionFinanceSchedules).mockResolvedValue({ items: [] })
   })
 

@@ -1030,15 +1030,28 @@ export function ProductionWorkbenchPage({
       return (
         <div className={styles.groupedOrderItems}>
           {orderTasks.map((task, index) => {
+            const rawContext = task.scaleContext as
+              | (Record<string, unknown> & {
+                  variantSnapshot?: { size?: string | null; color?: string | null }
+                  vendorProduct?: { title?: string | null }
+                  size?: string | null
+                  color?: string | null
+                })
+              | undefined
             const variantSummary = [
-              task.scaleContext?.variantSnapshot?.size || task.scaleContext?.size,
-              task.scaleContext?.variantSnapshot?.color || task.scaleContext?.color,
+              task.vendorCostCenter?.standardSize ||
+                rawContext?.variantSnapshot?.size ||
+                rawContext?.size,
+              task.vendorCostCenter?.standardColor ||
+                rawContext?.variantSnapshot?.color ||
+                rawContext?.color,
             ]
               .filter(Boolean)
               .join(' / ')
             const productTitle =
               task.orderItem?.title ||
-              task.scaleContext?.vendorProduct?.title ||
+              task.vendorProduct?.name ||
+              rawContext?.vendorProduct?.title ||
               task.orderItem?.sku ||
               `Item #${index + 1}`
 

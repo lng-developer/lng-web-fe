@@ -1062,7 +1062,7 @@ describe('IntegrationWorkbenchPage', () => {
     expect(within(orderSchedule).getByText('Off')).toBeVisible()
   })
 
-  it('shows all four import types in Automation', async () => {
+  it('shows all schedule types in Automation', async () => {
     vi.mocked(listExtensionManagementAgents).mockResolvedValue({
       items: [
         {
@@ -1085,7 +1085,7 @@ describe('IntegrationWorkbenchPage', () => {
 
     const agentCard = await screen.findByRole('article', { name: 'LNG Amazon US / RDC 1' })
     expect(within(agentCard).getByRole('list')).toBeVisible()
-    expect(within(agentCard).getAllByRole('listitem')).toHaveLength(4)
+    expect(within(agentCard).getAllByRole('listitem')).toHaveLength(5)
     expect(within(agentCard).queryByText('Chrome extension')).not.toBeInTheDocument()
   })
 

@@ -10,6 +10,7 @@ import i18n from '@/shared/i18n/i18n'
 vi.mock('@/features/portal/shipments/api/shipmentApi', () => ({ listShipments: vi.fn() }))
 vi.mock('@/features/portal/integrations/api/integrationApi', () => ({
   createAmazonTrackingSubmission: vi.fn(),
+  listExtensionManagementAgents: vi.fn().mockResolvedValue({ items: [] }),
 }))
 
 describe('TrackingUploadPreviewModal', () => {
