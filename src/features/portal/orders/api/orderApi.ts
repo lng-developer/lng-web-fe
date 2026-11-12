@@ -345,6 +345,15 @@ export async function cancelOrderItem(orderItemId: string, reason: string) {
   return unwrap(await apiClient.post(`/api/orders/items/${orderItemId}/cancel`, { reason }))
 }
 
+export async function recoverOrderItemForVendorRematch(orderItemId: string, reason: string) {
+  return unwrap(
+    await apiClient.post(`/api/orders/items/${orderItemId}/vendor-rematch-recovery`, {
+      externalCancellationConfirmed: true,
+      reason,
+    }),
+  )
+}
+
 export async function createOrderItemReplacement(
   orderItemId: string,
   input: { reason?: string; quantity?: number },
