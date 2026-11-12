@@ -114,6 +114,15 @@ export function CatalogListingWorkbenchPage(props: {
     [account?.permissions, account?.scopes],
   )
 
+  const canRequestPsd = useMemo(
+    () =>
+      Boolean(
+        account?.permissions.includes('DESIGN:PSD_REQUEST') ||
+        account?.scopes.some((scope) => scope.permissions.includes('DESIGN:PSD_REQUEST')),
+      ),
+    [account?.permissions, account?.scopes],
+  )
+
   const openEdit = useCallback(
     async (listing: Listing) => {
       setEditing(listing)
@@ -321,9 +330,9 @@ export function CatalogListingWorkbenchPage(props: {
         width: 100,
         fixed: 'right',
         render: (_, listing) =>
-          canWrite(listing) ? (
+          canWrite(listing) || canRequestPsd ? (
             <Space size={2}>
-              {!listing.defaultPsdTemplateAssetId ? (
+              {(canRequestPsd || canWrite(listing)) && !listing.defaultPsdTemplateAssetId ? (
                 <Tooltip
                   title={t(
                     listing.psdRequested
@@ -350,19 +359,21 @@ export function CatalogListingWorkbenchPage(props: {
                   </span>
                 </Tooltip>
               ) : null}
-              <Tooltip title={t('portal.catalog.edit')}>
-                <Button
-                  type="text"
-                  icon={<EditOutlined />}
-                  aria-label={t('portal.catalog.edit')}
-                  onClick={() => openEdit(listing)}
-                />
-              </Tooltip>
+              {canWrite(listing) ? (
+                <Tooltip title={t('portal.catalog.edit')}>
+                  <Button
+                    type="text"
+                    icon={<EditOutlined />}
+                    aria-label={t('portal.catalog.edit')}
+                    onClick={() => openEdit(listing)}
+                  />
+                </Tooltip>
+              ) : null}
             </Space>
           ) : null,
       },
     ],
-    [canWrite, openEdit, psdSummary, requestDefaultPsd, t],
+    [canRequestPsd, canWrite, openEdit, psdSummary, requestDefaultPsd, t],
   )
 
   const renderExpandedRow = useCallback(

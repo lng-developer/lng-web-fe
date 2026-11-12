@@ -135,6 +135,22 @@ describe('CatalogListingWorkbenchPage', () => {
     expect(document.querySelector('button[aria-label="Request PSD"]')).not.toBeNull()
   }, 15_000)
 
+  it('shows PSD request without catalog write access when the seller has PSD request permission', async () => {
+    const sellerAccount = {
+      permissions: [],
+      scopes: [{ scopeType: 'team', scopeId: 'sales-team', permissions: ['DESIGN:PSD_REQUEST'] }],
+    } as unknown as CurrentAccount
+
+    render(
+      <AppProviders>
+        <CatalogListingWorkbenchPage account={sellerAccount} />
+      </AppProviders>,
+    )
+
+    expect(await screen.findByLabelText('Request default PSD')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Edit listing')).not.toBeInTheDocument()
+  })
+
   it('prefers the editable preview image without replacing the imported product image', async () => {
     render(
       <AppProviders>
