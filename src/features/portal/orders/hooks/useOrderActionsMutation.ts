@@ -4,6 +4,7 @@ import {
   addOrderCaseComment,
   cancelOrderCase,
   cancelOrderItem,
+  recoverOrderItemForVendorRematch,
   createOrderCase,
   createOrderItemReplacement,
   createOrderReplacement,
@@ -50,6 +51,8 @@ export function useOrderActionsMutation({
         return retryCustomizationAssets(action.itemId)
       if (action.kind === 'ready') return markOrderItemFulfillmentReady(action.itemId)
       if (action.kind === 'cancel') return cancelOrderItem(action.itemId, action.reason)
+      if (action.kind === 'vendor-rematch-recovery')
+        return recoverOrderItemForVendorRematch(action.itemId, action.reason)
       if (action.kind === 'replacement') {
         return createOrderItemReplacement(action.itemId, {
           reason: action.reason,
@@ -95,6 +98,7 @@ export function useOrderActionsMutation({
         action.kind === 'note' ||
         action.kind === 'ready' ||
         action.kind === 'cancel' ||
+        action.kind === 'vendor-rematch-recovery' ||
         action.kind === 'replacement'
       ) {
         await queryClient.invalidateQueries({

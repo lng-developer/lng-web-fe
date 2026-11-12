@@ -210,6 +210,17 @@ export const OrderItemPanel = memo(function OrderItemPanel({
         : []),
       ...(canOperate && !terminal
         ? [
+            ...(item.production?.status === 'SENT_TO_VENDOR' && !item.tracking?.trackingNumber
+              ? [
+                  {
+                    key: 'vendor-rematch',
+                    danger: true,
+                    label: 'Reset vendor matching',
+                    onClick: ({ domEvent }: MenuClickInfo) =>
+                      onConfirm(domEvent.target, 'vendor-rematch-recovery', item),
+                  },
+                ]
+              : []),
             {
               key: 'recheck-mapping',
               icon: <ReloadOutlined />,

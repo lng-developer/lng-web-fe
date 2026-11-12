@@ -21,6 +21,7 @@ export type OrderAction =
   | { kind: 'retry-customization-assets'; itemId: string }
   | { kind: 'ready'; itemId: string }
   | { kind: 'cancel'; itemId: string; reason: string }
+  | { kind: 'vendor-rematch-recovery'; itemId: string; reason: string }
   | { kind: 'replacement'; itemId: string; reason: string; quantity: number }
   | {
       kind: 'order-replacement'
@@ -33,7 +34,7 @@ export type OrderAction =
   | { kind: 'case-comment'; orderCase: OrderCase; body: string }
 
 export type OrderItemConfirmation = {
-  kind: 'cancel' | 'replacement'
+  kind: 'cancel' | 'replacement' | 'vendor-rematch-recovery'
   item: OrderWorkbenchItem
 }
 
