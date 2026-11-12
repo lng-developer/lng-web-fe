@@ -7,9 +7,24 @@ export const IMPORT_CSV_EXTENSIONS = ['.csv']
 export const PRODUCT_IMPORT_TEMPLATE_HEADERS = [
   'code',
   'name',
+  'productTypeGroup',
   'minProductionDays',
   'maxProductionDays',
   'externalProductId',
+  'costCenterCode',
+  'size',
+  'color',
+  'standardSize',
+  'standardColor',
+  'sku',
+  'lngCode',
+  'printMethod',
+  'weight',
+  'weightUnit',
+  'width',
+  'length',
+  'height',
+  'dimensionUnit',
   'baseCostAmount',
   'currency',
   'domesticEconomyAmount',
@@ -42,19 +57,93 @@ export const COST_CENTER_IMPORT_TEMPLATE_HEADERS = [
   'dimensionUnit',
   'baseCostAmount',
   'currency',
+  'domesticEconomyAmount',
+  'domesticAdditionalAmount',
+  'internationalEconomyAmount',
+  'internationalAdditionalAmount',
+  'priorityEconomyAmount',
+  'priorityAdditionalAmount',
+  'importTaxAmount',
+  'embroideryAmount',
+  'twoSidedPrintAmount',
+  'twoPositionPrintAmount',
   'status',
 ] as const
 
-export const PRODUCT_IMPORT_SAMPLE_ROW = [
-  'TP-SHIRT',
-  'T-Shirt',
-  '2',
-  '5',
-  'EXT-TSHIRT',
-  '1200',
-  'USD',
-  'ACTIVE',
+export const PRODUCT_IMPORT_SAMPLE_ROWS = [
+  [
+    'TP-SHIRT',
+    'T-Shirt',
+    '',
+    '2',
+    '5',
+    'EXT-TSHIRT',
+    'TP-SHIRT-S-BLACK',
+    'S',
+    'Black',
+    'S',
+    'Black',
+    'TSHIRT-BLK-S',
+    '',
+    'DTG',
+    '0.2',
+    'kg',
+    '10',
+    '12',
+    '0.5',
+    'cm',
+    '12.00',
+    'USD',
+    '4.50',
+    '1.50',
+    '8.00',
+    '3.00',
+    '12.00',
+    '4.00',
+    '0.00',
+    '0.00',
+    '1.50',
+    '1.50',
+    'ACTIVE',
+  ],
+  [
+    'TP-SHIRT',
+    'T-Shirt',
+    '',
+    '2',
+    '5',
+    'EXT-TSHIRT',
+    'TP-SHIRT-M-BLACK',
+    'M',
+    'Black',
+    'M',
+    'Black',
+    'TSHIRT-BLK-M',
+    '',
+    'DTG',
+    '0.25',
+    'kg',
+    '10',
+    '12',
+    '0.5',
+    'cm',
+    '12.00',
+    'USD',
+    '4.50',
+    '1.50',
+    '8.00',
+    '3.00',
+    '12.00',
+    '4.00',
+    '0.00',
+    '0.00',
+    '1.50',
+    '1.50',
+    'ACTIVE',
+  ],
 ] as const
+
+export const PRODUCT_IMPORT_SAMPLE_ROW = PRODUCT_IMPORT_SAMPLE_ROWS[0]
 
 export const COST_CENTER_IMPORT_SAMPLE_ROW = [
   'TC-100',
@@ -71,18 +160,18 @@ export const COST_CENTER_IMPORT_SAMPLE_ROW = [
   '12',
   '0.5',
   'cm',
-  '800',
+  '8.00',
   'USD',
-  '450',
-  '150',
-  '800',
-  '300',
-  '1200',
-  '400',
-  '0',
-  '0',
-  '150',
-  '150',
+  '4.50',
+  '1.50',
+  '8.00',
+  '3.00',
+  '12.00',
+  '4.00',
+  '0.00',
+  '0.00',
+  '1.50',
+  '1.50',
   'ACTIVE',
 ] as const
 
@@ -102,7 +191,7 @@ export const buildImportTemplate = (target: ImportTarget) => {
   const quote = (value: string) => `"${value.replaceAll('"', '""')}"`
 
   if (target.kind === 'product') {
-    return `${PRODUCT_IMPORT_TEMPLATE_HEADERS.join(',')}\n${PRODUCT_IMPORT_SAMPLE_ROW.map(quote).join(',')}`
+    return `${PRODUCT_IMPORT_TEMPLATE_HEADERS.join(',')}\n${PRODUCT_IMPORT_SAMPLE_ROWS.map((row) => row.map(quote).join(',')).join('\n')}`
   }
 
   return `${COST_CENTER_IMPORT_TEMPLATE_HEADERS.join(',')}\n${COST_CENTER_IMPORT_SAMPLE_ROW.map(quote).join(',')}`
@@ -232,6 +321,13 @@ export const parseDecimalField = (value: string | undefined) => {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : Number.NaN
 }
 
+export const parseMoneyField = (value: string | undefined) => {
+  if (!value?.trim()) return undefined
+  const cleaned = value.replace(/[$€£,\s]/g, '').trim()
+  const parsed = Number(cleaned)
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : Number.NaN
+}
+
 export const hasTextValue = (value: string | undefined) => Boolean(value?.trim())
 
 export const appendImportFailure = (
@@ -285,16 +381,23 @@ export async function runProductImport({
 
   for (const [index, row] of rows.entries()) {
     const rowNumber = index + 2
-    const code = getField(row, ['code']) ?? ''
-    const name = getField(row, ['name']) ?? ''
+    const code = getField(row, ['code', 'productcode']) ?? ''
+    const rawName = getField(row, ['name', 'productname']) ?? ''
+    const fallbackRow = rows.find(
+      (r) =>
+        (getField(r, ['code', 'productcode']) || '').toUpperCase() === code.toUpperCase() &&
+        Boolean(getField(r, ['name', 'productname'])),
+    )
+    const name =
+      rawName || (fallbackRow ? getField(fallbackRow, ['name', 'productname']) || '' : '')
     const productTypeGroupId = resolveProductTypeGroupId(row, productTypeGroups)
     const minProductionDaysValue = getField(row, ['minproductiondays'])
     const maxProductionDaysValue = getField(row, ['maxproductiondays'])
-    const baseCostAmountValue = getField(row, ['basecostamount'])
+    const baseCostAmountValue = getField(row, ['basecostamount', 'productbasecostamount'])
     const statusValue = getField(row, ['status']) || ''
     const minProductionDays = parseIntegerField(minProductionDaysValue)
     const maxProductionDays = parseIntegerField(maxProductionDaysValue)
-    const baseCostAmount = parseIntegerField(baseCostAmountValue)
+    const baseCostAmount = parseMoneyField(baseCostAmountValue)
     const status = statusValue ? parseStatus(statusValue) : undefined
 
     if (!code || !name) {
@@ -354,8 +457,33 @@ export async function runProductImport({
       externalProductId: getField(row, ['externalproductid']) || '',
       minProductionDays: minProductionDaysValue || '',
       maxProductionDays: maxProductionDaysValue || '',
+      costCenterCode: getField(row, ['costcentercode', 'code_cc', 'cccode']) || '',
+      costCenterName: getField(row, ['costcentername']) || '',
+      size: getField(row, ['size', 'vendorsize']) || '',
+      color: getField(row, ['color', 'vendorcolor']) || '',
+      standardSize: getField(row, ['standardsize']) || '',
+      standardColor: getField(row, ['standardcolor']) || '',
+      sku: getField(row, ['sku']) || '',
+      lngCode: getField(row, ['lngcode']) || '',
+      printMethod: getField(row, ['printmethod']) || '',
+      weight: getField(row, ['weight']) || '',
+      weightUnit: getField(row, ['weightunit']) || '',
+      width: getField(row, ['width']) || '',
+      length: getField(row, ['length']) || '',
+      height: getField(row, ['height']) || '',
+      dimensionUnit: getField(row, ['dimensionunit']) || '',
       baseCostAmount: baseCostAmountValue || '',
       currency: (getField(row, ['currency']) || 'USD').toUpperCase(),
+      domesticEconomyAmount: getField(row, ['domesticeconomyamount']) || '',
+      domesticAdditionalAmount: getField(row, ['domesticadditionalamount']) || '',
+      internationalEconomyAmount: getField(row, ['internationaleconomyamount']) || '',
+      internationalAdditionalAmount: getField(row, ['internationaladditionalamount']) || '',
+      priorityEconomyAmount: getField(row, ['priorityeconomyamount']) || '',
+      priorityAdditionalAmount: getField(row, ['priorityadditionalamount']) || '',
+      importTaxAmount: getField(row, ['importtaxamount']) || '',
+      embroideryAmount: getField(row, ['embroideryamount']) || '',
+      twoSidedPrintAmount: getField(row, ['twosidedprintamount']) || '',
+      twoPositionPrintAmount: getField(row, ['twopositionprintamount']) || '',
       status: statusValue || '',
     })
   }
@@ -422,7 +550,7 @@ export async function runCostCenterImport({
       ].map((key) => [key, getField(row, [key]) || '']),
     )
     const statusValue = getField(row, ['status']) || ''
-    const baseCostAmount = parseIntegerField(baseCostAmountValue)
+    const baseCostAmount = parseMoneyField(baseCostAmountValue)
     const weight = parseDecimalField(weightValue)
     const width = parseDecimalField(widthValue)
     const length = parseDecimalField(lengthValue)
