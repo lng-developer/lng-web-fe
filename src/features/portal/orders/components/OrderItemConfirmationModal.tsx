@@ -55,12 +55,13 @@ function OrderItemConfirmationModalInner({
   const [quantity, setQuantity] = useState(confirmation.item.item?.quantity || 1)
 
   const isCancel = confirmation.kind === 'cancel'
+  const isVendorRematch = confirmation.kind === 'vendor-rematch-recovery'
 
   const handleOk = () => {
     const itemId = confirmation.item.item?.id ?? ''
-    if (isCancel) {
+    if (isCancel || isVendorRematch) {
       onConfirm({
-        kind: 'cancel',
+        kind: isVendorRematch ? 'vendor-rematch-recovery' : 'cancel',
         itemId,
         reason: reason.trim(),
       })
@@ -78,8 +79,12 @@ function OrderItemConfirmationModalInner({
     <PopupModal
       anchor={anchor}
       open={Boolean(confirmation)}
-      title={t(isCancel ? 'orders.actions.cancelItem' : 'orders.actions.createReplacement')}
-      okButtonProps={{ disabled: isCancel && !reason.trim() }}
+      title={
+        isVendorRematch
+          ? 'Reset vendor matching'
+          : t(isCancel ? 'orders.actions.cancelItem' : 'orders.actions.createReplacement')
+      }
+      okButtonProps={{ disabled: (isCancel || isVendorRematch) && !reason.trim() }}
       confirmLoading={pending}
       onCancel={onClose}
       onOk={handleOk}
@@ -105,6 +110,12 @@ function OrderItemConfirmationModalInner({
           <Typography.Text>{t('orders.fields.reason')}</Typography.Text>
           <Input.TextArea value={reason} onChange={(event) => setReason(event.target.value)} />
         </label>
+        {isVendorRematch ? (
+          <Typography.Text type="warning">
+            Vendor must already be cancelled externally. Production, Scale and QC will restart for
+            the next vendor.
+          </Typography.Text>
+        ) : null}
         {!isCancel ? (
           <label>
             <Typography.Text>{t('orders.fields.quantity')}</Typography.Text>
