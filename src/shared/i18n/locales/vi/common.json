@@ -4121,6 +4121,7 @@
         "waitVendor": "Chờ vendor",
         "limit": "Đang hiển thị {{shown}} / {{total}} shipment.",
         "submitToAmazon": "Gửi {{count}} đơn lên Amazon",
+        "submitToAmazonWithItems": "Gửi {{orderCount}} đơn ({{itemCount}} items) lên Amazon",
         "submitSuccess": "Đã tạo lệnh gửi tracking lên Amazon cho Extension."
       },
       "logsUnavailable": "Không thể tải lịch sử webhook",

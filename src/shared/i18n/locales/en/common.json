@@ -4121,6 +4121,7 @@
         "waitVendor": "Wait for vendor",
         "limit": "Showing {{shown}} of {{total}} shipments.",
         "submitToAmazon": "Submit {{count}} to Amazon",
+        "submitToAmazonWithItems": "Submit {{orderCount}} orders ({{itemCount}} items) to Amazon",
         "submitSuccess": "Tracking submission queued for Amazon Extension."
       },
       "logsUnavailable": "Webhook history is unavailable",
