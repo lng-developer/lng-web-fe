@@ -7,6 +7,9 @@ export type FinanceSnapshot = {
   id: string
   orderId: string
   orderItemId: string
+  productImageUrl?: string | null
+  productTitle?: string | null
+  productSku?: string | null
   shopId?: string | null
   externalOrderId: string | null
   salesChannelCode: string | null

@@ -105,4 +105,73 @@ describe('TrackingUploadPreviewModal', () => {
       expect(onClose).toHaveBeenCalled()
     })
   })
+
+  it('groups multi-item shipments sharing the same tracking number into one row and submits all shipment IDs', async () => {
+    vi.mocked(listShipments).mockResolvedValue({
+      items: [
+        {
+          id: 'shipment-101',
+          shopId: 'shop-1',
+          externalOrderId: '114-0159247-1546624',
+          carrier: 'UPS Mail Innovations',
+          trackingNumber: '92612903108421543475001234',
+          shippedAt: '2026-11-11T00:00:00.000Z',
+          marketplaceConfirmationStatus: 'PENDING',
+        },
+        {
+          id: 'shipment-102',
+          shopId: 'shop-1',
+          externalOrderId: '114-0159247-1546624',
+          carrier: 'UPS Mail Innovations',
+          trackingNumber: '92612903108421543475001234',
+          shippedAt: '2026-11-11T00:00:00.000Z',
+          marketplaceConfirmationStatus: 'PENDING',
+        },
+      ],
+      pagination: { total: 2, page: 1, limit: 100 },
+    } as Awaited<ReturnType<typeof listShipments>>)
+
+    vi.mocked(createAmazonTrackingSubmission).mockResolvedValue({
+      id: 'sub-2',
+      shopId: 'shop-1',
+      agentId: 'agent-1',
+      shipmentIds: ['shipment-101', 'shipment-102'],
+      filename: 'shipping-confirmation-2.txt',
+      rowCount: 1,
+      checksum: 'fake-checksum',
+      status: 'PENDING',
+      createdAt: '2026-11-11T10:00:00.000Z',
+      updatedAt: '2026-11-11T10:00:00.000Z',
+    } as Awaited<ReturnType<typeof createAmazonTrackingSubmission>>)
+
+    const onClose = vi.fn()
+
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <TrackingUploadPreviewModal shopId="shop-1" agentId="agent-1" onClose={onClose} />
+      </QueryClientProvider>,
+    )
+
+    await waitFor(() => expect(screen.getByText('114-0159247-1546624')).toBeVisible())
+    // Should display the 2 items tag
+    expect(screen.getByText('2 items')).toBeVisible()
+
+    // Submit button should indicate 1 order and 2 items
+    const submitButton = screen.getByRole('button', {
+      name: /Submit 1 orders? \(2 items\) to Amazon/i,
+    })
+    expect(submitButton).toBeEnabled()
+    submitButton.click()
+
+    await waitFor(() => {
+      expect(createAmazonTrackingSubmission).toHaveBeenCalledWith({
+        shopId: 'shop-1',
+        agentId: 'agent-1',
+        shipmentIds: ['shipment-101', 'shipment-102'],
+      })
+      expect(onClose).toHaveBeenCalled()
+    })
+  })
 })

@@ -1236,7 +1236,11 @@ export function LegacySidebar({
           aria-label={t('app.name', { defaultValue: 'LNG Web' })}
           title={t('shell.navigation.dashboard', { defaultValue: 'Dashboard' })}
         >
-          <Image src="/assets/images/lng-logo.jpg" preview={false} alt={t('app.name')} />
+          <Image
+            src="https://res.cloudinary.com/dlypxtccj/image/upload/v1794487172/lng-system/media/ECOMATRIX%20Logo-9a27aa02-94f9-4814-a240-bb739f892e89.png"
+            preview={false}
+            alt={t('app.name')}
+          />
         </div>
         {!collapsed && hasHrAccess && (
           <div className={styles.coreSwitch} role="group" aria-label="Core Switcher">

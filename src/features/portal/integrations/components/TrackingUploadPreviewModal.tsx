@@ -22,29 +22,56 @@ import {
   listExtensionManagementAgents,
 } from '@/features/portal/integrations/api/integrationApi'
 
-type PreviewShipment = Pick<
-  Shipment,
-  | 'id'
-  | 'externalOrderId'
-  | 'carrier'
-  | 'trackingNumber'
-  | 'shippedAt'
-  | 'marketplaceConfirmationStatus'
-  | 'marketplaceConfirmedAt'
->
+export interface GroupedPreviewShipment {
+  key: string
+  externalOrderId: string
+  carrier?: string
+  trackingNumber?: string
+  shippedAt?: string | null
+  marketplaceConfirmationStatus?: Shipment['marketplaceConfirmationStatus']
+  marketplaceConfirmedAt?: string | null
+  shipmentIds: string[]
+  itemCount: number
+  rawShipments: Shipment[]
+}
 
-function isReady(shipment: PreviewShipment) {
+function isShipmentReady(
+  shipment: Pick<Shipment, 'externalOrderId' | 'carrier' | 'trackingNumber' | 'shippedAt'>,
+) {
   return Boolean(
     shipment.externalOrderId && shipment.carrier && shipment.trackingNumber && shipment.shippedAt,
   )
 }
 
-function canSelectForUpload(shipment: PreviewShipment) {
+function isGroupReady(group: GroupedPreviewShipment) {
+  return group.rawShipments.every(isShipmentReady)
+}
+
+function canSelectGroupForUpload(group: GroupedPreviewShipment) {
   return (
-    isReady(shipment) &&
-    shipment.marketplaceConfirmationStatus !== 'CONFIRMED' &&
-    shipment.marketplaceConfirmationStatus !== 'SUBMITTED'
+    isGroupReady(group) &&
+    group.rawShipments.some(
+      (s) =>
+        s.marketplaceConfirmationStatus !== 'CONFIRMED' &&
+        s.marketplaceConfirmationStatus !== 'SUBMITTED',
+    )
   )
+}
+
+function getGroupMarketplaceStatus(
+  shipments: Shipment[],
+): Shipment['marketplaceConfirmationStatus'] {
+  if (shipments.length === 0) return undefined
+  if (shipments.every((s) => s.marketplaceConfirmationStatus === 'CONFIRMED')) {
+    return 'CONFIRMED'
+  }
+  if (shipments.some((s) => s.marketplaceConfirmationStatus === 'SUBMITTED')) {
+    return 'SUBMITTED'
+  }
+  if (shipments.some((s) => s.marketplaceConfirmationStatus === 'FAILED')) {
+    return 'FAILED'
+  }
+  return shipments[0].marketplaceConfirmationStatus
 }
 
 function formatShipDate(dateValue?: string | Date | null) {
@@ -102,31 +129,75 @@ export function TrackingUploadPreviewModal({
 
   const allItems = useMemo(() => shipments.data?.items ?? [], [shipments.data?.items])
 
+  const groupedShipments = useMemo(() => {
+    const map = new Map<string, GroupedPreviewShipment>()
+    for (const item of allItems) {
+      const groupKey =
+        item.externalOrderId && item.trackingNumber
+          ? `${item.externalOrderId}__${item.trackingNumber}`
+          : item.id
+
+      const existing = map.get(groupKey)
+      if (!existing) {
+        map.set(groupKey, {
+          key: groupKey,
+          externalOrderId: item.externalOrderId || '-',
+          carrier: item.carrier || undefined,
+          trackingNumber: item.trackingNumber || undefined,
+          shippedAt: item.shippedAt,
+          marketplaceConfirmationStatus: item.marketplaceConfirmationStatus,
+          marketplaceConfirmedAt: item.marketplaceConfirmedAt,
+          shipmentIds: [item.id],
+          itemCount: 1,
+          rawShipments: [item],
+        })
+      } else {
+        existing.shipmentIds.push(item.id)
+        existing.rawShipments.push(item)
+        existing.itemCount += 1
+        existing.marketplaceConfirmationStatus = getGroupMarketplaceStatus(existing.rawShipments)
+      }
+    }
+    return Array.from(map.values())
+  }, [allItems])
+
   const pendingCount = useMemo(
-    () => allItems.filter((s) => s.marketplaceConfirmationStatus !== 'CONFIRMED').length,
-    [allItems],
+    () => groupedShipments.filter((g) => g.marketplaceConfirmationStatus !== 'CONFIRMED').length,
+    [groupedShipments],
   )
   const confirmedCount = useMemo(
-    () => allItems.filter((s) => s.marketplaceConfirmationStatus === 'CONFIRMED').length,
-    [allItems],
+    () => groupedShipments.filter((g) => g.marketplaceConfirmationStatus === 'CONFIRMED').length,
+    [groupedShipments],
   )
-  const totalCount = allItems.length
+  const totalCount = groupedShipments.length
 
   const displayedShipments = useMemo(() => {
     if (filterMode === 'PENDING') {
-      return allItems.filter((s) => s.marketplaceConfirmationStatus !== 'CONFIRMED')
+      return groupedShipments.filter((g) => g.marketplaceConfirmationStatus !== 'CONFIRMED')
     }
     if (filterMode === 'CONFIRMED') {
-      return allItems.filter((s) => s.marketplaceConfirmationStatus === 'CONFIRMED')
+      return groupedShipments.filter((g) => g.marketplaceConfirmationStatus === 'CONFIRMED')
     }
-    return allItems
-  }, [allItems, filterMode])
+    return groupedShipments
+  }, [groupedShipments, filterMode])
 
-  const readyShipmentIds = useMemo(
-    () => allItems.filter(canSelectForUpload).map((s) => s.id),
-    [allItems],
+  const readyGroupKeys = useMemo(
+    () => groupedShipments.filter(canSelectGroupForUpload).map((g) => g.key),
+    [groupedShipments],
   )
-  const selectedRowKeys = selectedKeysOverride ?? readyShipmentIds
+  const selectedRowKeys = selectedKeysOverride ?? readyGroupKeys
+
+  const selectedGroups = useMemo(() => {
+    const keySet = new Set(selectedRowKeys)
+    return groupedShipments.filter((g) => keySet.has(g.key))
+  }, [groupedShipments, selectedRowKeys])
+
+  const selectedShipmentIds = useMemo(() => {
+    return selectedGroups.flatMap((g) => g.shipmentIds)
+  }, [selectedGroups])
+
+  const readyOrderCount = selectedGroups.length
+  const readyItemCount = selectedShipmentIds.length
 
   const submitMutation = useMutation({
     mutationFn: (shipmentIds: string[]) => {
@@ -148,12 +219,17 @@ export function TrackingUploadPreviewModal({
     },
   })
 
-  const columns: TableColumnsType<PreviewShipment> = [
+  const columns: TableColumnsType<GroupedPreviewShipment> = [
     {
       title: t('portal.shipments.trackingPreview.orderId', { defaultValue: 'Order ID' }),
       dataIndex: 'externalOrderId',
-      render: (value) => (
-        <Typography.Text copyable={Boolean(value)}>{value || '-'}</Typography.Text>
+      render: (value, record) => (
+        <Space size={6} align="center">
+          <Typography.Text copyable={Boolean(value && value !== '-')}>
+            {value || '-'}
+          </Typography.Text>
+          {record.itemCount > 1 ? <Tag color="blue">{record.itemCount} items</Tag> : null}
+        </Space>
       ),
     },
     {
@@ -178,17 +254,17 @@ export function TrackingUploadPreviewModal({
     {
       title: t('portal.shipments.trackingPreview.status', { defaultValue: 'Status' }),
       width: 170,
-      render: (_, shipment) => {
-        if (shipment.marketplaceConfirmationStatus === 'CONFIRMED') {
+      render: (_, record) => {
+        if (record.marketplaceConfirmationStatus === 'CONFIRMED') {
           return <Tag color="success">✓ Confirmed</Tag>
         }
-        if (shipment.marketplaceConfirmationStatus === 'SUBMITTED') {
+        if (record.marketplaceConfirmationStatus === 'SUBMITTED') {
           return <Tag color="processing">⏳ Submitted</Tag>
         }
-        if (shipment.marketplaceConfirmationStatus === 'FAILED') {
+        if (record.marketplaceConfirmationStatus === 'FAILED') {
           return <Tag color="error">Upload Failed</Tag>
         }
-        return isReady(shipment) ? (
+        return isGroupReady(record) ? (
           <Tag color="cyan">Ready to upload</Tag>
         ) : (
           <Tag color="warning">Missing Info</Tag>
@@ -196,8 +272,6 @@ export function TrackingUploadPreviewModal({
       },
     },
   ]
-
-  const readyCount = selectedRowKeys.length
 
   return (
     <Modal
@@ -208,13 +282,19 @@ export function TrackingUploadPreviewModal({
             <Button
               type="primary"
               loading={submitMutation.isPending}
-              disabled={readyCount === 0}
-              onClick={() => submitMutation.mutate(selectedRowKeys)}
+              disabled={readyOrderCount === 0}
+              onClick={() => submitMutation.mutate(selectedShipmentIds)}
             >
-              {t('portal.shipments.trackingPreview.submitToAmazon', {
-                count: readyCount,
-                defaultValue: `Submit ${readyCount} to Amazon`,
-              })}
+              {readyItemCount > readyOrderCount
+                ? t('portal.shipments.trackingPreview.submitToAmazonWithItems', {
+                    orderCount: readyOrderCount,
+                    itemCount: readyItemCount,
+                    defaultValue: `Submit ${readyOrderCount} orders (${readyItemCount} items) to Amazon`,
+                  })
+                : t('portal.shipments.trackingPreview.submitToAmazon', {
+                    count: readyOrderCount,
+                    defaultValue: `Submit ${readyOrderCount} to Amazon`,
+                  })}
             </Button>
           ) : null}
         </Space>
@@ -279,23 +359,25 @@ export function TrackingUploadPreviewModal({
           ]}
         />
         <Typography.Text type="secondary">
-          {readyCount} đơn được chọn để gửi lên Amazon
+          {readyItemCount > readyOrderCount
+            ? `${readyOrderCount} đơn (${readyItemCount} items) được chọn để gửi lên Amazon`
+            : `${readyOrderCount} đơn được chọn để gửi lên Amazon`}
         </Typography.Text>
       </div>
 
-      <Table<PreviewShipment>
+      <Table<GroupedPreviewShipment>
         columns={columns}
         dataSource={displayedShipments}
         loading={shipments.isLoading}
         pagination={false}
-        rowKey="id"
+        rowKey="key"
         rowSelection={
           effectiveAgentId
             ? {
                 selectedRowKeys,
                 onChange: (keys) => setSelectedKeysOverride(keys as string[]),
                 getCheckboxProps: (record) => ({
-                  disabled: !canSelectForUpload(record),
+                  disabled: !canSelectGroupForUpload(record),
                 }),
               }
             : undefined
