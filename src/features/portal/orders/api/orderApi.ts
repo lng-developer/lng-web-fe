@@ -6,6 +6,7 @@ export type OrderWorkbenchParams = {
   page: number
   limit: number
   tab?: string
+  stage?: string
   search?: string
   shopId?: string
   vendorId?: string
