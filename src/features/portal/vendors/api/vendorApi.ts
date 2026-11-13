@@ -428,3 +428,60 @@ export async function refreshVendorIntegrationCredential(
     Pick<VendorIntegrationConfig, 'authType' | 'baseUrl' | 'expiresAt' | 'providerKey' | 'status'>
   >(await apiClient.post(`/api/vendors/${vendorId}/integration/refresh`, input))
 }
+
+export type VendorUnifiedImportSummary = {
+  total: number
+  created: number
+  createdProducts: number
+  updatedProducts: number
+  createdCostCenters: number
+  updatedCostCenters: number
+  failed: string[]
+}
+
+export type MerchizeCatalogVariant = {
+  _id?: string
+  sku: string
+  attributes?: Array<{ name?: string; type?: string; value_text?: string; value?: string }>
+  tiers?: Array<{ name: string; price: number }>
+  shipping_prices?: Array<{ to_zone: string; first_item: number; additional_item: number }>
+}
+
+export type MerchizeCatalogProduct = {
+  _id?: string
+  sku: string
+  title: string
+  printing_methods?: string[]
+  fulfillment_location?: { name?: string; code?: string }
+  mockup_and_templates_link?: string
+  variants?: MerchizeCatalogVariant[]
+}
+
+export type MerchizeCatalogResponse = {
+  items: MerchizeCatalogProduct[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+  }
+}
+
+export async function fetchMerchizeCatalog(
+  vendorId: string,
+  query: { q?: string; page?: number; limit?: number },
+) {
+  return unwrap<MerchizeCatalogResponse>(
+    await apiClient.get(`/api/vendors/${vendorId}/integration/merchize/catalog`, {
+      params: query,
+    }),
+  )
+}
+
+export async function importMerchizeCatalogProducts(
+  vendorId: string,
+  payload: { products: MerchizeCatalogProduct[]; tierName?: string },
+) {
+  return unwrap<VendorUnifiedImportSummary>(
+    await apiClient.post(`/api/vendors/${vendorId}/integration/merchize/catalog/import`, payload),
+  )
+}
