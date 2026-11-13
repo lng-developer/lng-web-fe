@@ -429,6 +429,16 @@ export async function refreshVendorIntegrationCredential(
   >(await apiClient.post(`/api/vendors/${vendorId}/integration/refresh`, input))
 }
 
+export type VendorUnifiedImportSummary = {
+  total: number
+  created: number
+  createdProducts: number
+  updatedProducts: number
+  createdCostCenters: number
+  updatedCostCenters: number
+  failed: string[]
+}
+
 export type MerchizeCatalogVariant = {
   _id?: string
   sku: string
