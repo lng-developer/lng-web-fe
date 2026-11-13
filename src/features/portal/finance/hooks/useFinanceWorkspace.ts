@@ -47,6 +47,7 @@ export const useFinanceWorkspace = ({
       sellerEmployeeCode,
       teamId,
       departmentId,
+      dateBasis: 'ORDERED_AT',
       ...dates,
     }),
     [

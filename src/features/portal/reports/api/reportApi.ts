@@ -145,6 +145,15 @@ export type AdsSellerDaily = Omit<
   sellerName: string | null
 }
 
+export type OrderItemThumbnail = {
+  orderItemId: string
+  title: string | null
+  sku: string | null
+  asin: string | null
+  quantity: number
+  imageUrl: string | null
+}
+
 export type OrderProfitability = {
   orderId: string | null
   externalOrderId: string | null
@@ -154,6 +163,15 @@ export type OrderProfitability = {
   salesChannelCode: string | null
   marketplaceCode: string | null
   currency: string | null
+  sellerEmployeeCode?: string | null
+  sellerName?: string | null
+  teamId?: string | null
+  teamName?: string | null
+  departmentName?: string | null
+  productImageUrl?: string | null
+  productTitle?: string | null
+  productSku?: string | null
+  itemThumbnails?: OrderItemThumbnail[]
   itemCount: number
   revenueAmount: number
   netRevenueAmount?: number

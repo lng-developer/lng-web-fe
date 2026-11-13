@@ -4,11 +4,12 @@ import {
   DollarCircleOutlined,
   InboxOutlined,
   ReloadOutlined,
+  PictureOutlined,
   RiseOutlined,
   WalletOutlined,
 } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Alert, Button, Space, Spin, Timeline, Typography } from 'antd'
+import { Alert, Button, Image, Space, Spin, Timeline, Typography } from 'antd'
 
 import { DetailDrawer, FormattedDateTime, humanizeCode, MetricCard, StatusTag } from '@/shared/ui'
 
@@ -17,7 +18,7 @@ import styles from '../pages/FinanceWorkspacePage.module.scss'
 import { formatFinanceMoney } from './financeFormatters'
 
 interface FinanceOrderDetailModalProps {
-  selectedOrder?: FinanceSnapshot
+  selectedOrder?: (Pick<FinanceSnapshot, 'orderId'> & Partial<FinanceSnapshot>) | null
   canWrite: boolean
   isRecalculatingOrder: boolean
   isRecalculatingItem: boolean
@@ -199,9 +200,49 @@ export const FinanceOrderDetailModal: React.FC<FinanceOrderDetailModalProps> = (
           {orderDetail.data.snapshots.map((snapshot, index) => (
             <section key={snapshot.orderItemId} className={styles.itemBreakdown}>
               <div className={styles.itemHeader}>
-                <Typography.Title level={5}>
-                  {t('finance.detail.item', { number: index + 1 })}
-                </Typography.Title>
+                <Space align="center" size={12}>
+                  {snapshot.productImageUrl ? (
+                    <Image
+                      src={snapshot.productImageUrl}
+                      alt={snapshot.productTitle || ''}
+                      width={44}
+                      height={44}
+                      style={{
+                        objectFit: 'cover',
+                        borderRadius: 6,
+                        border: '1px solid #e5e7eb',
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: 6,
+                        background: '#f3f4f6',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#9ca3af',
+                        fontSize: 18,
+                        border: '1px solid #e5e7eb',
+                      }}
+                    >
+                      <PictureOutlined />
+                    </div>
+                  )}
+                  <Space orientation="vertical" size={2}>
+                    <Typography.Title level={5} style={{ margin: 0 }}>
+                      {t('finance.detail.item', { number: index + 1 })}:{' '}
+                      {snapshot.productTitle || 'Custom Product'}
+                    </Typography.Title>
+                    {snapshot.productSku ? (
+                      <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                        SKU: {snapshot.productSku}
+                      </Typography.Text>
+                    ) : null}
+                  </Space>
+                </Space>
                 <Space wrap>
                   <StatusTag
                     status={snapshot.financialStatus === 'ACTIVE' ? 'operational' : 'warning'}

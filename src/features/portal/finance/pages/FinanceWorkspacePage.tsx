@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData, useSearchParams } from 'react-router-dom'
-import { DownloadOutlined } from '@ant-design/icons'
+import { DownloadOutlined, EyeOutlined, PictureOutlined } from '@ant-design/icons'
 import type { TableColumnsType } from 'antd'
-import { Button, Select, Space, Tooltip, Typography } from 'antd'
+import { Button, Image, Select, Space, Tooltip, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
@@ -162,8 +162,58 @@ export const FinanceWorkspacePage = ({
     () => [
       {
         title: t('finance.columns.order'),
-        width: 140,
-        render: (_, row) => <CopyableOrderId strong value={row.externalOrderId} />,
+        width: 190,
+        render: (_, row) => (
+          <Space align="start" size={8}>
+            {row.productImageUrl ? (
+              <Image
+                src={row.productImageUrl}
+                alt={row.productTitle || row.externalOrderId || ''}
+                width={38}
+                height={38}
+                style={{
+                  objectFit: 'cover',
+                  borderRadius: 6,
+                  border: '1px solid #e5e7eb',
+                }}
+                preview={{
+                  mask: <EyeOutlined style={{ fontSize: 12 }} />,
+                }}
+                onClick={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <div
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 6,
+                  background: '#f3f4f6',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#9ca3af',
+                  fontSize: 16,
+                  border: '1px solid #e5e7eb',
+                  flexShrink: 0,
+                }}
+              >
+                <PictureOutlined />
+              </div>
+            )}
+            <Space orientation="vertical" size={2} style={{ minWidth: 0 }}>
+              <CopyableOrderId strong value={row.externalOrderId} />
+              {row.productTitle ? (
+                <Typography.Text
+                  ellipsis
+                  style={{ fontSize: 11, maxWidth: 130 }}
+                  title={row.productTitle}
+                >
+                  {row.productTitle}
+                </Typography.Text>
+              ) : null}
+            </Space>
+          </Space>
+        ),
       },
       {
         title: t('finance.columns.channel'),
