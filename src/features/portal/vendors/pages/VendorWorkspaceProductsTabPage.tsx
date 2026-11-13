@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import {
   AppstoreOutlined,
+  CloudDownloadOutlined,
   CopyOutlined,
   EditOutlined,
   PlusOutlined,
@@ -45,6 +46,8 @@ interface VendorWorkspaceProductsTabPageProps {
   readonly onProductsPageChange: (page: number, pageSize: number) => void
   readonly onAddProduct: (vendorId: string) => void
   readonly onOpenProductImport: (vendorId: string | undefined) => void
+  readonly onOpenMerchizeSync?: (vendorId: string) => void
+  readonly isMerchizeSelected?: boolean
   readonly onEditProduct: (product: VendorProduct) => void
   readonly onCloneProduct: (
     product: VendorProduct,
@@ -76,6 +79,8 @@ export function VendorWorkspaceProductsTabPage({
   onProductsPageChange,
   onAddProduct,
   onOpenProductImport,
+  onOpenMerchizeSync,
+  isMerchizeSelected,
   onEditProduct,
   onCloneProduct,
   cloneVendorOptions,
@@ -282,6 +287,16 @@ export function VendorWorkspaceProductsTabPage({
               <Button icon={<UploadOutlined />} onClick={() => onOpenProductImport(vendorFilter)}>
                 {t('portal.vendors.importProducts')}
               </Button>
+              {isMerchizeSelected && onOpenMerchizeSync ? (
+                <Button
+                  icon={<CloudDownloadOutlined />}
+                  onClick={() => onOpenMerchizeSync(vendorFilter)}
+                >
+                  {t('portal.vendors.merchize.syncAction', {
+                    defaultValue: 'Sync Merchize Catalog',
+                  })}
+                </Button>
+              ) : null}
             </Space>
           </div>
         ) : null}
