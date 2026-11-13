@@ -29,6 +29,7 @@ import {
 import { vendorKeys } from '../api/vendorKeys'
 import { VendorCsvImportModal } from '../components/VendorCsvImportModal'
 import { VendorCatalogImportModal } from '../components/VendorCatalogImportModal'
+import { MerchizeCatalogSyncModal } from '../components/MerchizeCatalogSyncModal'
 import type { ImportTarget } from '../components/vendorCsvUtils'
 import {
   useVendorMetricsQuery,
@@ -89,6 +90,7 @@ export const VendorWorkspacePage = () => {
   const [productTypeGroupFilter, setProductTypeGroupFilter] = useState<string>()
   const [importTarget, setImportTarget] = useState<ImportTarget>()
   const [catalogImportOpen, setCatalogImportOpen] = useState(false)
+  const [merchizeSyncVendorId, setMerchizeSyncVendorId] = useState<string>()
   const showFeedbackToast = useFeedbackToast()
 
   const closeEditor = () => {
@@ -329,6 +331,16 @@ export const VendorWorkspacePage = () => {
             onOpenProductImport={(vendorId) =>
               setImportTarget(vendorId ? { kind: 'product', vendorId } : undefined)
             }
+            onOpenMerchizeSync={(vendorId) => setMerchizeSyncVendorId(vendorId)}
+            isMerchizeSelected={Boolean(
+              productVendorFilter &&
+              vendors.data?.items.some(
+                (v) =>
+                  v.id === productVendorFilter &&
+                  (v.providerKey?.toUpperCase() === 'MERCHIZE' ||
+                    v.code?.toUpperCase().includes('MERCHIZE')),
+              ),
+            )}
             onEditProduct={(product) =>
               setEditor({ kind: 'product', item: product, vendorId: product.vendor?.id ?? '' })
             }
@@ -410,6 +422,13 @@ export const VendorWorkspacePage = () => {
         open={catalogImportOpen}
         onClose={() => setCatalogImportOpen(false)}
       />
+      {merchizeSyncVendorId ? (
+        <MerchizeCatalogSyncModal
+          open={Boolean(merchizeSyncVendorId)}
+          vendorId={merchizeSyncVendorId}
+          onClose={() => setMerchizeSyncVendorId(undefined)}
+        />
+      ) : null}
     </section>
   )
 }
