@@ -14,7 +14,7 @@ import {
 } from '@ant-design/icons'
 import { Button, Descriptions, Dropdown, type MenuProps, Space, Tooltip, Typography } from 'antd'
 
-import { AuthenticatedMediaImage, downloadMediaAsset } from '@/shared/media'
+import { AuthenticatedMediaImage, downloadMediaAsset, downloadMediaAssets } from '@/shared/media'
 import {
   CopyableAsin,
   CopyableListingId,
@@ -167,6 +167,42 @@ export const OrderItemPanel = memo(function OrderItemPanel({
       ? t('orders.actions.recheckProductionNeedsMapping')
       : t('orders.actions.recheckProductionShort')
 
+  const scaledOutputs = useMemo(() => {
+    if (item.production?.scaledOutputs && item.production.scaledOutputs.length > 0) {
+      return item.production.scaledOutputs.filter((out) =>
+        Boolean(out.outputAssetDownloadUrl || out.outputAssetId),
+      )
+    }
+    const fromQcChecks = (item.production?.qcPreviewFileChecks ?? [])
+      .filter((c) => Boolean(c.outputAssetDownloadUrl || c.outputAssetId))
+      .map((c) => ({
+        id: c.id,
+        slotKey: c.slotKey,
+        slotLabel: c.slotLabel || c.slotKey || 'Output',
+        outputAssetId: c.outputAssetId,
+        outputAssetDownloadUrl:
+          c.outputAssetDownloadUrl ||
+          (c.outputAssetId ? `/api/media/assets/${c.outputAssetId}/download` : null),
+        scaleStatus: c.scaleStatus,
+        qcStatus: c.qcStatus,
+      }))
+    if (fromQcChecks.length > 0) return fromQcChecks
+    const fromScaleSlots = (item.production?.scaleContext?.use?.scaleSlots ?? [])
+      .filter((s) => Boolean(s.outputAssetDownloadUrl || s.outputAssetId))
+      .map((s) => ({
+        id: (s as { fileCheckId?: string | null }).fileCheckId,
+        slotKey: s.slotKey,
+        slotLabel: s.slotLabel || s.slotKey || 'Output',
+        outputAssetId: s.outputAssetId,
+        outputAssetDownloadUrl:
+          s.outputAssetDownloadUrl ||
+          (s.outputAssetId ? `/api/media/assets/${s.outputAssetId}/download` : null),
+        scaleStatus: s.scaleStatus,
+        qcStatus: s.qcStatus,
+      }))
+    return fromScaleSlots
+  }, [item.production])
+
   const relatedImages = useMemo(
     () =>
       Array.from(
@@ -175,16 +211,18 @@ export const OrderItemPanel = memo(function OrderItemPanel({
           customizationImage,
           ...artworkImages.map((image) => image?.assetDownloadUrl),
           ...customizationInputs.map((input) => input?.assetDownloadUrl),
+          ...scaledOutputs.map((output) => output.outputAssetDownloadUrl),
         ]),
       )
         .filter((image): image is string => Boolean(image))
-        .slice(0, 5),
-    [artworkImages, customizationPreview, customizationImage, customizationInputs],
+        .slice(0, 10),
+    [artworkImages, customizationPreview, customizationImage, customizationInputs, scaledOutputs],
   )
 
   const customizationValueInputs = customizationInputs.filter((input) => !input?.assetDownloadUrl)
   const [showAllCustomizations, setShowAllCustomizations] = useState(false)
   const [isArtworkExpanded, setIsArtworkExpanded] = useState(false)
+  const [isScaledOutputExpanded, setIsScaledOutputExpanded] = useState(false)
   const CUSTOMIZATION_PREVIEW_LIMIT = 8
   const shouldCollapseCustomizations = customizationValueInputs.length > CUSTOMIZATION_PREVIEW_LIMIT
   const visibleCustomizationInputs =
@@ -359,16 +397,122 @@ export const OrderItemPanel = memo(function OrderItemPanel({
             ) : null}
           </div>
         ) : null}
-        <StatusTag status={orderStatusTone(psdStatus)}>PSD {displayValue(psdStatus)}</StatusTag>
-        {psdDownloadUrl ? (
-          <Button
-            size="small"
-            icon={<DownloadOutlined />}
-            onClick={() => void downloadMediaAsset(psdDownloadUrl, 'template.psd')}
-          >
-            PSD
-          </Button>
+        {scaledOutputs.length > 0 ? (
+          <div className={styles.artworkCollapsible}>
+            <button
+              type="button"
+              className={styles.artworkToggle}
+              onClick={() => setIsScaledOutputExpanded((current) => !current)}
+              aria-expanded={isScaledOutputExpanded}
+            >
+              <RightOutlined
+                className={styles.artworkToggleIcon}
+                style={{
+                  transform: isScaledOutputExpanded ? 'rotate(90deg)' : 'none',
+                  transition: 'transform 150ms ease',
+                }}
+              />
+              <span className={styles.artworkToggleLabel}>
+                {t('orders.fields.scaledOutputs', { defaultValue: 'File output scale' })} (
+                {scaledOutputs.length})
+              </span>
+            </button>
+            {isScaledOutputExpanded ? (
+              <div className={styles.artworkImages}>
+                {scaledOutputs.map((output, idx) => {
+                  const url = output.outputAssetDownloadUrl
+                  if (!url) return null
+                  const label = output.slotLabel || output.slotKey || `Output ${idx + 1}`
+                  const filename = `${output.slotKey || 'scaled-output'}.png`
+                  return (
+                    <div
+                      key={output.id || output.outputAssetId || output.slotKey || idx}
+                      style={{ display: 'grid', gap: 4 }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: 8,
+                        }}
+                      >
+                        <Typography.Text type="secondary" style={{ fontSize: 11 }}>
+                          {label}
+                        </Typography.Text>
+                        <Tooltip title={t('common.actions.download', { defaultValue: 'Download' })}>
+                          <Button
+                            type="text"
+                            size="small"
+                            icon={<DownloadOutlined />}
+                            style={{ height: 20, padding: '0 4px', fontSize: 11 }}
+                            onClick={() => void downloadMediaAsset(url, filename)}
+                          />
+                        </Tooltip>
+                      </div>
+                      <AuthenticatedMediaImage
+                        width={112}
+                        height={112}
+                        downloadUrl={url}
+                        alt={label}
+                        style={{ cursor: 'zoom-in' }}
+                        onClick={(event) => onOpenImageViewer(event, url, relatedImages)}
+                        fallback="/assets/images/favicon.svg"
+                      />
+                    </div>
+                  )
+                })}
+              </div>
+            ) : null}
+          </div>
         ) : null}
+        <StatusTag status={orderStatusTone(psdStatus)}>PSD {displayValue(psdStatus)}</StatusTag>
+        <Space wrap size={4}>
+          {psdDownloadUrl ? (
+            <Button
+              size="small"
+              icon={<DownloadOutlined />}
+              onClick={() => void downloadMediaAsset(psdDownloadUrl, 'template.psd')}
+            >
+              PSD
+            </Button>
+          ) : null}
+          {scaledOutputs.length === 1 && scaledOutputs[0].outputAssetDownloadUrl ? (
+            <Button
+              size="small"
+              icon={<DownloadOutlined />}
+              onClick={() =>
+                void downloadMediaAsset(
+                  scaledOutputs[0].outputAssetDownloadUrl!,
+                  `${scaledOutputs[0].slotKey || 'scaled-output'}.png`,
+                )
+              }
+            >
+              Scale
+            </Button>
+          ) : null}
+          {scaledOutputs.length > 1 ? (
+            <Button
+              size="small"
+              icon={<DownloadOutlined />}
+              onClick={() =>
+                void downloadMediaAssets(
+                  scaledOutputs
+                    .filter((out): out is typeof out & { outputAssetDownloadUrl: string } =>
+                      Boolean(out.outputAssetDownloadUrl),
+                    )
+                    .map((out) => ({
+                      downloadUrl: out.outputAssetDownloadUrl,
+                      filename: `${out.slotKey || 'scaled-output'}.png`,
+                    })),
+                  `scale-outputs-${item.item?.sku || 'order'}.zip`,
+                )
+              }
+            >
+              Scale ({scaledOutputs.length})
+            </Button>
+          ) : null}
+        </Space>
       </section>
       <section className={styles.identifierSection}>
         <Typography.Text strong>{t('orders.sections.skuSeller')}</Typography.Text>
