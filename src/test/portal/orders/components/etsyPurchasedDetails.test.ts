@@ -93,6 +93,19 @@ it('does not truncate a variation value that contains a comma', () => {
   expect(result.originals).toEqual([raw])
 })
 
+it('splits Etsy choose-option variations into separate rows', () => {
+  const result = getEtsyPurchasedDetails(
+    'Choose Your Size: 4 INCHES, Choose Design: Santa Gifts',
+    [],
+  )
+
+  expect(result.options).toEqual([
+    { label: 'Choose Your Size', value: '4 INCHES' },
+    { label: 'Choose Design', value: 'Santa Gifts' },
+  ])
+  expect(result.personalizations).toEqual([])
+})
+
 it('handles custom personalization labels such as Enter Your Name in inputs', () => {
   const result = getEtsyPurchasedDetails(
     'Choose Size: 4 Inches, Number Name: 2 Name, Enter Your Name: The Hansen’s, Bryce, Kyleigh, 2026',

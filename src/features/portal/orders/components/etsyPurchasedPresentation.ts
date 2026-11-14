@@ -43,7 +43,7 @@ export function getEtsyPurchasedDetails(variations: string | null | undefined, i
     const optionText = personalization ? raw.slice(0, personalization.index) : raw
     const optionMatches = optionText
       .split(',')
-      .map((part) => /^\s*(sizes?|border(?: colou?r)?|colou?r)\s*:\s*([^:]+?)\s*$/i.exec(part))
+      .map((part) => /^\s*([^,:]+?)\s*:\s*(.+?)\s*$/i.exec(part))
     if (optionMatches.every((match) => match !== null)) {
       for (const match of optionMatches) addOption(match![1], match![2])
     }
