@@ -455,8 +455,8 @@
 .itemPanel {
   display: grid;
   grid-template-columns:
-    minmax(175px, 0.9fr) minmax(150px, 0.95fr) minmax(250px, 1.1fr) minmax(150px, 0.65fr)
-    minmax(150px, 0.9fr) minmax(170px, 1fr) 48px;
+    minmax(240px, 1.1fr) minmax(150px, 0.95fr) minmax(250px, 1.1fr) minmax(130px, 0.65fr)
+    minmax(140px, 0.9fr) minmax(160px, 1fr) 48px;
   gap: 16px;
   padding: 16px;
   border: 1px solid var(--ant-color-border);
@@ -523,6 +523,26 @@
 .assetColumn :global(.ant-image-img) {
   object-fit: cover;
   border-radius: 8px;
+}
+.assetRow {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 10px;
+  align-items: flex-start;
+}
+.assetImageBlock {
+  display: grid;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+.assetImageBlock :global(.ant-typography) {
+  font-size: 12px;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 104px;
 }
 .artworkCollapsible {
   display: grid;
@@ -737,7 +757,7 @@
 @container (max-width: 1500px) {
   .itemPanel {
     grid-template-columns:
-      minmax(175px, 0.9fr) minmax(170px, 1fr) minmax(250px, 1.2fr) minmax(170px, 0.9fr)
+      minmax(240px, 1fr) minmax(170px, 1fr) minmax(250px, 1.2fr) minmax(170px, 0.9fr)
       48px;
   }
   .addressEditor {
