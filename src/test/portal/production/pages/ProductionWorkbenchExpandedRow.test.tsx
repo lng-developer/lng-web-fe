@@ -101,7 +101,11 @@ describe('ProductionWorkbenchExpandedRow', () => {
     })
 
     expect(screen.getByText('Variant selections')).toBeVisible()
-    expect(screen.getByText('Choose Your Size: 4 INCHES, Choose Design: Santa Gifts')).toBeVisible()
+    expect(screen.getByText('Choose Your Size: 4 INCHES')).toBeVisible()
+    expect(screen.getByText('Choose Design: Santa Gifts')).toBeVisible()
+    expect(
+      screen.queryByText('Choose Your Size: 4 INCHES, Choose Design: Santa Gifts'),
+    ).not.toBeInTheDocument()
     expect(screen.getByText('0 Customer inputs')).toBeVisible()
   })
 
