@@ -143,3 +143,50 @@ it('keeps Amazon identity and customization in the existing panel', async () => 
   expect(screen.getByText('Alice')).toBeInTheDocument()
   expect(screen.queryByRole('region', { name: 'Customer selection' })).not.toBeInTheDocument()
 })
+
+it('renders scale output directly as an image like main listing image', async () => {
+  await i18n.changeLanguage('vi')
+  const onOpenImageViewer = vi.fn()
+  const item = {
+    item: { id: 'item-scaled', salesChannelCode: 'AMAZON', asin: 'B0HQN286S5', quantity: 1 },
+    workflow: { nextActions: [], blockers: [] },
+    pricing: {},
+    production: {
+      status: 'QC_PENDING',
+      scaleStatus: 'SCALED',
+      scaledOutputs: [
+        {
+          id: 'scale-1',
+          slotKey: 'FRONT',
+          slotLabel: 'Front',
+          outputAssetId: 'asset-front',
+          outputAssetDownloadUrl: '/api/media/assets/asset-front/download',
+        },
+      ],
+    },
+  } as unknown as OrderWorkbenchItem
+  render(
+    <AppProviders>
+      <OrderItemPanel
+        item={item}
+        canWrite={false}
+        canOperate={false}
+        pending={false}
+        mappingRecheckPending={false}
+        onAction={vi.fn()}
+        onConfirm={vi.fn()}
+        onHistory={vi.fn()}
+        onOpenImageViewer={onOpenImageViewer}
+      />
+    </AppProviders>,
+  )
+  expect(screen.getByText('File output scale')).toBeInTheDocument()
+  const scaleImage = screen.getByRole('img', { name: 'File output scale' })
+  expect(scaleImage).toBeInTheDocument()
+  fireEvent.click(scaleImage)
+  expect(onOpenImageViewer).toHaveBeenCalledWith(
+    expect.anything(),
+    '/api/media/assets/asset-front/download',
+    expect.arrayContaining(['/api/media/assets/asset-front/download']),
+  )
+})

@@ -1,5 +1,5 @@
 import { type FC, memo } from 'react'
-import { AppstoreOutlined, CloseCircleOutlined, ShopOutlined } from '@ant-design/icons'
+import { AppstoreOutlined, CloseCircleOutlined, ShopOutlined, TagOutlined } from '@ant-design/icons'
 import { Button, Select } from 'antd'
 
 import { DateRangePicker, FilterBar, SearchInput } from '@/shared/ui'
@@ -19,20 +19,24 @@ type OrderWorkbenchFilterBarProps = {
   readonly search: string
   readonly shopId?: string
   readonly vendorId?: string
+  readonly stage?: string
   readonly dates: DateRangeValue
   readonly hasActiveFilters: boolean
   readonly shopOptions: SelectOption[]
   readonly vendorOptions: SelectOption[]
+  readonly stageOptions: SelectOption[]
   readonly filtersLabel: string
   readonly searchPlaceholder: string
   readonly shopPlaceholder: string
   readonly vendorPlaceholder: string
+  readonly stagePlaceholder: string
   readonly clearLabel: string
   readonly loadingShops: boolean
   readonly loadingVendors: boolean
   readonly onSearchChange: (value: string) => void
   readonly onShopChange: (value?: string) => void
   readonly onVendorChange: (value?: string) => void
+  readonly onStageChange: (value?: string) => void
   readonly onDatesChange: (value: { dateFrom?: string; dateTo?: string }) => void
   readonly onClearFilters: () => void
 }
@@ -42,20 +46,24 @@ export const OrderWorkbenchFilterBar: FC<OrderWorkbenchFilterBarProps> = memo(
     search,
     shopId,
     vendorId,
+    stage,
     dates,
     hasActiveFilters,
     shopOptions,
     vendorOptions,
+    stageOptions,
     filtersLabel,
     searchPlaceholder,
     shopPlaceholder,
     vendorPlaceholder,
+    stagePlaceholder,
     clearLabel,
     loadingShops,
     loadingVendors,
     onSearchChange,
     onShopChange,
     onVendorChange,
+    onStageChange,
     onDatesChange,
     onClearFilters,
   }) {
@@ -109,6 +117,21 @@ export const OrderWorkbenchFilterBar: FC<OrderWorkbenchFilterBarProps> = memo(
             placeholder={vendorPlaceholder}
             options={vendorOptions}
             onChange={onVendorChange}
+          />
+
+          <Select
+            className={[styles.filterSelect, stage ? styles.filterSelectActive : '']
+              .filter(Boolean)
+              .join(' ')}
+            prefix={<TagOutlined className={styles.filterPrefixIcon} />}
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            filterOption={filterSelectOption}
+            value={stage}
+            placeholder={stagePlaceholder}
+            options={stageOptions}
+            onChange={onStageChange}
           />
 
           <DateRangePicker

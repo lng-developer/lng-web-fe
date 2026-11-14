@@ -6,6 +6,7 @@ export type OrderWorkbenchParams = {
   page: number
   limit: number
   tab?: string
+  stage?: string
   search?: string
   shopId?: string
   vendorId?: string
@@ -74,6 +75,16 @@ export type OrderCaseInput = Pick<OrderCase, 'caseType' | 'severity' | 'title'> 
   orderItemId?: string
   description?: string
 }
+export type ScaledOutputFile = {
+  id?: string | null
+  slotKey?: string | null
+  slotLabel?: string | null
+  outputAssetId?: string | null
+  outputAssetDownloadUrl?: string | null
+  scaleStatus?: string | null
+  qcStatus?: string | null
+}
+
 export type OrderWorkbenchItem = {
   item: {
     salesChannelCode?: string | null
@@ -155,6 +166,8 @@ export type OrderWorkbenchItem = {
     status: string | null
     scaleStatus: string | null
     qcStatus: string | null
+    scaledOutputs?: ScaledOutputFile[]
+    qcPreviewFileChecks?: ScaledOutputFile[]
     scaleBy?: { employeeCode: string | null; name: string | null } | null
     scaleContext?: {
       use?: {
@@ -164,6 +177,7 @@ export type OrderWorkbenchItem = {
           assetDownloadUrl?: string | null
           downloadUrl?: string | null
         } | null
+        scaleSlots?: ScaledOutputFile[]
       }
     } | null
   } | null

@@ -93,6 +93,7 @@ export const OrderWorkbenchPage = () => {
   const deferredSearch = useDeferredValue(search)
   const [shopId, setShopId] = useState<string>()
   const [vendorId, setVendorId] = useState<string>()
+  const [stage, setStage] = useState<string | undefined>(searchParams.get('stage') || undefined)
   const [dates, setDates] = useState<{ dateFrom?: string; dateTo?: string }>(EMPTY_DATES)
   const canWriteOrder = useCallback(
     (row: OrderWorkbenchRow) =>
@@ -107,13 +108,14 @@ export const OrderWorkbenchPage = () => {
       page,
       limit: pageSize,
       tab,
+      stage,
       search: deferredSearch,
       shopId,
       vendorId,
       salesChannelCode,
       ...dates,
     }),
-    [dates, page, pageSize, deferredSearch, salesChannelCode, shopId, tab, vendorId],
+    [dates, page, pageSize, deferredSearch, salesChannelCode, shopId, stage, tab, vendorId],
   )
   const summaryParams = useMemo(
     () => ({
@@ -184,6 +186,10 @@ export const OrderWorkbenchPage = () => {
     setVendorId(value)
     setPage(1)
   }, [])
+  const onStageChange = useCallback((value?: string) => {
+    setStage(value)
+    setPage(1)
+  }, [])
   const onDatesChange = useCallback((value: { dateFrom?: string; dateTo?: string }) => {
     setDates(value)
     setPage(1)
@@ -207,6 +213,7 @@ export const OrderWorkbenchPage = () => {
   const handleClearFilters = useCallback(() => {
     setShopId(undefined)
     setVendorId(undefined)
+    setStage(undefined)
     setDates(EMPTY_DATES)
     setPage(1)
   }, [])
@@ -242,7 +249,51 @@ export const OrderWorkbenchPage = () => {
     () => orderItems.map((row) => row.order?.id).filter(Boolean) as string[],
     [orderItems],
   )
-  const hasActiveFilters = Boolean(shopId || vendorId || dates.dateFrom || dates.dateTo)
+  const hasActiveFilters = Boolean(shopId || vendorId || stage || dates.dateFrom || dates.dateTo)
+
+  const stageOptions = useMemo(
+    () => [
+      {
+        value: 'READY_FOR_SCALE',
+        label: t('orders.statuses.READY_FOR_SCALE', { defaultValue: 'Ready for scale' }),
+      },
+      { value: 'IN_SCALE', label: t('orders.statuses.IN_SCALE', { defaultValue: 'In scale' }) },
+      {
+        value: 'QC_PENDING',
+        label: t('orders.statuses.QC_PENDING', { defaultValue: 'QC pending' }),
+      },
+      {
+        value: 'QC_REJECTED',
+        label: t('orders.statuses.QC_REJECTED', { defaultValue: 'QC rejected' }),
+      },
+      {
+        value: 'READY_TO_SEND_VENDOR',
+        label: t('orders.statuses.READY_TO_SEND_VENDOR', { defaultValue: 'Ready to send vendor' }),
+      },
+      {
+        value: 'SENT_TO_VENDOR',
+        label: t('orders.statuses.SENT_TO_VENDOR', { defaultValue: 'Sent to vendor' }),
+      },
+      {
+        value: 'TRACKING_PENDING',
+        label: t('orders.statuses.TRACKING_PENDING', { defaultValue: 'Tracking pending' }),
+      },
+      { value: 'SHIPPED', label: t('orders.statuses.SHIPPED', { defaultValue: 'Shipped' }) },
+      { value: 'DELIVERED', label: t('orders.statuses.DELIVERED', { defaultValue: 'Delivered' }) },
+      {
+        value: 'NEED_ADDRESS',
+        label: t('orders.statuses.NEED_ADDRESS', { defaultValue: 'Need address' }),
+      },
+      { value: 'NEED_PSD', label: t('orders.statuses.NEED_PSD', { defaultValue: 'Need PSD' }) },
+      {
+        value: 'NEED_CUSTOMIZATION',
+        label: t('orders.statuses.NEED_CUSTOMIZATION', { defaultValue: 'Need customization' }),
+      },
+      { value: 'OPEN_CASE', label: t('orders.statuses.OPEN_CASE', { defaultValue: 'Open case' }) },
+      { value: 'CANCELLED', label: t('orders.statuses.CANCELLED', { defaultValue: 'Cancelled' }) },
+    ],
+    [t],
+  )
   const pagination = useMemo(() => {
     const rawTotal = orders.data?.pagination.total ?? orders.data?.items.length ?? 0
     const total =
@@ -254,14 +305,7 @@ export const OrderWorkbenchPage = () => {
       pageSize,
       total,
     }
-  }, [
-    orders.data?.items?.length,
-    orders.data?.pagination.total,
-    orderItems.length,
-    page,
-    pageSize,
-    tab,
-  ])
+  }, [orders.data?.items, orders.data?.pagination.total, orderItems.length, page, pageSize, tab])
   const handlePageChange = useCallback(
     (nextPage: number, nextPageSize: number) => {
       setPage(nextPageSize === pageSize ? nextPage : 1)
@@ -570,20 +614,24 @@ export const OrderWorkbenchPage = () => {
         search={search}
         shopId={shopId}
         vendorId={vendorId}
+        stage={stage}
         dates={dates}
         hasActiveFilters={hasActiveFilters}
         shopOptions={shopOptions}
         vendorOptions={vendorOptions}
+        stageOptions={stageOptions}
         filtersLabel={t('orders.filters.label')}
         searchPlaceholder={t('orders.filters.search')}
         shopPlaceholder={t('orders.filters.shop')}
         vendorPlaceholder={t('orders.filters.vendor')}
+        stagePlaceholder={t('orders.filters.stage', { defaultValue: 'Tất cả trạng thái' })}
         clearLabel={t('orders.filters.clear')}
         loadingShops={shops.isLoading}
         loadingVendors={vendors.isLoading}
         onSearchChange={onSearchChange}
         onShopChange={onShopChange}
         onVendorChange={onVendorChange}
+        onStageChange={onStageChange}
         onDatesChange={onDatesChange}
         onClearFilters={handleClearFilters}
       />

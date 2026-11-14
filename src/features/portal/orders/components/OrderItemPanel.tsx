@@ -14,7 +14,7 @@ import {
 } from '@ant-design/icons'
 import { Button, Descriptions, Dropdown, type MenuProps, Space, Tooltip, Typography } from 'antd'
 
-import { AuthenticatedMediaImage, downloadMediaAsset } from '@/shared/media'
+import { AuthenticatedMediaImage, downloadMediaAsset, downloadMediaAssets } from '@/shared/media'
 import {
   CopyableAsin,
   CopyableListingId,
@@ -167,6 +167,45 @@ export const OrderItemPanel = memo(function OrderItemPanel({
       ? t('orders.actions.recheckProductionNeedsMapping')
       : t('orders.actions.recheckProductionShort')
 
+  const scaledOutputs = useMemo(() => {
+    if (item.production?.scaledOutputs && item.production.scaledOutputs.length > 0) {
+      return item.production.scaledOutputs.filter((out) =>
+        Boolean(out.outputAssetDownloadUrl || out.outputAssetId),
+      )
+    }
+    const fromQcChecks = (item.production?.qcPreviewFileChecks ?? [])
+      .filter((c) => Boolean(c.outputAssetDownloadUrl || c.outputAssetId))
+      .map((c) => ({
+        id: c.id,
+        slotKey: c.slotKey,
+        slotLabel: c.slotLabel || c.slotKey || 'Output',
+        outputAssetId: c.outputAssetId,
+        outputAssetDownloadUrl:
+          c.outputAssetDownloadUrl ||
+          (c.outputAssetId ? `/api/media/assets/${c.outputAssetId}/download` : null),
+        scaleStatus: c.scaleStatus,
+        qcStatus: c.qcStatus,
+      }))
+    if (fromQcChecks.length > 0) return fromQcChecks
+    const fromScaleSlots = (item.production?.scaleContext?.use?.scaleSlots ?? [])
+      .filter((s) => Boolean(s.outputAssetDownloadUrl || s.outputAssetId))
+      .map((s) => ({
+        id: (s as { fileCheckId?: string | null }).fileCheckId,
+        slotKey: s.slotKey,
+        slotLabel: s.slotLabel || s.slotKey || 'Output',
+        outputAssetId: s.outputAssetId,
+        outputAssetDownloadUrl:
+          s.outputAssetDownloadUrl ||
+          (s.outputAssetId ? `/api/media/assets/${s.outputAssetId}/download` : null),
+        scaleStatus: s.scaleStatus,
+        qcStatus: s.qcStatus,
+      }))
+    return fromScaleSlots
+  }, [item.production])
+
+  const hasScaledOutputs = scaledOutputs.length > 0
+  const assetImageSize = hasScaledOutputs && mainListingImage ? 104 : 112
+
   const relatedImages = useMemo(
     () =>
       Array.from(
@@ -175,11 +214,12 @@ export const OrderItemPanel = memo(function OrderItemPanel({
           customizationImage,
           ...artworkImages.map((image) => image?.assetDownloadUrl),
           ...customizationInputs.map((input) => input?.assetDownloadUrl),
+          ...scaledOutputs.map((output) => output.outputAssetDownloadUrl),
         ]),
       )
         .filter((image): image is string => Boolean(image))
-        .slice(0, 5),
-    [artworkImages, customizationPreview, customizationImage, customizationInputs],
+        .slice(0, 10),
+    [artworkImages, customizationPreview, customizationImage, customizationInputs, scaledOutputs],
   )
 
   const customizationValueInputs = customizationInputs.filter((input) => !input?.assetDownloadUrl)
@@ -300,26 +340,59 @@ export const OrderItemPanel = memo(function OrderItemPanel({
     <article className={`${styles.itemPanel} ${isEtsy ? styles.etsyItemPanel : ''}`}>
       <section className={styles.assetColumn}>
         <Typography.Text strong>{t('orders.sections.imagePrint')}</Typography.Text>
-        {mainListingImage ? (
-          <>
-            <Typography.Text type="secondary">
-              {t('orders.fields.mainListingImage')}
-            </Typography.Text>
-            <AuthenticatedMediaImage
-              width={112}
-              height={112}
-              downloadUrl={mainListingImage}
-              alt={t('orders.fields.mainListingImage')}
-              style={{ cursor: 'zoom-in' }}
-              onClick={(event) => onOpenImageViewer(event, mainListingImage, [mainListingImage])}
-              fallback={listingImageFallback}
-              onError={(event) => {
-                if (event.currentTarget.getAttribute('src') !== listingImageFallback)
-                  event.currentTarget.src = listingImageFallback
-              }}
-            />
-          </>
-        ) : null}
+        <div className={styles.assetRow}>
+          {mainListingImage ? (
+            <div className={styles.assetImageBlock}>
+              <Typography.Text
+                type="secondary"
+                ellipsis
+                title={t('orders.fields.mainListingImage')}
+              >
+                {t('orders.fields.mainListingImage')}
+              </Typography.Text>
+              <AuthenticatedMediaImage
+                width={assetImageSize}
+                height={assetImageSize}
+                downloadUrl={mainListingImage}
+                alt={t('orders.fields.mainListingImage')}
+                style={{ cursor: 'zoom-in' }}
+                onClick={(event) => onOpenImageViewer(event, mainListingImage, [mainListingImage])}
+                fallback={listingImageFallback}
+                onError={(event) => {
+                  if (event.currentTarget.getAttribute('src') !== listingImageFallback)
+                    event.currentTarget.src = listingImageFallback
+                }}
+              />
+            </div>
+          ) : null}
+          {scaledOutputs.map((output, idx) => {
+            const url = output.outputAssetDownloadUrl
+            if (!url) return null
+            const label =
+              scaledOutputs.length > 1
+                ? `${t('orders.fields.scaledOutputs', { defaultValue: 'File output scale' })} (${output.slotLabel || output.slotKey || idx + 1})`
+                : t('orders.fields.scaledOutputs', { defaultValue: 'File output scale' })
+            return (
+              <div
+                key={output.id || output.outputAssetId || output.slotKey || idx}
+                className={styles.assetImageBlock}
+              >
+                <Typography.Text type="secondary" ellipsis title={label}>
+                  {label}
+                </Typography.Text>
+                <AuthenticatedMediaImage
+                  width={assetImageSize}
+                  height={assetImageSize}
+                  downloadUrl={url}
+                  alt={label}
+                  style={{ cursor: 'zoom-in' }}
+                  onClick={(event) => onOpenImageViewer(event, url, relatedImages)}
+                  fallback="/assets/images/favicon.svg"
+                />
+              </div>
+            )
+          })}
+        </div>
         {artworkImages.length > 0 ? (
           <div className={styles.artworkCollapsible}>
             <button
@@ -360,15 +433,52 @@ export const OrderItemPanel = memo(function OrderItemPanel({
           </div>
         ) : null}
         <StatusTag status={orderStatusTone(psdStatus)}>PSD {displayValue(psdStatus)}</StatusTag>
-        {psdDownloadUrl ? (
-          <Button
-            size="small"
-            icon={<DownloadOutlined />}
-            onClick={() => void downloadMediaAsset(psdDownloadUrl, 'template.psd')}
-          >
-            PSD
-          </Button>
-        ) : null}
+        <Space wrap size={4}>
+          {psdDownloadUrl ? (
+            <Button
+              size="small"
+              icon={<DownloadOutlined />}
+              onClick={() => void downloadMediaAsset(psdDownloadUrl, 'template.psd')}
+            >
+              PSD
+            </Button>
+          ) : null}
+          {scaledOutputs.length === 1 && scaledOutputs[0].outputAssetDownloadUrl ? (
+            <Button
+              size="small"
+              icon={<DownloadOutlined />}
+              onClick={() =>
+                void downloadMediaAsset(
+                  scaledOutputs[0].outputAssetDownloadUrl!,
+                  `${scaledOutputs[0].slotKey || 'scaled-output'}.png`,
+                )
+              }
+            >
+              Scale
+            </Button>
+          ) : null}
+          {scaledOutputs.length > 1 ? (
+            <Button
+              size="small"
+              icon={<DownloadOutlined />}
+              onClick={() =>
+                void downloadMediaAssets(
+                  scaledOutputs
+                    .filter((out): out is typeof out & { outputAssetDownloadUrl: string } =>
+                      Boolean(out.outputAssetDownloadUrl),
+                    )
+                    .map((out) => ({
+                      downloadUrl: out.outputAssetDownloadUrl,
+                      filename: `${out.slotKey || 'scaled-output'}.png`,
+                    })),
+                  `scale-outputs-${item.item?.sku || 'order'}.zip`,
+                )
+              }
+            >
+              Scale ({scaledOutputs.length})
+            </Button>
+          ) : null}
+        </Space>
       </section>
       <section className={styles.identifierSection}>
         <Typography.Text strong>{t('orders.sections.skuSeller')}</Typography.Text>
