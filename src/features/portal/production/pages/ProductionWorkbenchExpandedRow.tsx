@@ -324,6 +324,20 @@ export function ProductionWorkbenchExpandedRow({
           )}
         </div>
       </div>
+      {task.orderItem?.variantRaw ? (
+        <div className={`${styles.inlineSection} ${styles.customizationSection}`}>
+          <div className={styles.sectionHeader}>
+            <div>
+              <Typography.Text strong>
+                {t('portal.production.variantSelections', 'Variant selections')}
+              </Typography.Text>
+            </div>
+          </div>
+          <div className={styles.customizationList}>
+            <Typography.Text>{task.orderItem.variantRaw}</Typography.Text>
+          </div>
+        </div>
+      ) : null}
       <div className={`${styles.inlineSection} ${styles.productContext}`}>
         <div className={styles.sectionHeader}>
           <div>
