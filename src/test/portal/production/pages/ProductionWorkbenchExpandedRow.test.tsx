@@ -91,6 +91,24 @@ describe('ProductionWorkbenchExpandedRow', () => {
     ).not.toBeInTheDocument()
   })
 
+  it('shows Etsy variant selections separately from customer customization', () => {
+    renderExpandedRow({
+      ...task,
+      orderItem: {
+        salesChannelCode: 'ETSY',
+        variantRaw: 'Choose Your Size: 4 INCHES, Choose Design: Santa Gifts',
+      },
+    })
+
+    expect(screen.getByText('Variant selections')).toBeVisible()
+    expect(screen.getByText('Choose Your Size: 4 INCHES')).toBeVisible()
+    expect(screen.getByText('Choose Design: Santa Gifts')).toBeVisible()
+    expect(
+      screen.queryByText('Choose Your Size: 4 INCHES, Choose Design: Santa Gifts'),
+    ).not.toBeInTheDocument()
+    expect(screen.getByText('0 Customer inputs')).toBeVisible()
+  })
+
   it('does not present Amazon base image as a customized preview when ZIP images are absent', () => {
     renderExpandedRow({ ...task, amazonCustomizationPreviewUrl: 'https://example.test/base.jpg' })
     expect(screen.queryByText('Amazon customization preview')).not.toBeInTheDocument()

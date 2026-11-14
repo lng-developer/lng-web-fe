@@ -235,6 +235,10 @@ export function ProductionWorkbenchExpandedRow({
     : task.orderItem?.asin || task.listing?.asin || task.scaleContext?.use?.listing?.asin || '-'
   const spUrl = productUrl(task)
   const customizationEntries = formatCustomization(task.customization?.customerInputs)
+  const variantSelections = task.orderItem?.variantRaw
+    ?.split(',')
+    .map((selection) => selection.trim())
+    .filter(Boolean) ?? []
   const outputChecks = checks.filter(
     (check) =>
       check.sourceType !== 'PSD_TEMPLATE' &&
@@ -324,6 +328,22 @@ export function ProductionWorkbenchExpandedRow({
           )}
         </div>
       </div>
+      {variantSelections.length ? (
+        <div className={`${styles.inlineSection} ${styles.customizationSection}`}>
+          <div className={styles.sectionHeader}>
+            <div>
+              <Typography.Text strong>
+                {t('portal.production.variantSelections', 'Variant selections')}
+              </Typography.Text>
+            </div>
+          </div>
+          <div className={styles.customizationList}>
+            {variantSelections.map((selection) => (
+              <Typography.Text key={selection}>{selection}</Typography.Text>
+            ))}
+          </div>
+        </div>
+      ) : null}
       <div className={`${styles.inlineSection} ${styles.productContext}`}>
         <div className={styles.sectionHeader}>
           <div>

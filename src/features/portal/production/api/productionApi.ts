@@ -89,6 +89,7 @@ export type ProductionTask = {
     marketplaceCode?: string | null
     asin?: string | null
     etsyListingId?: string | null
+    variantRaw?: string | null
     sourceSku?: string | null
     sku?: string | null
     title?: string | null
