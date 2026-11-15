@@ -141,6 +141,7 @@ export const recheckSubmittedShipments = async (input: {
   provider?: string
   shopId?: string
   limit?: number
+  perVendor?: boolean
 }) => unwrap<unknown>(await apiClient.post(`${basePath}/vendor-tracking/recheck-submitted`, input))
 export const getTrackingSyncConfig = async () =>
   unwrap<TrackingSyncConfig>(await apiClient.get(`${basePath}/tracking-sync/config`))
