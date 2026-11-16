@@ -494,7 +494,7 @@ describe('ReportWorkspacePage', () => {
     expect(await screen.findByText('Additional fulfillment')).toBeInTheDocument()
     expect(
       screen.getByText(
-        'Gross profit = Revenue − Product cost − Additional fulfillment − Marketplace fee − Refund − Discount',
+        'Gross profit = Revenue − Total cost − Marketplace fee − Ad spend − Discount',
       ),
     ).toBeInTheDocument()
     expect(screen.queryByText('Tax')).not.toBeInTheDocument()
@@ -506,7 +506,7 @@ describe('ReportWorkspacePage', () => {
       2,
     )
     expect(
-      screen.getByText('Net profit = Gross profit − Operating cost − Ads spend'),
+      screen.getByText('Net profit = Gross profit − Refund − Operating cost'),
     ).toBeInTheDocument()
     expect(screen.getAllByText('Alex')).toHaveLength(1)
     expect(listFinanceSellerDaily).toHaveBeenCalledTimes(1)

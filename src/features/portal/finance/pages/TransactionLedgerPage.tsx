@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Input, Select } from 'antd'
+import { Alert, Input, Select, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
@@ -26,6 +27,7 @@ function money(value: unknown, currency = 'USD') {
 }
 
 export function TransactionLedgerPage() {
+  const { t } = useTranslation()
   const [page, setPage] = useState(1)
   const [dates, setDates] = useState<DateRangeValue>({})
   const [transactionType, setTransactionType] = useState('')
@@ -97,7 +99,14 @@ export function TransactionLedgerPage() {
   const resetPage = () => setPage(1)
   return (
     <section className={styles.page}>
-      <SectionCard title="Transaction ledger">
+      <Alert
+        type="info"
+        showIcon
+        closable
+        message={<Typography.Text strong>{t('finance.banners.transactionsTitle')}</Typography.Text>}
+        description={t('finance.banners.transactionsDesc')}
+      />
+      <SectionCard title={t('finance.transactions')}>
         <CoreDataTable
           tableLayout="fixed"
           scroll={{ x: 870 }}

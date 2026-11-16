@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouteLoaderData } from 'react-router-dom'
 import {
@@ -7,6 +8,7 @@ import {
   FallOutlined,
   InfoCircleOutlined,
   PictureOutlined,
+  ReloadOutlined,
   RiseOutlined,
   ShoppingCartOutlined,
   WalletOutlined,
@@ -46,6 +48,7 @@ export function ReportOrderCostPage({
   fixedSalesChannelCode?: 'AMAZON' | 'ETSY'
 }) {
   const queryClient = useQueryClient()
+  const { t } = useTranslation()
   const account = useRouteLoaderData('workspace') as CurrentAccount | undefined
   const permissions = account
     ? [...account.permissions, ...account.scopes.flatMap((scope) => scope.permissions)]
@@ -65,6 +68,9 @@ export function ReportOrderCostPage({
   const [dates, setDates] = useState<DateRangeValue>({})
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
+
+  // Selected row keys for bulk actions
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
 
   // Selected order & item for detail modals
   const [selectedOrder, setSelectedOrder] = useState<{ orderId: string } | null>(null)
@@ -137,7 +143,7 @@ export function ReportOrderCostPage({
   const totalRefunds = rows.reduce((s, r) => s + (r.refundAmount || 0), 0)
 
   // Finance mutations for recalculate
-  const { recalculate, recalculateItem } = useFinanceMutations()
+  const { recalculate, recalculateBulk, recalculateItem } = useFinanceMutations()
 
   const handleInspectOrder = useCallback((row: OrderProfitability) => {
     if (row.orderId) {
@@ -168,6 +174,17 @@ export function ReportOrderCostPage({
     },
     [queryClient, recalculate],
   )
+
+  const handleBulkRecalculate = useCallback(() => {
+    const orderIds = selectedRowKeys.map(String).filter((id) => id && id.length === 24)
+    if (!orderIds.length) return
+    recalculateBulk.mutate(orderIds, {
+      onSuccess: () => {
+        setSelectedRowKeys([])
+        queryClient.invalidateQueries({ queryKey: ['reports', 'order-cost'] })
+      },
+    })
+  }, [selectedRowKeys, recalculateBulk, queryClient])
 
   const handleRecalculateItem = useCallback(
     (itemId: string) => {
@@ -732,14 +749,56 @@ export function ReportOrderCostPage({
           />
         </FilterBar>
 
+        {selectedRowKeys.length > 0 ? (
+          <div className={styles.bulkActionBar}>
+            <Space>
+              <span>
+                {t('finance.bulk.selectedCount', {
+                  count: selectedRowKeys.length,
+                  defaultValue: `Đã chọn ${selectedRowKeys.length} đơn hàng`,
+                })}
+              </span>
+              <Button
+                type="primary"
+                icon={<ReloadOutlined />}
+                loading={recalculateBulk.isPending}
+                disabled={!canWrite}
+                onClick={handleBulkRecalculate}
+              >
+                {t('finance.actions.recalculateBulk', {
+                  count: selectedRowKeys.length,
+                  defaultValue: `Tính lại tài chính (${selectedRowKeys.length})`,
+                })}
+              </Button>
+            </Space>
+            <Button type="link" onClick={() => setSelectedRowKeys([])}>
+              {t('common.clearSelection', { defaultValue: 'Bỏ chọn' })}
+            </Button>
+          </div>
+        ) : null}
+
         <CoreDataTable
-          rowKey={(row) => `${row.externalOrderId || row.orderId}-${row.currency}`}
+          rowKey={(row) => row.orderId || `${row.externalOrderId || ''}-${row.currency}`}
           columns={columns}
           dataSource={rows}
           loading={query.isLoading}
+          rowSelection={{
+            selectedRowKeys,
+            onChange: setSelectedRowKeys,
+            preserveSelectedRowKeys: true,
+            getCheckboxProps: (row) => ({
+              disabled: !row.orderId,
+            }),
+          }}
           onRow={(row) => ({
             className: styles.interactiveRow,
-            onClick: () => handleInspectOrder(row),
+            onClick: (event) => {
+              const target = event.target as HTMLElement | null
+              if (target?.closest('.ant-checkbox-wrapper') || target?.closest('.ant-btn')) {
+                return
+              }
+              handleInspectOrder(row)
+            },
           })}
           pagination={
             query.data?.pagination

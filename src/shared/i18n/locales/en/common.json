@@ -271,7 +271,7 @@
     "description": "Review scoped revenue, costs, profit, and reconciliation.",
     "profitability": "Order profitability",
     "tabs": {
-      "overview": "Overview",
+      "overview": "Order P&L",
       "orders": "Order profitability",
       "imports": "Imports & reconciliation"
     },
@@ -407,7 +407,7 @@
       "total": "Net settlements",
       "periods": "Settlement periods",
       "ledgerLines": "Ledger lines",
-      "settlement": "Settlement",
+      "settlement": "Settlement & Payouts",
       "settlementId": "Settlement ID",
       "period": "Settlement period",
       "deposit": "Deposit date",
@@ -463,20 +463,43 @@
       "reprocess": "Reprocess",
       "recalculate": "Recalculate",
       "recalculateOrder": "Recalculate order",
+      "recalculateBulk": "Recalculate finance ({{count}})",
       "recalculateItem": "Recalculate item",
       "inspectItem": "Inspect item",
       "manageReconciliation": "Manage reconciliation",
       "settlements": "Settlement cash flow",
       "exportCsv": "Export CSV"
     },
+    "bulk": {
+      "selectedCount": "{{count}} orders selected"
+    },
     "feedback": {
       "reprocessed": "Import batch reprocessed",
       "imported": "Finance import completed",
       "recalculated": "Finance snapshot recalculated",
+      "bulkRecalculatedSuccess": "Recalculated finance for {{count}} orders",
+      "bulkRecalculatedPartial": "Recalculated {{successCount}} orders, {{failureCount}} failed",
+      "bulkRecalculatedFailed": "Failed to recalculate selected orders",
       "failed": "Finance action failed"
     },
-    "cashFlow": "Cash Flow",
-    "transactions": "Transaction Ledger"
+    "cashFlow": "Cash Flow & Exceptions",
+    "transactions": "Transaction Ledger (Audit)",
+    "tooltips": {
+      "overview": "View revenue, fulfillment costs, and profit per order",
+      "settlement": "Reconcile marketplace payout transfers to bank accounts",
+      "cashFlow": "Track cash movements and unlinked marketplace charges",
+      "transactions": "Search and audit raw marketplace transaction records"
+    },
+    "banners": {
+      "overviewTitle": "Order Profitability & P&L Analysis",
+      "overviewDesc": "Analyze revenue, fulfillment base costs, and gross/net profit for each order. Click an order to inspect fee breakdowns or trace missing costs.",
+      "settlementsTitle": "Marketplace Settlement & Payout Reconciliation",
+      "settlementsDesc": "Track marketplace disbursement payout cycles into your bank accounts, reconcile expected payout transfers with bank receipts, and review variances.",
+      "cashFlowTitle": "Cash Movements & Exception Queue",
+      "cashFlowDesc": "Monitor overall cash in/out and manage unlinked marketplace charges or adjustments waiting for order reconciliation.",
+      "transactionsTitle": "Raw Transaction Audit Ledger",
+      "transactionsDesc": "Search and audit raw transactional records streamed directly from marketplace feeds (Orders, Refunds, Service Fees, Shipping Labels)."
+    }
   },
   "reports": {
     "title": "Report workspace",
@@ -586,8 +609,18 @@
       "showChart": "Show comparison chart",
       "hideChart": "Hide comparison chart",
       "explanation": "How profit is calculated",
-      "grossFormula": "Gross profit = Revenue − Product cost − Additional fulfillment − Marketplace fee − Refund − Discount",
-      "netFormula": "Net profit = Gross profit − Operating cost − Ads spend",
+      "grossFormula": "Gross profit = Revenue − Total cost − Marketplace fee − Ad spend − Discount",
+      "netFormula": "Net profit = Gross profit − Refund − Operating cost",
+      "tooltips": {
+        "orders": "Total orders",
+        "revenue": "Revenue = Item price + Shipping paid by customer",
+        "totalCost": "Total cost = Base cost + Vendor print & shipping fee",
+        "fee": "Marketplace fee = Amazon referral fee + closing/payment fees",
+        "discount": "Discounts and promotions",
+        "refund": "Customer refunds (prior orders)",
+        "adSpend": "Advertising spend (Amazon Ads / PPC)",
+        "operatingCost": "Allocated seller operating / employee cost"
+      },
       "excludedCostNote": "Tax is excluded from revenue and P&L.",
       "dataNote": "Rows with missing cost should be treated as incomplete until their fulfillment cost is available."
     },
@@ -644,6 +677,7 @@
       "baseCost": "Product cost",
       "fulfillmentCost": "Fulfillment cost",
       "totalCost": "Total cost",
+      "fee": "Fee",
       "marketplaceFee": "Marketplace fee",
       "refund": "Refund",
       "discount": "Discount",
@@ -4116,6 +4150,7 @@
         "orderId": "order-id",
         "shipDate": "ship-date",
         "carrier": "carrier-code",
+        "shipMethod": "ship-method",
         "trackingNumber": "tracking-number",
         "status": "Upload readiness",
         "ready": "Ready",
