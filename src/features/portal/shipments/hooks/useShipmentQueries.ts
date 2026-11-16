@@ -197,8 +197,12 @@ export function useBatchRecheckShipmentsMutation(options?: {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (input?: { provider?: string; shopId?: string; limit?: number }) =>
-      recheckSubmittedShipments(input ?? { limit: 100 }),
+    mutationFn: (input?: {
+      provider?: string
+      shopId?: string
+      limit?: number
+      perVendor?: boolean
+    }) => recheckSubmittedShipments(input ?? { limit: 25, perVendor: true }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: shipmentKeys.all })
       await options?.onSuccess?.()

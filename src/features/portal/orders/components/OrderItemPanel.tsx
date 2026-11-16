@@ -203,6 +203,9 @@ export const OrderItemPanel = memo(function OrderItemPanel({
     return fromScaleSlots
   }, [item.production])
 
+  const hasScaledOutputs = scaledOutputs.length > 0
+  const assetImageSize = hasScaledOutputs && mainListingImage ? 104 : 112
+
   const relatedImages = useMemo(
     () =>
       Array.from(
@@ -222,7 +225,6 @@ export const OrderItemPanel = memo(function OrderItemPanel({
   const customizationValueInputs = customizationInputs.filter((input) => !input?.assetDownloadUrl)
   const [showAllCustomizations, setShowAllCustomizations] = useState(false)
   const [isArtworkExpanded, setIsArtworkExpanded] = useState(false)
-  const [isScaledOutputExpanded, setIsScaledOutputExpanded] = useState(false)
   const CUSTOMIZATION_PREVIEW_LIMIT = 8
   const shouldCollapseCustomizations = customizationValueInputs.length > CUSTOMIZATION_PREVIEW_LIMIT
   const visibleCustomizationInputs =
@@ -342,26 +344,59 @@ export const OrderItemPanel = memo(function OrderItemPanel({
     <article className={`${styles.itemPanel} ${isEtsy ? styles.etsyItemPanel : ''}`}>
       <section className={styles.assetColumn}>
         <Typography.Text strong>{t('orders.sections.imagePrint')}</Typography.Text>
-        {mainListingImage ? (
-          <>
-            <Typography.Text type="secondary">
-              {t('orders.fields.mainListingImage')}
-            </Typography.Text>
-            <AuthenticatedMediaImage
-              width={112}
-              height={112}
-              downloadUrl={mainListingImage}
-              alt={t('orders.fields.mainListingImage')}
-              style={{ cursor: 'zoom-in' }}
-              onClick={(event) => onOpenImageViewer(event, mainListingImage, [mainListingImage])}
-              fallback={listingImageFallback}
-              onError={(event) => {
-                if (event.currentTarget.getAttribute('src') !== listingImageFallback)
-                  event.currentTarget.src = listingImageFallback
-              }}
-            />
-          </>
-        ) : null}
+        <div className={styles.assetRow}>
+          {mainListingImage ? (
+            <div className={styles.assetImageBlock}>
+              <Typography.Text
+                type="secondary"
+                ellipsis
+                title={t('orders.fields.mainListingImage')}
+              >
+                {t('orders.fields.mainListingImage')}
+              </Typography.Text>
+              <AuthenticatedMediaImage
+                width={assetImageSize}
+                height={assetImageSize}
+                downloadUrl={mainListingImage}
+                alt={t('orders.fields.mainListingImage')}
+                style={{ cursor: 'zoom-in' }}
+                onClick={(event) => onOpenImageViewer(event, mainListingImage, [mainListingImage])}
+                fallback={listingImageFallback}
+                onError={(event) => {
+                  if (event.currentTarget.getAttribute('src') !== listingImageFallback)
+                    event.currentTarget.src = listingImageFallback
+                }}
+              />
+            </div>
+          ) : null}
+          {scaledOutputs.map((output, idx) => {
+            const url = output.outputAssetDownloadUrl
+            if (!url) return null
+            const label =
+              scaledOutputs.length > 1
+                ? `${t('orders.fields.scaledOutputs', { defaultValue: 'File output scale' })} (${output.slotLabel || output.slotKey || idx + 1})`
+                : t('orders.fields.scaledOutputs', { defaultValue: 'File output scale' })
+            return (
+              <div
+                key={output.id || output.outputAssetId || output.slotKey || idx}
+                className={styles.assetImageBlock}
+              >
+                <Typography.Text type="secondary" ellipsis title={label}>
+                  {label}
+                </Typography.Text>
+                <AuthenticatedMediaImage
+                  width={assetImageSize}
+                  height={assetImageSize}
+                  downloadUrl={url}
+                  alt={label}
+                  style={{ cursor: 'zoom-in' }}
+                  onClick={(event) => onOpenImageViewer(event, url, relatedImages)}
+                  fallback="/assets/images/favicon.svg"
+                />
+              </div>
+            )
+          })}
+        </div>
         {artworkImages.length > 0 ? (
           <div className={styles.artworkCollapsible}>
             <button
@@ -397,75 +432,6 @@ export const OrderItemPanel = memo(function OrderItemPanel({
                     fallback="/assets/images/favicon.svg"
                   />
                 ))}
-              </div>
-            ) : null}
-          </div>
-        ) : null}
-        {scaledOutputs.length > 0 ? (
-          <div className={styles.artworkCollapsible}>
-            <button
-              type="button"
-              className={styles.artworkToggle}
-              onClick={() => setIsScaledOutputExpanded((current) => !current)}
-              aria-expanded={isScaledOutputExpanded}
-            >
-              <RightOutlined
-                className={styles.artworkToggleIcon}
-                style={{
-                  transform: isScaledOutputExpanded ? 'rotate(90deg)' : 'none',
-                  transition: 'transform 150ms ease',
-                }}
-              />
-              <span className={styles.artworkToggleLabel}>
-                {t('orders.fields.scaledOutputs', { defaultValue: 'File output scale' })} (
-                {scaledOutputs.length})
-              </span>
-            </button>
-            {isScaledOutputExpanded ? (
-              <div className={styles.artworkImages}>
-                {scaledOutputs.map((output, idx) => {
-                  const url = output.outputAssetDownloadUrl
-                  if (!url) return null
-                  const label = output.slotLabel || output.slotKey || `Output ${idx + 1}`
-                  const filename = `${output.slotKey || 'scaled-output'}.png`
-                  return (
-                    <div
-                      key={output.id || output.outputAssetId || output.slotKey || idx}
-                      style={{ display: 'grid', gap: 4 }}
-                    >
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: 8,
-                        }}
-                      >
-                        <Typography.Text type="secondary" style={{ fontSize: 11 }}>
-                          {label}
-                        </Typography.Text>
-                        <Tooltip title={t('common.actions.download', { defaultValue: 'Download' })}>
-                          <Button
-                            type="text"
-                            size="small"
-                            icon={<DownloadOutlined />}
-                            style={{ height: 20, padding: '0 4px', fontSize: 11 }}
-                            onClick={() => void downloadMediaAsset(url, filename)}
-                          />
-                        </Tooltip>
-                      </div>
-                      <AuthenticatedMediaImage
-                        width={112}
-                        height={112}
-                        downloadUrl={url}
-                        alt={label}
-                        style={{ cursor: 'zoom-in' }}
-                        onClick={(event) => onOpenImageViewer(event, url, relatedImages)}
-                        fallback="/assets/images/favicon.svg"
-                      />
-                    </div>
-                  )
-                })}
               </div>
             ) : null}
           </div>
