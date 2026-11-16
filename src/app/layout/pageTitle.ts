@@ -156,7 +156,7 @@ export const ROUTE_TITLE_DEFINITIONS: readonly RouteTitleDefinition[] = [
   {
     pattern: /^\/portal\/finance\/settlements(\/.*)?$/,
     key: 'finance.settlements.settlement',
-    defaultTitle: 'Settlement & Payouts',
+    defaultTitle: 'Settlement',
   },
   {
     pattern: /^\/portal\/finance\/cash-flow(\/.*)?$/,
@@ -170,8 +170,8 @@ export const ROUTE_TITLE_DEFINITIONS: readonly RouteTitleDefinition[] = [
   },
   {
     pattern: /^\/portal\/finance(\/.*)?$/,
-    key: 'finance.tabs.overview',
-    defaultTitle: 'Order P&L',
+    key: 'shell.navigation.finance',
+    defaultTitle: 'Finance',
   },
   {
     pattern: /^\/portal\/reports(\/.*)?$/,
