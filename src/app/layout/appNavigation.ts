@@ -209,13 +209,27 @@ export function getContextNavigation(core: AppCoreKey, account: CurrentAccount):
           labelKey: 'shell.navigation.finance',
           items: [
             canAccessFinance
-              ? { key: 'finance', path: '/portal/finance', labelKey: 'shell.navigation.finance' }
+              ? { key: 'finance', path: '/portal/finance', labelKey: 'finance.tabs.overview' }
               : null,
             canAccessFinance
               ? {
                   key: 'settlements',
                   path: '/portal/finance/settlements',
                   labelKey: 'finance.settlements.settlement',
+                }
+              : null,
+            canAccessFinance
+              ? {
+                  key: 'cash-flow',
+                  path: '/portal/finance/cash-flow',
+                  labelKey: 'finance.cashFlow',
+                }
+              : null,
+            canAccessFinance
+              ? {
+                  key: 'transactions',
+                  path: '/portal/finance/transactions',
+                  labelKey: 'finance.transactions',
                 }
               : null,
           ].filter((item): item is NavigationItem => item !== null),

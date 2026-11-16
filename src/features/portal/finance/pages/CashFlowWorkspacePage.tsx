@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Select } from 'antd'
+import { useTranslation } from 'react-i18next'
+import { Alert, Select, Typography } from 'antd'
 
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { DateRangePicker, type DateRangeValue, FilterBar, SectionCard } from '@/shared/ui'
@@ -11,6 +12,7 @@ import { useCashFlow } from '../hooks/useCashFlow'
 import styles from './FinanceWorkspacePage.module.scss'
 
 export function CashFlowWorkspacePage() {
+  const { t } = useTranslation()
   const [page, setPage] = useState(1)
   const [dates, setDates] = useState<DateRangeValue>({})
   const [status, setStatus] = useState<CashFlowStatus>()
@@ -32,7 +34,14 @@ export function CashFlowWorkspacePage() {
 
   return (
     <section className={styles.page}>
-      <SectionCard title="Cash flow">
+      <Alert
+        type="info"
+        showIcon
+        closable
+        message={<Typography.Text strong>{t('finance.banners.cashFlowTitle')}</Typography.Text>}
+        description={t('finance.banners.cashFlowDesc')}
+      />
+      <SectionCard title={t('finance.cashFlow')}>
         <CashFlowSummary
           summaries={cashFlow.data?.summaryByCurrency ?? []}
           importErrorCount={cashFlow.data?.importErrorCount ?? 0}

@@ -333,7 +333,7 @@ export function getSearchableNavigationItems(account?: CurrentAccount): Searchab
       labelKey: 'finance.tabs.overview',
       categoryKey: 'shell.navigation.finance',
       icon: <DollarOutlined />,
-      keywords: ['finance', 'tai chinh', 'doanh thu', 'thu chi'],
+      keywords: ['finance', 'tai chinh', 'doanh thu', 'thu chi', 'lai lo', 'pnl', 'order pnl'],
     })
     items.push({
       key: 'finance-settlements',
@@ -341,7 +341,7 @@ export function getSearchableNavigationItems(account?: CurrentAccount): Searchab
       labelKey: 'finance.settlements.settlement',
       categoryKey: 'shell.navigation.finance',
       icon: <DollarOutlined />,
-      keywords: ['settlements', 'quyet toan', 'doi soat'],
+      keywords: ['settlements', 'quyet toan', 'doi soat', 'payout', 'tien ve'],
     })
     items.push({
       key: 'finance-cash-flow',
@@ -349,7 +349,7 @@ export function getSearchableNavigationItems(account?: CurrentAccount): Searchab
       labelKey: 'finance.cashFlow',
       categoryKey: 'shell.navigation.finance',
       icon: <DollarOutlined />,
-      keywords: ['cash flow', 'dong tien'],
+      keywords: ['cash flow', 'dong tien', 'chua khop', 'exception'],
     })
     items.push({
       key: 'finance-transactions',
@@ -357,7 +357,7 @@ export function getSearchableNavigationItems(account?: CurrentAccount): Searchab
       labelKey: 'finance.transactions',
       categoryKey: 'shell.navigation.finance',
       icon: <DollarOutlined />,
-      keywords: ['transactions', 'giao dich'],
+      keywords: ['transactions', 'giao dich', 'so cai', 'audit', 'raw'],
     })
   }
 

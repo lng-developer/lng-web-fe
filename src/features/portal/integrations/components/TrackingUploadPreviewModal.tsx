@@ -87,6 +87,15 @@ function formatShipDate(dateValue?: string | Date | null) {
   }
 }
 
+function resolveShipMethod(carrier?: string | null) {
+  if (!carrier) return '-'
+  const upper = carrier.toUpperCase()
+  if (upper.includes('USPS')) return 'USPS Ground Advantage'
+  if (upper.includes('UPS')) return 'UPS Ground'
+  if (upper.includes('FEDEX')) return 'FedEx Ground'
+  return 'Standard'
+}
+
 export function TrackingUploadPreviewModal({
   shopId,
   agentId,
@@ -241,6 +250,11 @@ export function TrackingUploadPreviewModal({
       title: t('portal.shipments.trackingPreview.carrier', { defaultValue: 'Carrier' }),
       dataIndex: 'carrier',
       render: (value) => value || '-',
+    },
+    {
+      title: t('portal.shipments.trackingPreview.shipMethod', { defaultValue: 'Shipping Method' }),
+      key: 'shipMethod',
+      render: (_, record) => resolveShipMethod(record.carrier),
     },
     {
       title: t('portal.shipments.trackingPreview.trackingNumber', {

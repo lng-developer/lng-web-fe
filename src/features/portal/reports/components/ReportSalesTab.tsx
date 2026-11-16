@@ -4,12 +4,13 @@ import {
   DollarOutlined,
   EyeInvisibleOutlined,
   EyeOutlined,
+  InfoCircleOutlined,
   MinusCircleOutlined,
   RiseOutlined,
   SearchOutlined,
   ShoppingCartOutlined,
 } from '@ant-design/icons'
-import { Button, Input, Segmented, Space, Typography, type TableColumnsType } from 'antd'
+import { Button, Input, Segmented, Space, Tooltip, Typography, type TableColumnsType } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { MetricCard, SectionCard } from '@/shared/ui'
@@ -59,16 +60,18 @@ type SellerMatrixMetricKey =
   | 'orders'
   | 'revenue'
   | 'totalCost'
+  | 'fee'
   | 'adSpend'
   | 'discount'
   | 'grossProfit'
-  | 'operatingCost'
   | 'refund'
+  | 'operatingCost'
   | 'netProfit'
 
 type SellerMatrixMetric = {
   key: SellerMatrixMetricKey
   label: string
+  tooltip?: string
   value: (row: SellerDailyProfit) => number | null
 }
 
@@ -78,6 +81,7 @@ type SellerMatrixRow = {
   sellerEmployeeCode: string | null
   metricKey: SellerMatrixMetricKey
   metricLabel: string
+  metricTooltip?: string
   metricIndex: number
   totalValue: number | null
   dateValues: Record<string, number | null>
@@ -98,11 +102,12 @@ const METRIC_STYLES: Record<
   orders: {},
   revenue: { isBold: true },
   totalCost: {},
+  fee: {},
   adSpend: {},
   discount: {},
   grossProfit: { isBold: true },
-  operatingCost: {},
   refund: {},
+  operatingCost: {},
   netProfit: { isBold: true },
 }
 
@@ -315,29 +320,80 @@ export function ReportSalesTab({
 
   const sellerMatrixMetrics = useMemo<SellerMatrixMetric[]>(
     () => [
-      { key: 'orders', label: t('reports.columns.orders'), value: (row) => row.orderCount },
-      { key: 'revenue', label: t('reports.columns.revenue'), value: (row) => row.revenueAmount },
+      {
+        key: 'orders',
+        label: t('reports.columns.orders'),
+        tooltip: t('reports.tooltips.orders', { defaultValue: 'Tổng số đơn hàng' }),
+        value: (row) => row.orderCount,
+      },
+      {
+        key: 'revenue',
+        label: t('reports.columns.revenue'),
+        tooltip: t('reports.tooltips.revenue', {
+          defaultValue: 'Doanh thu = Tiền hàng + Phí ship khách trả',
+        }),
+        value: (row) => row.revenueAmount,
+      },
       {
         key: 'totalCost',
         label: t('reports.columns.totalCost'),
+        tooltip: t('reports.tooltips.totalCost', {
+          defaultValue: 'Giá vốn = Giá phôi + Phí in ấn & Ship vendor',
+        }),
         value: (row) => row.totalCostAmount,
       },
-      { key: 'adSpend', label: t('reports.columns.spend'), value: (row) => row.adSpendAmount || 0 },
-      { key: 'discount', label: t('reports.columns.discount'), value: (row) => row.discountAmount },
+      {
+        key: 'fee',
+        label: t('reports.columns.fee', { defaultValue: 'Fee' }),
+        tooltip: t('reports.tooltips.fee', {
+          defaultValue: 'Phí sàn = Phí hoa hồng Amazon + Phí đóng/thanh toán',
+        }),
+        value: (row) => row.marketplaceFeeAmount || 0,
+      },
+      {
+        key: 'adSpend',
+        label: t('reports.columns.spend'),
+        tooltip: t('reports.tooltips.adSpend', {
+          defaultValue: 'Chi phí quảng cáo (Amazon Ads / PPC)',
+        }),
+        value: (row) => row.adSpendAmount || 0,
+      },
+      {
+        key: 'discount',
+        label: t('reports.columns.discount'),
+        tooltip: t('reports.tooltips.discount', { defaultValue: 'Chiết khấu / Giảm giá' }),
+        value: (row) => row.discountAmount,
+      },
       {
         key: 'grossProfit',
         label: t('reports.metrics.grossProfit'),
+        tooltip: t('reports.profitability.grossFormula', {
+          defaultValue: 'Lợi nhuận gộp = Doanh thu − Giá vốn − Phí sàn − Chi phí Ads − Giảm giá',
+        }),
         value: (row) => row.partialGrossProfitAmount ?? row.grossProfitAmount,
+      },
+      {
+        key: 'refund',
+        label: t('reports.columns.refund'),
+        tooltip: t('reports.tooltips.refund', {
+          defaultValue: 'Hoàn tiền cho khách hàng (đơn cũ)',
+        }),
+        value: (row) => row.refundAmount,
       },
       {
         key: 'operatingCost',
         label: t('reports.columns.operatingCost'),
+        tooltip: t('reports.tooltips.operatingCost', {
+          defaultValue: 'Chi phí vận hành / nhân sự phân bổ',
+        }),
         value: (row) => row.operatingCostAmount,
       },
-      { key: 'refund', label: t('reports.columns.refund'), value: (row) => row.refundAmount },
       {
         key: 'netProfit',
         label: t('reports.columns.netProfit'),
+        tooltip: t('reports.profitability.netFormula', {
+          defaultValue: 'Lợi nhuận ròng = Lợi nhuận gộp − Hoàn tiền − Chi phí vận hành',
+        }),
         value: (row) => row.partialNetProfitAmount ?? row.netProfitAmount,
       },
     ],
@@ -416,6 +472,7 @@ export function ReportSalesTab({
               sellerEmployeeCode: sellerKey === 'UNASSIGNED' ? null : sellerKey,
               metricKey: metric.key,
               metricLabel: metric.label,
+              metricTooltip: metric.tooltip,
               metricIndex,
               totalValue,
               dateValues,
@@ -461,7 +518,22 @@ export function ReportSalesTab({
           className: styles.dailyTypeCell,
           render: (label: string, row: SellerMatrixRow) => {
             const config = METRIC_STYLES[row.metricKey]
-            return <Typography.Text strong={config?.isBold}>{label}</Typography.Text>
+            return (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                <Typography.Text strong={config?.isBold}>{label}</Typography.Text>
+                {row.metricTooltip ? (
+                  <Tooltip title={row.metricTooltip} placement="right">
+                    <InfoCircleOutlined
+                      style={{
+                        fontSize: 12,
+                        color: 'var(--ant-color-text-tertiary)',
+                        cursor: 'help',
+                      }}
+                    />
+                  </Tooltip>
+                ) : null}
+              </span>
+            )
           },
         },
         {
