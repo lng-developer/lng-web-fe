@@ -30,6 +30,8 @@ import { vendorKeys } from '../api/vendorKeys'
 import { VendorCsvImportModal } from '../components/VendorCsvImportModal'
 import { VendorCatalogImportModal } from '../components/VendorCatalogImportModal'
 import { MerchizeCatalogSyncModal } from '../components/MerchizeCatalogSyncModal'
+import { MangoteeCatalogSyncModal } from '../components/MangoteeCatalogSyncModal'
+import { PrintwayCatalogSyncModal } from '../components/PrintwayCatalogSyncModal'
 import type { ImportTarget } from '../components/vendorCsvUtils'
 import {
   useVendorMetricsQuery,
@@ -91,6 +93,8 @@ export const VendorWorkspacePage = () => {
   const [importTarget, setImportTarget] = useState<ImportTarget>()
   const [catalogImportOpen, setCatalogImportOpen] = useState(false)
   const [merchizeSyncVendorId, setMerchizeSyncVendorId] = useState<string>()
+  const [mangoteeSyncVendorId, setMangoteeSyncVendorId] = useState<string>()
+  const [printwaySyncVendorId, setPrintwaySyncVendorId] = useState<string>()
   const showFeedbackToast = useFeedbackToast()
 
   const closeEditor = () => {
@@ -132,6 +136,7 @@ export const VendorWorkspacePage = () => {
     [vendorsPage, vendorsPageSize, debouncedSearchVendors, vendorStatus],
   )
   const vendors = useVendorsQuery(vendorParams)
+  const allVendorsQuery = useVendorsQuery({ page: 1, limit: 100 })
 
   const productTypeGroups = useQuery({
     queryKey: ['portal', 'catalog', 'product-type-groups', 'all'],
@@ -217,11 +222,11 @@ export const VendorWorkspacePage = () => {
 
   const vendorFilterOptions = useMemo(
     () =>
-      (vendors.data?.items ?? []).map((vendor) => ({
+      (allVendorsQuery.data?.items ?? []).map((vendor) => ({
         value: vendor.id,
         label: `${vendor.code} — ${vendor.name}`,
       })),
-    [vendors.data?.items],
+    [allVendorsQuery.data?.items],
   )
 
   return (
@@ -334,11 +339,31 @@ export const VendorWorkspacePage = () => {
             onOpenMerchizeSync={(vendorId) => setMerchizeSyncVendorId(vendorId)}
             isMerchizeSelected={Boolean(
               productVendorFilter &&
-              vendors.data?.items.some(
+              (allVendorsQuery.data?.items ?? []).some(
                 (v) =>
                   v.id === productVendorFilter &&
                   (v.providerKey?.toUpperCase() === 'MERCHIZE' ||
                     v.code?.toUpperCase().includes('MERCHIZE')),
+              ),
+            )}
+            onOpenMangoteeSync={(vendorId) => setMangoteeSyncVendorId(vendorId)}
+            isMangoteeSelected={Boolean(
+              productVendorFilter &&
+              (allVendorsQuery.data?.items ?? []).some(
+                (v) =>
+                  v.id === productVendorFilter &&
+                  (v.providerKey?.toUpperCase() === 'MANGOTEE' ||
+                    v.code?.toUpperCase().includes('MANGOTEE')),
+              ),
+            )}
+            onOpenPrintwaySync={(vendorId) => setPrintwaySyncVendorId(vendorId)}
+            isPrintwaySelected={Boolean(
+              productVendorFilter &&
+              (allVendorsQuery.data?.items ?? []).some(
+                (v) =>
+                  v.id === productVendorFilter &&
+                  (v.providerKey?.toUpperCase() === 'PRINTWAY' ||
+                    v.code?.toUpperCase().includes('PRINTWAY')),
               ),
             )}
             onEditProduct={(product) =>
@@ -427,6 +452,20 @@ export const VendorWorkspacePage = () => {
           open={Boolean(merchizeSyncVendorId)}
           vendorId={merchizeSyncVendorId}
           onClose={() => setMerchizeSyncVendorId(undefined)}
+        />
+      ) : null}
+      {mangoteeSyncVendorId ? (
+        <MangoteeCatalogSyncModal
+          open={Boolean(mangoteeSyncVendorId)}
+          vendorId={mangoteeSyncVendorId}
+          onClose={() => setMangoteeSyncVendorId(undefined)}
+        />
+      ) : null}
+      {printwaySyncVendorId ? (
+        <PrintwayCatalogSyncModal
+          open={Boolean(printwaySyncVendorId)}
+          vendorId={printwaySyncVendorId}
+          onClose={() => setPrintwaySyncVendorId(undefined)}
         />
       ) : null}
     </section>

@@ -48,6 +48,10 @@ interface VendorWorkspaceProductsTabPageProps {
   readonly onOpenProductImport: (vendorId: string | undefined) => void
   readonly onOpenMerchizeSync?: (vendorId: string) => void
   readonly isMerchizeSelected?: boolean
+  readonly onOpenMangoteeSync?: (vendorId: string) => void
+  readonly isMangoteeSelected?: boolean
+  readonly onOpenPrintwaySync?: (vendorId: string) => void
+  readonly isPrintwaySelected?: boolean
   readonly onEditProduct: (product: VendorProduct) => void
   readonly onCloneProduct: (
     product: VendorProduct,
@@ -81,6 +85,10 @@ export function VendorWorkspaceProductsTabPage({
   onOpenProductImport,
   onOpenMerchizeSync,
   isMerchizeSelected,
+  onOpenMangoteeSync,
+  isMangoteeSelected,
+  onOpenPrintwaySync,
+  isPrintwaySelected,
   onEditProduct,
   onCloneProduct,
   cloneVendorOptions,
@@ -294,6 +302,26 @@ export function VendorWorkspaceProductsTabPage({
                 >
                   {t('portal.vendors.merchize.syncAction', {
                     defaultValue: 'Sync Merchize Catalog',
+                  })}
+                </Button>
+              ) : null}
+              {isMangoteeSelected && onOpenMangoteeSync ? (
+                <Button
+                  icon={<CloudDownloadOutlined />}
+                  onClick={() => onOpenMangoteeSync(vendorFilter)}
+                >
+                  {t('portal.vendors.mangotee.syncAction', {
+                    defaultValue: 'Sync MangoTee Catalog',
+                  })}
+                </Button>
+              ) : null}
+              {isPrintwaySelected && onOpenPrintwaySync ? (
+                <Button
+                  icon={<CloudDownloadOutlined />}
+                  onClick={() => onOpenPrintwaySync(vendorFilter)}
+                >
+                  {t('portal.vendors.printway.syncAction', {
+                    defaultValue: 'Sync Printway Catalog',
                   })}
                 </Button>
               ) : null}
