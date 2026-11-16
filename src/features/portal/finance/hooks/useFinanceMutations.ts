@@ -7,6 +7,7 @@ import {
   exportFinanceSnapshotsCsv,
   type FinanceParams,
   recalculateOrder,
+  recalculateOrders,
   recalculateOrderItem,
 } from '../api/financeApi'
 
@@ -40,6 +41,42 @@ export const useFinanceMutations = (queryParams: FinanceParams = {}) => {
     onError: (error: Error) => toast('error', t('finance.feedback.failed'), error.message),
   })
 
+  const recalculateBulk = useMutation({
+    mutationFn: recalculateOrders,
+    onSuccess: async (data) => {
+      if (data.failureCount === 0) {
+        toast(
+          'success',
+          t('finance.feedback.bulkRecalculatedSuccess', {
+            count: data.successCount,
+            defaultValue: `Đã tính lại tài chính cho ${data.successCount} đơn hàng`,
+          }),
+        )
+      } else if (data.successCount > 0) {
+        toast(
+          'warning',
+          t('finance.feedback.bulkRecalculatedPartial', {
+            successCount: data.successCount,
+            failureCount: data.failureCount,
+            defaultValue: `Đã tính lại ${data.successCount} đơn hàng, thất bại ${data.failureCount} đơn`,
+          }),
+        )
+      } else {
+        toast(
+          'error',
+          t('finance.feedback.bulkRecalculatedFailed', {
+            defaultValue: 'Không thể tính lại tài chính cho các đơn đã chọn',
+          }),
+        )
+      }
+      await Promise.all([
+        client.invalidateQueries({ queryKey: ['finance'] }),
+        client.invalidateQueries({ queryKey: ['reports'] }),
+      ])
+    },
+    onError: (error: Error) => toast('error', t('finance.feedback.failed'), error.message),
+  })
+
   const exportCsv = useMutation({
     mutationFn: () => exportFinanceSnapshotsCsv(queryParams),
     onSuccess: (result) => {
@@ -55,6 +92,7 @@ export const useFinanceMutations = (queryParams: FinanceParams = {}) => {
 
   return {
     recalculate,
+    recalculateBulk,
     recalculateItem,
     exportCsv,
   }

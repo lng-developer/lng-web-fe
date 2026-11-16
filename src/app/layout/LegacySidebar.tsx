@@ -74,6 +74,7 @@ type LegacyMenuItem = {
   labelKey: string
   icon: ReactNode
   className?: string
+  tooltipKey?: string
   children?: LegacyMenuItem[]
 }
 
@@ -458,21 +459,25 @@ const financeMenuItem: LegacyMenuItem = {
     {
       key: '/portal/finance',
       labelKey: 'finance.tabs.overview',
+      tooltipKey: 'finance.tooltips.overview',
       icon: <DollarOutlined />,
     },
     {
       key: '/portal/finance/settlements',
       labelKey: 'finance.settlements.settlement',
+      tooltipKey: 'finance.tooltips.settlement',
       icon: <DollarOutlined />,
     },
     {
       key: '/portal/finance/cash-flow',
       labelKey: 'finance.cashFlow',
+      tooltipKey: 'finance.tooltips.cashFlow',
       icon: <DollarOutlined />,
     },
     {
       key: '/portal/finance/transactions',
       labelKey: 'finance.transactions',
+      tooltipKey: 'finance.tooltips.transactions',
       icon: <DollarOutlined />,
     },
   ],
@@ -680,15 +685,8 @@ function toMenuItems(
   t: (key: string) => string,
   badgeCounts: Partial<Record<string, number>> = {},
 ): Parameters<typeof Menu>[0]['items'] {
-  return items.map((item) => ({
-    key: item.key,
-    icon: item.icon
-      ? cloneElement(item.icon as ReactElement<{ 'aria-hidden'?: boolean }>, {
-          'aria-hidden': true,
-        })
-      : undefined,
-    className: item.className,
-    label: (
+  return items.map((item) => {
+    const labelNode = (
       <span className={styles.menuLabel}>
         <span className={styles.menuLabelText}>
           {item.children ? t(item.labelKey) : <Link to={item.key}>{t(item.labelKey)}</Link>}
@@ -699,9 +697,26 @@ function toMenuItems(
           </span>
         ) : null}
       </span>
-    ),
-    children: item.children ? toMenuItems(item.children, t, badgeCounts) : undefined,
-  }))
+    )
+
+    return {
+      key: item.key,
+      icon: item.icon
+        ? cloneElement(item.icon as ReactElement<{ 'aria-hidden'?: boolean }>, {
+            'aria-hidden': true,
+          })
+        : undefined,
+      className: item.className,
+      label: item.tooltipKey ? (
+        <Tooltip title={t(item.tooltipKey)} placement="right" mouseEnterDelay={0.3}>
+          {labelNode}
+        </Tooltip>
+      ) : (
+        labelNode
+      ),
+      children: item.children ? toMenuItems(item.children, t, badgeCounts) : undefined,
+    }
+  })
 }
 
 function matchesRoute(key: string, pathname: string, search: string) {

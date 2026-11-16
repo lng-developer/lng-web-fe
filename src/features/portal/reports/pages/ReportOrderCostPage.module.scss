@@ -120,6 +120,17 @@
   color: var(--ant-color-primary);
 }
 
+.bulkActionBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  margin-bottom: 12px;
+  background: #f0f5ff;
+  border: 1px solid #adc6ff;
+  border-radius: 8px;
+}
+
 @media (max-width: 1100px) {
   .metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));

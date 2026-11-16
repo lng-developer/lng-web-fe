@@ -250,7 +250,11 @@ export const OrderItemPanel = memo(function OrderItemPanel({
         : []),
       ...(canOperate && !terminal
         ? [
-            ...(item.production?.status === 'SENT_TO_VENDOR' && !item.tracking?.trackingNumber
+            ...((['READY_TO_SEND_VENDOR', 'SENT_TO_VENDOR'].includes(
+              item.production?.status ?? '',
+            ) ||
+              ['READY_TO_SEND_VENDOR', 'SENT_TO_VENDOR'].includes(item.item?.status ?? '')) &&
+            !item.tracking?.trackingNumber
               ? [
                   {
                     key: 'vendor-rematch',

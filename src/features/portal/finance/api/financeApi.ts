@@ -359,8 +359,35 @@ export async function listFinanceFilterOptions() {
 export async function getOrderFinanceSummary(orderId: string) {
   return unwrap<OrderFinanceSummary>(await apiClient.get(`/api/finance/orders/${orderId}/summary`))
 }
+export type BulkRecalculateResponse = {
+  totalRequested: number
+  successCount: number
+  failureCount: number
+  recalculatedItemCount: number
+  succeeded: Array<{
+    orderId: string
+    itemCount: number
+    recalculatedCount: number
+    missingCostCount: number
+    summary?: {
+      revenueAmount: number
+      baseCostAmount: number
+      grossProfitAmount: number
+    }
+  }>
+  failed: Array<{
+    orderId: string
+    message: string
+    code: string
+  }>
+}
+
 export async function recalculateOrder(orderId: string) {
   return unwrap(await apiClient.post(`/api/finance/orders/${orderId}/recalculate`))
+}
+
+export async function recalculateOrders(orderIds: string[]): Promise<BulkRecalculateResponse> {
+  return unwrap(await apiClient.post('/api/finance/orders/recalculate-bulk', { orderIds }))
 }
 export async function listImportBatches(query: Record<string, unknown> = {}) {
   const data = unwrap<Paginated<ImportBatch>>(

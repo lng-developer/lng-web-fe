@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import { DownloadOutlined, EyeOutlined, PictureOutlined } from '@ant-design/icons'
 import type { TableColumnsType } from 'antd'
-import { Button, Image, Select, Space, Tooltip, Typography } from 'antd'
+import { Alert, Button, Image, Select, Space, Tooltip, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
@@ -333,6 +333,14 @@ export const FinanceWorkspacePage = ({
 
   return (
     <section className={styles.page}>
+      <Alert
+        type="info"
+        showIcon
+        closable
+        message={<Typography.Text strong>{t('finance.banners.overviewTitle')}</Typography.Text>}
+        description={t('finance.banners.overviewDesc')}
+      />
+
       <FinanceCurrencySummary
         summaries={snapshots.data?.summaryByCurrency}
         onFilterMissingCost={() => handleCostStatusChange('MISSING')}

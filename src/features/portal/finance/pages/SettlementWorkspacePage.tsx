@@ -240,6 +240,14 @@ export function SettlementWorkspacePage() {
 
   return (
     <section className={styles.page}>
+      <Alert
+        type="info"
+        showIcon
+        closable
+        message={<Typography.Text strong>{t('finance.banners.settlementsTitle')}</Typography.Text>}
+        description={t('finance.banners.settlementsDesc')}
+      />
+
       <SectionCard title={t('finance.settlements.title')}>
         {currencySummaries.length ? (
           <div className={styles.metrics}>

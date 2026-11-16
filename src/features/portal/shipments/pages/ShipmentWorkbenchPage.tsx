@@ -616,7 +616,14 @@ export function ShipmentWorkbenchPage({
                 <Button
                   icon={<SyncOutlined />}
                   loading={batchRecheck.isPending}
-                  onClick={() => batchRecheck.mutate({ limit: 100 })}
+                  onClick={() =>
+                    batchRecheck.mutate({
+                      provider: provider || undefined,
+                      shopId: shopId || undefined,
+                      limit: trackingSyncConfig.data?.batchSize || 25,
+                      perVendor: !provider,
+                    })
+                  }
                 >
                   {t('portal.shipments.recheckSubmitted')}
                 </Button>

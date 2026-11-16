@@ -159,6 +159,16 @@ export const ROUTE_TITLE_DEFINITIONS: readonly RouteTitleDefinition[] = [
     defaultTitle: 'Settlement',
   },
   {
+    pattern: /^\/portal\/finance\/cash-flow(\/.*)?$/,
+    key: 'finance.cashFlow',
+    defaultTitle: 'Cash Flow & Exceptions',
+  },
+  {
+    pattern: /^\/portal\/finance\/transactions(\/.*)?$/,
+    key: 'finance.transactions',
+    defaultTitle: 'Transaction Ledger (Audit)',
+  },
+  {
     pattern: /^\/portal\/finance(\/.*)?$/,
     key: 'shell.navigation.finance',
     defaultTitle: 'Finance',
