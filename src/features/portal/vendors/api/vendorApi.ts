@@ -444,7 +444,13 @@ export type MerchizeCatalogVariant = {
   sku: string
   attributes?: Array<{ name?: string; type?: string; value_text?: string; value?: string }>
   tiers?: Array<{ name: string; price: number }>
-  shipping_prices?: Array<{ to_zone: string; first_item: number; additional_item: number }>
+  shipping_prices?: Array<{
+    to_zone: string
+    first_item?: number
+    first_item_price?: number
+    additional_item?: number
+    additional_item_price?: number
+  }>
 }
 
 export type MerchizeCatalogProduct = {
@@ -483,5 +489,130 @@ export async function importMerchizeCatalogProducts(
 ) {
   return unwrap<VendorUnifiedImportSummary>(
     await apiClient.post(`/api/vendors/${vendorId}/integration/merchize/catalog/import`, payload),
+  )
+}
+
+export type MangoteeCatalogVariant = {
+  id: string
+  product_id?: string
+  name?: string
+  sku: string
+  color?: string
+  size?: string
+  price?: number
+  is_available?: boolean
+  stock_quantity?: number
+  attributes?: {
+    tier?: string
+    print_areas?: string[]
+    [key: string]: unknown
+  }
+}
+
+export type MangoteeCatalogProduct = {
+  id: string
+  sku?: string
+  name: string
+  title?: string
+  catalog_name?: string
+  base_price?: number | string
+  currency?: string
+  is_active?: boolean
+  images?: string[]
+  attributes?: Record<string, unknown>
+  variants?: MangoteeCatalogVariant[]
+  variations?: MangoteeCatalogVariant[]
+}
+
+export type MangoteeCatalogResponse = {
+  items: MangoteeCatalogProduct[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    pages?: number
+  }
+}
+
+export async function fetchMangoteeCatalog(
+  vendorId: string,
+  query: { q?: string; page?: number; limit?: number },
+) {
+  return unwrap<MangoteeCatalogResponse>(
+    await apiClient.get(`/api/vendors/${vendorId}/integration/mangotee/catalog`, {
+      params: query,
+    }),
+  )
+}
+
+export async function importMangoteeCatalogProducts(
+  vendorId: string,
+  payload: { products: MangoteeCatalogProduct[] },
+) {
+  return unwrap<VendorUnifiedImportSummary>(
+    await apiClient.post(`/api/vendors/${vendorId}/integration/mangotee/catalog/import`, payload),
+  )
+}
+
+export type PrintwayCatalogVariantLocation = {
+  name?: string
+  code?: string
+  made_in_location?: string
+  product_location?: string[]
+  base_cost?: number
+  tier_cost?: number
+}
+
+export type PrintwayCatalogVariant = {
+  variant_id: string
+  variant_title: string
+  item_sku?: string
+  availability?: string
+  attributes?: Array<{ name: string; value: string; hexColor?: string | null }>
+  locations?: PrintwayCatalogVariantLocation[]
+}
+
+export type PrintwayCatalogProduct = {
+  _id?: string
+  code: string
+  product_name: string
+  mockup_url?: string
+  template_mockup_url?: string | null
+  categories?: Array<{ name: string; slug?: string }>
+  variants?: PrintwayCatalogVariant[]
+}
+
+export type PrintwayCatalogResponse = {
+  items: PrintwayCatalogProduct[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    pages?: number
+  }
+}
+
+export async function fetchPrintwayCatalog(
+  vendorId: string,
+  query: { q?: string; page?: number; limit?: number },
+) {
+  return unwrap<PrintwayCatalogResponse>(
+    await apiClient.get(`/api/vendors/${vendorId}/integration/printway/catalog`, {
+      params: query,
+    }),
+  )
+}
+
+export async function importPrintwayCatalogProducts(
+  vendorId: string,
+  payload: {
+    products: PrintwayCatalogProduct[]
+    tierName?: string
+    preferredLocation?: string
+    fetchShipping?: boolean
+  },
+) {
+  return unwrap<VendorUnifiedImportSummary>(
+    await apiClient.post(`/api/vendors/${vendorId}/integration/printway/catalog/import`, payload),
   )
 }
