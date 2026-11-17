@@ -520,6 +520,51 @@ export async function createAmazonTrackingSubmission(input: AmazonTrackingSubmis
   )
 }
 
+export interface AmazonTrackingPreviewRow {
+  key: string
+  shipmentId?: string | null
+  orderId?: string | null
+  orderItemId?: string | null
+  shipmentIds: string[]
+  externalOrderId: string
+  externalItemId?: string
+  quantity?: string
+  shipDate: string
+  carrier: string
+  carrierCode: string
+  carrierName: string
+  trackingNumber: string
+  shipMethod: string
+  itemCount: number
+  marketplaceConfirmationStatus: 'PENDING' | 'SUBMITTED' | 'CONFIRMED' | 'FAILED'
+  marketplaceConfirmedAt?: string | null
+  isReady: boolean
+  issues: string[]
+}
+
+export interface AmazonTrackingPreviewResult {
+  items: AmazonTrackingPreviewRow[]
+  tsv: string
+  rowCount: number
+  summary: {
+    totalOrders: number
+    totalShipments: number
+    readyOrders: number
+    readyShipments: number
+    confirmedOrders: number
+    pendingOrders: number
+  }
+}
+
+export async function previewAmazonTrackingSubmission(payload: {
+  shopId: string
+  shipmentIds?: string[]
+}) {
+  return unwrap<AmazonTrackingPreviewResult>(
+    await apiClient.post('/api/integration/amazon-tracking-submissions/preview', payload),
+  )
+}
+
 export async function listAmazonTrackingSubmissions(params: PageParams & { shopId?: string } = {}) {
   return unwrap<Paginated<AmazonTrackingSubmission>>(
     await apiClient.get('/api/integration/amazon-tracking-submissions', { params }),
