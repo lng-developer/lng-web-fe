@@ -1,11 +1,11 @@
 import { useTranslation } from 'react-i18next'
-import { FileOutlined } from '@ant-design/icons'
-import { Descriptions, Space, Typography } from 'antd'
+import { CopyOutlined, FileOutlined, LinkOutlined } from '@ant-design/icons'
+import { Button, Descriptions, message, Space, Typography } from 'antd'
 
 import { AuthenticatedMediaImage } from '@/shared/media'
 import { DetailDrawer, FormattedDateTime, StatusTag } from '@/shared/ui'
 
-import type { MediaAsset } from '../api/mediaApi'
+import { getMediaAssetUrl, type MediaAsset } from '../api/mediaApi'
 
 const formatSize = (size: number | null) =>
   size === null
@@ -71,6 +71,43 @@ export function MediaAssetDetailModal({
               <StatusTag status={asset.status === 'ACTIVE' ? 'operational' : 'cancelled'}>
                 {t(`media.statuses.${asset.status}`, { defaultValue: asset.status })}
               </StatusTag>
+            </Descriptions.Item>
+            <Descriptions.Item
+              label={t('media.columns.url', { defaultValue: 'Link ảnh' })}
+              span={2}
+            >
+              {(() => {
+                const url = getMediaAssetUrl(asset)
+                if (!url) return '-'
+                return (
+                  <Space wrap>
+                    <Typography.Link href={url} target="_blank" rel="noreferrer">
+                      {url}
+                    </Typography.Link>
+                    <Button
+                      size="small"
+                      icon={<CopyOutlined />}
+                      onClick={() => {
+                        void navigator.clipboard.writeText(url)
+                        void message.success(
+                          t('media.actions.copiedLink', { defaultValue: 'Đã sao chép link ảnh' }),
+                        )
+                      }}
+                    >
+                      {t('media.actions.copyLink', { defaultValue: 'Sao chép' })}
+                    </Button>
+                    <Button
+                      size="small"
+                      icon={<LinkOutlined />}
+                      href={url}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {t('media.actions.openLink', { defaultValue: 'Mở tab mới' })}
+                    </Button>
+                  </Space>
+                )
+              })()}
             </Descriptions.Item>
             <Descriptions.Item label={t('media.columns.createdAt')} span={2}>
               <FormattedDateTime value={asset.createdAt} />

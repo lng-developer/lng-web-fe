@@ -117,7 +117,13 @@ export function TrackingUploadPreviewModal({
 
   const submitMutation = useMutation({
     mutationFn: (shipmentIds: string[]) => {
-      if (!effectiveAgentId) throw new Error('Extension agent is required')
+      if (!effectiveAgentId) {
+        throw new Error(
+          t('portal.shipments.trackingPreview.agentRequired', {
+            defaultValue: 'Extension agent is required',
+          }),
+        )
+      }
       return createAmazonTrackingSubmission({ shopId, agentId: effectiveAgentId, shipmentIds })
     },
     onSuccess: () => {
@@ -132,7 +138,12 @@ export function TrackingUploadPreviewModal({
       onClose()
     },
     onError: (error: Error) => {
-      message.error(error.message || 'Failed to submit tracking')
+      message.error(
+        error.message ||
+          t('portal.shipments.trackingPreview.submitError', {
+            defaultValue: 'Failed to submit tracking to Amazon',
+          }),
+      )
     },
   })
 
@@ -142,7 +153,7 @@ export function TrackingUploadPreviewModal({
     setHasCopiedTsv(true)
     message.success(
       t('portal.shipments.trackingPreview.copySuccess', {
-        defaultValue: 'Đã sao chép nội dung file TSV gửi Amazon',
+        defaultValue: 'Amazon TSV feed content copied to clipboard',
       }),
     )
     setTimeout(() => setHasCopiedTsv(false), 2000)
@@ -165,11 +176,22 @@ export function TrackingUploadPreviewModal({
             <Typography.Text copyable={Boolean(value && value !== '-')}>
               {value || '-'}
             </Typography.Text>
-            {record.itemCount > 1 ? <Tag color="blue">{record.itemCount} items</Tag> : null}
+            {record.itemCount > 1 ? (
+              <Tag color="blue">
+                {t('portal.shipments.trackingPreview.itemCount', {
+                  count: record.itemCount,
+                  defaultValue: `${record.itemCount} items`,
+                })}
+              </Tag>
+            ) : null}
           </Space>
           {record.externalItemId ? (
             <Typography.Text type="secondary" style={{ fontSize: 11 }}>
-              Item: {record.externalItemId} {record.quantity ? `(x${record.quantity})` : ''}
+              {t('portal.shipments.trackingPreview.itemPrefix', {
+                id: record.externalItemId,
+                defaultValue: `Item: ${record.externalItemId}`,
+              })}{' '}
+              {record.quantity ? `(x${record.quantity})` : ''}
             </Typography.Text>
           ) : null}
         </Space>
@@ -276,20 +298,47 @@ export function TrackingUploadPreviewModal({
       width: 160,
       render: (_: unknown, record: AmazonTrackingPreviewRow) => {
         if (record.marketplaceConfirmationStatus === 'CONFIRMED') {
-          return <Tag color="success">✓ Đã xác nhận</Tag>
+          return (
+            <Tag color="success">
+              {t('portal.shipments.trackingPreview.statusConfirmed', {
+                defaultValue: '✓ Confirmed',
+              })}
+            </Tag>
+          )
         }
         if (record.marketplaceConfirmationStatus === 'SUBMITTED') {
-          return <Tag color="processing">⏳ Đang gửi lên Amazon</Tag>
+          return (
+            <Tag color="processing">
+              {t('portal.shipments.trackingPreview.statusSubmitted', {
+                defaultValue: '⏳ Submitting to Amazon',
+              })}
+            </Tag>
+          )
         }
         if (record.marketplaceConfirmationStatus === 'FAILED') {
-          return <Tag color="error">Gửi thất bại</Tag>
+          return (
+            <Tag color="error">
+              {t('portal.shipments.trackingPreview.statusFailed', {
+                defaultValue: 'Submission Failed',
+              })}
+            </Tag>
+          )
         }
         if (record.isReady) {
-          return <Tag color="cyan">Sẵn sàng gửi</Tag>
+          return (
+            <Tag color="cyan">
+              {t('portal.shipments.trackingPreview.statusReady', {
+                defaultValue: 'Ready to Submit',
+              })}
+            </Tag>
+          )
         }
+        const missingLabel = t('portal.shipments.trackingPreview.statusMissingData', {
+          defaultValue: 'Missing Data',
+        })
         return (
-          <Tooltip title={record.issues?.join(', ') || 'Thiếu thông tin'}>
-            <Tag color="warning">Thiếu thông tin</Tag>
+          <Tooltip title={record.issues?.join(', ') || missingLabel}>
+            <Tag color="warning">{missingLabel}</Tag>
           </Tooltip>
         )
       },
@@ -324,7 +373,7 @@ export function TrackingUploadPreviewModal({
       }
       open
       title={t('portal.shipments.trackingPreview.title', {
-        defaultValue: 'Amazon tracking upload preview',
+        defaultValue: 'Amazon Tracking Upload Preview',
       })}
       width="min(1250px, 94vw)"
       onCancel={onClose}
@@ -332,21 +381,25 @@ export function TrackingUploadPreviewModal({
       <Typography.Paragraph type="secondary">
         {t('portal.shipments.trackingPreview.description', {
           defaultValue:
-            'Xem trước các trường dữ liệu thực tế sẽ được đưa vào file feed TSV và gửi lên Amazon Seller Central qua Extension Worker.',
+            'Preview the actual data fields that will be included in the TSV feed file and uploaded to Amazon Seller Central via the Extension Worker.',
         })}
       </Typography.Paragraph>
       <Alert
         showIcon
         type="info"
-        title={t('portal.shipments.trackingPreview.noFallback', {
+        title={t('portal.shipments.trackingPreview.feedSyncNote', {
           defaultValue:
-            'Các trường dữ liệu hiển thị (order-id, ship-date, carrier-code, ship-method, tracking-number) được chuẩn hóa đồng bộ 100% với file TSV gửi Amazon.',
+            'Displayed data fields (order-id, ship-date, carrier-code, carrier-name, ship-method, tracking-number) are 100% synchronized with the Amazon TSV feed.',
         })}
       />
 
       {availableAgents.length > 1 ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
-          <Typography.Text strong>Worker Extension:</Typography.Text>
+          <Typography.Text strong>
+            {t('portal.shipments.trackingPreview.workerExtension', {
+              defaultValue: 'Worker Extension:',
+            })}
+          </Typography.Text>
           <Select
             value={effectiveAgentId}
             onChange={setSelectedAgentIdOverride}
@@ -364,11 +417,11 @@ export function TrackingUploadPreviewModal({
           showIcon
           type="warning"
           title={t('portal.shipments.trackingPreview.noAgentWarning', {
-            defaultValue: 'Chưa có Worker Extension kết nối',
+            defaultValue: 'No connected Extension Worker',
           })}
           description={t('portal.shipments.trackingPreview.noAgentDesc', {
             defaultValue:
-              'Shop này hiện chưa có Worker Extension nào kết nối (hoặc extension đang offline). Bạn chỉ có thể xem trước danh sách, cần Worker Extension online để gửi tracking lên sàn.',
+              'No Worker Extension is currently connected for this store (or it is offline). You can only preview the list; an online Worker Extension is required to submit tracking to the marketplace.',
           })}
           style={{ marginTop: 12 }}
         />
@@ -388,18 +441,40 @@ export function TrackingUploadPreviewModal({
           value={filterMode}
           onChange={(val) => setFilterMode(val as 'PENDING' | 'CONFIRMED' | 'ALL')}
           options={[
-            { label: `Cần gửi (${summary?.readyOrders ?? pendingCount})`, value: 'PENDING' },
             {
-              label: `Đã xác nhận (${summary?.confirmedOrders ?? confirmedCount})`,
+              label: t('portal.shipments.trackingPreview.filterPending', {
+                count: summary?.readyOrders ?? pendingCount,
+                defaultValue: `Pending (${summary?.readyOrders ?? pendingCount})`,
+              }),
+              value: 'PENDING',
+            },
+            {
+              label: t('portal.shipments.trackingPreview.filterConfirmed', {
+                count: summary?.confirmedOrders ?? confirmedCount,
+                defaultValue: `Confirmed (${summary?.confirmedOrders ?? confirmedCount})`,
+              }),
               value: 'CONFIRMED',
             },
-            { label: `Tất cả (${totalCount})`, value: 'ALL' },
+            {
+              label: t('portal.shipments.trackingPreview.filterAll', {
+                count: totalCount,
+                defaultValue: `All (${totalCount})`,
+              }),
+              value: 'ALL',
+            },
           ]}
         />
         <Typography.Text type="secondary">
           {readyItemCount > readyOrderCount
-            ? `${readyOrderCount} đơn (${readyItemCount} items) được chọn để gửi lên Amazon`
-            : `${readyOrderCount} đơn được chọn để gửi lên Amazon`}
+            ? t('portal.shipments.trackingPreview.selectedOrdersWithItems', {
+                orderCount: readyOrderCount,
+                itemCount: readyItemCount,
+                defaultValue: `${readyOrderCount} orders (${readyItemCount} items) selected to submit to Amazon`,
+              })
+            : t('portal.shipments.trackingPreview.selectedOrders', {
+                count: readyOrderCount,
+                defaultValue: `${readyOrderCount} order(s) selected to submit to Amazon`,
+              })}
         </Typography.Text>
       </div>
 
@@ -436,7 +511,7 @@ export function TrackingUploadPreviewModal({
                 <Typography.Text strong>
                   {t('portal.shipments.trackingPreview.tsvFeedPreviewTitle', {
                     count: previewQuery.data?.rowCount || 0,
-                    defaultValue: `Xem nội dung Feed gửi Amazon (TSV Preview - ${previewQuery.data?.rowCount || 0} dòng)`,
+                    defaultValue: `Amazon Feed Preview (TSV Preview - ${previewQuery.data?.rowCount || 0} rows)`,
                   })}
                 </Typography.Text>
               </Space>
@@ -450,14 +525,18 @@ export function TrackingUploadPreviewModal({
                   copyTsv()
                 }}
               >
-                {hasCopiedTsv ? 'Đã sao chép' : 'Sao chép TSV'}
+                {hasCopiedTsv
+                  ? t('portal.shipments.trackingPreview.copiedTsv', { defaultValue: 'Copied' })
+                  : t('portal.shipments.trackingPreview.copyTsv', { defaultValue: 'Copy TSV' })}
               </Button>
             ) : null,
             children: (
               <div>
                 <Typography.Paragraph type="secondary" style={{ fontSize: 12, marginBottom: 8 }}>
-                  Nội dung file TSV tuân thủ đúng 19 cột của Amazon Shipping Confirmation Template.
-                  Extension Worker sẽ tải file này lên Amazon Seller Central.
+                  {t('portal.shipments.trackingPreview.tsvDescription', {
+                    defaultValue:
+                      'The TSV file strictly follows the 19 columns of the Amazon Shipping Confirmation Template. The Extension Worker will upload this file to Amazon Seller Central.',
+                  })}
                 </Typography.Paragraph>
                 <div
                   style={{
@@ -472,7 +551,10 @@ export function TrackingUploadPreviewModal({
                     maxHeight: 240,
                   }}
                 >
-                  {previewQuery.data?.tsv || 'Chưa có dòng feed nào sẵn sàng gửi.'}
+                  {previewQuery.data?.tsv ||
+                    t('portal.shipments.trackingPreview.tsvEmpty', {
+                      defaultValue: 'No feed rows ready to submit.',
+                    })}
                 </div>
               </div>
             ),
