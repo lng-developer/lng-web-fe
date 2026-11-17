@@ -3,9 +3,14 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 
-import { getUnreadCount, listNotifications } from '@/features/notifications/api/notificationApi'
+import {
+  type AppNotification,
+  getUnreadCount,
+  listNotifications,
+} from '@/features/notifications/api/notificationApi'
 import { notificationTarget } from '@/features/notifications/notificationTarget'
 import { isImportantNotification } from '@/features/notifications/utils/notificationUrgency'
+import { getSharedChatSocket } from '@/features/portal/chat/realtime/chatSocket'
 import { useNotificationAlerts } from '@/shared/notification'
 
 export function useImportantNotificationWatcher() {
@@ -25,6 +30,42 @@ export function useImportantNotificationWatcher() {
   })
 
   const currentCount = countQuery.data?.unreadCount
+
+  useEffect(() => {
+    const socket = getSharedChatSocket()
+    if (!socket) return
+
+    const handleRealtimeNotification = (item: AppNotification) => {
+      if (
+        !item ||
+        item.readAt ||
+        alertedIdsRef.current.has(item.id) ||
+        !isImportantNotification(item)
+      ) {
+        return
+      }
+
+      alertedIdsRef.current.add(item.id)
+      const target = notificationTarget(item)
+      alertImportantNotification({
+        id: `noti-${item.id}`,
+        title: item.title,
+        message: item.message,
+        actionText: t('notificationAlerts.viewDetail'),
+        flashText: t('notificationAlerts.titleFlashNotification'),
+        onAction: target
+          ? () => {
+              navigate(target)
+            }
+          : undefined,
+      })
+    }
+
+    socket.on('notification.created', handleRealtimeNotification)
+    return () => {
+      socket.off('notification.created', handleRealtimeNotification)
+    }
+  }, [alertImportantNotification, navigate, t])
 
   useEffect(() => {
     if (typeof currentCount !== 'number') return

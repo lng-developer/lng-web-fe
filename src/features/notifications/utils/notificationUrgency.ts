@@ -14,6 +14,9 @@ const IMPORTANT_TYPE_KEYWORDS = [
   'pending',
   'payroll',
   'warning',
+  'overdue',
+  'deadline',
+  'tracking',
 ] as const
 
 const IMPORTANT_TEXT_KEYWORDS = [
@@ -24,6 +27,8 @@ const IMPORTANT_TEXT_KEYWORDS = [
   'phân công',
   'cần duyệt',
   'từ chối',
+  'quá hạn',
+  'đến hạn',
   'failed',
   'error',
   'urgent',
@@ -32,6 +37,8 @@ const IMPORTANT_TEXT_KEYWORDS = [
   'pending',
   'rejected',
   'action required',
+  'overdue',
+  'deadline',
 ] as const
 
 export function isImportantNotification(

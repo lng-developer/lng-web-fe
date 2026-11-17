@@ -1,5 +1,6 @@
 import { io, type Socket } from 'socket.io-client'
 
+import type { AppNotification } from '@/features/notifications/api/notificationApi'
 import type { ChatConversation, ChatMessage } from '@/features/portal/chat/api/chatApi'
 import type { SendChatMessageInput } from '@/features/portal/chat/api/chatApi'
 import { getAccessToken } from '@/shared/auth/session'
@@ -10,6 +11,7 @@ type ServerToClientEvents = {
   'message.read': (state: { conversationId: string; accountId: string; lastReadAt: string }) => void
   'presence.changed': (event: { accountId: string; presence: 'ONLINE' | 'OFFLINE' }) => void
   typing: (event: { conversationId: string; accountId: string; isTyping: boolean }) => void
+  'notification.created': (notification: AppNotification) => void
 }
 
 type ClientToServerEvents = {
@@ -26,6 +28,8 @@ type ClientToServerEvents = {
 
 export type ChatSocket = Socket<ServerToClientEvents, ClientToServerEvents>
 
+let sharedSocket: ChatSocket | null = null
+
 export function createChatSocket(): ChatSocket | null {
   const token = getAccessToken()
   if (!token) return null
@@ -33,4 +37,26 @@ export function createChatSocket(): ChatSocket | null {
     auth: { token },
     transports: ['websocket'],
   })
+}
+
+export function getSharedChatSocket(): ChatSocket | null {
+  const token = getAccessToken()
+  if (!token) {
+    if (sharedSocket) {
+      sharedSocket.disconnect?.()
+      sharedSocket = null
+    }
+    return null
+  }
+  if (!sharedSocket) {
+    sharedSocket = createChatSocket()
+  }
+  return sharedSocket
+}
+
+export function resetSharedChatSocket(): void {
+  if (sharedSocket) {
+    sharedSocket.disconnect?.()
+    sharedSocket = null
+  }
 }

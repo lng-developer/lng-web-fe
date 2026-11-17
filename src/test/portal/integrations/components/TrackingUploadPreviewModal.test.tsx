@@ -87,7 +87,32 @@ describe('TrackingUploadPreviewModal', () => {
     expect(screen.getByText('USPS Ground Advantage')).toBeVisible()
     expect(screen.getByText('9400111899223856928499')).toBeVisible()
     expect(screen.getByText('2026-09-29')).toBeVisible()
-    expect(screen.getByText(/Thiếu thông tin/i)).toBeVisible()
+    expect(screen.getByText(/Missing Data/i)).toBeVisible()
+  })
+
+  it('renders all UI labels in Vietnamese when language is switched to vi', async () => {
+    await i18n.changeLanguage('vi')
+
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <TrackingUploadPreviewModal shopId="shop-1" onClose={vi.fn()} />
+      </QueryClientProvider>,
+    )
+
+    await waitFor(() => expect(screen.getByText('114-1234567-1234567')).toBeVisible())
+    // Verify Vietnamese table headers and status
+    expect(screen.getAllByText('Mã đơn hàng')[0]).toBeVisible()
+    expect(screen.getAllByText('Ngày gửi hàng')[0]).toBeVisible()
+    expect(screen.getAllByText('Mã nhà vận chuyển')[0]).toBeVisible()
+    expect(screen.getAllByText('Tên nhà vận chuyển')[0]).toBeVisible()
+    expect(screen.getAllByText('Phương thức vận chuyển')[0]).toBeVisible()
+    expect(screen.getAllByText('Mã vận đơn')[0]).toBeVisible()
+    expect(screen.getAllByText('Trạng thái')[0]).toBeVisible()
+    expect(screen.getAllByText(/Thiếu thông tin/i)[0]).toBeVisible()
+    expect(screen.getAllByText(/Sẵn sàng gửi/i)[0]).toBeVisible()
+    expect(screen.getByText(/Xem trước dữ liệu tải lên tracking Amazon/i)).toBeVisible()
   })
 
   it('submits ready tracking rows when agentId is provided', async () => {

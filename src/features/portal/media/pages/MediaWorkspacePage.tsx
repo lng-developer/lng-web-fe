@@ -1,9 +1,15 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
-import { DownloadOutlined, FileOutlined, UploadOutlined } from '@ant-design/icons'
+import {
+  CopyOutlined,
+  DownloadOutlined,
+  FileOutlined,
+  LinkOutlined,
+  UploadOutlined,
+} from '@ant-design/icons'
 import type { TableColumnsType } from 'antd'
-import { Button, Select, Space, Tooltip, Typography } from 'antd'
+import { Button, message, Select, Space, Tooltip, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
@@ -22,6 +28,7 @@ import {
 } from '@/shared/ui'
 
 import {
+  getMediaAssetUrl,
   type MediaAsset,
   type MediaAssetListParams,
   type MediaAssetStatus,
@@ -154,21 +161,76 @@ export function MediaWorkspacePage() {
         ),
       },
       {
+        title: t('media.columns.url', { defaultValue: 'Link ảnh' }),
+        width: 200,
+        render: (_, asset) => {
+          const url = getMediaAssetUrl(asset)
+          if (!url) return '-'
+          return (
+            <Space size={4} onClick={(event) => event.stopPropagation()}>
+              <Typography.Link
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+                style={{ maxWidth: 140, display: 'inline-block' }}
+                ellipsis
+              >
+                {url}
+              </Typography.Link>
+              <Tooltip title={t('media.actions.copyLink', { defaultValue: 'Sao chép link' })}>
+                <Button
+                  size="small"
+                  type="text"
+                  icon={<CopyOutlined />}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    void navigator.clipboard.writeText(url)
+                    void message.success(
+                      t('media.actions.copiedLink', { defaultValue: 'Đã sao chép link ảnh' }),
+                    )
+                  }}
+                />
+              </Tooltip>
+            </Space>
+          )
+        },
+      },
+      {
         title: t('media.columns.actions'),
-        width: 80,
-        render: (_, asset) =>
-          asset.downloadUrl ? (
-            <Tooltip title={t('media.actions.download')}>
-              <Button
-                aria-label={t('media.actions.download')}
-                icon={<DownloadOutlined />}
-                onClick={(event) => {
-                  event.stopPropagation()
-                  void downloadMediaAsset(asset.downloadUrl!, asset.originalFilename ?? undefined)
-                }}
-              />
-            </Tooltip>
-          ) : null,
+        width: 100,
+        render: (_, asset) => {
+          const url = getMediaAssetUrl(asset)
+          return (
+            <Space size={4} onClick={(event) => event.stopPropagation()}>
+              {url && (
+                <Tooltip title={t('media.actions.openLink', { defaultValue: 'Mở ảnh' })}>
+                  <Button
+                    aria-label={t('media.actions.openLink', { defaultValue: 'Mở ảnh' })}
+                    icon={<LinkOutlined />}
+                    href={url}
+                    target="_blank"
+                    rel="noreferrer"
+                  />
+                </Tooltip>
+              )}
+              {asset.downloadUrl && (
+                <Tooltip title={t('media.actions.download')}>
+                  <Button
+                    aria-label={t('media.actions.download')}
+                    icon={<DownloadOutlined />}
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      void downloadMediaAsset(
+                        asset.downloadUrl!,
+                        asset.originalFilename ?? undefined,
+                      )
+                    }}
+                  />
+                </Tooltip>
+              )}
+            </Space>
+          )
+        },
       },
     ],
     [t],
