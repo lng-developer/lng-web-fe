@@ -2,14 +2,16 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { listShipments } from '@/features/portal/shipments/api/shipmentApi'
-import { createAmazonTrackingSubmission } from '@/features/portal/integrations/api/integrationApi'
+import {
+  createAmazonTrackingSubmission,
+  previewAmazonTrackingSubmission,
+} from '@/features/portal/integrations/api/integrationApi'
 import { TrackingUploadPreviewModal } from '@/features/portal/integrations/components/TrackingUploadPreviewModal'
 import i18n from '@/shared/i18n/i18n'
 
-vi.mock('@/features/portal/shipments/api/shipmentApi', () => ({ listShipments: vi.fn() }))
 vi.mock('@/features/portal/integrations/api/integrationApi', () => ({
   createAmazonTrackingSubmission: vi.fn(),
+  previewAmazonTrackingSubmission: vi.fn(),
   listExtensionManagementAgents: vi.fn().mockResolvedValue({ items: [] }),
 }))
 
@@ -19,30 +21,53 @@ describe('TrackingUploadPreviewModal', () => {
   beforeEach(async () => {
     vi.clearAllMocks()
     await i18n.changeLanguage('en')
-    vi.mocked(listShipments).mockResolvedValue({
+    vi.mocked(previewAmazonTrackingSubmission).mockResolvedValue({
       items: [
         {
-          id: 'shipment-1',
-          shopId: 'shop-1',
+          key: '114-1234567-1234567__9400111899223856928499',
+          shipmentIds: ['shipment-1'],
           externalOrderId: '114-1234567-1234567',
           carrier: 'USPS',
+          carrierCode: 'USPS',
+          carrierName: '',
+          shipMethod: 'USPS Ground Advantage',
           trackingNumber: '9400111899223856928499',
-          shippedAt: '2026-09-29T10:00:00.000Z',
+          shipDate: '2026-09-29',
+          itemCount: 1,
+          marketplaceConfirmationStatus: 'PENDING',
+          isReady: true,
+          issues: [],
         },
         {
-          id: 'shipment-2',
-          shopId: 'shop-1',
+          key: '114-7654321-7654321__TRACK-2',
+          shipmentIds: ['shipment-2'],
           externalOrderId: '114-7654321-7654321',
-          carrier: null,
+          carrier: '',
+          carrierCode: 'Other',
+          carrierName: '',
+          shipMethod: 'Standard',
           trackingNumber: 'TRACK-2',
-          shippedAt: null,
+          shipDate: '',
+          itemCount: 1,
+          marketplaceConfirmationStatus: 'PENDING',
+          isReady: false,
+          issues: ['missing_carrier', 'missing_shipped_at'],
         },
       ],
-      pagination: { total: 2, page: 1, limit: 100 },
-    } as Awaited<ReturnType<typeof listShipments>>)
+      tsv: 'order-id\torder-item-id\tquantity\tship-date\tcarrier-code\tcarrier-name\ttracking-number\tship-method\r\n114-1234567-1234567\t\t\t2026-09-29\tUSPS\t\t9400111899223856928499\tUSPS Ground Advantage\r\n',
+      rowCount: 1,
+      summary: {
+        totalOrders: 2,
+        totalShipments: 2,
+        readyOrders: 1,
+        readyShipments: 1,
+        confirmedOrders: 0,
+        pendingOrders: 2,
+      },
+    })
   })
 
-  it('shows vendor tracking fields and marks incomplete rows without filling them', async () => {
+  it('shows Amazon feed fields and marks incomplete rows with missing info', async () => {
     render(
       <QueryClientProvider
         client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
@@ -52,20 +77,19 @@ describe('TrackingUploadPreviewModal', () => {
     )
 
     await waitFor(() =>
-      expect(listShipments).toHaveBeenCalledWith({
+      expect(previewAmazonTrackingSubmission).toHaveBeenCalledWith({
         shopId: 'shop-1',
-        status: 'SHIPPED',
-        page: 1,
-        limit: 100,
       }),
     )
 
     await waitFor(() => expect(screen.getByText('114-1234567-1234567')).toBeVisible())
     expect(screen.getByText('USPS')).toBeVisible()
+    expect(screen.getByText('USPS Ground Advantage')).toBeVisible()
     expect(screen.getByText('9400111899223856928499')).toBeVisible()
-    expect(screen.getByText('Missing Info')).toBeVisible()
-    expect(screen.getAllByText('-').length).toBeGreaterThan(0)
+    expect(screen.getByText('2026-09-29')).toBeVisible()
+    expect(screen.getByText(/Thiếu thông tin/i)).toBeVisible()
   })
+
   it('submits ready tracking rows when agentId is provided', async () => {
     vi.mocked(createAmazonTrackingSubmission).mockResolvedValue({
       id: 'sub-1',
@@ -78,7 +102,7 @@ describe('TrackingUploadPreviewModal', () => {
       status: 'PENDING',
       createdAt: '2026-09-29T10:00:00.000Z',
       updatedAt: '2026-09-29T10:00:00.000Z',
-    } as Awaited<ReturnType<typeof createAmazonTrackingSubmission>>)
+    })
 
     const onClose = vi.fn()
 
@@ -107,29 +131,35 @@ describe('TrackingUploadPreviewModal', () => {
   })
 
   it('groups multi-item shipments sharing the same tracking number into one row and submits all shipment IDs', async () => {
-    vi.mocked(listShipments).mockResolvedValue({
+    vi.mocked(previewAmazonTrackingSubmission).mockResolvedValue({
       items: [
         {
-          id: 'shipment-101',
-          shopId: 'shop-1',
+          key: '114-0159247-1546624__92612903108421543475001234',
+          shipmentIds: ['shipment-101', 'shipment-102'],
           externalOrderId: '114-0159247-1546624',
           carrier: 'UPS Mail Innovations',
+          carrierCode: 'UPS',
+          carrierName: '',
+          shipMethod: 'UPS Mail Innovations',
           trackingNumber: '92612903108421543475001234',
-          shippedAt: '2026-11-11T00:00:00.000Z',
+          shipDate: '2026-11-11',
+          itemCount: 2,
           marketplaceConfirmationStatus: 'PENDING',
-        },
-        {
-          id: 'shipment-102',
-          shopId: 'shop-1',
-          externalOrderId: '114-0159247-1546624',
-          carrier: 'UPS Mail Innovations',
-          trackingNumber: '92612903108421543475001234',
-          shippedAt: '2026-11-11T00:00:00.000Z',
-          marketplaceConfirmationStatus: 'PENDING',
+          isReady: true,
+          issues: [],
         },
       ],
-      pagination: { total: 2, page: 1, limit: 100 },
-    } as Awaited<ReturnType<typeof listShipments>>)
+      tsv: 'order-id\torder-item-id\tquantity\tship-date\tcarrier-code\tcarrier-name\ttracking-number\tship-method\r\n114-0159247-1546624\t\t\t2026-11-11\tUPS\t\t92612903108421543475001234\tUPS Mail Innovations\r\n',
+      rowCount: 1,
+      summary: {
+        totalOrders: 1,
+        totalShipments: 2,
+        readyOrders: 1,
+        readyShipments: 1,
+        confirmedOrders: 0,
+        pendingOrders: 1,
+      },
+    })
 
     vi.mocked(createAmazonTrackingSubmission).mockResolvedValue({
       id: 'sub-2',
@@ -142,7 +172,7 @@ describe('TrackingUploadPreviewModal', () => {
       status: 'PENDING',
       createdAt: '2026-11-11T10:00:00.000Z',
       updatedAt: '2026-11-11T10:00:00.000Z',
-    } as Awaited<ReturnType<typeof createAmazonTrackingSubmission>>)
+    })
 
     const onClose = vi.fn()
 
