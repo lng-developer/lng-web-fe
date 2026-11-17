@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, cleanup, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -35,34 +34,38 @@ vi.mock('@/features/portal/chat/realtime/chatSocket', () => ({
   getSharedChatSocket: vi.fn(),
 }))
 
+type MockListener = (...args: unknown[]) => void
+
 describe('Notification realtime socket integration', () => {
   let mockSocket: {
     on: ReturnType<typeof vi.fn>
     off: ReturnType<typeof vi.fn>
-    listeners: Record<string, ((...args: any[]) => void)[]>
+    listeners: Record<string, MockListener[]>
   }
   let alertMock: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
     vi.clearAllMocks()
-    const listeners: Record<string, ((...args: any[]) => void)[]> = {}
+    const listeners: Record<string, MockListener[]> = {}
     mockSocket = {
       listeners,
-      on: vi.fn((event: string, callback: (...args: any[]) => void) => {
+      on: vi.fn((event: string, callback: MockListener) => {
         if (!listeners[event]) listeners[event] = []
         listeners[event].push(callback)
       }),
-      off: vi.fn((event: string, callback: (...args: any[]) => void) => {
+      off: vi.fn((event: string, callback: MockListener) => {
         if (listeners[event]) {
           listeners[event] = listeners[event].filter((cb) => cb !== callback)
         }
       }),
     }
-    vi.mocked(getSharedChatSocket).mockReturnValue(mockSocket as any)
+    vi.mocked(getSharedChatSocket).mockReturnValue(
+      mockSocket as unknown as ReturnType<typeof getSharedChatSocket>,
+    )
     alertMock = vi.fn()
     vi.mocked(useNotificationAlerts).mockReturnValue({
       alertImportantNotification: alertMock,
-    } as any)
+    } as unknown as ReturnType<typeof useNotificationAlerts>)
   })
 
   afterEach(cleanup)
