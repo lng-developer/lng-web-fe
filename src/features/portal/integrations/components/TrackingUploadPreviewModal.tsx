@@ -5,6 +5,7 @@ import type { TableColumnsType } from 'antd'
 import {
   Alert,
   Button,
+  Collapse,
   message,
   Modal,
   Segmented,
@@ -12,88 +13,24 @@ import {
   Space,
   Table,
   Tag,
+  Tooltip,
   Typography,
 } from 'antd'
-import dayjs from 'dayjs'
+import { CopyOutlined, CheckOutlined, FileTextOutlined } from '@ant-design/icons'
 
-import { listShipments, type Shipment } from '@/features/portal/shipments/api/shipmentApi'
 import {
   createAmazonTrackingSubmission,
   listExtensionManagementAgents,
+  previewAmazonTrackingSubmission,
+  type AmazonTrackingPreviewRow,
 } from '@/features/portal/integrations/api/integrationApi'
 
-export interface GroupedPreviewShipment {
-  key: string
-  externalOrderId: string
-  carrier?: string
-  trackingNumber?: string
-  shippedAt?: string | null
-  marketplaceConfirmationStatus?: Shipment['marketplaceConfirmationStatus']
-  marketplaceConfirmedAt?: string | null
-  shipmentIds: string[]
-  itemCount: number
-  rawShipments: Shipment[]
-}
-
-function isShipmentReady(
-  shipment: Pick<Shipment, 'externalOrderId' | 'carrier' | 'trackingNumber' | 'shippedAt'>,
-) {
-  return Boolean(
-    shipment.externalOrderId && shipment.carrier && shipment.trackingNumber && shipment.shippedAt,
-  )
-}
-
-function isGroupReady(group: GroupedPreviewShipment) {
-  return group.rawShipments.every(isShipmentReady)
-}
-
-function canSelectGroupForUpload(group: GroupedPreviewShipment) {
+function canSelectRowForUpload(row: AmazonTrackingPreviewRow) {
   return (
-    isGroupReady(group) &&
-    group.rawShipments.some(
-      (s) =>
-        s.marketplaceConfirmationStatus !== 'CONFIRMED' &&
-        s.marketplaceConfirmationStatus !== 'SUBMITTED',
-    )
+    row.isReady &&
+    row.marketplaceConfirmationStatus !== 'CONFIRMED' &&
+    row.marketplaceConfirmationStatus !== 'SUBMITTED'
   )
-}
-
-function getGroupMarketplaceStatus(
-  shipments: Shipment[],
-): Shipment['marketplaceConfirmationStatus'] {
-  if (shipments.length === 0) return undefined
-  if (shipments.every((s) => s.marketplaceConfirmationStatus === 'CONFIRMED')) {
-    return 'CONFIRMED'
-  }
-  if (shipments.some((s) => s.marketplaceConfirmationStatus === 'SUBMITTED')) {
-    return 'SUBMITTED'
-  }
-  if (shipments.some((s) => s.marketplaceConfirmationStatus === 'FAILED')) {
-    return 'FAILED'
-  }
-  return shipments[0].marketplaceConfirmationStatus
-}
-
-function formatShipDate(dateValue?: string | Date | null) {
-  if (!dateValue) return '-'
-  try {
-    const d = new Date(dateValue)
-    const pstFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' })
-    const formatted = pstFormatter.format(d)
-    const todayInPst = pstFormatter.format(new Date())
-    return formatted > todayInPst ? todayInPst : formatted
-  } catch {
-    return dayjs(dateValue).format('YYYY-MM-DD')
-  }
-}
-
-function resolveShipMethod(carrier?: string | null) {
-  if (!carrier) return '-'
-  const upper = carrier.toUpperCase()
-  if (upper.includes('USPS')) return 'USPS Ground Advantage'
-  if (upper.includes('UPS')) return 'UPS Ground'
-  if (upper.includes('FEDEX')) return 'FedEx Ground'
-  return 'Standard'
 }
 
 export function TrackingUploadPreviewModal({
@@ -110,10 +47,11 @@ export function TrackingUploadPreviewModal({
   const [selectedKeysOverride, setSelectedKeysOverride] = useState<string[]>()
   const [selectedAgentIdOverride, setSelectedAgentIdOverride] = useState<string>()
   const [filterMode, setFilterMode] = useState<'PENDING' | 'CONFIRMED' | 'ALL'>('PENDING')
+  const [hasCopiedTsv, setHasCopiedTsv] = useState(false)
 
-  const shipments = useQuery({
-    queryKey: ['shipments', 'amazon-tracking-preview', shopId],
-    queryFn: () => listShipments({ shopId, status: 'SHIPPED', page: 1, limit: 100 }),
+  const previewQuery = useQuery({
+    queryKey: ['amazon-tracking-preview', shopId],
+    queryFn: () => previewAmazonTrackingSubmission({ shopId }),
     staleTime: 20_000,
     retry: false,
   })
@@ -136,76 +74,45 @@ export function TrackingUploadPreviewModal({
     return availableAgents[0]?.id
   }, [selectedAgentIdOverride, agentId, availableAgents])
 
-  const allItems = useMemo(() => shipments.data?.items ?? [], [shipments.data?.items])
+  const allItems = useMemo(() => previewQuery.data?.items ?? [], [previewQuery.data?.items])
+  const summary = previewQuery.data?.summary
 
-  const groupedShipments = useMemo(() => {
-    const map = new Map<string, GroupedPreviewShipment>()
-    for (const item of allItems) {
-      const groupKey =
-        item.externalOrderId && item.trackingNumber
-          ? `${item.externalOrderId}__${item.trackingNumber}`
-          : item.id
-
-      const existing = map.get(groupKey)
-      if (!existing) {
-        map.set(groupKey, {
-          key: groupKey,
-          externalOrderId: item.externalOrderId || '-',
-          carrier: item.carrier || undefined,
-          trackingNumber: item.trackingNumber || undefined,
-          shippedAt: item.shippedAt,
-          marketplaceConfirmationStatus: item.marketplaceConfirmationStatus,
-          marketplaceConfirmedAt: item.marketplaceConfirmedAt,
-          shipmentIds: [item.id],
-          itemCount: 1,
-          rawShipments: [item],
-        })
-      } else {
-        existing.shipmentIds.push(item.id)
-        existing.rawShipments.push(item)
-        existing.itemCount += 1
-        existing.marketplaceConfirmationStatus = getGroupMarketplaceStatus(existing.rawShipments)
-      }
-    }
-    return Array.from(map.values())
+  const pendingCount = useMemo(() => {
+    return allItems.filter((i) => i.marketplaceConfirmationStatus !== 'CONFIRMED').length
   }, [allItems])
 
-  const pendingCount = useMemo(
-    () => groupedShipments.filter((g) => g.marketplaceConfirmationStatus !== 'CONFIRMED').length,
-    [groupedShipments],
-  )
-  const confirmedCount = useMemo(
-    () => groupedShipments.filter((g) => g.marketplaceConfirmationStatus === 'CONFIRMED').length,
-    [groupedShipments],
-  )
-  const totalCount = groupedShipments.length
+  const confirmedCount = useMemo(() => {
+    return allItems.filter((i) => i.marketplaceConfirmationStatus === 'CONFIRMED').length
+  }, [allItems])
 
-  const displayedShipments = useMemo(() => {
+  const totalCount = allItems.length
+
+  const displayedRows = useMemo(() => {
     if (filterMode === 'PENDING') {
-      return groupedShipments.filter((g) => g.marketplaceConfirmationStatus !== 'CONFIRMED')
+      return allItems.filter((i) => i.marketplaceConfirmationStatus !== 'CONFIRMED')
     }
     if (filterMode === 'CONFIRMED') {
-      return groupedShipments.filter((g) => g.marketplaceConfirmationStatus === 'CONFIRMED')
+      return allItems.filter((i) => i.marketplaceConfirmationStatus === 'CONFIRMED')
     }
-    return groupedShipments
-  }, [groupedShipments, filterMode])
+    return allItems
+  }, [allItems, filterMode])
 
-  const readyGroupKeys = useMemo(
-    () => groupedShipments.filter(canSelectGroupForUpload).map((g) => g.key),
-    [groupedShipments],
+  const readyRowKeys = useMemo(
+    () => allItems.filter(canSelectRowForUpload).map((r) => r.key),
+    [allItems],
   )
-  const selectedRowKeys = selectedKeysOverride ?? readyGroupKeys
+  const selectedRowKeys = selectedKeysOverride ?? readyRowKeys
 
-  const selectedGroups = useMemo(() => {
+  const selectedRows = useMemo(() => {
     const keySet = new Set(selectedRowKeys)
-    return groupedShipments.filter((g) => keySet.has(g.key))
-  }, [groupedShipments, selectedRowKeys])
+    return allItems.filter((r) => keySet.has(r.key))
+  }, [allItems, selectedRowKeys])
 
   const selectedShipmentIds = useMemo(() => {
-    return selectedGroups.flatMap((g) => g.shipmentIds)
-  }, [selectedGroups])
+    return selectedRows.flatMap((r) => r.shipmentIds)
+  }, [selectedRows])
 
-  const readyOrderCount = selectedGroups.length
+  const readyOrderCount = selectedRows.length
   const readyItemCount = selectedShipmentIds.length
 
   const submitMutation = useMutation({
@@ -220,6 +127,7 @@ export function TrackingUploadPreviewModal({
         }),
       )
       queryClient.invalidateQueries({ queryKey: ['shipments'] })
+      queryClient.invalidateQueries({ queryKey: ['amazon-tracking-preview'] })
       queryClient.invalidateQueries({ queryKey: ['extension-commands'] })
       onClose()
     },
@@ -228,60 +136,161 @@ export function TrackingUploadPreviewModal({
     },
   })
 
-  const columns: TableColumnsType<GroupedPreviewShipment> = [
+  const copyTsv = () => {
+    if (!previewQuery.data?.tsv) return
+    navigator.clipboard.writeText(previewQuery.data.tsv)
+    setHasCopiedTsv(true)
+    message.success(
+      t('portal.shipments.trackingPreview.copySuccess', {
+        defaultValue: 'Đã sao chép nội dung file TSV gửi Amazon',
+      }),
+    )
+    setTimeout(() => setHasCopiedTsv(false), 2000)
+  }
+
+  const columns: TableColumnsType<AmazonTrackingPreviewRow> = [
     {
-      title: t('portal.shipments.trackingPreview.orderId', { defaultValue: 'Order ID' }),
-      dataIndex: 'externalOrderId',
-      render: (value, record) => (
-        <Space size={6} align="center">
-          <Typography.Text copyable={Boolean(value && value !== '-')}>
-            {value || '-'}
+      title: (
+        <div>
+          <div>{t('portal.shipments.trackingPreview.orderId', { defaultValue: 'Order ID' })}</div>
+          <Typography.Text type="secondary" style={{ fontSize: 11 }}>
+            order-id
           </Typography.Text>
-          {record.itemCount > 1 ? <Tag color="blue">{record.itemCount} items</Tag> : null}
+        </div>
+      ),
+      dataIndex: 'externalOrderId',
+      render: (value: string, record: AmazonTrackingPreviewRow) => (
+        <Space vertical size={2}>
+          <Space size={6} align="center">
+            <Typography.Text copyable={Boolean(value && value !== '-')}>
+              {value || '-'}
+            </Typography.Text>
+            {record.itemCount > 1 ? <Tag color="blue">{record.itemCount} items</Tag> : null}
+          </Space>
+          {record.externalItemId ? (
+            <Typography.Text type="secondary" style={{ fontSize: 11 }}>
+              Item: {record.externalItemId} {record.quantity ? `(x${record.quantity})` : ''}
+            </Typography.Text>
+          ) : null}
         </Space>
       ),
     },
     {
-      title: t('portal.shipments.trackingPreview.shipDate', { defaultValue: 'Ship Date' }),
-      dataIndex: 'shippedAt',
-      render: (value) => formatShipDate(value),
+      title: (
+        <div>
+          <div>{t('portal.shipments.trackingPreview.shipDate', { defaultValue: 'Ship Date' })}</div>
+          <Typography.Text type="secondary" style={{ fontSize: 11 }}>
+            ship-date
+          </Typography.Text>
+        </div>
+      ),
+      dataIndex: 'shipDate',
+      width: 125,
+      render: (value: string) => (
+        <Typography.Text strong style={{ fontFamily: 'monospace' }}>
+          {value || '-'}
+        </Typography.Text>
+      ),
     },
     {
-      title: t('portal.shipments.trackingPreview.carrier', { defaultValue: 'Carrier' }),
-      dataIndex: 'carrier',
-      render: (value) => value || '-',
+      title: (
+        <div>
+          <div>
+            {t('portal.shipments.trackingPreview.carrierCode', { defaultValue: 'Carrier Code' })}
+          </div>
+          <Typography.Text type="secondary" style={{ fontSize: 11 }}>
+            carrier-code
+          </Typography.Text>
+        </div>
+      ),
+      dataIndex: 'carrierCode',
+      width: 125,
+      render: (value: string) => (
+        <Tag
+          color={
+            value === 'USPS'
+              ? 'blue'
+              : value === 'UPS'
+                ? 'gold'
+                : value === 'FedEx'
+                  ? 'purple'
+                  : 'default'
+          }
+        >
+          {value || '-'}
+        </Tag>
+      ),
     },
     {
-      title: t('portal.shipments.trackingPreview.shipMethod', { defaultValue: 'Shipping Method' }),
-      key: 'shipMethod',
-      render: (_, record) => resolveShipMethod(record.carrier),
+      title: (
+        <div>
+          <div>
+            {t('portal.shipments.trackingPreview.carrierName', { defaultValue: 'Carrier Name' })}
+          </div>
+          <Typography.Text type="secondary" style={{ fontSize: 11 }}>
+            carrier-name
+          </Typography.Text>
+        </div>
+      ),
+      dataIndex: 'carrierName',
+      width: 130,
+      render: (value: string) => value || <Typography.Text type="secondary">-</Typography.Text>,
     },
     {
-      title: t('portal.shipments.trackingPreview.trackingNumber', {
-        defaultValue: 'Tracking Number',
-      }),
+      title: (
+        <div>
+          <div>
+            {t('portal.shipments.trackingPreview.shipMethod', { defaultValue: 'Shipping Method' })}
+          </div>
+          <Typography.Text type="secondary" style={{ fontSize: 11 }}>
+            ship-method
+          </Typography.Text>
+        </div>
+      ),
+      dataIndex: 'shipMethod',
+      width: 175,
+      render: (value: string) => <Typography.Text>{value || 'Standard'}</Typography.Text>,
+    },
+    {
+      title: (
+        <div>
+          <div>
+            {t('portal.shipments.trackingPreview.trackingNumber', {
+              defaultValue: 'Tracking Number',
+            })}
+          </div>
+          <Typography.Text type="secondary" style={{ fontSize: 11 }}>
+            tracking-number
+          </Typography.Text>
+        </div>
+      ),
       dataIndex: 'trackingNumber',
-      render: (value) => (
-        <Typography.Text copyable={Boolean(value)}>{value || '-'}</Typography.Text>
+      render: (value: string) => (
+        <Typography.Text copyable={Boolean(value)} style={{ fontFamily: 'monospace' }}>
+          {value || '-'}
+        </Typography.Text>
       ),
     },
     {
       title: t('portal.shipments.trackingPreview.status', { defaultValue: 'Status' }),
-      width: 170,
-      render: (_, record) => {
+      width: 160,
+      render: (_: unknown, record: AmazonTrackingPreviewRow) => {
         if (record.marketplaceConfirmationStatus === 'CONFIRMED') {
-          return <Tag color="success">✓ Confirmed</Tag>
+          return <Tag color="success">✓ Đã xác nhận</Tag>
         }
         if (record.marketplaceConfirmationStatus === 'SUBMITTED') {
-          return <Tag color="processing">⏳ Submitted</Tag>
+          return <Tag color="processing">⏳ Đang gửi lên Amazon</Tag>
         }
         if (record.marketplaceConfirmationStatus === 'FAILED') {
-          return <Tag color="error">Upload Failed</Tag>
+          return <Tag color="error">Gửi thất bại</Tag>
         }
-        return isGroupReady(record) ? (
-          <Tag color="cyan">Ready to upload</Tag>
-        ) : (
-          <Tag color="warning">Missing Info</Tag>
+        if (record.isReady) {
+          return <Tag color="cyan">Sẵn sàng gửi</Tag>
+        }
+        return (
+          <Tooltip title={record.issues?.join(', ') || 'Thiếu thông tin'}>
+            <Tag color="warning">Thiếu thông tin</Tag>
+          </Tooltip>
         )
       },
     },
@@ -314,14 +323,26 @@ export function TrackingUploadPreviewModal({
         </Space>
       }
       open
-      title={t('portal.shipments.trackingPreview.title')}
-      width="min(1200px, 92vw)"
+      title={t('portal.shipments.trackingPreview.title', {
+        defaultValue: 'Amazon tracking upload preview',
+      })}
+      width="min(1250px, 94vw)"
       onCancel={onClose}
     >
       <Typography.Paragraph type="secondary">
-        {t('portal.shipments.trackingPreview.description')}
+        {t('portal.shipments.trackingPreview.description', {
+          defaultValue:
+            'Xem trước các trường dữ liệu thực tế sẽ được đưa vào file feed TSV và gửi lên Amazon Seller Central qua Extension Worker.',
+        })}
       </Typography.Paragraph>
-      <Alert showIcon type="info" title={t('portal.shipments.trackingPreview.noFallback')} />
+      <Alert
+        showIcon
+        type="info"
+        title={t('portal.shipments.trackingPreview.noFallback', {
+          defaultValue:
+            'Các trường dữ liệu hiển thị (order-id, ship-date, carrier-code, ship-method, tracking-number) được chuẩn hóa đồng bộ 100% với file TSV gửi Amazon.',
+        })}
+      />
 
       {availableAgents.length > 1 ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
@@ -342,7 +363,7 @@ export function TrackingUploadPreviewModal({
         <Alert
           showIcon
           type="warning"
-          message={t('portal.shipments.trackingPreview.noAgentWarning', {
+          title={t('portal.shipments.trackingPreview.noAgentWarning', {
             defaultValue: 'Chưa có Worker Extension kết nối',
           })}
           description={t('portal.shipments.trackingPreview.noAgentDesc', {
@@ -367,8 +388,11 @@ export function TrackingUploadPreviewModal({
           value={filterMode}
           onChange={(val) => setFilterMode(val as 'PENDING' | 'CONFIRMED' | 'ALL')}
           options={[
-            { label: `Cần gửi (${pendingCount})`, value: 'PENDING' },
-            { label: `Đã xác nhận (${confirmedCount})`, value: 'CONFIRMED' },
+            { label: `Cần gửi (${summary?.readyOrders ?? pendingCount})`, value: 'PENDING' },
+            {
+              label: `Đã xác nhận (${summary?.confirmedOrders ?? confirmedCount})`,
+              value: 'CONFIRMED',
+            },
             { label: `Tất cả (${totalCount})`, value: 'ALL' },
           ]}
         />
@@ -379,10 +403,10 @@ export function TrackingUploadPreviewModal({
         </Typography.Text>
       </div>
 
-      <Table<GroupedPreviewShipment>
+      <Table<AmazonTrackingPreviewRow>
         columns={columns}
-        dataSource={displayedShipments}
-        loading={shipments.isLoading}
+        dataSource={displayedRows}
+        loading={previewQuery.isLoading}
         pagination={false}
         rowKey="key"
         rowSelection={
@@ -391,22 +415,70 @@ export function TrackingUploadPreviewModal({
                 selectedRowKeys,
                 onChange: (keys) => setSelectedKeysOverride(keys as string[]),
                 getCheckboxProps: (record) => ({
-                  disabled: !canSelectGroupForUpload(record),
+                  disabled: !canSelectRowForUpload(record),
                 }),
               }
             : undefined
         }
-        scroll={{ x: 900 }}
+        scroll={{ x: 1050 }}
         style={{ marginTop: 12 }}
       />
-      {shipments.data && shipments.data.pagination.total > shipments.data.items.length ? (
-        <Typography.Paragraph type="secondary" style={{ marginTop: 12, marginBottom: 0 }}>
-          {t('portal.shipments.trackingPreview.limit', {
-            shown: shipments.data.items.length,
-            total: shipments.data.pagination.total,
-          })}
-        </Typography.Paragraph>
-      ) : null}
+
+      <Collapse
+        ghost
+        style={{ marginTop: 16, border: '1px solid #d9d9d9', borderRadius: 8 }}
+        items={[
+          {
+            key: 'tsv-feed',
+            label: (
+              <Space>
+                <FileTextOutlined />
+                <Typography.Text strong>
+                  {t('portal.shipments.trackingPreview.tsvFeedPreviewTitle', {
+                    count: previewQuery.data?.rowCount || 0,
+                    defaultValue: `Xem nội dung Feed gửi Amazon (TSV Preview - ${previewQuery.data?.rowCount || 0} dòng)`,
+                  })}
+                </Typography.Text>
+              </Space>
+            ),
+            extra: previewQuery.data?.tsv ? (
+              <Button
+                size="small"
+                icon={hasCopiedTsv ? <CheckOutlined /> : <CopyOutlined />}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  copyTsv()
+                }}
+              >
+                {hasCopiedTsv ? 'Đã sao chép' : 'Sao chép TSV'}
+              </Button>
+            ) : null,
+            children: (
+              <div>
+                <Typography.Paragraph type="secondary" style={{ fontSize: 12, marginBottom: 8 }}>
+                  Nội dung file TSV tuân thủ đúng 19 cột của Amazon Shipping Confirmation Template.
+                  Extension Worker sẽ tải file này lên Amazon Seller Central.
+                </Typography.Paragraph>
+                <div
+                  style={{
+                    backgroundColor: '#1e1e1e',
+                    color: '#d4d4d4',
+                    padding: 12,
+                    borderRadius: 6,
+                    fontSize: 12,
+                    fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+                    overflowX: 'auto',
+                    whiteSpace: 'pre',
+                    maxHeight: 240,
+                  }}
+                >
+                  {previewQuery.data?.tsv || 'Chưa có dòng feed nào sẵn sàng gửi.'}
+                </div>
+              </div>
+            ),
+          },
+        ]}
+      />
     </Modal>
   )
 }
