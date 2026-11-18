@@ -52,6 +52,12 @@ export type CoreDataTableProps<RecordType extends object> = Pick<
   // Đẩy thanh pagination xuống đáy mà không thay đổi chiều cao phần bảng
   readonly paginationAtBottom?: boolean
   readonly serverSorting?: CoreDataTableServerSorting
+
+  /**
+   * Khi bật, bảng vừa vặn 100% container mà không ép min-width 1000px gây thanh cuộn ngang thừa.
+   * Thích hợp cho các bảng compact trong Card 50% hoặc modal nhỏ (3-5 cột).
+   */
+  readonly fitContainer?: boolean
 }
 
 export function CoreDataTable<RecordType extends object>({
@@ -61,6 +67,7 @@ export function CoreDataTable<RecordType extends object>({
   fillViewport = false,
   viewportBottomGap = 0,
   paginationAtBottom = false,
+  fitContainer = false,
   serverSorting,
   ...tableProps
 }: CoreDataTableProps<RecordType>) {
@@ -183,6 +190,9 @@ export function CoreDataTable<RecordType extends object>({
   }, [serverSorting, tableProps.columns])
 
   const defaultScrollX = useMemo(() => {
+    if (fitContainer) {
+      return undefined
+    }
     if (tableProps.scroll?.x && tableProps.scroll.x !== '100%') {
       return tableProps.scroll.x
     }
@@ -203,7 +213,7 @@ export function CoreDataTable<RecordType extends object>({
       sum += 48
     }
     return sum > 0 ? Math.max(sum, 1000) : 'max-content'
-  }, [tableProps.columns, tableProps.rowSelection, tableProps.scroll])
+  }, [fitContainer, tableProps.columns, tableProps.rowSelection, tableProps.scroll])
 
   const handleTableChange: TableProps<RecordType>['onChange'] = (
     pagination,
@@ -315,13 +325,29 @@ export function CoreDataTable<RecordType extends object>({
     }
   }, [dataSourceLength, fillViewport, viewportBottomGap])
 
-  const scroll = {
-    ...(fillViewport && dataSourceLength > 0
-      ? { y: viewportScrollY ?? 'calc(100vh - 360px)' }
-      : {}),
-    ...tableProps.scroll,
-    ...(defaultScrollX ? { x: defaultScrollX } : {}),
-  }
+  const scroll = useMemo(() => {
+    const nextScroll: TableProps<RecordType>['scroll'] = {
+      ...(fillViewport && dataSourceLength > 0
+        ? { y: viewportScrollY ?? 'calc(100vh - 360px)' }
+        : {}),
+      ...tableProps.scroll,
+    }
+
+    if (fitContainer) {
+      delete nextScroll.x
+    } else if (defaultScrollX) {
+      nextScroll.x = defaultScrollX
+    }
+
+    return Object.keys(nextScroll).length > 0 ? nextScroll : undefined
+  }, [
+    dataSourceLength,
+    defaultScrollX,
+    fillViewport,
+    fitContainer,
+    tableProps.scroll,
+    viewportScrollY,
+  ])
 
   return (
     <div ref={containerRef} className={tableClassName}>

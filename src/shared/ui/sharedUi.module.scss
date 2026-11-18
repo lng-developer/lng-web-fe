@@ -1017,3 +1017,162 @@
   font-weight: 400;
   white-space: nowrap;
 }
+
+/* ── CompactStatBar component styles ─────────────────── */
+.compactStatBar {
+  display: flex;
+  align-items: center;
+  background: var(--ant-color-bg-container);
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 10px;
+  padding: 8px 12px;
+  box-shadow: 0 1px 3px 0 rgb(15 23 42 / 4%);
+}
+
+.compactStatSegment {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  padding: 2px 14px;
+
+  &:not(:last-child) {
+    border-right: 1px solid var(--ant-color-border-secondary);
+  }
+}
+
+.compactStatSegmentClickable {
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 150ms ease;
+
+  &:hover {
+    background: var(--ant-color-fill-quaternary);
+  }
+}
+
+.compactStatIconBadge {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.compactStatIconPrimary {
+  background: var(--ant-color-primary-bg);
+  color: var(--ant-color-primary);
+}
+
+.compactStatIconNeutral {
+  background: var(--ant-color-fill-quaternary);
+  color: var(--ant-color-text-secondary);
+}
+
+.compactStatIconSuccess {
+  background: var(--ant-color-success-bg);
+  color: var(--ant-color-success);
+}
+
+.compactStatIconWarning {
+  background: var(--ant-color-warning-bg);
+  color: var(--ant-color-warning);
+}
+
+.compactStatIconDanger {
+  background: var(--ant-color-error-bg);
+  color: var(--ant-color-error);
+}
+
+.compactStatIconInfo {
+  background: color-mix(in srgb, var(--ant-color-info) 14%, var(--ant-color-bg-container));
+  color: var(--ant-color-info);
+}
+
+.compactStatContent {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+
+.compactStatLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ant-color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.compactStatValue {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ant-color-text);
+  line-height: 1.2;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.compactStatValuePrimary {
+  color: var(--ant-color-primary);
+}
+
+.compactStatValueSuccess {
+  color: var(--ant-color-success);
+}
+
+.compactStatValueWarning {
+  color: var(--ant-color-warning);
+}
+
+.compactStatValueDanger {
+  color: var(--ant-color-error);
+}
+
+.compactStatValueInfo {
+  color: var(--ant-color-info);
+}
+
+.compactStatSubDetail {
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+.compactStatSkeleton {
+  height: 18px !important;
+  border-radius: 4px !important;
+}
+
+@media (max-width: 1024px) {
+  .compactStatBar {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .compactStatSegment {
+    padding: 4px 6px;
+
+    &:not(:last-child) {
+      border-right: none;
+    }
+  }
+}
+
+@media (max-width: 640px) {
+  .compactStatBar {
+    grid-template-columns: 1fr;
+  }
+}

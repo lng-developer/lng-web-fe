@@ -8,7 +8,7 @@ export function useDocumentTitle(title?: string | null, options?: { readonly raw
 
   useEffect(() => {
     if (!title) return
-    const appName = t('app.name', { defaultValue: 'LNG Web' })
+    const appName = t('app.name', { defaultValue: 'Ecomatrix' })
     document.title = options?.raw ? title : formatDocumentTitle(title, appName)
   }, [options?.raw, t, title])
 }

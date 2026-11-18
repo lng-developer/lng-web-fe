@@ -41,7 +41,7 @@
     "downloadFailed": "Unable to download the attachment. Please try again."
   },
   "app": {
-    "name": "LNG Web"
+    "name": "Ecomatrix"
   },
   "common": {
     "downloadFailed": "Unable to download the file. Please try again.",
@@ -49,6 +49,8 @@
     "updatedAt": "Updated at {{time}}",
     "copyOrderId": "Copy order ID",
     "orderIdCopied": "Order ID copied",
+    "copyTracking": "Copy tracking number",
+    "trackingCopied": "Tracking number copied",
     "close": "Close",
     "date": "Date",
     "pagination": {
@@ -100,7 +102,7 @@
   },
   "legacyMenu": {
     "setting": "Setting",
-    "systemName": "LNG System",
+    "systemName": "Ecomatrix System",
     "sales": "Sales",
     "fulfillment": "Fulfillment",
     "design": "Design",
@@ -176,7 +178,7 @@
     "navigationHintNavigate": "Navigate",
     "navigationHintSelect": "Select",
     "navigationHintClose": "Close",
-    "legacySystemName": "LNG System",
+    "legacySystemName": "Ecomatrix System",
     "navigation": {
       "dashboard": "Dashboard",
       "primary": "Primary",
@@ -1353,7 +1355,7 @@
       "title": "Operations workspace",
       "description": "A secure workspace for managing the POD operation.",
       "welcome": "Welcome back",
-      "instruction": "Sign in to continue to LNG Web.",
+      "instruction": "Sign in to continue to Ecomatrix.",
       "identifier": "Email Address",
       "password": "Password",
       "identifierRequired": "Enter your email or employee code",
@@ -1363,7 +1365,7 @@
       "forgotPassword": "Forgot password?",
       "registerPrompt": "Don’t have an account?",
       "register": "Sign Up here",
-      "welcomeTitle": "Welcome to LNG",
+      "welcomeTitle": "Welcome to Ecomatrix",
       "welcomeDescription": "Sign in to access your secure admin dashboard.",
       "continueWith": "Or Continue With",
       "socialOptions": "Social sign-in options",
@@ -1386,7 +1388,7 @@
       "backToLogin": "Sign In here",
       "terms": "I agree to privacy policy & terms",
       "register": {
-        "title": "Create your LNG account",
+        "title": "Create your Ecomatrix account",
         "description": "Set up your secure operations workspace.",
         "submit": "Create account"
       },
@@ -1397,7 +1399,7 @@
       },
       "reset-password": {
         "title": "Set a new password",
-        "description": "Choose a strong password for your LNG account.",
+        "description": "Choose a strong password for your Ecomatrix account.",
         "submit": "Update password"
       }
     },
@@ -1415,9 +1417,9 @@
       "validationDescription": "The form moved to the first tab that needs attention.",
       "password": {
         "step": "Secure account",
-        "initialTitle": "Create your LNG password",
-        "initialDescription": "Use at least 12 characters. This password is separate from Microsoft. Next time, sign in with your work email or employee code and this LNG password.",
-        "initialStepDescription": "Set your own LNG password",
+        "initialTitle": "Create your Ecomatrix password",
+        "initialDescription": "Use at least 12 characters. This password is separate from Microsoft. Next time, sign in with your work email or employee code and this Ecomatrix password.",
+        "initialStepDescription": "Set your own Ecomatrix password",
         "stepDescription": "Replace your temporary password",
         "title": "Create a new password",
         "description": "Your temporary password can only be used for initial access.",
@@ -1474,7 +1476,7 @@
         "authLocal": "Internal Account",
         "digitalBadge": "Staff Member ID",
         "heroGreeting": "Welcome to the team",
-        "heroSubtitle": "Please complete your employee profile details to activate full access to the LNG operations workspace.",
+        "heroSubtitle": "Please complete your employee profile details to activate full access to the Ecomatrix operations workspace.",
         "stepAuth": "Account authenticated",
         "stepProfile": "Contact details",
         "stepReady": "Ready to operate",
@@ -2045,9 +2047,13 @@
       },
       "metrics": {
         "locations": "Work locations",
+        "locationUnit": "locations",
         "shifts": "Work shifts",
+        "shiftUnit": "shifts",
         "assignments": "Active assignments",
-        "holidays": "Holidays & overrides"
+        "assignmentUnit": "assignments",
+        "holidays": "Holidays & overrides",
+        "holidayUnit": "days"
       },
       "sections": {
         "locationIdentity": "Location identity",
@@ -2115,6 +2121,36 @@
       "standardShiftName": "Standard office shift",
       "source": "Source",
       "dayOfWeek": "Day",
+      "viewCalendar": "Calendar",
+      "viewTable": "Table",
+      "viewSummary": "Workdays & Leaves Summary",
+      "metrics": {
+        "totalStaff": "Total Staff",
+        "staffUnit": "staff",
+        "activeStaff": "{{count}} active",
+        "punctualityRate": "On-Time Rate",
+        "punctualitySummary": "{{punctual}}/{{total}} shifts",
+        "noRecords": "No records",
+        "monthLeaves": "Month Leaves",
+        "leavesSummary": "{{paid}} leave · {{absent}} absent",
+        "allPresent": "Full attendance",
+        "issues": "Action Needed",
+        "missingCheckoutSummary": "{{count}} missing checkout",
+        "attendanceAbnormal": "Attendance anomalies",
+        "allGood": "All clear"
+      },
+      "monthLeaves": "Leaves in Month",
+      "paidLeaveShort": "paid",
+      "unpaidLeaveShort": "unpaid",
+      "absentShort": "absent",
+      "searchPlaceholder": "Search by name, employee code...",
+      "showingErrorsOnly": "Filtering exceptions",
+      "filterErrorsOnly": "Filter exceptions / errors",
+      "errorSummaryCount": "Found {{count}} records with late or attendance exceptions",
+      "legendFullDay": "Full day",
+      "legendHalfDay": "Half day / Early leave",
+      "legendWeekend": "Weekend",
+      "drawerExplanationHint": "If there is any discrepancy in swipe time due to timekeeping machine or external work, please click \"Adjust\" to submit an explanation request to manager.",
       "syncSqlAttendance": "Sync timekeeping machine",
       "syncSuccess": "Successfully synced attendance ({{total}} punches: {{inserted}} new, {{updated}} updated)",
       "syncFailed": "Failed to sync attendance from timekeeping machine",
@@ -2128,8 +2164,11 @@
         "LEAVE_RECONCILIATION": "Approved leave"
       },
       "present": "Present",
+      "daysUnit": "days",
       "late": "Late",
+      "timesUnit": "times",
       "missingCheckout": "Missing check-out",
+      "turnsUnit": "times",
       "lateMinutes": "Late minutes",
       "minutes": "{{count}} min",
       "teamTable": "Staff attendance",
@@ -2196,9 +2235,12 @@
       "minutes": "minutes",
       "minutesWithCount": "{{count}} minutes",
       "remainingLeave": "Remaining leave",
+      "approvedCount": "Approved",
+      "daysUnit": "days",
       "pendingLeave": "Pending leave",
       "pendingOvertime": "Pending OT",
       "total": "Total requests",
+      "requestsUnit": "requests",
       "leave": "Leave",
       "overtime": "Overtime",
       "time": "Time",
@@ -2259,6 +2301,7 @@
       "addBulkAdjustment": "Add bulk adjustment",
       "run": "Run payroll",
       "employees": "Employees",
+      "peopleUnit": "staff",
       "gross": "Total gross",
       "deductions": "Deductions",
       "net": "Net pay",
@@ -4614,7 +4657,7 @@
         "modalTitle": "Generate Extension Bot Token",
         "generate": "Generate Token",
         "createdSuccess": "Token created successfully!",
-        "copyNotice": "Copy this token now. It will not be shown again for security reasons. Paste it into the LNG Extension settings on the bot client machine.",
+        "copyNotice": "Copy this token now. It will not be shown again for security reasons. Paste it into the Ecomatrix Extension settings on the bot client machine.",
         "shop": "Target Shop",
         "shopPlaceholder": "Select shop to bind extension to",
         "clientLabel": "Client PC / VM Name",
@@ -4685,7 +4728,7 @@
         }
       },
       "images": {
-        "subtitle": "Synchronize marketplace listing high-resolution gallery and mockup images to LNG System storage."
+        "subtitle": "Synchronize marketplace listing high-resolution gallery and mockup images to Ecomatrix System storage."
       }
     }
   },
