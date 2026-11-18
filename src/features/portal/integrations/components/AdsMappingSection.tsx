@@ -34,8 +34,8 @@ export function AdsMappingSection({
   return (
     <SectionCard title="Unassigned Amazon Ads rows">
       <Typography.Paragraph type="secondary">
-        Map each campaign or portfolio to an internal shop. The unread Amazon report retries on the
-        next scan.
+        See why an Ads row is unassigned. Map rows with a campaign or portfolio ID to an internal
+        shop; seller attribution needs an employee code in the campaign or portfolio name.
       </Typography.Paragraph>
       {canRead ? (
         <CoreDataTable<AdsUnassignedRow>
@@ -55,11 +55,12 @@ export function AdsMappingSection({
               render: (_, row) =>
                 row.campaignName || row.campaignId || row.portfolioName || row.portfolioId || '—',
             },
+            { title: 'Reason', dataIndex: 'reason' },
             {
               title: 'Action',
               render: (_, row) => (
                 <Button
-                  disabled={!canManage}
+                  disabled={!canManage || row.canMap === false}
                   onClick={() => {
                     setSelectedAdsUnassignedRow(row)
                     adsMappingForm.setFieldsValue({

@@ -1415,6 +1415,38 @@ describe('IntegrationWorkbenchPage', () => {
     )
   })
 
+  it('explains when an imported Ads row cannot be mapped', async () => {
+    vi.mocked(listAdsUnassignedRows).mockResolvedValue({
+      items: [
+        {
+          id: 'ads-spend-1',
+          reportDate: '2026-11-01',
+          advertiserAccountId: null,
+          campaignId: null,
+          campaignName: 'Evermood campaign',
+          portfolioId: null,
+          portfolioName: null,
+          salesChannelCode: 'AMAZON',
+          marketplaceCode: 'US',
+          status: 'PENDING',
+          sourceType: 'SELLER_ATTRIBUTION',
+          canMap: false,
+          reason: 'Campaign or portfolio name has no recognized employee code.',
+        },
+      ],
+      pagination: { total: 1, page: 1, limit: 100 },
+    })
+    renderWorkbench('/portal/integrations', account(['FINANCE:READ', 'FINANCE:WRITE']))
+
+    fireEvent.click(await screen.findByRole('tab', { name: 'Finance data' }))
+    fireEvent.click(await screen.findByText('Ads mapping'))
+
+    expect(
+      await screen.findByText('Campaign or portfolio name has no recognized employee code.'),
+    ).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Map shop' })).toBeDisabled()
+  })
+
   it('shows Amazon Ads import history for finance readers', async () => {
     renderWorkbench('/portal/integrations', account(['FINANCE:READ']))
 
