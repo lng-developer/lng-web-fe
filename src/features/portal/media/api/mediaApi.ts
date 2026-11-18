@@ -13,7 +13,29 @@ export type MediaAsset = {
   ownerType: string | null
   status: MediaAssetStatus
   downloadUrl: string | null
+  publicUrl?: string | null
+  secureUrl?: string | null
   createdAt: string
+}
+
+export function getMediaAssetUrl(asset: MediaAsset): string {
+  if (asset.secureUrl && /^https?:\/\//i.test(asset.secureUrl)) {
+    return asset.secureUrl
+  }
+  if (asset.publicUrl && /^https?:\/\//i.test(asset.publicUrl)) {
+    return asset.publicUrl
+  }
+  if (asset.publicUrl) {
+    return typeof window !== 'undefined'
+      ? `${window.location.origin}${asset.publicUrl}`
+      : asset.publicUrl
+  }
+  if (asset.id) {
+    return typeof window !== 'undefined'
+      ? `${window.location.origin}/api/media/public/assets/${asset.id}/download`
+      : `/api/media/public/assets/${asset.id}/download`
+  }
+  return ''
 }
 export type MediaAssetListParams = {
   q?: string

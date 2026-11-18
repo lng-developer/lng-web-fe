@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
+import { getSharedChatSocket } from '@/features/portal/chat/realtime/chatSocket'
 import {
   getUnreadCount,
   listNotifications,
@@ -11,6 +13,20 @@ const notificationKey = ['notifications'] as const
 
 export function useNotificationCenter(open: boolean, limit: number, unreadOnly = false) {
   const queryClient = useQueryClient()
+
+  useEffect(() => {
+    const socket = getSharedChatSocket()
+    if (!socket) return
+
+    const handleNotificationCreated = () => {
+      void queryClient.invalidateQueries({ queryKey: notificationKey })
+    }
+
+    socket.on('notification.created', handleNotificationCreated)
+    return () => {
+      socket.off('notification.created', handleNotificationCreated)
+    }
+  }, [queryClient])
 
   const countQuery = useQuery({
     queryKey: [...notificationKey, 'unread-count'],

@@ -8,6 +8,7 @@ import { Button, Drawer, Grid, Layout, Select, Space, Tooltip, Typography } from
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { getUnreadCount } from '@/features/notifications/api/notificationApi'
 import { NotificationCenter } from '@/features/notifications/components/NotificationCenter'
+import { useImportantNotificationWatcher } from '@/features/notifications/hooks/useImportantNotificationWatcher'
 import { getChatUnreadCount } from '@/features/portal/chat/api/chatApi'
 import { chatKeys } from '@/features/portal/chat/api/chatKeys'
 import { ChatShell } from '@/features/portal/chat/components/ChatShell'
@@ -48,6 +49,8 @@ export function AppShell() {
   const navigate = useNavigate()
   const account = useLoaderData() as CurrentAccount
   const cores = useMemo(() => getAvailableCores(account), [account])
+
+  useImportantNotificationWatcher()
   const routeCore = getCoreForPath(location.pathname)
   const activeCore = routeCore ?? cores[0]?.key
   const isCompact = isCompactBreakpoint(screens)
