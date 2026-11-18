@@ -49,7 +49,14 @@ import {
 
 import { loadDepartments } from '@/features/organization/api/organizationApi'
 import { usePermissions } from '@/shared/auth/useAuthStore'
-import { MetricCard, PageHeader, SectionCard, StatusTag, useFeedbackToast } from '@/shared/ui'
+import {
+  CompactStatBar,
+  MetricCard,
+  PageHeader,
+  SectionCard,
+  StatusTag,
+  useFeedbackToast,
+} from '@/shared/ui'
 
 import { hrKeys } from '../api/hrKeys'
 import {
@@ -335,32 +342,38 @@ export function HrOverviewPage({ view = 'dashboard' }: { view?: 'dashboard' | 'a
         />
       )}
       {view === 'announcements' && (
-        <div className={styles.metrics}>
-          <MetricCard
-            icon={<BellOutlined />}
-            label={t('hrOperations.overview.totalAnnouncements')}
-            value={String(announcementStats.total)}
-            variant="primary"
-          />
-          <MetricCard
-            icon={<CheckCircleOutlined />}
-            label={t('hrOperations.overview.published')}
-            value={String(announcementStats.published)}
-            variant="success"
-          />
-          <MetricCard
-            icon={<PushpinFilled />}
-            label={t('hrOperations.overview.pinnedShort')}
-            value={String(announcementStats.pinned)}
-            variant="warning"
-          />
-          <MetricCard
-            icon={<ClockCircleOutlined />}
-            label={t('hrOperations.overview.scheduled')}
-            value={String(announcementStats.scheduled)}
-            variant="info"
-          />
-        </div>
+        <CompactStatBar
+          items={[
+            {
+              key: 'total',
+              icon: <BellOutlined />,
+              variant: 'primary',
+              label: t('hrOperations.overview.totalAnnouncements'),
+              value: announcementStats.total,
+            },
+            {
+              key: 'published',
+              icon: <CheckCircleOutlined />,
+              variant: 'success',
+              label: t('hrOperations.overview.published'),
+              value: announcementStats.published,
+            },
+            {
+              key: 'pinned',
+              icon: <PushpinFilled />,
+              variant: 'warning',
+              label: t('hrOperations.overview.pinnedShort'),
+              value: announcementStats.pinned,
+            },
+            {
+              key: 'scheduled',
+              icon: <ClockCircleOutlined />,
+              variant: 'info',
+              label: t('hrOperations.overview.scheduled'),
+              value: announcementStats.scheduled,
+            },
+          ]}
+        />
       )}
       {view === 'dashboard' && data && (
         <section className={styles.overviewCommand}>
@@ -391,32 +404,40 @@ export function HrOverviewPage({ view = 'dashboard' }: { view?: 'dashboard' | 'a
         </section>
       )}
       {view === 'dashboard' && data && (
-        <div className={styles.metrics}>
-          <MetricCard
-            icon={<TeamOutlined />}
-            label={t('hrOperations.overview.activeStaff')}
-            value={String(data.employees.active)}
-            variant="info"
-          />
-          <MetricCard
-            icon={<CalendarOutlined />}
-            label={t('hrOperations.overview.presentToday')}
-            value={String(data.attendance.present)}
-            variant="success"
-          />
-          <MetricCard
-            icon={<FieldTimeOutlined />}
-            label={t('hrOperations.overview.coverage')}
-            value={percent(data.attendance.coverageRate)}
-            variant="primary"
-          />
-          <MetricCard
-            icon={<ReadOutlined />}
-            label={t('hrOperations.overview.pendingApproval')}
-            value={String(data.approvals.totalPending)}
-            variant="warning"
-          />
-        </div>
+        <CompactStatBar
+          items={[
+            {
+              key: 'active',
+              icon: <TeamOutlined />,
+              variant: 'info',
+              label: t('hrOperations.overview.activeStaff'),
+              value: `${data.employees.active} ${t('hrOperations.payroll.peopleUnit', 'người')}`,
+            },
+            {
+              key: 'present',
+              icon: <CalendarOutlined />,
+              variant: 'success',
+              label: t('hrOperations.overview.presentToday'),
+              value: `${data.attendance.present} ${t('hrOperations.payroll.peopleUnit', 'người')}`,
+            },
+            {
+              key: 'coverage',
+              icon: <FieldTimeOutlined />,
+              variant: 'primary',
+              valueVariant: 'primary',
+              label: t('hrOperations.overview.coverage'),
+              value: percent(data.attendance.coverageRate),
+            },
+            {
+              key: 'approvals',
+              icon: <ReadOutlined />,
+              variant: data.approvals.totalPending > 0 ? 'warning' : 'neutral',
+              valueVariant: data.approvals.totalPending > 0 ? 'warning' : undefined,
+              label: t('hrOperations.overview.pendingApproval'),
+              value: `${data.approvals.totalPending} ${t('hrOperations.requests.requestsUnit', 'đơn')}`,
+            },
+          ]}
+        />
       )}
       {view === 'dashboard' && (
         <div className={styles.overviewGrid}>

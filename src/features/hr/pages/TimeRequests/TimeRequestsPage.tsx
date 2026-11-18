@@ -1,5 +1,6 @@
 import {
   CalendarOutlined,
+  CheckCircleOutlined,
   ClockCircleOutlined,
   FieldTimeOutlined,
   PlusOutlined,
@@ -7,7 +8,7 @@ import {
 } from '@ant-design/icons'
 import { Button, Descriptions, Modal, Space, Tabs, Typography } from 'antd'
 
-import { EmployeeAvatar, FeedbackAlert, MetricCard, PageHeader } from '@/shared/ui'
+import { EmployeeAvatar, FeedbackAlert, CompactStatBar, PageHeader } from '@/shared/ui'
 
 import { type LeaveRequest, type OvertimeRequest } from '../../api/hrTimeApi'
 import { RequestDecisionModal } from '../../components/RequestDecisionModal'
@@ -38,6 +39,7 @@ export function TimeRequestsPage({
       submitDecision,
       pendingLeaves,
       pendingOvertime,
+      totalApproved,
       availableLeaveUnits,
       totalRequests,
       date,
@@ -78,36 +80,83 @@ export function TimeRequestsPage({
         }
       />
 
-      <div className={styles.metrics}>
-        <MetricCard
-          icon={<RestOutlined />}
-          variant="success"
-          label={t('hrOperations.requests.remainingLeave')}
-          value={String(availableLeaveUnits)}
-          loading={balances.isLoading}
-        />
-        <MetricCard
-          icon={<ClockCircleOutlined />}
-          variant="warning"
-          label={t('hrOperations.requests.pendingLeave')}
-          value={String(pendingLeaves)}
-          loading={leaves.isLoading}
-        />
-        <MetricCard
-          icon={<FieldTimeOutlined />}
-          variant="info"
-          label={t('hrOperations.requests.pendingOvertime')}
-          value={String(pendingOvertime)}
-          loading={overtime.isLoading}
-        />
-        <MetricCard
-          icon={<CalendarOutlined />}
-          variant="neutral"
-          label={t('hrOperations.requests.total')}
-          value={String(totalRequests)}
-          loading={leaves.isLoading || overtime.isLoading}
-        />
-      </div>
+      <CompactStatBar
+        items={
+          workspace !== 'personal'
+            ? [
+                {
+                  key: 'pendingLeaves',
+                  icon: <ClockCircleOutlined />,
+                  variant: pendingLeaves > 0 ? 'warning' : 'neutral',
+                  valueVariant: pendingLeaves > 0 ? 'warning' : undefined,
+                  label: t('hrOperations.requests.pendingLeave', 'Đơn nghỉ chờ duyệt'),
+                  value: `${pendingLeaves} ${t('hrOperations.requests.requestsUnit', 'đơn')}`,
+                  loading: leaves.isLoading,
+                },
+                {
+                  key: 'pendingOvertime',
+                  icon: <FieldTimeOutlined />,
+                  variant: pendingOvertime > 0 ? 'warning' : 'neutral',
+                  valueVariant: pendingOvertime > 0 ? 'warning' : undefined,
+                  label: t('hrOperations.requests.pendingOvertime', 'OT chờ duyệt'),
+                  value: `${pendingOvertime} ${t('hrOperations.requests.requestsUnit', 'đơn')}`,
+                  loading: overtime.isLoading,
+                },
+                {
+                  key: 'approved',
+                  icon: <CheckCircleOutlined />,
+                  variant: 'success',
+                  label: t('hrOperations.requests.approvedCount', 'Đã phê duyệt'),
+                  value: `${totalApproved} ${t('hrOperations.requests.requestsUnit', 'đơn')}`,
+                  loading: leaves.isLoading || overtime.isLoading,
+                },
+                {
+                  key: 'total',
+                  icon: <CalendarOutlined />,
+                  variant: 'neutral',
+                  label: t('hrOperations.requests.total', 'Tổng yêu cầu'),
+                  value: `${totalRequests} ${t('hrOperations.requests.requestsUnit', 'đơn')}`,
+                  loading: leaves.isLoading || overtime.isLoading,
+                },
+              ]
+            : [
+                {
+                  key: 'balances',
+                  icon: <RestOutlined />,
+                  variant: 'success',
+                  label: t('hrOperations.requests.remainingLeave'),
+                  value: `${availableLeaveUnits / 2} ${t('hrOperations.requests.daysUnit', 'ngày')}`,
+                  loading: balances.isLoading,
+                },
+                {
+                  key: 'pendingLeaves',
+                  icon: <ClockCircleOutlined />,
+                  variant: pendingLeaves > 0 ? 'warning' : 'neutral',
+                  valueVariant: pendingLeaves > 0 ? 'warning' : undefined,
+                  label: t('hrOperations.requests.pendingLeave'),
+                  value: `${pendingLeaves} ${t('hrOperations.requests.requestsUnit', 'đơn')}`,
+                  loading: leaves.isLoading,
+                },
+                {
+                  key: 'pendingOvertime',
+                  icon: <FieldTimeOutlined />,
+                  variant: pendingOvertime > 0 ? 'info' : 'neutral',
+                  valueVariant: pendingOvertime > 0 ? 'info' : undefined,
+                  label: t('hrOperations.requests.pendingOvertime'),
+                  value: `${pendingOvertime} ${t('hrOperations.requests.requestsUnit', 'đơn')}`,
+                  loading: overtime.isLoading,
+                },
+                {
+                  key: 'total',
+                  icon: <CalendarOutlined />,
+                  variant: 'neutral',
+                  label: t('hrOperations.requests.total'),
+                  value: `${totalRequests} ${t('hrOperations.requests.requestsUnit', 'đơn')}`,
+                  loading: leaves.isLoading || overtime.isLoading,
+                },
+              ]
+        }
+      />
 
       <Tabs items={tabItems} defaultActiveKey="leave-requests" />
 
@@ -177,7 +226,7 @@ export function TimeRequestsPage({
               </Descriptions.Item>
               <Descriptions.Item label={t('hrOperations.requests.duration')}>
                 {detail.kind === 'leave'
-                  ? (detail.request as LeaveRequest).requestedUnits
+                  ? `${(detail.request as LeaveRequest).requestedUnits / 2} ${t('hrOperations.requests.daysUnit', 'ngày')}`
                   : t('hrOperations.requests.minutesWithCount', {
                       count: (detail.request as OvertimeRequest).requestedMinutes,
                     })}

@@ -5,6 +5,7 @@ import {
   CalendarOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
+  DollarOutlined,
   FieldTimeOutlined,
   LoginOutlined,
   LogoutOutlined,
@@ -16,9 +17,9 @@ import { Avatar, Button, Empty, Modal, Space, Typography } from 'antd'
 import dayjs from 'dayjs'
 
 import {
+  CompactStatBar,
   EmployeeAvatar,
   FeedbackAlert,
-  MetricCard,
   MonthPicker,
   SectionCard,
   StatusTag,
@@ -179,36 +180,43 @@ export function StaffWorkspacePage({ view = 'dashboard' }: { view?: 'dashboard' 
             <MonthPicker value={month} onChange={handleMonthChange} />
           </div>
 
-          <div className={styles.metrics}>
-            <MetricCard
-              icon={<ClockCircleOutlined />}
-              variant="info"
-              label={t('hrOperations.self.shift')}
-              value={shift?.name ?? t('hrOperations.self.noShift')}
-              loading={workspace.isLoading}
-            />
-            <MetricCard
-              icon={<CheckCircleOutlined />}
-              variant="success"
-              label={t('hrOperations.self.attendance')}
-              value={data?.today.attendance?.status ?? t('hrOperations.self.notCheckedIn')}
-              loading={workspace.isLoading}
-            />
-            <MetricCard
-              icon={<RestOutlined />}
-              variant="warning"
-              label={t('hrOperations.self.leaveBalance')}
-              value={String(data?.leave.availableUnits ?? 0)}
-              loading={workspace.isLoading}
-            />
-            <MetricCard
-              icon={<CalendarOutlined />}
-              variant="neutral"
-              label={t('hrOperations.self.latestPay')}
-              value={money(data?.latestPayroll?.netIncome)}
-              loading={workspace.isLoading}
-            />
-          </div>
+          <CompactStatBar
+            items={[
+              {
+                key: 'shift',
+                icon: <ClockCircleOutlined />,
+                variant: 'info',
+                label: t('hrOperations.self.shift'),
+                value: shift?.name ?? t('hrOperations.self.noShift'),
+                loading: workspace.isLoading,
+              },
+              {
+                key: 'attendance',
+                icon: <CheckCircleOutlined />,
+                variant: data?.today.attendance?.status === 'PRESENT' ? 'success' : 'neutral',
+                label: t('hrOperations.self.attendance'),
+                value: data?.today.attendance?.status ?? t('hrOperations.self.notCheckedIn'),
+                loading: workspace.isLoading,
+              },
+              {
+                key: 'leave',
+                icon: <RestOutlined />,
+                variant: 'warning',
+                label: t('hrOperations.self.leaveBalance'),
+                value: `${(data?.leave.availableUnits ?? 0) / 2} ${t('hrOperations.requests.daysUnit', 'ngày')}`,
+                loading: workspace.isLoading,
+              },
+              {
+                key: 'pay',
+                icon: <DollarOutlined />,
+                variant: 'primary',
+                valueVariant: 'primary',
+                label: t('hrOperations.self.latestPay'),
+                value: money(data?.latestPayroll?.netIncome),
+                loading: workspace.isLoading,
+              },
+            ]}
+          />
 
           <div className={styles.split}>
             <SectionCard title={t('hrOperations.self.today')}>
@@ -330,36 +338,43 @@ export function StaffWorkspacePage({ view = 'dashboard' }: { view?: 'dashboard' 
 
       {view === 'schedule' && (
         <>
-          <div className={styles.metrics}>
-            <MetricCard
-              icon={<CheckCircleOutlined />}
-              variant="success"
-              label={t('hrOperations.overview.presentToday')}
-              value={t('hrOperations.overview.days', { count: presentCount })}
-              loading={workspace.isLoading}
-            />
-            <MetricCard
-              icon={<WarningOutlined />}
-              variant="danger"
-              label={t('hrOperations.attendance.late')}
-              value={t('hrOperations.overview.times', { count: lateCount })}
-              loading={workspace.isLoading}
-            />
-            <MetricCard
-              icon={<RestOutlined />}
-              variant="warning"
-              label={t('hrOperations.overview.onLeave')}
-              value={t('hrOperations.overview.days', { count: leaveCount })}
-              loading={workspace.isLoading}
-            />
-            <MetricCard
-              icon={<FieldTimeOutlined />}
-              variant="info"
-              label={t('hrOperations.overview.approvedOt')}
-              value={t('hrOperations.overview.days', { count: overtimeCount })}
-              loading={workspace.isLoading}
-            />
-          </div>
+          <CompactStatBar
+            items={[
+              {
+                key: 'present',
+                icon: <CheckCircleOutlined />,
+                variant: 'success',
+                label: t('hrOperations.overview.presentToday'),
+                value: t('hrOperations.overview.days', { count: presentCount }),
+                loading: workspace.isLoading,
+              },
+              {
+                key: 'late',
+                icon: <WarningOutlined />,
+                variant: lateCount > 0 ? 'danger' : 'neutral',
+                valueVariant: lateCount > 0 ? 'danger' : undefined,
+                label: t('hrOperations.attendance.late'),
+                value: t('hrOperations.overview.times', { count: lateCount }),
+                loading: workspace.isLoading,
+              },
+              {
+                key: 'leave',
+                icon: <RestOutlined />,
+                variant: 'warning',
+                label: t('hrOperations.overview.onLeave'),
+                value: t('hrOperations.overview.days', { count: leaveCount }),
+                loading: workspace.isLoading,
+              },
+              {
+                key: 'ot',
+                icon: <FieldTimeOutlined />,
+                variant: 'info',
+                label: t('hrOperations.overview.approvedOt'),
+                value: t('hrOperations.overview.days', { count: overtimeCount }),
+                loading: workspace.isLoading,
+              },
+            ]}
+          />
 
           <SectionCard>
             <MonthlyScheduleCalendar

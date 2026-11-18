@@ -1,29 +1,42 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
+  BarChartOutlined,
   CalendarOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
+  ExclamationCircleFilled,
+  ExclamationCircleOutlined,
   InfoCircleOutlined,
   LoginOutlined,
   LogoutOutlined,
+  RestOutlined,
+  SearchOutlined,
   SyncOutlined,
+  TeamOutlined,
+  UnorderedListOutlined,
   WarningOutlined,
 } from '@ant-design/icons'
-import { Button, Divider, Form, Input, Modal, Space, Tag } from 'antd'
+import { useQuery } from '@tanstack/react-query'
+import { Button, Divider, Form, Input, Modal, Segmented, Space, Tag } from 'antd'
 import dayjs from 'dayjs'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import {
+  CompactStatBar,
   DateTimePicker,
   FeedbackAlert,
   FormActions,
-  MetricCard,
   MonthPicker,
   PageHeader,
   SectionCard,
 } from '@/shared/ui'
 
+import { listLeaveBalances } from '../../api/hrTimeApi'
+import { useEmployeeProfilesQuery } from '../../hooks'
+import { AttendanceCalendarGrid, type CalendarDayItem } from './AttendanceCalendarGrid'
+import { AttendanceDayDrawer } from './AttendanceDayDrawer'
+import { AttendanceSummaryTable } from './AttendanceSummaryTable'
 import styles from './AttendancePage.module.scss'
 import { type AttendanceWorkspace, useAttendance } from './useAttendance'
 
@@ -41,6 +54,7 @@ export const AttendancePage = ({
       month,
       setMonth,
       adjusting,
+      openAdjusting,
       closeAdjusting,
       attendanceCapabilities,
       completedCheckIn,
@@ -62,7 +76,23 @@ export const AttendancePage = ({
     { records, canRead, canWrite, canSyncMachine },
   ] = useAttendance(workspace, teamId)
 
+  const showTeamAttendance = workspace === 'operations' || workspace === 'team'
+  const profilesQuery = useEmployeeProfilesQuery(false, { enabled: showTeamAttendance })
+  const balancesQuery = useQuery({
+    queryKey: ['hr-time', 'all-leave-balances', month.year()],
+    queryFn: () => listLeaveBalances({ year: month.year() }),
+    enabled: showTeamAttendance,
+  })
+
   const [currentTime, setCurrentTime] = useState(() => dayjs().format('HH:mm:ss'))
+  const [viewMode, setViewMode] = useState<'calendar' | 'table' | 'summary'>(
+    showTeamAttendance ? 'summary' : 'calendar',
+  )
+  const [selectedDayItem, setSelectedDayItem] = useState<CalendarDayItem | null>(null)
+  const [isDayDrawerOpen, setIsDayDrawerOpen] = useState(false)
+  const [searchText, setSearchText] = useState('')
+  const [showErrorsOnly, setShowErrorsOnly] = useState(false)
+
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(dayjs().format('HH:mm:ss'))
@@ -93,6 +123,60 @@ export const AttendancePage = ({
   const totalLateMinutes = useMemo(() => {
     return items.reduce((acc, cur) => acc + (cur.lateMinutes || 0), 0)
   }, [items])
+
+  const totalEmployees = profilesQuery.data?.items?.length ?? 0
+  const activeEmployees = useMemo(() => {
+    return (profilesQuery.data?.items ?? []).filter((p) => p.status === 'ACTIVE').length
+  }, [profilesQuery.data?.items])
+
+  const companyMonthLeaves = useMemo(() => {
+    return items.filter(
+      (it) =>
+        it.status === 'PAID_LEAVE' ||
+        it.status === 'ANNUAL_LEAVE' ||
+        it.status === 'UNPAID_LEAVE' ||
+        it.status === 'ABSENT',
+    ).length
+  }, [items])
+
+  const companyPaidLeaves = useMemo(() => {
+    return items.filter((it) => it.status === 'PAID_LEAVE' || it.status === 'ANNUAL_LEAVE').length
+  }, [items])
+
+  const companyAbsents = useMemo(() => {
+    return items.filter((it) => it.status === 'ABSENT').length
+  }, [items])
+
+  const exceptionCount = useMemo(() => {
+    return items.filter(
+      (it) =>
+        it.status === 'ERROR' ||
+        it.status === 'ABSENT' ||
+        (it.lateMinutes ?? 0) > 0 ||
+        (it.checkInAt && !it.checkOutAt),
+    ).length
+  }, [items])
+
+  const displayedItems = useMemo(() => {
+    return items.filter((item) => {
+      if (showErrorsOnly) {
+        const hasError =
+          item.status === 'ERROR' ||
+          item.status === 'ABSENT' ||
+          (item.lateMinutes ?? 0) > 0 ||
+          (item.checkInAt && !item.checkOutAt)
+        if (!hasError) return false
+      }
+      if (searchText.trim()) {
+        const q = searchText.trim().toLowerCase()
+        const matchName = item.employee?.fullName?.toLowerCase().includes(q)
+        const matchCode = item.employee?.employeeCode?.toLowerCase().includes(q)
+        const matchDate = item.workDateKey?.toLowerCase().includes(q)
+        if (!matchName && !matchCode && !matchDate) return false
+      }
+      return true
+    })
+  }, [items, showErrorsOnly, searchText])
 
   const attendanceActions = canWrite ? (
     hasCompletedAttendance ? (
@@ -149,64 +233,179 @@ export const AttendancePage = ({
         }
       />
 
-      <div className={styles.metrics}>
-        <MetricCard
-          icon={<CalendarOutlined />}
-          variant="primary"
-          label={t('hrOperations.attendance.totalWorkdays')}
-          value={t('hrOperations.attendance.workDayCount', { count: totalWorkdays })}
-          loading={records.isLoading}
-        />
-        <MetricCard
-          icon={<ClockCircleOutlined />}
-          variant="neutral"
-          label={t('hrOperations.attendance.totalWorkedHours')}
-          value={`${totalWorkedHours}h`}
-          loading={records.isLoading}
-        />
-        <MetricCard
-          icon={<ClockCircleOutlined />}
-          variant="neutral"
-          label={t('hrOperations.attendance.records')}
-          value={String(items.length)}
-          loading={records.isLoading}
-        />
-        <MetricCard
-          icon={<CheckCircleOutlined />}
-          variant="success"
-          label={t('hrOperations.attendance.present')}
-          value={String(present)}
-          loading={records.isLoading}
-        />
-        <MetricCard
-          icon={<WarningOutlined />}
-          variant="danger"
-          label={t('hrOperations.attendance.late')}
-          value={String(late)}
-          loading={records.isLoading}
-        />
-        <MetricCard
-          icon={<ClockCircleOutlined />}
-          variant="warning"
-          label={t('hrOperations.attendance.missingCheckout')}
-          value={String(missing)}
-          loading={records.isLoading}
-        />
-      </div>
+      <CompactStatBar
+        items={
+          showTeamAttendance
+            ? [
+                {
+                  key: 'staff',
+                  icon: <TeamOutlined />,
+                  variant: 'primary',
+                  label: t('hrOperations.attendance.metrics.totalStaff', 'Tổng nhân sự'),
+                  value: `${totalEmployees} ${t('hrOperations.attendance.metrics.staffUnit', 'nhân sự')}`,
+                  subDetail: t('hrOperations.attendance.metrics.activeStaff', {
+                    count: activeEmployees,
+                  }),
+                  loading: profilesQuery.isLoading,
+                },
+                {
+                  key: 'punctuality',
+                  icon: <CheckCircleOutlined />,
+                  variant: 'success',
+                  label: t('hrOperations.attendance.metrics.punctualityRate', 'Tỷ lệ đúng giờ'),
+                  value: punctualityRate,
+                  subDetail:
+                    items.length > 0
+                      ? t('hrOperations.attendance.metrics.punctualitySummary', {
+                          punctual: items.length - late,
+                          total: items.length,
+                        })
+                      : t('hrOperations.attendance.metrics.noRecords', 'Chưa có bản ghi'),
+                  loading: records.isLoading,
+                },
+                {
+                  key: 'late',
+                  icon: <ClockCircleOutlined />,
+                  variant: late > 0 ? 'warning' : 'neutral',
+                  valueVariant: late > 0 ? 'warning' : undefined,
+                  label: t('hrOperations.attendance.late', 'Đi muộn'),
+                  value: `${late} ${t('hrOperations.attendance.timesUnit', 'lần')}`,
+                  subDetail: totalLateMinutes > 0 ? `${totalLateMinutes}p` : undefined,
+                  loading: records.isLoading,
+                },
+                {
+                  key: 'leaves',
+                  icon: <RestOutlined />,
+                  variant: 'neutral',
+                  label: t('hrOperations.attendance.metrics.monthLeaves', 'Nghỉ trong tháng'),
+                  value: `${companyMonthLeaves} ${t('hrOperations.attendance.daysUnit', 'ngày')}`,
+                  subDetail:
+                    companyMonthLeaves > 0
+                      ? t('hrOperations.attendance.metrics.leavesSummary', {
+                          paid: companyPaidLeaves,
+                          absent: companyAbsents,
+                        })
+                      : t('hrOperations.attendance.metrics.allPresent', 'Đi làm đầy đủ'),
+                  loading: records.isLoading,
+                },
+                {
+                  key: 'issues',
+                  icon: <WarningOutlined />,
+                  variant: exceptionCount > 0 ? 'danger' : 'neutral',
+                  valueVariant: exceptionCount > 0 ? 'danger' : undefined,
+                  label: t('hrOperations.attendance.metrics.issues', 'Cần xử lý'),
+                  value: `${exceptionCount} ${t('hrOperations.attendance.turnsUnit', 'lượt')}`,
+                  subDetail:
+                    missing > 0
+                      ? t('hrOperations.attendance.metrics.missingCheckoutSummary', {
+                          count: missing,
+                        })
+                      : exceptionCount > 0
+                        ? t(
+                            'hrOperations.attendance.metrics.attendanceAbnormal',
+                            'Bất thường chấm công',
+                          )
+                        : t('hrOperations.attendance.metrics.allGood', 'Dữ liệu chuẩn'),
+                  loading: records.isLoading,
+                },
+              ]
+            : [
+                {
+                  key: 'workdays',
+                  icon: <CalendarOutlined />,
+                  variant: 'primary',
+                  label: t('hrOperations.attendance.totalWorkdays'),
+                  value: t('hrOperations.attendance.workDayCount', { count: totalWorkdays }),
+                  loading: records.isLoading,
+                },
+                {
+                  key: 'hours',
+                  icon: <ClockCircleOutlined />,
+                  variant: 'neutral',
+                  label: t('hrOperations.attendance.totalWorkedHours'),
+                  value: `${totalWorkedHours}h`,
+                  loading: records.isLoading,
+                },
+                {
+                  key: 'present',
+                  icon: <CheckCircleOutlined />,
+                  variant: 'success',
+                  label: t('hrOperations.attendance.present'),
+                  value: `${present} ${t('hrOperations.attendance.daysUnit', 'ngày')}`,
+                  loading: records.isLoading,
+                },
+                {
+                  key: 'late',
+                  icon: <WarningOutlined />,
+                  variant: late > 0 ? 'danger' : 'neutral',
+                  valueVariant: late > 0 ? 'danger' : undefined,
+                  label: t('hrOperations.attendance.late'),
+                  value: `${late} ${t('hrOperations.attendance.timesUnit', 'lần')}`,
+                  subDetail: totalLateMinutes > 0 ? `(${totalLateMinutes}p)` : undefined,
+                  loading: records.isLoading,
+                },
+                {
+                  key: 'missing',
+                  icon: <ClockCircleOutlined />,
+                  variant: missing > 0 ? 'warning' : 'neutral',
+                  valueVariant: missing > 0 ? 'warning' : undefined,
+                  label: t('hrOperations.attendance.missingCheckout'),
+                  value: `${missing} ${t('hrOperations.attendance.turnsUnit', 'lượt')}`,
+                  loading: records.isLoading,
+                },
+              ]
+        }
+      />
 
       {!canRead ? (
         <div className={styles.workbench}>
           <div className={styles.mainPanel}>
-            <SectionCard title={t('hrOperations.attendance.myTable')} extra={attendanceActions}>
-              <CoreDataTable
-                size="small"
-                rowKey="id"
-                loading={records.isLoading}
-                error={tableError}
-                dataSource={items}
-                pagination={pagination}
-                columns={columns}
-              />
+            <SectionCard
+              title={t('hrOperations.attendance.myTable')}
+              extra={
+                <div className={styles.cardHeaderControls}>
+                  <Segmented
+                    value={viewMode}
+                    onChange={(val) => setViewMode(val as 'calendar' | 'table')}
+                    options={[
+                      {
+                        value: 'calendar',
+                        icon: <CalendarOutlined />,
+                        label: t('hrOperations.attendance.viewCalendar', 'Lịch tháng'),
+                      },
+                      {
+                        value: 'table',
+                        icon: <UnorderedListOutlined />,
+                        label: t('hrOperations.attendance.viewTable', 'Bảng dòng'),
+                      },
+                    ]}
+                  />
+                  {attendanceActions}
+                </div>
+              }
+            >
+              {tableError}
+              {!tableError && viewMode === 'calendar' ? (
+                <AttendanceCalendarGrid
+                  month={month}
+                  records={items}
+                  loading={records.isLoading}
+                  selectedDateKey={selectedDayItem?.dateKey}
+                  onSelectDay={(day) => {
+                    setSelectedDayItem(day)
+                    setIsDayDrawerOpen(true)
+                  }}
+                />
+              ) : !tableError ? (
+                <CoreDataTable
+                  size="small"
+                  rowKey="id"
+                  loading={records.isLoading}
+                  dataSource={items}
+                  pagination={pagination}
+                  columns={columns}
+                />
+              ) : null}
             </SectionCard>
           </div>
 
@@ -312,7 +511,6 @@ export const AttendancePage = ({
                   <strong
                     style={{ color: totalLateMinutes > 0 ? 'var(--ant-color-error)' : undefined }}
                   >
-                    {totalLateMinutes}{' '}
                     {t('hrOperations.attendance.minutes', { count: totalLateMinutes })}
                   </strong>
                 </div>
@@ -332,19 +530,145 @@ export const AttendancePage = ({
           </aside>
         </div>
       ) : (
-        <SectionCard title={t('hrOperations.attendance.teamTable')} extra={attendanceActions}>
-          <CoreDataTable
-            size="small"
-            rowKey="id"
-            loading={records.isLoading}
-            error={tableError}
-            dataSource={items}
-            pagination={pagination}
-            columns={columns}
-          />
+        <SectionCard
+          title={t('hrOperations.attendance.teamTable')}
+          extra={
+            <div className={styles.cardHeaderControls}>
+              <Segmented
+                value={viewMode}
+                onChange={(val) => setViewMode(val as 'calendar' | 'table' | 'summary')}
+                options={[
+                  {
+                    value: 'summary',
+                    icon: <BarChartOutlined />,
+                    label: t('hrOperations.attendance.viewSummary', 'Tổng hợp công - phép'),
+                  },
+                  {
+                    value: 'calendar',
+                    icon: <CalendarOutlined />,
+                    label: t('hrOperations.attendance.viewCalendar', 'Lịch tháng'),
+                  },
+                  {
+                    value: 'table',
+                    icon: <UnorderedListOutlined />,
+                    label: t('hrOperations.attendance.viewTable', 'Bảng dòng'),
+                  },
+                ]}
+              />
+              {attendanceActions}
+            </div>
+          }
+        >
+          {tableError}
+          {!tableError && (
+            <>
+              <div className={styles.adminFilterBar}>
+                <div className={styles.adminFilterControls}>
+                  <Input
+                    prefix={<SearchOutlined />}
+                    placeholder={t(
+                      'hrOperations.attendance.searchPlaceholder',
+                      'Tìm tên, mã nhân viên...',
+                    )}
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    allowClear
+                    style={{ width: 240 }}
+                  />
+                  {viewMode !== 'summary' && (
+                    <Button
+                      type={showErrorsOnly ? 'primary' : 'default'}
+                      danger={showErrorsOnly}
+                      icon={<ExclamationCircleOutlined />}
+                      onClick={() => setShowErrorsOnly(!showErrorsOnly)}
+                    >
+                      {showErrorsOnly
+                        ? t('hrOperations.attendance.showingErrorsOnly', 'Đang lọc bất thường')
+                        : t('hrOperations.attendance.filterErrorsOnly', 'Lọc bất thường / Lỗi')}
+                    </Button>
+                  )}
+                </div>
+
+                {viewMode !== 'summary' && exceptionCount > 0 && (
+                  <div className={styles.errorBanner}>
+                    <ExclamationCircleFilled />
+                    <span>
+                      {t('hrOperations.attendance.errorSummaryCount', {
+                        count: exceptionCount,
+                        defaultValue: `Phát hiện ${exceptionCount} bản ghi đi muộn hoặc bất thường chấm công`,
+                      })}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {viewMode === 'summary' ? (
+                <AttendanceSummaryTable
+                  month={month}
+                  records={items}
+                  profiles={profilesQuery.data?.items ?? []}
+                  balances={balancesQuery.data ?? []}
+                  loading={records.isLoading || profilesQuery.isLoading || balancesQuery.isLoading}
+                  searchText={searchText}
+                  onViewEmployeeSchedule={(code) => {
+                    setSearchText(code)
+                    setViewMode('table')
+                  }}
+                />
+              ) : viewMode === 'calendar' ? (
+                <AttendanceCalendarGrid
+                  month={month}
+                  records={displayedItems}
+                  loading={records.isLoading}
+                  selectedDateKey={selectedDayItem?.dateKey}
+                  onSelectDay={(day) => {
+                    setSelectedDayItem(day)
+                    setIsDayDrawerOpen(true)
+                  }}
+                />
+              ) : (
+                <CoreDataTable
+                  size="small"
+                  rowKey="id"
+                  loading={records.isLoading}
+                  error={tableError}
+                  dataSource={displayedItems}
+                  pagination={pagination}
+                  columns={columns}
+                  onRow={(record) => ({
+                    onClick: () => {
+                      setSelectedDayItem({
+                        date: dayjs(record.workDateKey),
+                        dateKey: record.workDateKey,
+                        dayNumber: dayjs(record.workDateKey).date(),
+                        isCurrentMonth: true,
+                        isToday: record.workDateKey === dayjs().format('YYYY-MM-DD'),
+                        isWeekend:
+                          dayjs(record.workDateKey).day() === 0 ||
+                          dayjs(record.workDateKey).day() === 6,
+                        record,
+                      })
+                      setIsDayDrawerOpen(true)
+                    },
+                    style: { cursor: 'pointer' },
+                  })}
+                />
+              )}
+            </>
+          )}
         </SectionCard>
       )}
 
+      {/* Slide-over Detail Drawer */}
+      <AttendanceDayDrawer
+        open={isDayDrawerOpen}
+        onClose={() => setIsDayDrawerOpen(false)}
+        day={selectedDayItem}
+        onAdjust={(rec) => rec && openAdjusting(rec)}
+        canAdjust={canWrite}
+      />
+
+      {/* Adjust Modal */}
       <Modal
         destroyOnHidden
         open={Boolean(adjusting)}

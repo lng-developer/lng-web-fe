@@ -347,6 +347,8 @@ export const getSqlAttendanceStatus = () =>
     lastFinishedAt: string | null
   }>('/api/hr/integrations/sql-attendance/status')
 
+export const listLeaveBalances = (params: Query = {}) =>
+  get<LeaveBalance[]>('/api/hr/leave-balances', params)
 export const listMyLeaveBalances = () =>
   get<LeaveBalance[]>('/api/hr/leave-balances/me', { year: new Date().getFullYear() })
 export const getLeaveBalance = (profileId: string, year: number, leaveType: string) =>

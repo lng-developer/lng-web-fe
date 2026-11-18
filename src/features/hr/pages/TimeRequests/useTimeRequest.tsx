@@ -171,6 +171,16 @@ export const useTimeRequest = (workspace: TimeRequestWorkspace = 'personal', tea
     (item) => item.status === 'PENDING',
   ).length
 
+  const approvedLeaves = (leaves.data?.items ?? []).filter(
+    (item) => item.status === 'APPROVED',
+  ).length
+
+  const approvedOvertime = (overtime.data?.items ?? []).filter(
+    (item) => item.status === 'APPROVED',
+  ).length
+
+  const totalApproved = approvedLeaves + approvedOvertime
+
   const availableLeaveUnits = (balances.data ?? []).reduce(
     (sum, item) => sum + (item.availableUnits ?? 0),
     0,
@@ -237,35 +247,55 @@ export const useTimeRequest = (workspace: TimeRequestWorkspace = 'personal', tea
     </Tooltip>
   )
 
-  const renderRequestActions = (kind: TimeRequestKind, item: LeaveRequest | OvertimeRequest) => (
-    <Space size={2}>
-      {item.capabilities?.edit &&
-        renderAction(t('hrOperations.common.edit'), <EditOutlined />, () =>
+  const renderRequestActions = (kind: TimeRequestKind, item: LeaveRequest | OvertimeRequest) => {
+    const actions: ReactNode[] = []
+
+    if (item.capabilities?.edit) {
+      actions.push(
+        renderAction(t('hrOperations.common.edit'), <EditOutlined key="edit" />, () =>
           openEditEditor(kind, item),
-        )}
+        ),
+      )
+    }
 
-      {item.capabilities?.approve &&
-        renderAction(t('hrOperations.team.approve'), <CheckOutlined />, () =>
+    if (item.capabilities?.approve) {
+      actions.push(
+        renderAction(t('hrOperations.team.approve'), <CheckOutlined key="approve" />, () =>
           openDecision(kind, 'approve', item),
-        )}
+        ),
+      )
+    }
 
-      {item.capabilities?.reject &&
+    if (item.capabilities?.reject) {
+      actions.push(
         renderAction(
           t('hrOperations.team.reject'),
-          <CloseOutlined />,
+          <CloseOutlined key="reject" />,
           () => openDecision(kind, 'reject', item),
           true,
-        )}
+        ),
+      )
+    }
 
-      {item.capabilities?.cancel &&
+    if (item.capabilities?.cancel) {
+      actions.push(
         renderAction(
           t('hrOperations.common.cancel'),
-          <StopOutlined />,
+          <StopOutlined key="cancel" />,
           () => handleDecision(kind, 'cancel', item.id),
           true,
-        )}
-    </Space>
-  )
+        ),
+      )
+    }
+
+    if (actions.length === 0) return null
+
+    return (
+      <Space size={2} onClick={(event) => event.stopPropagation()}>
+        {actions}
+      </Space>
+    )
+  }
 
   const tabItems: TabsProps['items'] = [
     {
@@ -323,9 +353,10 @@ export const useTimeRequest = (workspace: TimeRequestWorkspace = 'personal', tea
                 render: renderStatus,
               },
               {
-                title: '',
-                align: 'right',
-                render: (_, item: LeaveRequest) => renderRequestActions('leave', item),
+                title: t('hrOperations.common.action'),
+                align: 'center' as const,
+                width: 100,
+                render: (_, item: LeaveRequest) => renderRequestActions('leave', item) ?? '—',
               },
             ]}
           />
@@ -381,9 +412,10 @@ export const useTimeRequest = (workspace: TimeRequestWorkspace = 'personal', tea
                 render: renderStatus,
               },
               {
-                title: '',
-                align: 'right',
-                render: (_, item: OvertimeRequest) => renderRequestActions('overtime', item),
+                title: t('hrOperations.common.action'),
+                align: 'center' as const,
+                width: 100,
+                render: (_, item: OvertimeRequest) => renderRequestActions('overtime', item) ?? '—',
               },
             ]}
           />
@@ -412,6 +444,7 @@ export const useTimeRequest = (workspace: TimeRequestWorkspace = 'personal', tea
       submitDecision,
       pendingLeaves,
       pendingOvertime,
+      totalApproved,
       availableLeaveUnits,
       totalRequests,
       date,
