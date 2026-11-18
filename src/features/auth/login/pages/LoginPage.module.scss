@@ -9,7 +9,7 @@
   padding: 48px clamp(32px, 10vw, 180px);
   background-color: rgb(239 246 255);
   background:
-    url('/assets/images/login-operations-hero.png') calc(50% + 70px) calc(50% + 72px) / auto 138%
+    url('/assets/images/login-operations-hero.png') calc(50% + 70px) calc(50% + 120px) / auto 138%
       no-repeat,
     rgb(239 246 255);
   overflow: hidden;
@@ -22,8 +22,8 @@
   opacity: 0;
   background:
     linear-gradient(90deg, rgb(3 9 18 / 12%), rgb(3 9 18 / 32%)),
-    url('/assets/images/login-operations-hero-dark-v2.png') calc(50% + 70px) calc(50% + 72px) / auto
-      138% no-repeat;
+    url('/assets/images/login-operations-hero-dark-v2.png') calc(50% + 70px) calc(50% + 120px) /
+      auto 138% no-repeat;
   pointer-events: none;
   transition: opacity 1200ms cubic-bezier(0.16, 1, 0.3, 1);
 }

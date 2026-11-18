@@ -1233,7 +1233,7 @@ export function LegacySidebar({
               handleLogoClick()
             }
           }}
-          aria-label={t('app.name', { defaultValue: 'LNG Web' })}
+          aria-label={t('app.name', { defaultValue: 'Ecomatrix' })}
           title={t('shell.navigation.dashboard', { defaultValue: 'Dashboard' })}
         >
           <Image
