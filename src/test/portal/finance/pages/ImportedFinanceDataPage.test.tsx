@@ -44,7 +44,7 @@ describe('TransactionLedgerPage', () => {
     expect(screen.getByText('4.25 USD')).toBeInTheDocument()
     expect(listImportedFinanceData).toHaveBeenCalledWith('transactions', {
       page: 1,
-      limit: 10,
+      limit: 50,
       dateFrom: undefined,
       dateTo: undefined,
       transactionType: undefined,

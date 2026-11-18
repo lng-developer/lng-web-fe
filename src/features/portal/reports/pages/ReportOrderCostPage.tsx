@@ -17,6 +17,7 @@ import dayjs from 'dayjs'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { FinanceItemSnapshotModal } from '@/features/portal/finance/components/FinanceItemSnapshotModal'
 import { FinanceOrderDetailModal } from '@/features/portal/finance/components/FinanceOrderDetailModal'
 import { useFinanceMutations } from '@/features/portal/finance/hooks/useFinanceMutations'
@@ -64,7 +65,7 @@ export function ReportOrderCostPage({
   const [costCoverage, setCostCoverage] = useState<'MISSING' | 'COMPLETE' | undefined>()
   const [dates, setDates] = useState<DateRangeValue>({})
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
 
   // Selected order & item for detail modals
   const [selectedOrder, setSelectedOrder] = useState<{ orderId: string } | null>(null)

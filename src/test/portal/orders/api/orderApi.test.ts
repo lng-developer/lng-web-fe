@@ -63,7 +63,7 @@ describe('orderApi', () => {
       level: 'GROUND',
     })
     expect(apiClient.get).toHaveBeenCalledWith('/api/orders/cases', {
-      params: { orderId: 'order-1', page: 1, limit: 10 },
+      params: { orderId: 'order-1', page: 1, limit: 50 },
     })
     expect(apiClient.post).toHaveBeenCalledWith('/api/orders/cases', {
       orderId: 'order-1',

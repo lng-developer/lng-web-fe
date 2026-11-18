@@ -10,6 +10,7 @@ import {
   createExtensionToken,
   revokeExtensionToken,
 } from '@/features/auth/extension-tokens/api/extensionTokensApi'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { useFeedbackToast } from '@/shared/ui'
 
 import {
@@ -67,7 +68,7 @@ export function useExtensionWorkbench({
 
   const extensionCommands = useQuery({
     queryKey: integrationKeys.extensionCommands(),
-    queryFn: () => listExtensionCommands({ page: 1, limit: 10 }),
+    queryFn: () => listExtensionCommands({ page: 1, limit: DEFAULT_PAGE_SIZE }),
     enabled: canUseExtension,
     retry: false,
     refetchInterval: (query) =>

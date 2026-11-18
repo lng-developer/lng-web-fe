@@ -1,5 +1,6 @@
 import { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 
 export type OrderWorkbenchParams = {
   recordId?: string
@@ -382,9 +383,9 @@ export async function createOrderReplacement(
   return unwrap(await apiClient.post(`/api/orders/${orderId}/replacement`, input))
 }
 
-export async function listOrderCases(orderId: string) {
+export async function listOrderCases(orderId: string, page = 1, limit = DEFAULT_PAGE_SIZE) {
   return unwrap<{ items: OrderCase[]; pagination: { total: number; page: number; limit: number } }>(
-    await apiClient.get('/api/orders/cases', { params: { orderId, page: 1, limit: 10 } }),
+    await apiClient.get('/api/orders/cases', { params: { orderId, page, limit } }),
   )
 }
 

@@ -103,7 +103,7 @@ describe('ImportIssueQueue', () => {
     await waitFor(() =>
       expect(listIssues).toHaveBeenCalledWith({
         page: 1,
-        limit: 10,
+        limit: 50,
         importJobId: 'job-selected',
       }),
     )
@@ -123,7 +123,7 @@ describe('ImportIssueQueue', () => {
 
   it('sends all queue filters to the server and hides write actions for readers', async () => {
     renderQueue()
-    await waitFor(() => expect(listIssues).toHaveBeenCalledWith({ page: 1, limit: 10 }))
+    await waitFor(() => expect(listIssues).toHaveBeenCalledWith({ page: 1, limit: 50 }))
 
     const selections = [
       ['Issue shop', 'LNG Amazon US', 'shopId', 'shop-1'],
@@ -152,7 +152,7 @@ describe('ImportIssueQueue', () => {
     await waitFor(() =>
       expect(listIssues).toHaveBeenLastCalledWith({
         page: 1,
-        limit: 10,
+        limit: 50,
         shopId: 'shop-1',
         source: 'MANUAL_EXCEL',
         severity: 'ERROR',
@@ -258,7 +258,7 @@ describe('ImportIssueQueue', () => {
     expect(listIssues).toHaveBeenCalledTimes(1)
     expect(listIssues).toHaveBeenCalledWith({
       page: 1,
-      limit: 10,
+      limit: 50,
       externalOrderId: 'ORDER-1',
     })
     vi.useRealTimers()

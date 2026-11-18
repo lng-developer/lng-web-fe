@@ -21,6 +21,7 @@ import { Button, Input, Modal, Select, Space, Tag, Tooltip, Typography } from 'a
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
   CopyableAsin,
   CopyableListingId,
@@ -66,7 +67,7 @@ export function CatalogListingWorkbenchPage(props: {
   const toast = useFeedbackToast()
 
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [search, setSearch] = useState('')
   const [shopId, setShopId] = useState<string>()
   const [salesChannelCode, setSalesChannelCode] = useState<string>()

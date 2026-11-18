@@ -479,7 +479,7 @@ describe('FinanceWorkspacePage', () => {
     expect(await screen.findByText('55521020702')).toBeVisible()
     expect(screen.getAllByText('$962.15').length).toBeGreaterThan(0)
     expect(screen.getByText('80% linked (8 / 10)')).toBeVisible()
-    expect(listSettlements).toHaveBeenCalledWith({ page: 1, limit: 10 })
+    expect(listSettlements).toHaveBeenCalledWith({ page: 1, limit: 50 })
   })
 
   it('reloads finance snapshots when the shared page-size control changes', async () => {

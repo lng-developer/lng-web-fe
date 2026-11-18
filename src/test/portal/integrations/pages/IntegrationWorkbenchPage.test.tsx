@@ -419,7 +419,7 @@ describe('IntegrationWorkbenchPage', () => {
         source: 'MANUAL_EXCEL',
         status: 'FAILED',
         page: 2,
-        limit: 10,
+        limit: 50,
         dateFrom: '2026-07-01T00:00:00.000Z',
         dateTo: '2026-07-31T23:59:59.999Z',
       }),
@@ -457,7 +457,7 @@ describe('IntegrationWorkbenchPage', () => {
   it('sanitizes malformed page, source, and status URL filters before querying', async () => {
     renderWorkbench('/portal/integrations?page=-3&source=UNKNOWN_SOURCE&status=UNKNOWN_STATUS')
 
-    await waitFor(() => expect(listImportJobs).toHaveBeenCalledWith({ page: 1, limit: 10 }))
+    await waitFor(() => expect(listImportJobs).toHaveBeenCalledWith({ page: 1, limit: 50 }))
     expect(
       await screen.findByText('8 rows processed / 1 rows skipped / 3 rows failed'),
     ).toBeVisible()
@@ -469,7 +469,7 @@ describe('IntegrationWorkbenchPage', () => {
     await waitFor(() =>
       expect(listImportJobs).toHaveBeenCalledWith({
         page: 1,
-        limit: 10,
+        limit: 50,
         dateFrom: '2026-07-01',
         dateTo: '2026-07-31',
       }),
@@ -482,7 +482,7 @@ describe('IntegrationWorkbenchPage', () => {
     await waitFor(() =>
       expect(listImportJobs).toHaveBeenCalledWith({
         page: 1,
-        limit: 10,
+        limit: 50,
         dateTo: '2026-07-31',
       }),
     )
@@ -491,7 +491,7 @@ describe('IntegrationWorkbenchPage', () => {
   it('drops a reversed date range before querying', async () => {
     renderWorkbench('/portal/integrations?dateFrom=2026-08-01&dateTo=2026-07-31')
 
-    await waitFor(() => expect(listImportJobs).toHaveBeenCalledWith({ page: 1, limit: 10 }))
+    await waitFor(() => expect(listImportJobs).toHaveBeenCalledWith({ page: 1, limit: 50 }))
   })
 
   it('opens selected job detail in a side panel', async () => {
@@ -1424,7 +1424,7 @@ describe('IntegrationWorkbenchPage', () => {
     await waitFor(() =>
       expect(listImportBatches).toHaveBeenCalledWith({
         page: 1,
-        limit: 10,
+        limit: 50,
         sourceType: 'ADS',
         salesChannelCode: 'AMAZON',
         marketplaceCode: 'US',
@@ -1507,7 +1507,7 @@ describe('IntegrationWorkbenchPage', () => {
       expect(listImportedFinanceData).toHaveBeenCalledWith('transactions', {
         importBatchId: 'batch-transactions-1',
         page: 1,
-        limit: 10,
+        limit: 50,
       }),
     )
     expect(screen.getByTitle('Next Page')).toBeVisible()
@@ -1520,7 +1520,7 @@ describe('IntegrationWorkbenchPage', () => {
         expect.objectContaining({
           importBatchId: 'batch-transactions-1',
           page: 1,
-          limit: 10,
+          limit: 50,
           transactionType: 'Order Payment',
         }),
       ),

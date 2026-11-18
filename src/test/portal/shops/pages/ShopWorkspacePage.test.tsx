@@ -95,7 +95,7 @@ describe('ShopWorkspacePage', () => {
     renderPage('/portal/shops?page=2&status=ACTIVE')
 
     await waitFor(() =>
-      expect(listShops).toHaveBeenCalledWith({ page: 2, limit: 10, status: 'ACTIVE' }),
+      expect(listShops).toHaveBeenCalledWith({ page: 2, limit: 50, status: 'ACTIVE' }),
     )
     expect(await screen.findByText('Football US', {}, { timeout: 5_000 })).toBeVisible()
     vi.useFakeTimers()
@@ -108,7 +108,7 @@ describe('ShopWorkspacePage', () => {
     await act(() => vi.advanceTimersByTimeAsync(1))
     expect(listShops).toHaveBeenCalledWith({
       page: 1,
-      limit: 10,
+      limit: 50,
       search: 'football',
       status: 'ACTIVE',
     })
@@ -179,7 +179,7 @@ describe('ShopWorkspacePage', () => {
     renderPage('/portal/shops?page=1&status=ACTIVE')
 
     await waitFor(() =>
-      expect(listShops).toHaveBeenCalledWith({ page: 1, limit: 10, status: 'ACTIVE' }),
+      expect(listShops).toHaveBeenCalledWith({ page: 1, limit: 50, status: 'ACTIVE' }),
     )
     expect(await screen.findByText('Football US')).toBeVisible()
     fireEvent.click(await screen.findByRole('button', { name: 'Edit Football US' }))
@@ -238,7 +238,7 @@ describe('ShopWorkspacePage', () => {
     renderPage('/portal/shops?page=-3&status=UNKNOWN&search=%20football%20')
 
     expect(await screen.findByText('Football US')).toBeVisible()
-    expect(listShops).toHaveBeenCalledWith({ page: 1, limit: 10, search: 'football' })
+    expect(listShops).toHaveBeenCalledWith({ page: 1, limit: 50, search: 'football' })
   })
 
   it('shows filtered no-results with a Clear filters action', async () => {
