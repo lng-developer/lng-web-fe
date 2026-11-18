@@ -35,10 +35,10 @@ import { loadTeams } from '@/features/organization/api/organizationApi'
 import { getPermissions } from '@/shared/auth/session'
 import { DEFAULT_TABLE_PAGINATION } from '@/shared/constants/enum'
 import {
+  CompactStatBar,
   DateTimePicker,
   EmployeeIdentity,
   FormActions,
-  MetricCard,
   MonthPicker,
   PageHeader,
   SectionCard,
@@ -427,6 +427,7 @@ export function ScheduleCalendarPage() {
                 </Button>
               )}
               <CoreDataTable
+                fitContainer
                 size="small"
                 scroll={{ y: 'calc(100vh - 360px)' }}
                 pagination={DEFAULT_TABLE_PAGINATION}
@@ -437,16 +438,21 @@ export function ScheduleCalendarPage() {
                   {
                     title: t('hrOperations.common.location'),
                     dataIndex: 'name',
+                    ellipsis: true,
                     render: (val) => <Typography.Text strong>{val}</Typography.Text>,
                   },
                   {
                     title: t('hrOperations.common.timezone'),
                     dataIndex: 'timezone',
+                    width: 160,
+                    align: 'center',
                     render: (val) => <Tag color="geekblue">{val}</Tag>,
                   },
                   {
                     title: t('hrOperations.common.status'),
                     dataIndex: 'status',
+                    width: 120,
+                    align: 'center',
                     render: (value) => (
                       <StatusTag status={value === 'ACTIVE' ? 'operational' : 'cancelled'}>
                         {statusLabel(value)}
@@ -457,10 +463,12 @@ export function ScheduleCalendarPage() {
                     ? [
                         {
                           title: '',
-                          width: 44,
+                          width: 48,
+                          align: 'center' as const,
                           render: (_: unknown, item: WorkLocation) => (
                             <Button
                               type="text"
+                              size="small"
                               icon={<EditOutlined />}
                               onClick={() => openEditor({ kind: 'location', item })}
                             />
@@ -486,6 +494,7 @@ export function ScheduleCalendarPage() {
                 </Button>
               )}
               <CoreDataTable
+                fitContainer
                 size="small"
                 scroll={{ y: 'calc(100vh - 360px)' }}
                 pagination={DEFAULT_TABLE_PAGINATION}
@@ -495,8 +504,9 @@ export function ScheduleCalendarPage() {
                 columns={[
                   {
                     title: t('hrOperations.schedule.shift'),
+                    ellipsis: true,
                     render: (_, item: Shift) => (
-                      <Space>
+                      <Space size={6}>
                         <Typography.Text strong>{item.name}</Typography.Text>
                         <Tag color="default" style={{ fontFamily: 'monospace', fontSize: 11 }}>
                           {item.code}
@@ -506,6 +516,8 @@ export function ScheduleCalendarPage() {
                   },
                   {
                     title: t('hrOperations.schedule.hours'),
+                    width: 150,
+                    align: 'center',
                     render: (_, item: Shift) => (
                       <Tag color="cyan">
                         {item.startTime} - {item.endTime}
@@ -515,16 +527,20 @@ export function ScheduleCalendarPage() {
                   {
                     title: t('hrOperations.schedule.break'),
                     dataIndex: 'breakMinutes',
+                    width: 110,
+                    align: 'center',
                     render: (value) => t('hrOperations.schedule.minutes', { count: value }),
                   },
                   ...(canScheduleWrite
                     ? [
                         {
                           title: '',
-                          width: 44,
+                          width: 48,
+                          align: 'center' as const,
                           render: (_: unknown, item: Shift) => (
                             <Button
                               type="text"
+                              size="small"
                               icon={<EditOutlined />}
                               onClick={() => openEditor({ kind: 'shift', item })}
                             />
@@ -562,6 +578,7 @@ export function ScheduleCalendarPage() {
                 </Button>
               )}
               <CoreDataTable
+                fitContainer
                 size="small"
                 scroll={{ y: 'calc(100vh - 360px)' }}
                 pagination={DEFAULT_TABLE_PAGINATION}
@@ -572,22 +589,32 @@ export function ScheduleCalendarPage() {
                   {
                     title: t('hrOperations.common.date'),
                     dataIndex: 'dateKey',
+                    width: 120,
+                    align: 'center',
                     render: (v: string) => <Tag color="gold">{dayjs(v).format('DD/MM/YYYY')}</Tag>,
                   },
-                  { title: t('hrOperations.common.name'), dataIndex: 'name' },
+                  {
+                    title: t('hrOperations.common.name'),
+                    dataIndex: 'name',
+                    ellipsis: true,
+                  },
                   {
                     title: t('hrOperations.common.type'),
                     dataIndex: 'holidayType',
+                    width: 140,
+                    align: 'center',
                     render: (v: string) => holidayTypeLabel(v),
                   },
                   ...(canCalendarWrite
                     ? [
                         {
                           title: '',
-                          width: 44,
+                          width: 48,
+                          align: 'center' as const,
                           render: (_: unknown, item: Holiday) => (
                             <Button
                               type="text"
+                              size="small"
                               icon={<EditOutlined />}
                               onClick={() => openEditor({ kind: 'holiday', item })}
                             />
@@ -613,6 +640,7 @@ export function ScheduleCalendarPage() {
                 </Button>
               )}
               <CoreDataTable
+                fitContainer
                 size="small"
                 scroll={{ y: 'calc(100vh - 360px)' }}
                 pagination={DEFAULT_TABLE_PAGINATION}
@@ -623,19 +651,29 @@ export function ScheduleCalendarPage() {
                   {
                     title: t('hrOperations.common.date'),
                     dataIndex: 'dateKey',
+                    width: 120,
+                    align: 'center',
                     render: (v: string) => (
                       <Tag color="orange">{dayjs(v).format('DD/MM/YYYY')}</Tag>
                     ),
                   },
-                  { title: t('hrOperations.common.name'), dataIndex: 'name' },
+                  {
+                    title: t('hrOperations.common.name'),
+                    dataIndex: 'name',
+                    ellipsis: true,
+                  },
                   {
                     title: t('hrOperations.common.type'),
                     dataIndex: 'kind',
+                    width: 140,
+                    align: 'center',
                     render: (v: string) => overrideKindLabel(v),
                   },
                   {
                     title: t('hrOperations.common.scope'),
                     dataIndex: 'scopeType',
+                    width: 130,
+                    align: 'center',
                     render: (v: string) => scopeTypeLabel(v),
                   },
                 ]}
@@ -803,37 +841,43 @@ export function ScheduleCalendarPage() {
         actions={<MonthPicker value={month} onChange={(value) => value && setMonth(value)} />}
       />
 
-      {/* Summary Metric Cards */}
-      <div className={styles.metrics}>
-        <MetricCard
-          icon={<CompassOutlined />}
-          variant="neutral"
-          label={t('hrOperations.schedule.metrics.locations')}
-          value={locationCount}
-          loading={locations.isLoading}
-        />
-        <MetricCard
-          icon={<ClockCircleOutlined />}
-          variant="info"
-          label={t('hrOperations.schedule.metrics.shifts')}
-          value={shiftCount}
-          loading={shifts.isLoading}
-        />
-        <MetricCard
-          icon={<TeamOutlined />}
-          variant="success"
-          label={t('hrOperations.schedule.metrics.assignments')}
-          value={assignmentCount}
-          loading={assignments.isLoading}
-        />
-        <MetricCard
-          icon={<CalendarOutlined />}
-          variant="warning"
-          label={t('hrOperations.schedule.metrics.holidays')}
-          value={holidayCount}
-          loading={holidays.isLoading}
-        />
-      </div>
+      {/* Summary Stat Bar */}
+      <CompactStatBar
+        items={[
+          {
+            key: 'locations',
+            icon: <CompassOutlined />,
+            variant: 'neutral',
+            label: t('hrOperations.schedule.metrics.locations'),
+            value: `${locationCount} ${t('hrOperations.schedule.metrics.locationUnit', 'địa điểm')}`,
+            loading: locations.isLoading,
+          },
+          {
+            key: 'shifts',
+            icon: <ClockCircleOutlined />,
+            variant: 'info',
+            label: t('hrOperations.schedule.metrics.shifts'),
+            value: `${shiftCount} ${t('hrOperations.schedule.metrics.shiftUnit', 'ca')}`,
+            loading: shifts.isLoading,
+          },
+          {
+            key: 'assignments',
+            icon: <TeamOutlined />,
+            variant: 'success',
+            label: t('hrOperations.schedule.metrics.assignments'),
+            value: `${assignmentCount} ${t('hrOperations.schedule.metrics.assignmentUnit', 'phân ca')}`,
+            loading: assignments.isLoading,
+          },
+          {
+            key: 'holidays',
+            icon: <CalendarOutlined />,
+            variant: 'warning',
+            label: t('hrOperations.schedule.metrics.holidays'),
+            value: `${holidayCount} ${t('hrOperations.schedule.metrics.holidayUnit', 'ngày')}`,
+            loading: holidays.isLoading,
+          },
+        ]}
+      />
 
       <Tabs items={tabItems} defaultActiveKey="assignments" />
 

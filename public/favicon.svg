@@ -1,7 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <rect width="32" height="32" rx="6" fill="#1976d2" />
+  <defs>
+    <linearGradient id="ecoGrad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#06b6d4" />
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="7" fill="url(#ecoGrad)" />
   <path
-    d="M9 22V10h3.2l6.6 8.4V10H22v12h-3.2l-6.6-8.4V22H9z"
+    d="M9 8h14v3.2H12.6v4h9.2v3.1h-9.2V21H23v3.2H9V8z"
     fill="#ffffff"
   />
 </svg>

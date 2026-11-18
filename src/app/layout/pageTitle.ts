@@ -293,7 +293,7 @@ export const ROUTE_TITLE_DEFINITIONS: readonly RouteTitleDefinition[] = [
 
 export function formatDocumentTitle(
   pageTitle?: string | null,
-  appName = 'LNG Web',
+  appName = 'Ecomatrix',
   unreadCount = 0,
 ): string {
   const trimmed = pageTitle?.trim()

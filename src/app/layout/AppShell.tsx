@@ -107,7 +107,7 @@ export function AppShell() {
 
   useDocumentTitleBadge({
     pageTitle,
-    appName: t('app.name', { defaultValue: 'LNG Web' }),
+    appName: t('app.name', { defaultValue: 'Ecomatrix' }),
     unreadCount: totalUnread,
     flashMessage,
     onClearFlash: clearFlashMessage,

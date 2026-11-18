@@ -7,7 +7,7 @@ describe('readEnv', () => {
     expect(readEnv({ DEV: false })).toEqual({
       apiBaseUrl: '',
       uploadApiBaseUrl: '',
-      appName: 'LNG Web FE',
+      appName: 'Ecomatrix',
       isDev: false,
       googleClientId: '',
       microsoftClientId: '',

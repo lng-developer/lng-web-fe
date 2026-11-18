@@ -21,24 +21,24 @@ describe('useDocumentTitleBadge', () => {
     renderHook(() =>
       useDocumentTitleBadge({
         pageTitle: 'Orders',
-        appName: 'LNG Web',
+        appName: 'Ecomatrix',
         unreadCount: 0,
       }),
     )
 
-    expect(document.title).toBe('Orders | LNG Web')
+    expect(document.title).toBe('Orders | Ecomatrix')
   })
 
   it('includes unread badge in document title when unreadCount > 0', () => {
     renderHook(() =>
       useDocumentTitleBadge({
         pageTitle: 'Orders',
-        appName: 'LNG Web',
+        appName: 'Ecomatrix',
         unreadCount: 9,
       }),
     )
 
-    expect(document.title).toBe('(9) Orders | LNG Web')
+    expect(document.title).toBe('(9) Orders | Ecomatrix')
   })
 
   it('alternates title when flashMessage is active and tab is hidden', () => {
@@ -56,7 +56,7 @@ describe('useDocumentTitleBadge', () => {
     renderHook(() =>
       useDocumentTitleBadge({
         pageTitle: 'Orders',
-        appName: 'LNG Web',
+        appName: 'Ecomatrix',
         unreadCount: 3,
         flashMessage: '🔔 Tin nhắn mới!',
         onClearFlash,
@@ -68,7 +68,7 @@ describe('useDocumentTitleBadge', () => {
     act(() => {
       vi.advanceTimersByTime(1200)
     })
-    expect(document.title).toBe('(3) Orders | LNG Web')
+    expect(document.title).toBe('(3) Orders | Ecomatrix')
 
     act(() => {
       vi.advanceTimersByTime(1200)
@@ -80,7 +80,7 @@ describe('useDocumentTitleBadge', () => {
       window.dispatchEvent(new Event('focus'))
     })
 
-    expect(document.title).toBe('(3) Orders | LNG Web')
+    expect(document.title).toBe('(3) Orders | Ecomatrix')
     expect(onClearFlash).toHaveBeenCalled()
   })
 })

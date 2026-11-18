@@ -142,7 +142,7 @@ export function ExtensionTrackingPage() {
             </div>
             <div className={styles.stepDesc}>
               When vendors submit tracking numbers in Vendor Handoff, shipments are verified and
-              marked as SHIPPED in LNG System.
+              marked as SHIPPED in Ecomatrix System.
             </div>
           </div>
           <div className={styles.stepBox}>
@@ -150,8 +150,8 @@ export function ExtensionTrackingPage() {
               <SyncOutlined /> 2. Extension Auto-Sync
             </div>
             <div className={styles.stepDesc}>
-              The LNG Extension worker on your store PC picks up tracking numbers and dispatches
-              orders on Etsy or confirms shipments on Amazon Seller Central.
+              The Ecomatrix Extension worker on your store PC picks up tracking numbers and
+              dispatches orders on Etsy or confirms shipments on Amazon Seller Central.
             </div>
           </div>
           <div className={styles.stepBox}>

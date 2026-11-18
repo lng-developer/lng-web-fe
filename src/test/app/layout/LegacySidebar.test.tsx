@@ -622,7 +622,7 @@ describe('LegacySidebar', () => {
     expect(compactSwitch).toHaveTextContent('PORTAL')
 
     // Click logo in portal mode
-    const logoButton = screen.getByRole('button', { name: 'LNG Web' })
+    const logoButton = screen.getByRole('button', { name: 'Ecomatrix' })
     expect(logoButton).toBeVisible()
 
     // Switch to HR mode via compact switch

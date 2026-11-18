@@ -455,8 +455,8 @@
 .itemPanel {
   display: grid;
   grid-template-columns:
-    minmax(240px, 1.1fr) minmax(150px, 0.95fr) minmax(250px, 1.1fr) minmax(130px, 0.65fr)
-    minmax(140px, 0.9fr) minmax(160px, 1fr) 48px;
+    minmax(230px, 1.1fr) minmax(150px, 0.9fr) minmax(240px, 1.1fr) minmax(110px, 0.55fr)
+    minmax(140px, 0.85fr) minmax(240px, 1.35fr) 48px;
   gap: 16px;
   padding: 16px;
   border: 1px solid var(--ant-color-border);
@@ -584,10 +584,49 @@
   display: grid;
   gap: 8px;
 }
-.inputList,
-.trackingRow {
+.inputList {
   display: grid;
   gap: 6px;
+}
+.trackingRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.trackingLine {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  white-space: nowrap;
+}
+.trackingLabel {
+  flex: 0 0 auto;
+  font-size: 12px;
+  line-height: 20px;
+  white-space: nowrap;
+  user-select: none;
+}
+.trackingEmpty {
+  font-size: 12px;
+  line-height: 20px;
+  white-space: nowrap;
+}
+.trackingHistoryBtn {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: var(--ant-color-text-secondary);
+
+  &:hover {
+    color: var(--ant-color-primary);
+  }
 }
 .customizationHeader {
   align-items: center;
@@ -657,7 +696,8 @@
 .orderIdChip,
 .skuChip,
 .asinChip,
-.sellerChip {
+.sellerChip,
+.trackingChip {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -714,6 +754,28 @@
   border: 1px solid color-mix(in srgb, var(--ant-color-warning) 42%, var(--ant-color-border));
 }
 
+.trackingChip {
+  min-width: 0;
+  font-family: var(--font-family-code, monospace);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.2px;
+  color: var(--ant-color-text);
+  background: color-mix(
+    in srgb,
+    var(--ant-color-fill-quaternary) 80%,
+    var(--ant-color-bg-container)
+  );
+  border: 1px solid var(--ant-color-border-secondary);
+  cursor: copy;
+
+  &:hover {
+    color: var(--ant-color-primary);
+    border-color: var(--ant-color-primary);
+    background: color-mix(in srgb, var(--ant-color-primary-bg) 64%, var(--ant-color-bg-container));
+  }
+}
+
 :global(html[data-theme='dark']) {
   .orderIdChip {
     border-color: color-mix(in srgb, var(--ant-color-primary) 42%, #393a3b);
@@ -752,6 +814,18 @@
     border-color: color-mix(in srgb, #d97706 42%, #393a3b);
     background: color-mix(in srgb, #d97706 14%, #242526);
     color: #fcd34d;
+  }
+
+  .trackingChip {
+    border-color: color-mix(in srgb, var(--ant-color-border) 60%, #393a3b);
+    background: color-mix(in srgb, var(--ant-color-fill-quaternary) 50%, #242526);
+    color: #e2e8f0;
+
+    &:hover {
+      border-color: var(--ant-color-primary);
+      background: color-mix(in srgb, var(--ant-color-primary) 18%, #242526);
+      color: #93c5fd;
+    }
   }
 }
 @container (max-width: 1500px) {

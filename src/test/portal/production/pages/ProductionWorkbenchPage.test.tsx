@@ -497,16 +497,16 @@ describe('ProductionWorkbenchPage', () => {
 
     await waitFor(() =>
       expect(listProductionTasks).toHaveBeenCalledWith(
-        expect.objectContaining({ limit: 10, page: 1, view: undefined }),
+        expect.objectContaining({ limit: 50, page: 1, view: undefined }),
       ),
     )
 
     fireEvent.mouseDown(await screen.findByRole('combobox', { name: 'Rows per page' }))
-    fireEvent.click((await screen.findAllByText('50')).at(-1)!)
+    fireEvent.click((await screen.findAllByText('100')).at(-1)!)
 
     await waitFor(() =>
       expect(listProductionTasks).toHaveBeenCalledWith(
-        expect.objectContaining({ limit: 50, page: 1, view: undefined }),
+        expect.objectContaining({ limit: 100, page: 1, view: undefined }),
       ),
     )
   })

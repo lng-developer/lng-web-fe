@@ -84,7 +84,7 @@ export function ExtensionTokenModal({
             })}
             description={t('portal.extensions.tokens.copyNotice', {
               defaultValue:
-                'Copy this token now. It will not be shown again for security reasons. Paste it into the LNG Extension settings on the bot client machine.',
+                'Copy this token now. It will not be shown again for security reasons. Paste it into the Ecomatrix Extension settings on the bot client machine.',
             })}
           />
           <Input.Password

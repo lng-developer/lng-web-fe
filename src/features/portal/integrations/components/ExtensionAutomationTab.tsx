@@ -29,6 +29,8 @@ import {
   Tooltip,
   Typography,
 } from 'antd'
+
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import type { ColumnsType } from 'antd/es/table'
 
 import { SectionCard, StatusTag } from '@/shared/ui'
@@ -1033,7 +1035,7 @@ export function ExtensionAutomationTab({
               rowKey="id"
               size="small"
               pagination={{
-                pageSize: 10,
+                pageSize: DEFAULT_PAGE_SIZE,
                 showSizeChanger: true,
                 showTotal: (total) => `${total} extensions`,
               }}

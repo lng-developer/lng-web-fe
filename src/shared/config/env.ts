@@ -16,7 +16,7 @@ export function readEnv(source: EnvSource) {
       /\/+$/,
       '',
     ),
-    appName: source.VITE_APP_NAME ?? 'LNG Web FE',
+    appName: source.VITE_APP_NAME ?? 'Ecomatrix',
     googleClientId: source.VITE_GOOGLE_CLIENT_ID ?? '',
     microsoftClientId: source.VITE_MICROSOFT_CLIENT_ID ?? '',
     microsoftTenantId: source.VITE_MICROSOFT_TENANT_ID ?? 'common',

@@ -137,7 +137,7 @@ describe('AppSidebar', () => {
       </MemoryRouter>,
     )
 
-    expect(screen.getByText('LNG System')).toBeVisible()
+    expect(screen.getByText('Ecomatrix System')).toBeVisible()
     expect(screen.getByText('Ngô Văn Hiếu')).toBeVisible()
   })
 })

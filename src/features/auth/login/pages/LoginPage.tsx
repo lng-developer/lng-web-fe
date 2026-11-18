@@ -9,6 +9,7 @@ import { getAccessToken } from '@/shared/auth/session'
 import { brandAssets } from '@/shared/config/brandAssets'
 import { LanguageSwitch } from '@/shared/i18n/LanguageSwitch'
 import { ThemeSwitch } from '@/shared/theme/ThemeSwitch'
+import { useDocumentTitle } from '@/shared/ui'
 
 import { login } from '../../api/authApi'
 import { useGoogleLoginHandler } from '../../google/useGoogleLoginHandler'
@@ -18,6 +19,7 @@ type LoginValues = { identifier: string; password: string }
 export function LoginPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  useDocumentTitle('Ecomatrix', { raw: true })
   const [error, setError] = useState<string | undefined>(() => {
     const msalError = sessionStorage.getItem('msal_login_error')
     if (msalError) {
@@ -59,10 +61,10 @@ export function LoginPage() {
       </div>
       <div className={styles.workspace} role="group" aria-labelledby="login-workspace-title">
         <Card className={styles.card} variant="borderless">
-          <section className={styles.intro} aria-label="LNG Web">
+          <section className={styles.intro} aria-label="Ecomatrix">
             <div className={styles.brandMark}>
-              <img className={styles.logo} src={brandAssets.logoWide} alt={t('app.name')} />
-              <Typography.Text className={styles.wordmark}>LNG</Typography.Text>
+              <img className={styles.logo} src={brandAssets.logoWide} alt="Ecomatrix" />
+              <Typography.Text className={styles.wordmark}>Ecomatrix</Typography.Text>
             </div>
             <div className={styles.introInner}>
               <Typography.Title id="login-workspace-title" level={1} className={styles.introTitle}>

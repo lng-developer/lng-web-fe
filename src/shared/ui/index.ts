@@ -1,6 +1,12 @@
 export { BarChart, type BarChartDatum, type BarChartProps } from './BarChart'
 export { BulkActionBar, type BulkActionBarProps } from './BulkActionBar'
 export { type Command, CommandPalette, type CommandPaletteProps } from './CommandPalette'
+export {
+  CompactStatBar,
+  type CompactStatBarProps,
+  type CompactStatItem,
+  type CompactStatVariant,
+} from './CompactStatBar'
 export { ConfirmDangerModal, type ConfirmDangerModalProps } from './ConfirmDangerModal'
 export { ContentErrorBoundary, type ContentErrorBoundaryProps } from './ContentErrorBoundary'
 export {

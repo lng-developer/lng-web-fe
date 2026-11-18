@@ -299,6 +299,7 @@ export const useAttendance = (workspace: AttendanceWorkspace = 'personal', teamI
       month,
       setMonth,
       adjusting,
+      openAdjusting,
       closeAdjusting,
       attendanceCapabilities,
       completedCheckIn,
