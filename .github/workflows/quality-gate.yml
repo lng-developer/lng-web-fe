@@ -31,7 +31,7 @@ jobs:
         run: test "$RELEASE_SOURCE" = 'develop'
 
   quality-gate:
-    if: ${{ inputs.ui_test_file == '' && (github.ref == 'refs/heads/develop' || github.base_ref == 'develop') }}
+    if: ${{ inputs.ui_test_file == '' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.base_ref == 'develop')) }}
     name: lint-unit-build
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -59,7 +59,7 @@ jobs:
           retention-days: 1
 
   ui-tests:
-    if: ${{ inputs.ui_test_file == '' && (github.ref == 'refs/heads/develop' || github.base_ref == 'develop') }}
+    if: ${{ inputs.ui_test_file == '' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.base_ref == 'develop')) }}
     name: ui-tests-${{ matrix.shard }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
