@@ -234,15 +234,15 @@ const compact = (params: OrderWorkbenchParams) =>
   Object.fromEntries(Object.entries(params).filter(([, value]) => value !== '' && value != null))
 const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
 
-export async function listOrderWorkbench(params: OrderWorkbenchParams) {
+export async function listOrderWorkbench(params: OrderWorkbenchParams, signal?: AbortSignal) {
   return unwrap<OrderWorkbenchResult>(
-    await apiClient.get('/api/orders/workbench', { params: compact(params) }),
+    await apiClient.get('/api/orders/workbench', { params: compact(params), signal }),
   )
 }
 
-export async function getOrderSummary(params: OrderWorkbenchParams) {
+export async function getOrderSummary(params: OrderWorkbenchParams, signal?: AbortSignal) {
   return unwrap<OrderSummary>(
-    await apiClient.get('/api/orders/summary', { params: compact(params) }),
+    await apiClient.get('/api/orders/summary', { params: compact(params), signal }),
   )
 }
 

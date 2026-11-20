@@ -94,7 +94,7 @@ export function AppShell() {
   const { data: chatUnreadData } = useQuery({
     queryKey: chatKeys.unread,
     queryFn: getChatUnreadCount,
-    refetchInterval: 30_000,
+    refetchInterval: 60_000,
   })
   const { data: notiUnreadData } = useQuery({
     queryKey: ['notifications', 'unread-count'],

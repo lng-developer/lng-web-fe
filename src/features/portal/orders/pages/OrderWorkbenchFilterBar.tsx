@@ -78,6 +78,7 @@ export const OrderWorkbenchFilterBar: FC<OrderWorkbenchFilterBarProps> = memo(
         <div className={styles.searchSection}>
           <SearchInput
             className={styles.orderSearch}
+            delay={400}
             value={search}
             onSearchChange={onSearchChange}
             placeholder={searchPlaceholder}
