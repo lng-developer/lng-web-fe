@@ -78,7 +78,9 @@ describe('RuleEditorPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Preview changes' }))
 
     await waitFor(() =>
-      expect(onPreview).toHaveBeenCalledWith(expect.anything(), ['J2605-TS1S-01']),
+      expect(onPreview).toHaveBeenCalledWith(expect.objectContaining({ patternType: 'SEGMENT' }), [
+        'J2605-TS1S-01',
+      ]),
     )
     expect(onSave).not.toHaveBeenCalled()
   })

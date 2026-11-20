@@ -148,6 +148,7 @@ function pickRuleValues(type: MappingRuleType, values: MappingRuleInput) {
   return Object.fromEntries(
     Object.entries(values).filter(([key]) => {
       if (metadataFieldNames.has(key)) return true
+      if (type === 'skuNormalize' && key === 'patternType') return true
       return allowedFields.has(key)
     }),
   )
