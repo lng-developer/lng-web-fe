@@ -311,8 +311,9 @@ export const useTeamWorkspace = (view: TeamWorkspaceView) => {
                 dataIndex: 'reason',
               },
               {
-                title: '',
-                align: 'right',
+                title: t('hrOperations.common.action'),
+                align: 'center' as const,
+                width: 96,
                 render: (_, item) => (
                   <Space>
                     <Button

@@ -19,7 +19,7 @@ describe('LoginPage visual styles', () => {
   it('keeps the light background mark balanced with the dark composition and centers the preference controls vertically', () => {
     expect(loginStyles).toMatch(/login-operations-hero\.png[^;]*\/\s*auto\s+138%/s)
     expect(loginStyles).toMatch(
-      /\.page::before[\s\S]*login-operations-hero-dark-v2\.png'\) calc\(50% \+ 70px\) calc\(50% \+ 72px\)\s*\/\s*auto\s+138%/,
+      /\.page::before[\s\S]*login-operations-hero-dark-v2\.png'\) calc\(50% \+ 70px\) calc\(50% \+ 120px\)\s*\/\s*auto\s+138%/,
     )
     expect(loginStyles).toMatch(
       /\.preferences\s*\{[^}]*top:\s*50%[^}]*right:\s*24px[^}]*flex-direction:\s*column[^}]*transform:\s*translateY\(-50%\)/s,

@@ -12,7 +12,7 @@ export interface UseDocumentTitleBadgeOptions {
 
 export function useDocumentTitleBadge({
   pageTitle,
-  appName = 'LNG Web',
+  appName = 'Ecomatrix',
   unreadCount = 0,
   flashMessage = null,
   onClearFlash,

@@ -1,7 +1,14 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { CheckOutlined, CloseOutlined, TeamOutlined } from '@ant-design/icons'
+import {
+  CheckCircleOutlined,
+  CheckOutlined,
+  ClockCircleOutlined,
+  CloseOutlined,
+  TeamOutlined,
+  WarningOutlined,
+} from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Empty, Flex, Segmented, Space, Typography } from 'antd'
 import dayjs from 'dayjs'
@@ -19,9 +26,9 @@ import {
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from '@/shared/constants/enum'
 import {
+  CompactStatBar,
   EmployeeAvatar,
   FeedbackAlert,
-  MetricCard,
   SectionCard,
   StatusTag,
   useFeedbackToast,
@@ -285,8 +292,9 @@ export function TeamWorkspacePage({
               },
               { title: t('hrOperations.common.reason'), dataIndex: 'reason' },
               {
-                title: '',
-                align: 'right',
+                title: t('hrOperations.common.action'),
+                align: 'center' as const,
+                width: 96,
                 render: (_, item) => (
                   <Space>
                     <Button
@@ -337,19 +345,44 @@ export function TeamWorkspacePage({
         />
       )}
       {view === 'dashboard' && (
-        <div className={styles.metrics}>
-          <MetricCard
-            icon={<TeamOutlined />}
-            label={t('hrOperations.team.members')}
-            value={String(data?.profiles.items.length ?? 0)}
-          />
-          <MetricCard label={t('hrOperations.team.present')} value={String(presentCount)} />
-          <MetricCard label={t('hrOperations.team.exceptions')} value={String(exceptions)} />
-          <MetricCard
-            label={t('hrOperations.team.pendingApproval')}
-            value={String(approvals.length)}
-          />
-        </div>
+        <CompactStatBar
+          items={[
+            {
+              key: 'members',
+              icon: <TeamOutlined />,
+              variant: 'info',
+              label: t('hrOperations.team.members'),
+              value: `${data?.profiles.items.length ?? 0} ${t('hrOperations.payroll.peopleUnit', 'người')}`,
+              loading: workspace.isLoading,
+            },
+            {
+              key: 'present',
+              icon: <CheckCircleOutlined />,
+              variant: 'success',
+              label: t('hrOperations.team.present'),
+              value: `${presentCount} ${t('hrOperations.payroll.peopleUnit', 'người')}`,
+              loading: workspace.isLoading,
+            },
+            {
+              key: 'exceptions',
+              icon: <WarningOutlined />,
+              variant: exceptions > 0 ? 'danger' : 'neutral',
+              valueVariant: exceptions > 0 ? 'danger' : undefined,
+              label: t('hrOperations.team.exceptions'),
+              value: `${exceptions} ${t('hrOperations.attendance.turnsUnit', 'lượt')}`,
+              loading: workspace.isLoading,
+            },
+            {
+              key: 'approvals',
+              icon: <ClockCircleOutlined />,
+              variant: approvals.length > 0 ? 'warning' : 'neutral',
+              valueVariant: approvals.length > 0 ? 'warning' : undefined,
+              label: t('hrOperations.team.pendingApproval'),
+              value: `${approvals.length} ${t('hrOperations.requests.requestsUnit', 'đơn')}`,
+              loading: workspace.isLoading,
+            },
+          ]}
+        />
       )}
       {view === 'dashboard' && (
         <div className={styles.split}>

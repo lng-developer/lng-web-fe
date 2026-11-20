@@ -190,3 +190,37 @@ it('renders scale output directly as an image like main listing image', async ()
     expect.arrayContaining(['/api/media/assets/asset-front/download']),
   )
 })
+
+it('renders tracking number in a single copyable chip with history button', async () => {
+  await i18n.changeLanguage('vi')
+  const onHistory = vi.fn()
+  const item = {
+    item: { id: 'item-tracking', salesChannelCode: 'AMAZON', asin: 'B0HQN28655', quantity: 1 },
+    workflow: { nextActions: [], blockers: [] },
+    pricing: {},
+    tracking: {
+      trackingNumber: '4207261630339214490374008505076419',
+    },
+  } as unknown as OrderWorkbenchItem
+  render(
+    <AppProviders>
+      <OrderItemPanel
+        item={item}
+        canWrite={false}
+        canOperate={false}
+        pending={false}
+        mappingRecheckPending={false}
+        onAction={vi.fn()}
+        onConfirm={vi.fn()}
+        onHistory={onHistory}
+        onOpenImageViewer={vi.fn()}
+      />
+    </AppProviders>,
+  )
+  expect(screen.getByText('Tracking')).toBeInTheDocument()
+  expect(screen.getByText('4207261630339214490374008505076419')).toBeInTheDocument()
+  const historyBtn = screen.getByRole('button', { name: i18n.t('orders.actions.viewHistory') })
+  expect(historyBtn).toBeInTheDocument()
+  fireEvent.click(historyBtn)
+  expect(onHistory).toHaveBeenCalledWith(expect.anything(), 'item-tracking')
+})

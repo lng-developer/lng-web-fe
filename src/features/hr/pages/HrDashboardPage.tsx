@@ -32,7 +32,7 @@ import {
 } from 'recharts'
 
 import { loadDepartments } from '@/features/organization/api/organizationApi'
-import { MetricCard, SectionCard } from '@/shared/ui'
+import { CompactStatBar, SectionCard } from '@/shared/ui'
 
 import { hrKeys } from '../api/hrKeys'
 import { useEmployeeProfilesQuery, useHrAnnouncementsQuery, useHrDashboardQuery } from '../hooks'
@@ -166,56 +166,66 @@ export function HrDashboardPage() {
         </div>
       </header>
 
-      {/* 2. Top KPI Metric Cards */}
-      <section className={styles.kpiGrid}>
-        <MetricCard
-          icon={<TeamOutlined />}
-          label={t('hrOperations.dashboard.headcount', { defaultValue: 'Total Headcount' })}
-          value={String(data?.employees.active ?? 0)}
-          subtext={`${data?.employees.total ?? 0} ${t('hrOperations.overview.totalStaff', { defaultValue: 'total' })} · ${data?.employees.probation ?? 0} ${t('hrOperations.overview.probation', { defaultValue: 'probation' })}`}
-          variant="info"
-        />
-        <MetricCard
-          icon={<CheckCircleOutlined />}
-          label={t('hrOperations.dashboard.presentToday', { defaultValue: 'Present Today' })}
-          value={`${data?.attendance.present ?? 0}/${data?.attendance.expectedEmployees ?? 0}`}
-          subtext={`${t('hrOperations.dashboard.attendanceRate', { defaultValue: 'Coverage' })}: ${percent(data?.attendance.coverageRate)}`}
-          variant="success"
-        />
-        <MetricCard
-          icon={<ClockCircleOutlined />}
-          label={t('hrOperations.dashboard.exceptions', { defaultValue: 'Attendance Exceptions' })}
-          value={String(totalExceptions)}
-          subtext={`${data?.attendance.late ?? 0} ${t('hrOperations.dashboard.late', { defaultValue: 'late' })} · ${data?.attendance.missingCheckOuts ?? 0} ${t('hrOperations.dashboard.missingCheckouts', { defaultValue: 'missing out' })}`}
-          variant={totalExceptions > 0 ? 'danger' : 'info'}
-        />
-        <MetricCard
-          icon={<FileTextOutlined />}
-          label={t('hrOperations.dashboard.pendingApprovals', {
-            defaultValue: 'Pending Approvals',
-          })}
-          value={String(data?.approvals.totalPending ?? 0)}
-          subtext={`${data?.approvals.pendingLeaves ?? 0} ${t('hrOperations.requests.tabs.leave', { defaultValue: 'leave' })} · ${data?.approvals.pendingOvertimes ?? 0} OT`}
-          variant={(data?.approvals.totalPending ?? 0) > 0 ? 'warning' : 'primary'}
-        />
-        <MetricCard
-          icon={<DollarOutlined />}
-          label={t('hrOperations.dashboard.payrollSummary', { defaultValue: 'Payroll Period' })}
-          value={
-            data?.payroll?.summary?.amounts?.netIncome
+      {/* 2. Top KPI Stat Bar */}
+      <CompactStatBar
+        style={{ marginBottom: 16 }}
+        items={[
+          {
+            key: 'headcount',
+            icon: <TeamOutlined />,
+            variant: 'info',
+            label: t('hrOperations.dashboard.headcount', { defaultValue: 'Total Headcount' }),
+            value: String(data?.employees.active ?? 0),
+            subDetail: `(${data?.employees.total ?? 0} ${t('hrOperations.overview.totalStaff', { defaultValue: 'total' })})`,
+          },
+          {
+            key: 'present',
+            icon: <CheckCircleOutlined />,
+            variant: 'success',
+            label: t('hrOperations.dashboard.presentToday', { defaultValue: 'Present Today' }),
+            value: `${data?.attendance.present ?? 0}/${data?.attendance.expectedEmployees ?? 0}`,
+            subDetail: `(${percent(data?.attendance.coverageRate)})`,
+          },
+          {
+            key: 'exceptions',
+            icon: <ClockCircleOutlined />,
+            variant: totalExceptions > 0 ? 'danger' : 'neutral',
+            valueVariant: totalExceptions > 0 ? 'danger' : undefined,
+            label: t('hrOperations.dashboard.exceptions', {
+              defaultValue: 'Attendance Exceptions',
+            }),
+            value: String(totalExceptions),
+            subDetail:
+              totalExceptions > 0
+                ? `(${data?.attendance.late ?? 0} ${t('hrOperations.dashboard.late', { defaultValue: 'late' })})`
+                : undefined,
+          },
+          {
+            key: 'approvals',
+            icon: <FileTextOutlined />,
+            variant: (data?.approvals.totalPending ?? 0) > 0 ? 'warning' : 'neutral',
+            valueVariant: (data?.approvals.totalPending ?? 0) > 0 ? 'warning' : undefined,
+            label: t('hrOperations.dashboard.pendingApprovals', {
+              defaultValue: 'Pending Approvals',
+            }),
+            value: String(data?.approvals.totalPending ?? 0),
+          },
+          {
+            key: 'payroll',
+            icon: <DollarOutlined />,
+            variant: 'primary',
+            valueVariant: 'primary',
+            label: t('hrOperations.dashboard.payrollSummary', {
+              defaultValue: 'Payroll Period',
+            }),
+            value: data?.payroll?.summary?.amounts?.netIncome
               ? formatCurrency(data.payroll.summary.amounts.netIncome)
               : data?.payroll
                 ? `${data.payroll.month}/${data.payroll.year}`
-                : '—'
-          }
-          subtext={
-            data?.payroll
-              ? `${data.payroll.status} · ${data.payroll.resultCount} ${t('hrOperations.common.employee', { defaultValue: 'staff' })}`
-              : t('hrOperations.overview.noPayroll', { defaultValue: 'No payroll run yet.' })
-          }
-          variant="primary"
-        />
-      </section>
+                : '—',
+          },
+        ]}
+      />
 
       {/* 3. Main Dashboard Grid */}
       <section className={styles.mainGrid}>

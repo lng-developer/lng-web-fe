@@ -1,5 +1,6 @@
 import type { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 
 const basePath = '/api/integration/listing-image-sync'
 const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
@@ -33,9 +34,9 @@ export async function listImageSchedules() {
 export async function saveImageSchedule(agentId: string, enabled: boolean) {
   return unwrap<ImageSchedule>(await apiClient.put(`${basePath}/schedules/${agentId}`, { enabled }))
 }
-export async function listImageJobs(page = 1) {
+export async function listImageJobs(page = 1, limit = DEFAULT_PAGE_SIZE) {
   return unwrap<{ items: ImageJob[]; total: number; page: number; limit: number }>(
-    await apiClient.get(`${basePath}/jobs`, { params: { page, limit: 10 } }),
+    await apiClient.get(`${basePath}/jobs`, { params: { page, limit } }),
   )
 }
 export async function createImageJob(input: { shopId: string; agentId: string }) {

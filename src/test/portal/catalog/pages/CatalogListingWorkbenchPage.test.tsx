@@ -259,7 +259,7 @@ describe('CatalogListingWorkbenchPage', () => {
 
     await waitFor(() =>
       expect(listListings).toHaveBeenLastCalledWith(
-        expect.objectContaining({ page: 1, limit: 10 }),
+        expect.objectContaining({ page: 1, limit: 50 }),
       ),
     )
   })
@@ -310,7 +310,7 @@ describe('CatalogListingWorkbenchPage', () => {
 
     await waitFor(() =>
       expect(listListings).toHaveBeenLastCalledWith(
-        expect.objectContaining({ page: 1, limit: 10, sort: 'quantitySoldDesc' }),
+        expect.objectContaining({ page: 1, limit: 50, sort: 'quantitySoldDesc' }),
       ),
     )
   })

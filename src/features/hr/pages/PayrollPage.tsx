@@ -2,11 +2,15 @@ import { useCallback, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
+  DollarOutlined,
   DownloadOutlined,
+  FallOutlined,
   PlayCircleOutlined,
   PlusOutlined,
+  RiseOutlined,
   SearchOutlined,
   SendOutlined,
+  TeamOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
@@ -31,8 +35,8 @@ import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { usePermissions } from '@/shared/auth/useAuthStore'
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from '@/shared/constants/enum'
 import {
+  CompactStatBar,
   EmployeeAvatar,
-  MetricCard,
   MonthPicker,
   PageHeader,
   DetailDrawer,
@@ -345,7 +349,9 @@ export function PayrollPage({ workspace = 'personal' }: { workspace?: 'personal'
         render: (value: string) => <Tag>{payrollStatus(value)}</Tag>,
       },
       {
-        title: '',
+        title: t('hrOperations.common.action'),
+        align: 'right' as const,
+        width: 140,
         render: (_: unknown, item: PayrollRun) => (
           <Space size={4}>
             {canFinalize && item.capabilities?.finalize && (
@@ -487,32 +493,42 @@ export function PayrollPage({ workspace = 'personal' }: { workspace?: 'personal'
         </div>
       </section>
 
-      <div className={styles.payrollSummaryGrid}>
-        <MetricCard
-          className={styles.payrollMetricPeople}
-          label={t('hrOperations.payroll.employees')}
-          value={String(payrollSummary?.total ?? resultItems.length)}
-          variant="info"
-        />
-        <MetricCard
-          className={styles.payrollMetricGross}
-          label={t('hrOperations.payroll.gross')}
-          value={money(payrollTotals.gross)}
-          variant="success"
-        />
-        <MetricCard
-          className={styles.payrollMetricDeductions}
-          label={t('hrOperations.payroll.deductions')}
-          value={money(payrollTotals.deductions)}
-          variant="warning"
-        />
-        <MetricCard
-          className={styles.payrollMetricNet}
-          label={t('hrOperations.payroll.net')}
-          value={money(payrollTotals.net)}
-          variant="primary"
-        />
-      </div>
+      <CompactStatBar
+        style={{ marginBottom: 16 }}
+        items={[
+          {
+            key: 'employees',
+            icon: <TeamOutlined />,
+            variant: 'info',
+            label: t('hrOperations.payroll.employees'),
+            value: `${payrollSummary?.total ?? resultItems.length} ${t('hrOperations.payroll.peopleUnit', 'người')}`,
+          },
+          {
+            key: 'gross',
+            icon: <RiseOutlined />,
+            variant: 'success',
+            valueVariant: 'success',
+            label: t('hrOperations.payroll.gross'),
+            value: money(payrollTotals.gross),
+          },
+          {
+            key: 'deductions',
+            icon: <FallOutlined />,
+            variant: 'warning',
+            valueVariant: 'warning',
+            label: t('hrOperations.payroll.deductions'),
+            value: money(payrollTotals.deductions),
+          },
+          {
+            key: 'net',
+            icon: <DollarOutlined />,
+            variant: 'primary',
+            valueVariant: 'primary',
+            label: t('hrOperations.payroll.net'),
+            value: money(payrollTotals.net),
+          },
+        ]}
+      />
 
       <div className={styles.payrollWorkspace}>
         <div className={styles.payrollTabsContainer}>

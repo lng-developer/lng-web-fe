@@ -5,6 +5,7 @@ import type { TableColumnsType } from 'antd'
 import { Button, Space, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { FormattedDateTime, MetricCard, SectionCard, StatusTag } from '@/shared/ui'
 
 import { listSettlements, type Settlement } from '../api/financeApi'
@@ -20,7 +21,7 @@ export function SettlementCashFlow() {
   const { t } = useTranslation()
   const settlements = useQuery({
     queryKey: ['finance', 'settlements'],
-    queryFn: () => listSettlements({ page: 1, limit: 10 }),
+    queryFn: () => listSettlements({ page: 1, limit: DEFAULT_PAGE_SIZE }),
     retry: false,
   })
   const columns: TableColumnsType<Settlement> = useMemo(

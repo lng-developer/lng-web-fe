@@ -7,25 +7,25 @@ import type { NavigationGroup } from '@/app/layout/appNavigation'
 describe('pageTitle', () => {
   describe('formatDocumentTitle', () => {
     it('formats title with app name', () => {
-      expect(formatDocumentTitle('Monitoring', 'LNG Web')).toBe('Monitoring | LNG Web')
-      expect(formatDocumentTitle('Giám sát', 'LNG Web')).toBe('Giám sát | LNG Web')
+      expect(formatDocumentTitle('Monitoring', 'Ecomatrix')).toBe('Monitoring | Ecomatrix')
+      expect(formatDocumentTitle('Giám sát', 'Ecomatrix')).toBe('Giám sát | Ecomatrix')
     })
 
     it('returns app name when title is empty or nullish', () => {
-      expect(formatDocumentTitle('', 'LNG Web')).toBe('LNG Web')
-      expect(formatDocumentTitle('   ', 'LNG Web')).toBe('LNG Web')
-      expect(formatDocumentTitle(undefined, 'LNG Web')).toBe('LNG Web')
-      expect(formatDocumentTitle(null, 'LNG Web')).toBe('LNG Web')
-      expect(formatDocumentTitle()).toBe('LNG Web')
+      expect(formatDocumentTitle('', 'Ecomatrix')).toBe('Ecomatrix')
+      expect(formatDocumentTitle('   ', 'Ecomatrix')).toBe('Ecomatrix')
+      expect(formatDocumentTitle(undefined, 'Ecomatrix')).toBe('Ecomatrix')
+      expect(formatDocumentTitle(null, 'Ecomatrix')).toBe('Ecomatrix')
+      expect(formatDocumentTitle()).toBe('Ecomatrix')
     })
 
     it('formats unread count badge in document title', () => {
-      expect(formatDocumentTitle('Orders', 'LNG Web', 3)).toBe('(3) Orders | LNG Web')
-      expect(formatDocumentTitle('Orders', 'LNG Web', 99)).toBe('(99) Orders | LNG Web')
-      expect(formatDocumentTitle('Orders', 'LNG Web', 150)).toBe('(99+) Orders | LNG Web')
-      expect(formatDocumentTitle('', 'LNG Web', 5)).toBe('(5) LNG Web')
-      expect(formatDocumentTitle('Orders', 'LNG Web', 0)).toBe('Orders | LNG Web')
-      expect(formatDocumentTitle('Orders', 'LNG Web', -1)).toBe('Orders | LNG Web')
+      expect(formatDocumentTitle('Orders', 'Ecomatrix', 3)).toBe('(3) Orders | Ecomatrix')
+      expect(formatDocumentTitle('Orders', 'Ecomatrix', 99)).toBe('(99) Orders | Ecomatrix')
+      expect(formatDocumentTitle('Orders', 'Ecomatrix', 150)).toBe('(99+) Orders | Ecomatrix')
+      expect(formatDocumentTitle('', 'Ecomatrix', 5)).toBe('(5) Ecomatrix')
+      expect(formatDocumentTitle('Orders', 'Ecomatrix', 0)).toBe('Orders | Ecomatrix')
+      expect(formatDocumentTitle('Orders', 'Ecomatrix', -1)).toBe('Orders | Ecomatrix')
     })
   })
 

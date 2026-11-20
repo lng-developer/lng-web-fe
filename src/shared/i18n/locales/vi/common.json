@@ -41,7 +41,7 @@
     "downloadFailed": "Không thể tải tệp đính kèm. Vui lòng thử lại."
   },
   "app": {
-    "name": "LNG Web"
+    "name": "Ecomatrix"
   },
   "common": {
     "downloadFailed": "Không thể tải file. Vui lòng thử lại.",
@@ -49,6 +49,8 @@
     "updatedAt": "Cập nhật lúc {{time}}",
     "copyOrderId": "Sao chép mã đơn",
     "orderIdCopied": "Đã sao chép mã đơn",
+    "copyTracking": "Sao chép mã tracking",
+    "trackingCopied": "Đã sao chép mã tracking",
     "close": "Đóng",
     "date": "Ngày",
     "pagination": {
@@ -100,7 +102,7 @@
   },
   "legacyMenu": {
     "setting": "Cài đặt",
-    "systemName": "LNG System",
+    "systemName": "Hệ thống Ecomatrix",
     "sales": "Sales",
     "fulfillment": "Fulfillment",
     "design": "Design",
@@ -176,7 +178,7 @@
     "navigationHintNavigate": "Điều hướng",
     "navigationHintSelect": "Chọn",
     "navigationHintClose": "Đóng",
-    "legacySystemName": "Hệ thống LNG",
+    "legacySystemName": "Hệ thống Ecomatrix",
     "navigation": {
       "dashboard": "Dashboard",
       "primary": "Điều hướng chính",
@@ -1391,7 +1393,7 @@
       "title": "Không gian vận hành",
       "description": "Không gian làm việc an toàn để điều hành POD.",
       "welcome": "Chào mừng trở lại",
-      "instruction": "Đăng nhập để tiếp tục vào LNG Web.",
+      "instruction": "Đăng nhập để tiếp tục vào Ecomatrix.",
       "identifier": "Email hoặc mã nhân viên",
       "password": "Mật khẩu",
       "identifierRequired": "Nhập email hoặc mã nhân viên",
@@ -1401,7 +1403,7 @@
       "forgotPassword": "Quên mật khẩu?",
       "registerPrompt": "Chưa có tài khoản?",
       "register": "Đăng ký",
-      "welcomeTitle": "Chào mừng đến LNG Web",
+      "welcomeTitle": "Chào mừng đến Ecomatrix",
       "welcomeDescription": "Đăng nhập để truy cập không gian vận hành an toàn.",
       "continueWith": "Hoặc tiếp tục với",
       "socialOptions": "Các lựa chọn đăng nhập mạng xã hội",
@@ -1424,7 +1426,7 @@
       "backToLogin": "Quay lại đăng nhập",
       "terms": "Tôi đồng ý với chính sách quyền riêng tư và điều khoản",
       "register": {
-        "title": "Tạo tài khoản LNG",
+        "title": "Tạo tài khoản Ecomatrix",
         "description": "Thiết lập không gian vận hành an toàn của bạn.",
         "submit": "Tạo tài khoản"
       },
@@ -1435,7 +1437,7 @@
       },
       "reset-password": {
         "title": "Đặt mật khẩu mới",
-        "description": "Chọn mật khẩu mạnh cho tài khoản LNG của bạn.",
+        "description": "Chọn mật khẩu mạnh cho tài khoản Ecomatrix của bạn.",
         "submit": "Cập nhật mật khẩu"
       }
     },
@@ -1453,9 +1455,9 @@
       "validationDescription": "Biểu mẫu đã chuyển đến tab đầu tiên cần chỉnh sửa.",
       "password": {
         "step": "Bảo mật tài khoản",
-        "initialTitle": "Tạo mật khẩu LNG",
-        "initialDescription": "Sử dụng ít nhất 12 ký tự. Mật khẩu này độc lập với Microsoft. Lần sau, đăng nhập bằng email công ty hoặc mã nhân viên và mật khẩu LNG này.",
-        "initialStepDescription": "Thiết lập mật khẩu LNG của bạn",
+        "initialTitle": "Tạo mật khẩu Ecomatrix",
+        "initialDescription": "Sử dụng ít nhất 12 ký tự. Mật khẩu này độc lập với Microsoft. Lần sau, đăng nhập bằng email công ty hoặc mã nhân viên và mật khẩu Ecomatrix này.",
+        "initialStepDescription": "Thiết lập mật khẩu Ecomatrix của bạn",
         "stepDescription": "Thay mật khẩu tạm thời",
         "title": "Tạo mật khẩu mới",
         "description": "Mật khẩu tạm thời chỉ dùng cho lần truy cập đầu tiên.",
@@ -1511,8 +1513,8 @@
         "authMicrosoft": "Microsoft 365",
         "authLocal": "Tài khoản nội bộ",
         "digitalBadge": "Thẻ nhân viên điện tử",
-        "heroGreeting": "Chào mừng bạn gia nhập LNG",
-        "heroSubtitle": "Vui lòng hoàn tất thông tin hồ sơ nhân sự để kích hoạt quyền truy cập vào không gian làm việc LNG.",
+        "heroGreeting": "Chào mừng bạn gia nhập Ecomatrix",
+        "heroSubtitle": "Vui lòng hoàn tất thông tin hồ sơ nhân sự để kích hoạt quyền truy cập vào không gian làm việc Ecomatrix.",
         "stepAuth": "Tài khoản đã xác thực",
         "stepProfile": "Thông tin liên lạc",
         "stepReady": "Sẵn sàng làm việc",
@@ -2083,9 +2085,13 @@
       },
       "metrics": {
         "locations": "Địa điểm làm việc",
+        "locationUnit": "địa điểm",
         "shifts": "Ca làm việc",
+        "shiftUnit": "ca",
         "assignments": "Phân ca hiệu lực",
-        "holidays": "Ngày lễ & ngoại lệ"
+        "assignmentUnit": "phân ca",
+        "holidays": "Ngày lễ & ngoại lệ",
+        "holidayUnit": "ngày"
       },
       "sections": {
         "locationIdentity": "Thông tin địa điểm",
@@ -2152,6 +2158,36 @@
       "standardShiftName": "Ca hành chính",
       "source": "Nguồn",
       "dayOfWeek": "Thứ",
+      "viewCalendar": "Lịch tháng",
+      "viewTable": "Bảng dòng",
+      "viewSummary": "Tổng hợp công - phép",
+      "metrics": {
+        "totalStaff": "Tổng nhân sự",
+        "staffUnit": "nhân sự",
+        "activeStaff": "{{count}} đang hoạt động",
+        "punctualityRate": "Tỷ lệ đúng giờ",
+        "punctualitySummary": "{{punctual}}/{{total}} lượt",
+        "noRecords": "Chưa có bản ghi",
+        "monthLeaves": "Nghỉ trong tháng",
+        "leavesSummary": "{{paid}} phép · {{absent}} vắng",
+        "allPresent": "Đi làm đầy đủ",
+        "issues": "Cần xử lý",
+        "missingCheckoutSummary": "{{count}} quên check-out",
+        "attendanceAbnormal": "Bất thường chấm công",
+        "allGood": "Dữ liệu chuẩn"
+      },
+      "monthLeaves": "Nghỉ trong tháng",
+      "paidLeaveShort": "phép",
+      "unpaidLeaveShort": "KL",
+      "absentShort": "vắng",
+      "searchPlaceholder": "Tìm tên, mã nhân viên...",
+      "showingErrorsOnly": "Đang lọc bất thường",
+      "filterErrorsOnly": "Lọc bất thường / Lỗi",
+      "errorSummaryCount": "Phát hiện {{count}} bản ghi đi muộn hoặc bất thường chấm công",
+      "legendFullDay": "Đủ công",
+      "legendHalfDay": "Nửa công / Về sớm",
+      "legendWeekend": "Nghỉ cuối tuần",
+      "drawerExplanationHint": "Nếu có sai lệch về giờ quẹt thẻ do máy chấm công hoặc công tác bên ngoài, vui lòng bấm \"Điều chỉnh\" để gửi yêu cầu giải trình tới quản lý.",
       "syncSqlAttendance": "Đồng bộ máy chấm công",
       "syncSuccess": "Đồng bộ chấm công thành công ({{total}} lượt: {{inserted}} mới, {{updated}} cập nhật)",
       "syncFailed": "Đồng bộ từ máy chấm công thất bại",
@@ -2165,9 +2201,12 @@
         "LEAVE_RECONCILIATION": "Nghỉ phép"
       },
       "present": "Có mặt",
+      "daysUnit": "ngày",
       "late": "Đi muộn",
+      "timesUnit": "lần",
       "completedToday": "Đã hoàn thành chấm công hôm nay · {{checkIn}} - {{checkOut}}",
       "missingCheckout": "Thiếu check-out",
+      "turnsUnit": "lượt",
       "lateMinutes": "Số phút đi muộn",
       "minutes": "{{count}} phút",
       "teamTable": "Bảng chấm công nhân sự",
@@ -2234,9 +2273,12 @@
       "minutes": "phút",
       "minutesWithCount": "{{count}} phút",
       "remainingLeave": "Phép còn lại",
+      "approvedCount": "Đã phê duyệt",
+      "daysUnit": "ngày",
       "pendingLeave": "Đơn nghỉ chờ duyệt",
       "pendingOvertime": "OT chờ duyệt",
       "total": "Tổng yêu cầu",
+      "requestsUnit": "đơn",
       "leave": "Nghỉ phép",
       "overtime": "Làm thêm giờ",
       "time": "Thời gian",
@@ -2297,6 +2339,7 @@
       "addBulkAdjustment": "Thêm điều chỉnh hàng loạt",
       "run": "Chạy bảng lương",
       "employees": "Nhân viên",
+      "peopleUnit": "người",
       "gross": "Tổng gross",
       "deductions": "Khấu trừ",
       "net": "Thực nhận",
@@ -3869,6 +3912,8 @@
       "designSourceMissing": "Thiếu file thiết kế nguồn. Nhờ Leader bổ sung nguồn đã duyệt cho listing/variant này.",
       "outputReady": "Đã có output",
       "outputMissing": "Thiếu output",
+      "confirmDeleteSlot": "Xóa slot này?",
+      "confirmDeleteSlotDesc": "Bạn có chắc muốn xóa slot này khỏi task?",
       "filters": "Bộ lọc sản xuất",
       "search": "Tìm đơn hàng, SKU hoặc sản phẩm",
       "channel": "Kênh bán",
@@ -3984,6 +4029,8 @@
       "feedback": {
         "uploadSuccessTitle": "Tải lên thành công",
         "uploadSuccessDescription": "Đã tải lên file scale thành công.",
+        "deleteSlotSuccessTitle": "Đã xóa slot",
+        "deleteSlotSuccessDescription": "Slot đã được xóa khỏi task thành công.",
         "addSlotSuccessTitle": "Thêm vị trí in thành công",
         "addSlotSuccessDescription": "Đã thêm và tải lên file scale cho vị trí \"{{slot}}\" thành công.",
         "submitQcSuccessTitle": "Đã gửi QC thành công",
@@ -4681,7 +4728,7 @@
         "modalTitle": "Cấp Token Extension Mới",
         "generate": "Tạo Token",
         "createdSuccess": "Tạo token thành công!",
-        "copyNotice": "Hãy sao chép token này ngay bây giờ. Token sẽ không được hiển thị lại vì lý do bảo mật. Dán token vào cài đặt LNG Extension trên máy client.",
+        "copyNotice": "Hãy sao chép token này ngay bây giờ. Token sẽ không được hiển thị lại vì lý do bảo mật. Dán token vào cài đặt Ecomatrix Extension trên máy client.",
         "shop": "Shop mục tiêu",
         "shopPlaceholder": "Chọn shop để gắn extension",
         "clientLabel": "Tên máy trạm PC / VM",
@@ -4752,7 +4799,7 @@
         }
       },
       "images": {
-        "subtitle": "Đồng bộ ảnh gallery và mockup độ phân giải cao từ listing sàn về hệ thống LNG."
+        "subtitle": "Đồng bộ ảnh gallery và mockup độ phân giải cao từ listing sàn về hệ thống Ecomatrix."
       }
     }
   },
@@ -4827,6 +4874,11 @@
     "title": "Bàn làm việc đơn hàng",
     "description": "Theo dõi người phụ trách, điểm nghẽn và trạng thái xử lý ngay trong hàng đợi.",
     "error": "Không thể tải danh sách đơn hàng",
+    "vendorRematch": {
+      "requireRework": "Làm lại file thiết kế (Rework)",
+      "requireReworkDescription": "Hủy file scale và kết quả QC cũ. Sau khi bắt lại vendor, đơn sẽ về hàng chờ Designer làm lại file mới.",
+      "keepScaleDescription": "Đổi vendor và giữ nguyên file scale hiện tại. Khi bắt lại vendor, đơn sẽ tự động gửi sang vendor mới nếu file đã QC pass."
+    },
     "actions": {
       "refresh": "Làm mới",
       "retry": "Thử lại",

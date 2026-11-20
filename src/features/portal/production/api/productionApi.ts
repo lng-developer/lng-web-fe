@@ -26,6 +26,7 @@ export type FileCheck = {
   outputAssetId?: string | null
   outputWorkerId?: string | null
   outputStatus: string
+  scaleStatus?: string | null
   qcStatus: QcStatus
   note: string | null
 }
@@ -261,3 +262,8 @@ export async function uploadManualScaledOutput(id: string, input: ManualScaledOu
     ),
   )
 }
+
+export const deleteFileCheck = async (taskId: string, fileCheckId: string) =>
+  unwrap<ProductionTask>(
+    await apiClient.delete(`${basePath}/tasks/${taskId}/file-checks/${fileCheckId}`),
+  )

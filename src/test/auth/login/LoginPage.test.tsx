@@ -42,7 +42,7 @@ describe('LoginPage', () => {
     expect(screen.getByRole('link', { name: /forgot password/i })).toBeVisible()
   })
 
-  it('uses the LNG welcome heading in the authentication card', () => {
+  it('uses the Ecomatrix welcome heading in the authentication card', () => {
     render(
       <MemoryRouter>
         <AppProviders>
@@ -51,10 +51,10 @@ describe('LoginPage', () => {
       </MemoryRouter>,
     )
 
-    expect(screen.getByRole('heading', { name: 'Welcome to LNG' })).toBeVisible()
+    expect(screen.getByRole('heading', { name: 'Welcome to Ecomatrix' })).toBeVisible()
   })
 
-  it('places the LNG welcome heading inside the sign-in card', () => {
+  it('places the Ecomatrix welcome heading inside the sign-in card', () => {
     render(
       <MemoryRouter>
         <AppProviders>
@@ -63,9 +63,9 @@ describe('LoginPage', () => {
       </MemoryRouter>,
     )
 
-    const workspace = screen.getByRole('group', { name: 'Welcome to LNG' })
+    const workspace = screen.getByRole('group', { name: 'Welcome to Ecomatrix' })
 
-    expect(workspace).toContainElement(screen.getByText('Welcome to LNG'))
+    expect(workspace).toContainElement(screen.getByText('Welcome to Ecomatrix'))
   })
 
   it('keeps the brand and workspace introduction inside the sign-in card', () => {
@@ -77,10 +77,11 @@ describe('LoginPage', () => {
       </MemoryRouter>,
     )
 
-    const card = screen.getByText('Welcome to LNG').closest('.ant-card')
+    const card = screen.getByText('Welcome to Ecomatrix').closest('.ant-card')
 
-    expect(card).toContainElement(screen.getByRole('img', { name: 'LNG Web' }))
-    expect(card).toContainElement(screen.getByRole('heading', { name: 'Welcome to LNG' }))
+    expect(card).toContainElement(screen.getByRole('img', { name: 'Ecomatrix' }))
+    expect(card).toContainElement(screen.getByRole('heading', { name: 'Welcome to Ecomatrix' }))
+    expect(card).toContainElement(screen.getByText('Ecomatrix', { selector: 'span' }))
   })
 
   it('offers language and appearance switching before sign in', () => {

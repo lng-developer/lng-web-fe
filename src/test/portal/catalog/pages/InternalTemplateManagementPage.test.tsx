@@ -6,7 +6,10 @@ vi.mock('@/app/common/CoreDataTable', async () => ({
 }))
 
 import { AppProviders } from '@/app/providers/AppProviders'
-import { getInternalTemplate, listInternalTemplates } from '@/features/portal/catalog/api/catalogApi'
+import {
+  getInternalTemplate,
+  listInternalTemplates,
+} from '@/features/portal/catalog/api/catalogApi'
 import { InternalTemplateManagementPage } from '@/features/portal/catalog/pages/InternalTemplateManagementPage'
 import i18n from '@/shared/i18n/i18n'
 import { queryClient } from '@/shared/query/queryClient'
@@ -87,7 +90,9 @@ describe('InternalTemplateManagementPage', () => {
     const card = container.querySelector('.ant-card')
     expect(card).not.toBeNull()
     expect(within(card as HTMLElement).queryByPlaceholderText('Search templates')).toBeNull()
-    expect(within(card as HTMLElement).queryByRole('button', { name: 'Create template' })).toBeNull()
+    expect(
+      within(card as HTMLElement).queryByRole('button', { name: 'Create template' }),
+    ).toBeNull()
   })
 
   it('disables template editing until its detail has loaded', async () => {
@@ -131,7 +136,7 @@ describe('InternalTemplateManagementPage', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Page 2' }))
     await waitFor(() =>
-      expect(listInternalTemplates).toHaveBeenLastCalledWith({ page: 2, limit: 10, q: undefined }),
+      expect(listInternalTemplates).toHaveBeenLastCalledWith({ page: 2, limit: 50, q: undefined }),
     )
 
     fireEvent.change(screen.getByPlaceholderText('Search templates'), {
@@ -139,7 +144,7 @@ describe('InternalTemplateManagementPage', () => {
     })
 
     await waitFor(() =>
-      expect(listInternalTemplates).toHaveBeenLastCalledWith({ page: 1, limit: 10, q: 'canvas' }),
+      expect(listInternalTemplates).toHaveBeenLastCalledWith({ page: 1, limit: 50, q: 'canvas' }),
     )
   })
 })

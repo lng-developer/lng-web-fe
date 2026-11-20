@@ -15,7 +15,7 @@ export function ExtensionImagesPage() {
         title={t('legacyMenu.imageSync', { defaultValue: 'Listing Image Sync' })}
         description={t('portal.extensions.images.subtitle', {
           defaultValue:
-            'Synchronize marketplace listing high-resolution gallery and mockup images to LNG System storage.',
+            'Synchronize marketplace listing high-resolution gallery and mockup images to Ecomatrix System storage.',
         })}
       />
 

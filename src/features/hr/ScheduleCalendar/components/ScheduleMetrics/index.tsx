@@ -6,9 +6,7 @@ import {
   TeamOutlined,
 } from '@ant-design/icons'
 
-import { MetricCard } from '@/shared/ui'
-
-import styles from './ScheduleMetrics.module.scss'
+import { CompactStatBar } from '@/shared/ui'
 
 export type ScheduleMetricsModel = {
   locationCount: number
@@ -31,35 +29,41 @@ export function ScheduleMetrics({ model }: ScheduleMetricsProps) {
   const { t } = useTranslation()
 
   return (
-    <div className={styles.metrics}>
-      <MetricCard
-        icon={<CompassOutlined />}
-        variant="neutral"
-        label={t('hrOperations.schedule.metrics.locations')}
-        value={model.locationCount}
-        loading={model.loading.locations}
-      />
-      <MetricCard
-        icon={<ClockCircleOutlined />}
-        variant="info"
-        label={t('hrOperations.schedule.metrics.shifts')}
-        value={model.shiftCount}
-        loading={model.loading.shifts}
-      />
-      <MetricCard
-        icon={<TeamOutlined />}
-        variant="success"
-        label={t('hrOperations.schedule.metrics.assignments')}
-        value={model.assignmentCount}
-        loading={model.loading.assignments}
-      />
-      <MetricCard
-        icon={<CalendarOutlined />}
-        variant="warning"
-        label={t('hrOperations.schedule.metrics.holidays')}
-        value={model.holidayCount}
-        loading={model.loading.holidays}
-      />
-    </div>
+    <CompactStatBar
+      items={[
+        {
+          key: 'locations',
+          icon: <CompassOutlined />,
+          variant: 'neutral',
+          label: t('hrOperations.schedule.metrics.locations'),
+          value: `${model.locationCount} ${t('hrOperations.schedule.metrics.locationUnit', 'địa điểm')}`,
+          loading: model.loading.locations,
+        },
+        {
+          key: 'shifts',
+          icon: <ClockCircleOutlined />,
+          variant: 'info',
+          label: t('hrOperations.schedule.metrics.shifts'),
+          value: `${model.shiftCount} ${t('hrOperations.schedule.metrics.shiftUnit', 'ca')}`,
+          loading: model.loading.shifts,
+        },
+        {
+          key: 'assignments',
+          icon: <TeamOutlined />,
+          variant: 'success',
+          label: t('hrOperations.schedule.metrics.assignments'),
+          value: `${model.assignmentCount} ${t('hrOperations.schedule.metrics.assignmentUnit', 'phân ca')}`,
+          loading: model.loading.assignments,
+        },
+        {
+          key: 'holidays',
+          icon: <CalendarOutlined />,
+          variant: 'warning',
+          label: t('hrOperations.schedule.metrics.holidays'),
+          value: `${model.holidayCount} ${t('hrOperations.schedule.metrics.holidayUnit', 'ngày')}`,
+          loading: model.loading.holidays,
+        },
+      ]}
+    />
   )
 }

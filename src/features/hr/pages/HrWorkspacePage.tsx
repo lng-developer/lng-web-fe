@@ -15,6 +15,7 @@ import dayjs from 'dayjs'
 
 import { usePermissions } from '@/shared/auth/useAuthStore'
 import {
+  CompactStatBar,
   ConfirmDangerModal,
   FeedbackAlert,
   MetricCard,
@@ -238,43 +239,62 @@ export function HrWorkspacePage() {
           }
         />
       )}
-      <div className={styles.metrics}>
-        <MetricCard
-          icon={<UserOutlined />}
-          label={t('hr.totalStaff')}
-          value={String(profiles.data?.pagination.total ?? 0)}
-        />
-        <MetricCard
-          icon={<TeamOutlined />}
-          label={t('hr.activeStaff')}
-          value={String(activeCount)}
-        />
-        <MetricCard
-          icon={<IdcardOutlined />}
-          label={t('hr.incompleteProfiles')}
-          value={String(incompleteCount)}
-          variant={incompleteOnly ? 'warning' : 'neutral'}
-          onClick={() => setIncompleteOnly((value) => !value)}
-        />
-        <MetricCard
-          icon={<FieldTimeOutlined />}
-          label={t('hr.probationStaff')}
-          value={String(profileStats.probation)}
-          variant="warning"
-        />
-        <MetricCard
-          icon={<CalendarOutlined />}
-          label={t('hr.newThisMonth')}
-          value={String(profileStats.newThisMonth)}
-          variant="success"
-        />
-        <MetricCard
-          icon={<CalendarOutlined />}
-          label={t('hr.endingSoon')}
-          value={String(profileStats.endingSoon)}
-          variant="danger"
-        />
-      </div>
+      <CompactStatBar
+        style={{ marginBottom: 16 }}
+        items={[
+          {
+            key: 'total',
+            icon: <UserOutlined />,
+            variant: 'info',
+            label: t('hr.totalStaff'),
+            value: `${profiles.data?.pagination.total ?? 0} ${t('hrOperations.payroll.peopleUnit', 'người')}`,
+            loading: profiles.isLoading,
+          },
+          {
+            key: 'active',
+            icon: <TeamOutlined />,
+            variant: 'success',
+            label: t('hr.activeStaff'),
+            value: `${activeCount} ${t('hrOperations.payroll.peopleUnit', 'người')}`,
+            loading: profiles.isLoading,
+          },
+          {
+            key: 'incomplete',
+            icon: <IdcardOutlined />,
+            variant: incompleteOnly ? 'warning' : 'neutral',
+            valueVariant: incompleteOnly ? 'warning' : undefined,
+            label: t('hr.incompleteProfiles'),
+            value: `${incompleteCount} ${t('hrOperations.payroll.peopleUnit', 'người')}`,
+            onClick: () => setIncompleteOnly((value) => !value),
+            loading: profiles.isLoading,
+          },
+          {
+            key: 'probation',
+            icon: <FieldTimeOutlined />,
+            variant: 'warning',
+            label: t('hr.probationStaff'),
+            value: `${profileStats.probation} ${t('hrOperations.payroll.peopleUnit', 'người')}`,
+            loading: profiles.isLoading,
+          },
+          {
+            key: 'new',
+            icon: <CalendarOutlined />,
+            variant: 'primary',
+            label: t('hr.newThisMonth'),
+            value: `${profileStats.newThisMonth} ${t('hrOperations.payroll.peopleUnit', 'người')}`,
+            loading: profiles.isLoading,
+          },
+          {
+            key: 'endingSoon',
+            icon: <CalendarOutlined />,
+            variant: profileStats.endingSoon > 0 ? 'danger' : 'neutral',
+            valueVariant: profileStats.endingSoon > 0 ? 'danger' : undefined,
+            label: t('hr.endingSoon'),
+            value: `${profileStats.endingSoon} ${t('hrOperations.payroll.peopleUnit', 'người')}`,
+            loading: profiles.isLoading,
+          },
+        ]}
+      />
       <SectionCard title={t('hr.employmentMix')}>
         <div className={styles.profileMix}>
           <MetricCard label={t('hr.fullTime')} value={String(profileStats.fullTime)} />

@@ -318,19 +318,19 @@ describe('ImportJobPanel', () => {
   it('resets diagnostics to page one when selecting another job', async () => {
     vi.mocked(listJobRawRecords).mockResolvedValue({
       items: [],
-      pagination: { total: 25, page: 1, limit: 10 },
+      pagination: { total: 100, page: 1, limit: 50 },
     })
     const { rerender, renderView } = renderPanel()
     const pageButtons = await screen.findAllByTitle('2')
     fireEvent.click(pageButtons[0])
     await waitFor(() =>
-      expect(listJobRawRecords).toHaveBeenCalledWith('job-1', { page: 2, limit: 10 }),
+      expect(listJobRawRecords).toHaveBeenCalledWith('job-1', { page: 2, limit: 50 }),
     )
 
     rerender(renderView('job-2'))
 
     await waitFor(() =>
-      expect(listJobRawRecords).toHaveBeenCalledWith('job-2', { page: 1, limit: 10 }),
+      expect(listJobRawRecords).toHaveBeenCalledWith('job-2', { page: 1, limit: 50 }),
     )
   })
 

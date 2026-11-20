@@ -19,6 +19,7 @@ import {
   CopyableAsin,
   CopyableListingId,
   CopyableSku,
+  CopyableText,
   EmployeeIdentity,
   StatusTag,
 } from '@/shared/ui'
@@ -674,11 +675,22 @@ export const OrderItemPanel = memo(function OrderItemPanel({
       <section>
         <Typography.Text strong>{t('orders.sections.trackingState')}</Typography.Text>
         <div className={styles.trackingRow}>
-          <Space size={4}>
-            <Typography.Text type="secondary">{t('orders.fields.tracking')}</Typography.Text>
-            <Typography.Text type={item.tracking?.trackingNumber ? undefined : 'secondary'}>
-              {item.tracking?.trackingNumber || t('orders.fields.notSet')}
+          <div className={styles.trackingLine}>
+            <Typography.Text type="secondary" className={styles.trackingLabel}>
+              {t('orders.fields.tracking')}
             </Typography.Text>
+            {item.tracking?.trackingNumber ? (
+              <CopyableText
+                value={item.tracking.trackingNumber}
+                className={styles.trackingChip}
+                title={item.tracking.trackingNumber}
+                copiedMessage={t('common.trackingCopied')}
+              />
+            ) : (
+              <Typography.Text type="secondary" className={styles.trackingEmpty}>
+                {t('orders.fields.notSet')}
+              </Typography.Text>
+            )}
             <Tooltip title={t('orders.actions.viewHistory')}>
               <Button
                 type="text"
@@ -686,9 +698,10 @@ export const OrderItemPanel = memo(function OrderItemPanel({
                 aria-label={t('orders.actions.viewHistory')}
                 icon={<HistoryOutlined />}
                 onClick={(event) => onHistory(event, item.item?.id ?? '')}
+                className={styles.trackingHistoryBtn}
               />
             </Tooltip>
-          </Space>
+          </div>
         </div>
         <OrderItemNoteEditor
           key={`${item.item?.id ?? ''}:${item.item?.csNote ?? ''}`}

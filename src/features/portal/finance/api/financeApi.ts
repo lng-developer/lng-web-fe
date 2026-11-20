@@ -225,6 +225,9 @@ export type AdsUnassignedRow = {
   salesChannelCode: string | null
   marketplaceCode: string | null
   status: 'PENDING' | 'RESOLVED'
+  sourceType?: 'SHOP_MAPPING' | 'SELLER_ATTRIBUTION'
+  canMap?: boolean
+  reason?: string
 }
 export type AdsShopMappingInput = {
   advertiserAccountId: string

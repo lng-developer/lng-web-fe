@@ -4,6 +4,7 @@ import { Button, Modal, Progress, Select, Space, Switch, Table, Typography } fro
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { canUseScopedPermission } from '@/shared/auth/permissions'
+import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import { FeedbackAlert, SectionCard } from '@/shared/ui'
 
 import type { ExtensionManagementAgent } from '../../api/integrationApi'
@@ -102,7 +103,7 @@ export default function ListingImageSyncPanel({
           scroll={{ x: true }}
           pagination={{
             current: page,
-            pageSize: 10,
+            pageSize: DEFAULT_PAGE_SIZE,
             total: state.jobs.data?.total || 0,
             onChange: setPage,
             showSizeChanger: false,
