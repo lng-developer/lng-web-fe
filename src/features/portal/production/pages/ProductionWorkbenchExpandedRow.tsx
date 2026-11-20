@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { DownloadOutlined, LinkOutlined, ZoomInOutlined } from '@ant-design/icons'
+import { DeleteOutlined, DownloadOutlined, LinkOutlined, ZoomInOutlined } from '@ant-design/icons'
 import { useMutation } from '@tanstack/react-query'
-import { Button, Input, Tooltip, Typography, Upload } from 'antd'
+import { Button, Input, Popconfirm, Tooltip, Typography, Upload } from 'antd'
 
 import { AuthenticatedMediaImage, downloadMediaAsset, downloadMediaAssets } from '@/shared/media'
 import { StatusTag, useFeedbackToast, ZoomableImage } from '@/shared/ui'
@@ -136,6 +136,7 @@ export function ProductionWorkbenchExpandedRow({
   onInspectSlot,
   onPassSlot,
   onManualSlotUploaded,
+  onDeleteSlot,
   onClaimTask,
 }: {
   readonly task: ProductionTask
@@ -161,6 +162,7 @@ export function ProductionWorkbenchExpandedRow({
   readonly onInspectSlot: (task: ProductionTask, check: FileCheck, readonly?: boolean) => void
   readonly onPassSlot: (checkId: string) => void
   readonly onManualSlotUploaded: () => void | Promise<void>
+  readonly onDeleteSlot?: (taskId: string, fileCheckId: string) => void | Promise<void>
   readonly onClaimTask?: (taskId: string) => void
 }) {
   const { t } = useTranslation()
@@ -235,14 +237,18 @@ export function ProductionWorkbenchExpandedRow({
     : task.orderItem?.asin || task.listing?.asin || task.scaleContext?.use?.listing?.asin || '-'
   const spUrl = productUrl(task)
   const customizationEntries = formatCustomization(task.customization?.customerInputs)
-  const variantSelections = task.orderItem?.variantRaw
-    ?.split(',')
-    .map((selection) => selection.trim())
-    .filter(Boolean) ?? []
+  const variantSelections =
+    task.orderItem?.variantRaw
+      ?.split(',')
+      .map((selection) => selection.trim())
+      .filter(Boolean) ?? []
   const outputChecks = checks.filter(
     (check) =>
       check.sourceType !== 'PSD_TEMPLATE' &&
-      (check.required || check.outputRequired || check.outputAssetDownloadUrl),
+      (check.required ||
+        check.outputRequired ||
+        check.scaleStatus === 'NEED_SCALE' ||
+        Boolean(check.outputAssetDownloadUrl)),
   )
   const canSubmitQc = outputChecks.length > 0 && outputChecks.every((check) => decisions[check.id])
   const canSubmitScale =
@@ -528,6 +534,24 @@ export function ProductionWorkbenchExpandedRow({
                           : t('portal.production.outputMissing')}
                       </StatusTag>
                     </div>
+                    {isScale && canScale && check.sourceType !== 'PSD_TEMPLATE' ? (
+                      <Popconfirm
+                        title={t('portal.production.confirmDeleteSlot')}
+                        description={t('portal.production.confirmDeleteSlotDesc')}
+                        okText={t('common.delete')}
+                        cancelText={t('common.cancel')}
+                        okButtonProps={{ danger: true }}
+                        onConfirm={() => onDeleteSlot?.(task.id, check.id)}
+                      >
+                        <Button
+                          type="text"
+                          danger
+                          size="small"
+                          icon={<DeleteOutlined />}
+                          aria-label={t('common.delete')}
+                        />
+                      </Popconfirm>
+                    ) : null}
                   </div>
                   {canInspect ? (
                     <button

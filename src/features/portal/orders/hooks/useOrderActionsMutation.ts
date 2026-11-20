@@ -52,7 +52,9 @@ export function useOrderActionsMutation({
       if (action.kind === 'ready') return markOrderItemFulfillmentReady(action.itemId)
       if (action.kind === 'cancel') return cancelOrderItem(action.itemId, action.reason)
       if (action.kind === 'vendor-rematch-recovery')
-        return recoverOrderItemForVendorRematch(action.itemId, action.reason)
+        return recoverOrderItemForVendorRematch(action.itemId, action.reason, {
+          requireRework: action.requireRework,
+        })
       if (action.kind === 'replacement') {
         return createOrderItemReplacement(action.itemId, {
           reason: action.reason,

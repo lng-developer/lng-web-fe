@@ -3912,6 +3912,8 @@
       "designSourceMissing": "Thiếu file thiết kế nguồn. Nhờ Leader bổ sung nguồn đã duyệt cho listing/variant này.",
       "outputReady": "Đã có output",
       "outputMissing": "Thiếu output",
+      "confirmDeleteSlot": "Xóa slot này?",
+      "confirmDeleteSlotDesc": "Bạn có chắc muốn xóa slot này khỏi task?",
       "filters": "Bộ lọc sản xuất",
       "search": "Tìm đơn hàng, SKU hoặc sản phẩm",
       "channel": "Kênh bán",
@@ -4027,6 +4029,8 @@
       "feedback": {
         "uploadSuccessTitle": "Tải lên thành công",
         "uploadSuccessDescription": "Đã tải lên file scale thành công.",
+        "deleteSlotSuccessTitle": "Đã xóa slot",
+        "deleteSlotSuccessDescription": "Slot đã được xóa khỏi task thành công.",
         "addSlotSuccessTitle": "Thêm vị trí in thành công",
         "addSlotSuccessDescription": "Đã thêm và tải lên file scale cho vị trí \"{{slot}}\" thành công.",
         "submitQcSuccessTitle": "Đã gửi QC thành công",
@@ -4870,6 +4874,11 @@
     "title": "Bàn làm việc đơn hàng",
     "description": "Theo dõi người phụ trách, điểm nghẽn và trạng thái xử lý ngay trong hàng đợi.",
     "error": "Không thể tải danh sách đơn hàng",
+    "vendorRematch": {
+      "requireRework": "Làm lại file thiết kế (Rework)",
+      "requireReworkDescription": "Hủy file scale và kết quả QC cũ. Sau khi bắt lại vendor, đơn sẽ về hàng chờ Designer làm lại file mới.",
+      "keepScaleDescription": "Đổi vendor và giữ nguyên file scale hiện tại. Khi bắt lại vendor, đơn sẽ tự động gửi sang vendor mới nếu file đã QC pass."
+    },
     "actions": {
       "refresh": "Làm mới",
       "retry": "Thử lại",
