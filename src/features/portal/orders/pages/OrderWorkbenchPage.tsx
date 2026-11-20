@@ -1,6 +1,6 @@
 import 'dayjs/locale/vi'
 
-import { type MouseEvent, useCallback, useMemo, useState } from 'react'
+import { type MouseEvent, useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import {
@@ -90,6 +90,7 @@ export const OrderWorkbenchPage = () => {
   const requestedTab = searchParams.get('tab')
   const tab: TabKey = TABS.includes(requestedTab as TabKey) ? (requestedTab as TabKey) : 'ALL'
   const [search, setSearch] = useState('')
+  const deferredSearch = useDeferredValue(search)
   const [shopId, setShopId] = useState<string>()
   const [vendorId, setVendorId] = useState<string>()
   const [stage, setStage] = useState<string | undefined>(searchParams.get('stage') || undefined)
@@ -108,25 +109,25 @@ export const OrderWorkbenchPage = () => {
       limit: pageSize,
       tab,
       stage,
-      search,
+      search: deferredSearch,
       shopId,
       vendorId,
       salesChannelCode,
       ...dates,
     }),
-    [dates, page, pageSize, salesChannelCode, search, shopId, stage, tab, vendorId],
+    [dates, page, pageSize, deferredSearch, salesChannelCode, shopId, stage, tab, vendorId],
   )
   const summaryParams = useMemo(
     () => ({
       page: 1,
       limit: 1,
-      search,
+      search: deferredSearch,
       shopId,
       vendorId,
       salesChannelCode,
       ...dates,
     }),
-    [dates, salesChannelCode, search, shopId, vendorId],
+    [dates, deferredSearch, salesChannelCode, shopId, vendorId],
   )
   const orders = useOrderWorkbenchQuery(
     recordId ? { page: 1, limit: 1, tab: 'ALL', recordId } : params,
