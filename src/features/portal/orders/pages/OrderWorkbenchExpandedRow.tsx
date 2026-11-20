@@ -71,7 +71,7 @@ const LazyOrderDetail = memo(function LazyOrderDetail({
         setVisible(true)
         observer.disconnect()
       },
-      { rootMargin: '600px 0px' },
+      { rootMargin: '200px 0px' },
     )
     observer.observe(elementRef.current)
     return () => observer.disconnect()

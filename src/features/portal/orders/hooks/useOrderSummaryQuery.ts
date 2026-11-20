@@ -8,7 +8,7 @@ type QueryOptions = Partial<Parameters<typeof useQuery<OrderSummary>>[0]>
 export function useOrderSummaryQuery(params: OrderWorkbenchParams, options?: QueryOptions) {
   return useQuery({
     queryKey: orderKeys.summary(params),
-    queryFn: () => getOrderSummary(params),
+    queryFn: ({ signal }) => getOrderSummary(params, signal),
     retry: false,
     staleTime: 20_000,
     refetchOnWindowFocus: false,

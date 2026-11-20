@@ -121,6 +121,7 @@ describe('OrderWorkbenchPage', () => {
     await waitFor(() =>
       expect(listOrderWorkbench).toHaveBeenCalledWith(
         expect.objectContaining({ tab: 'NEW_ORDER' }),
+        expect.any(AbortSignal),
       ),
     )
   })
@@ -131,10 +132,12 @@ describe('OrderWorkbenchPage', () => {
     await waitFor(() =>
       expect(listOrderWorkbench).toHaveBeenCalledWith(
         expect.objectContaining({ salesChannelCode: 'ETSY' }),
+        expect.any(AbortSignal),
       ),
     )
     expect(getOrderSummary).toHaveBeenCalledWith(
       expect.objectContaining({ salesChannelCode: 'ETSY' }),
+      expect.any(AbortSignal),
     )
   })
 
