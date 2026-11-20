@@ -3,7 +3,13 @@ import { useTranslation } from 'react-i18next'
 import { Alert, Select, Typography } from 'antd'
 
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
-import { DateRangePicker, type DateRangeValue, FilterBar, SectionCard } from '@/shared/ui'
+import {
+  DateRangePicker,
+  type DateRangeValue,
+  FilterBar,
+  getDefaultDateRange,
+  SectionCard,
+} from '@/shared/ui'
 
 import type { CashFlowStatus } from '../api/financeApi'
 import { CashFlowMovementTable } from '../components/CashFlowMovementTable'
@@ -14,7 +20,7 @@ import styles from './FinanceWorkspacePage.module.scss'
 export function CashFlowWorkspacePage() {
   const { t } = useTranslation()
   const [page, setPage] = useState(1)
-  const [dates, setDates] = useState<DateRangeValue>({})
+  const [dates, setDates] = useState<DateRangeValue>(getDefaultDateRange)
   const [status, setStatus] = useState<CashFlowStatus>()
   const query = useMemo(
     () => ({

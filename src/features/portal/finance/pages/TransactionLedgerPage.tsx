@@ -12,6 +12,7 @@ import {
   type DateRangeValue,
   FilterBar,
   FormattedDateTime,
+  getDefaultDateRange,
   SectionCard,
   TableTextCell,
 } from '@/shared/ui'
@@ -29,7 +30,7 @@ function money(value: unknown, currency = 'USD') {
 export function TransactionLedgerPage() {
   const { t } = useTranslation()
   const [page, setPage] = useState(1)
-  const [dates, setDates] = useState<DateRangeValue>({})
+  const [dates, setDates] = useState<DateRangeValue>(getDefaultDateRange)
   const [transactionType, setTransactionType] = useState('')
   const [transactionStatus, setTransactionStatus] = useState('')
   const [externalOrderId, setExternalOrderId] = useState('')

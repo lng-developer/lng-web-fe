@@ -18,10 +18,12 @@ import {
   FeedbackAlert,
   FilterBar,
   FormattedDateTime,
+  getDefaultDateRange,
   MetricCard,
   SearchInput,
   StatusTag,
   TableTextCell,
+  type DateRangeValue,
   useFeedbackToast,
   useResourceSelection,
 } from '@/shared/ui'
@@ -84,7 +86,7 @@ export function ShipmentWorkbenchPage({
   const [status, setStatus] = useState<ShipmentStatus>()
   const [externalOrderId, setExternalOrderId] = useState('')
   const [trackingNumber, setTrackingNumber] = useState('')
-  const [dates, setDates] = useState<{ dateFrom?: string; dateTo?: string }>({})
+  const [dates, setDates] = useState<DateRangeValue>(getDefaultDateRange)
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [selectedId, setSelectedId] = useResourceSelection()
   const [editMode, setEditMode] = useState<'tracking' | 'status'>()

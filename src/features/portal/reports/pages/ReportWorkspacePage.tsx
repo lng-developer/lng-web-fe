@@ -11,6 +11,7 @@ import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
   DateRangePicker,
   FilterBar,
+  getDefaultDateRange,
   MetricCard,
   SectionCard,
   UiTabLabel,
@@ -76,8 +77,7 @@ export function ReportWorkspacePage() {
   const isAdsView = activeTab === 'ads-employee'
   const [profitabilityView, setProfitabilityView] = useState<ProfitabilityView>('summary')
   const [filters, setFilters] = useState<ReportFilters>(() => ({
-    dateFrom: dayjs().subtract(6, 'day').startOf('day').toISOString(),
-    dateTo: dayjs().endOf('day').toISOString(),
+    ...getDefaultDateRange(),
     dateBasis: 'ORDERED_AT',
   }))
   const effectiveFilters = fixedSalesChannelCode

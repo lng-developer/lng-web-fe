@@ -18,7 +18,7 @@ import dayjs, { type Dayjs } from 'dayjs'
 
 import { workspaceRouteLinks } from '@/app/router/workspaceRoutes'
 import { AccessDeniedResult } from '@/shared/auth/AccessDeniedResult'
-import { DateRangePicker, FeedbackAlert, SectionCard } from '@/shared/ui'
+import { DateRangePicker, FeedbackAlert, getDateRangePreset, SectionCard } from '@/shared/ui'
 
 import styles from './FoundationPage.module.scss'
 import {
@@ -38,10 +38,7 @@ export function OperationsDashboardPage() {
   const [loadOperationalHealth, setLoadOperationalHealth] = useState(
     () => typeof IntersectionObserver === 'undefined',
   )
-  const [dates, setDates] = useState<[Dayjs, Dayjs]>(() => [
-    dayjs().subtract(30, 'day').startOf('day'),
-    dayjs().endOf('day'),
-  ])
+  const [dates, setDates] = useState<[Dayjs, Dayjs]>(() => getDateRangePreset(7))
   const [summaryExpanded, setSummaryExpanded] = useState(false)
   const [salesChannelCode, setSalesChannelCode] = useState<'ALL' | 'AMAZON' | 'ETSY'>('ALL')
   const { value, handle } = useOperationsDashboard(

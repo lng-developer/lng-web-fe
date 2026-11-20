@@ -20,6 +20,7 @@ import {
   type DateRangeValue,
   FilterBar,
   FormattedDateTime,
+  getDefaultDateRange,
   MetricCard,
   SectionCard,
   StatusTag,
@@ -60,7 +61,7 @@ export function SettlementWorkspacePage() {
   const client = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
   const [page, setPage] = useState(1)
-  const [dates, setDates] = useState<DateRangeValue>({})
+  const [dates, setDates] = useState<DateRangeValue>(getDefaultDateRange)
   const [selected, setSelected] = useState<SettlementSummary>()
   const [ledgerPage, setLedgerPage] = useState(1)
   const [reconciliationStatus, setReconciliationStatus] = useState<string>()

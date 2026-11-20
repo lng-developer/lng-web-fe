@@ -29,10 +29,12 @@ import {
   FeedbackAlert,
   FilterBar,
   FormattedDateTime,
+  getDefaultDateRange,
   MetricCard,
   SectionCard,
   StatusTag,
   TableTextCell,
+  type DateRangeValue,
   useFeedbackToast,
 } from '@/shared/ui'
 
@@ -88,7 +90,7 @@ export function WorkScoreWorkbenchPage({
   const [taskType, setTaskType] = useState<string>()
   const [scaleDifficultyLevel, setScaleDifficultyLevel] = useState<'NORMAL' | 'HARD' | 'SPECIAL'>()
   const [scoreStatus, setScoreStatus] = useState<'ACTIVE' | 'VOIDED' | 'ALL'>('ACTIVE')
-  const [dates, setDates] = useState<{ dateFrom?: string; dateTo?: string }>({})
+  const [dates, setDates] = useState<DateRangeValue>(getDefaultDateRange)
   const [selectedId, setSelectedId] = useState<string>()
   const [ruleModalOpen, setRuleModalOpen] = useState(false)
   const [adjustment, setAdjustment] = useState<{

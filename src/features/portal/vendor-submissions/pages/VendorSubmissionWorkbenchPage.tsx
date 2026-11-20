@@ -23,9 +23,11 @@ import {
   FeedbackAlert,
   FilterBar,
   FormattedDateTime,
+  getDefaultDateRange,
   MetricCard,
   StatusTag,
   TableTextCell,
+  type DateRangeValue,
   useFeedbackToast,
   useResourceSelection,
 } from '@/shared/ui'
@@ -83,7 +85,7 @@ export function VendorSubmissionWorkbenchPage({
   const [page, setPage] = useState(1)
   const [status, setStatus] = useState<VendorSubmissionStatus>()
   const [externalOrderId, setExternalOrderId] = useState('')
-  const [dates, setDates] = useState<{ dateFrom?: string; dateTo?: string }>({})
+  const [dates, setDates] = useState<DateRangeValue>(getDefaultDateRange)
   const [selectedId, setSelectedId] = useResourceSelection()
   const [reconcileRow, setReconcileRow] = useState<VendorSubmission>()
   const [vendorExternalOrderId, setVendorExternalOrderId] = useState('')
