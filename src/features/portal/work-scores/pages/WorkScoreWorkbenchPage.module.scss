@@ -74,6 +74,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  contain: content;
 }
 
 .assetThumb {
@@ -85,10 +86,12 @@
   background: var(--ant-color-fill-quaternary);
   flex-shrink: 0;
   cursor: pointer;
-  transition: transform 0.18s;
+  transform: translateZ(0);
+  will-change: transform;
+  transition: transform 0.15s ease-out;
 
   &:hover {
-    transform: scale(1.05);
+    transform: scale(1.05) translateZ(0);
   }
 }
 
@@ -159,6 +162,11 @@
   box-shadow: none !important;
   border-radius: 0 !important;
   height: 100%;
+}
+
+.tableCard :global(.ant-table-row) {
+  cursor: pointer;
+  contain: layout style;
 }
 
 /* ── Filters ─────────────────────────────────────────── */

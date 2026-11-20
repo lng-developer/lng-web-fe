@@ -15,7 +15,7 @@ import {
 } from '@ant-design/icons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Button, Input, Select, Space, Tag, Tooltip, Typography } from 'antd'
+import { Button, Input, Select, Space, Tag, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
@@ -417,55 +417,51 @@ export function WorkScoreWorkbenchPage({
         width: 140,
         render: (_, row) => (
           <Space size={4}>
-            <Tooltip title={t('portal.workScores.actions.view')}>
+            <Button
+              title={t('portal.workScores.actions.view')}
+              aria-label={t('portal.workScores.actions.view')}
+              size="small"
+              icon={<EyeOutlined />}
+              onClick={(event) => {
+                event.stopPropagation()
+                setSelectedId(row.id)
+              }}
+            />
+            {row.assetDownloadUrl ? (
               <Button
-                aria-label={t('portal.workScores.actions.view')}
+                title={t('portal.workScores.actions.download')}
+                aria-label={t('portal.workScores.actions.download')}
                 size="small"
-                icon={<EyeOutlined />}
+                icon={<DownloadOutlined />}
                 onClick={(event) => {
                   event.stopPropagation()
-                  setSelectedId(row.id)
+                  void downloadMediaAsset(row.assetDownloadUrl!)
                 }}
               />
-            </Tooltip>
-            {row.assetDownloadUrl ? (
-              <Tooltip title={t('portal.workScores.actions.download')}>
-                <Button
-                  aria-label={t('portal.workScores.actions.download')}
-                  size="small"
-                  icon={<DownloadOutlined />}
-                  onClick={(event) => {
-                    event.stopPropagation()
-                    void downloadMediaAsset(row.assetDownloadUrl!)
-                  }}
-                />
-              </Tooltip>
             ) : null}
             {canAdjust && row.status === 'ACTIVE' ? (
               <>
-                <Tooltip title={t('portal.workScores.actions.override')}>
-                  <Button
-                    aria-label={t('portal.workScores.actions.override')}
-                    size="small"
-                    icon={<EditOutlined />}
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      openAction('override', row)
-                    }}
-                  />
-                </Tooltip>
-                <Tooltip title={t('portal.workScores.actions.void')}>
-                  <Button
-                    danger
-                    aria-label={t('portal.workScores.actions.void')}
-                    size="small"
-                    icon={<StopOutlined />}
-                    onClick={(event) => {
-                      event.stopPropagation()
-                      openAction('void', row)
-                    }}
-                  />
-                </Tooltip>
+                <Button
+                  title={t('portal.workScores.actions.override')}
+                  aria-label={t('portal.workScores.actions.override')}
+                  size="small"
+                  icon={<EditOutlined />}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    openAction('override', row)
+                  }}
+                />
+                <Button
+                  danger
+                  title={t('portal.workScores.actions.void')}
+                  aria-label={t('portal.workScores.actions.void')}
+                  size="small"
+                  icon={<StopOutlined />}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    openAction('void', row)
+                  }}
+                />
               </>
             ) : null}
           </Space>
@@ -480,6 +476,13 @@ export function WorkScoreWorkbenchPage({
   const topWorkers = useMemo(
     () => (summary.data?.byWorker ?? []).slice(0, 5),
     [summary.data?.byWorker],
+  )
+
+  const handleRow = useCallback(
+    (row: WorkScoreListItem) => ({
+      onClick: () => setSelectedId(row.id),
+    }),
+    [],
   )
 
   return (
@@ -715,6 +718,7 @@ export function WorkScoreWorkbenchPage({
             />
             <div className={styles.dates}>
               <DateRangePicker
+                value={dates}
                 onChange={(value) => {
                   setDates(value)
                   setPage(1)
@@ -753,7 +757,7 @@ export function WorkScoreWorkbenchPage({
           columns={columns}
           dataSource={rows.data?.items ?? []}
           loading={rows.isLoading}
-          onRow={(row) => ({ onClick: () => setSelectedId(row.id) })}
+          onRow={handleRow}
           pagination={{
             current: page,
             pageSize: DEFAULT_PAGE_SIZE,
