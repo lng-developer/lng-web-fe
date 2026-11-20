@@ -370,33 +370,37 @@ export const OrderItemPanel = memo(function OrderItemPanel({
               />
             </div>
           ) : null}
-          {scaledOutputs.map((output, idx) => {
-            const url = output.outputAssetDownloadUrl
-            if (!url) return null
-            const label =
-              scaledOutputs.length > 1
-                ? `${t('orders.fields.scaledOutputs', { defaultValue: 'File output scale' })} (${output.slotLabel || output.slotKey || idx + 1})`
-                : t('orders.fields.scaledOutputs', { defaultValue: 'File output scale' })
-            return (
-              <div
-                key={output.id || output.outputAssetId || output.slotKey || idx}
-                className={styles.assetImageBlock}
-              >
-                <Typography.Text type="secondary" ellipsis title={label}>
-                  {label}
-                </Typography.Text>
-                <AuthenticatedMediaImage
-                  width={assetImageSize}
-                  height={assetImageSize}
-                  downloadUrl={url}
-                  alt={label}
-                  style={{ cursor: 'zoom-in' }}
-                  onClick={(event) => onOpenImageViewer(event, url, relatedImages)}
-                  fallback="/assets/images/favicon.svg"
-                />
-              </div>
-            )
-          })}
+          {scaledOutputs.length > 0 ? (
+            <div className={scaledOutputs.length > 1 ? styles.scaledOutputsStack : undefined}>
+              {scaledOutputs.map((output, idx) => {
+                const url = output.outputAssetDownloadUrl
+                if (!url) return null
+                const label =
+                  scaledOutputs.length > 1
+                    ? `${t('orders.fields.scaledOutputs', { defaultValue: 'File output scale' })} (${output.slotLabel || output.slotKey || idx + 1})`
+                    : t('orders.fields.scaledOutputs', { defaultValue: 'File output scale' })
+                return (
+                  <div
+                    key={output.id || output.outputAssetId || output.slotKey || idx}
+                    className={styles.assetImageBlock}
+                  >
+                    <Typography.Text type="secondary" ellipsis title={label}>
+                      {label}
+                    </Typography.Text>
+                    <AuthenticatedMediaImage
+                      width={assetImageSize}
+                      height={assetImageSize}
+                      downloadUrl={url}
+                      alt={label}
+                      style={{ cursor: 'zoom-in' }}
+                      onClick={(event) => onOpenImageViewer(event, url, relatedImages)}
+                      fallback="/assets/images/favicon.svg"
+                    />
+                  </div>
+                )
+              })}
+            </div>
+          ) : null}
         </div>
         {artworkImages.length > 0 ? (
           <div className={styles.artworkCollapsible}>
