@@ -41,6 +41,23 @@ npm run lint
 npm run build
 ```
 
+## Git & PR Lifecycle Rules
+
+- Do not commit directly to `main` or `develop` unless the user explicitly asks for that exact action.
+- **NEVER automatically merge a Pull Request into `develop` or `main`** without explicit user confirmation/testing. Always create a branch, push, open the PR, provide the PR link, and wait for the user to review and test.
+- Inspect `git diff` before committing or summarizing changes.
+- Commit messages should follow `<type>(<scope>): <description>` when commits are requested.
+- **Hotfix & Release Flow**:
+  - All feature work, bug fixes, and hotfixes must target `develop` via PR (`feat/*`, `fix/*`, `hotfix/*` ➔ `develop`).
+  - Releases to `main` only promote from `develop` (`develop` ➔ `main`).
+  - CI test suites gate PRs; server deployment deploys the verified commit SHA without duplicate test runs.
+
+## What Not To Do
+
+- Do not merge PRs into develop or main autonomously without user confirmation/testing.
+- Do not commit directly to develop or main.
+- Do not add unapproved npm packages.
+
 ## Autonomous Tooling & Workflow Protocols
 
 Agents operating on this repository must automatically adopt the following integrated workflows on every user request without requiring explicit prompt activation:
