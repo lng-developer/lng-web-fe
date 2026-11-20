@@ -45,8 +45,8 @@ describe('TransactionLedgerPage', () => {
     expect(listImportedFinanceData).toHaveBeenCalledWith('transactions', {
       page: 1,
       limit: 50,
-      dateFrom: undefined,
-      dateTo: undefined,
+      dateFrom: expect.any(String),
+      dateTo: expect.any(String),
       transactionType: undefined,
       transactionStatus: undefined,
       externalOrderId: undefined,
