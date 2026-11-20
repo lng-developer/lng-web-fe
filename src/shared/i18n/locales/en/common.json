@@ -3911,6 +3911,8 @@
       "designSourceMissing": "Design source missing. Ask your leader to add the approved source for this listing/variant.",
       "outputReady": "Output ready",
       "outputMissing": "Output missing",
+      "confirmDeleteSlot": "Delete this slot?",
+      "confirmDeleteSlotDesc": "Are you sure you want to delete this slot from the task?",
       "filters": "Production filters",
       "search": "Search order, SKU, or product",
       "channel": "Channel",
@@ -4027,6 +4029,8 @@
       "feedback": {
         "uploadSuccessTitle": "Upload successful",
         "uploadSuccessDescription": "Scaled output file uploaded successfully.",
+        "deleteSlotSuccessTitle": "Slot deleted",
+        "deleteSlotSuccessDescription": "The slot was deleted from the task.",
         "addSlotSuccessTitle": "Print position added",
         "addSlotSuccessDescription": "Successfully added and uploaded scaled file for position \"{{slot}}\".",
         "submitQcSuccessTitle": "Submitted for QC",
@@ -4870,6 +4874,11 @@
     "title": "Order workbench",
     "description": "See ownership, blockers and fulfillment state without leaving the queue.",
     "error": "Orders are unavailable",
+    "vendorRematch": {
+      "requireRework": "Redo design files (Rework)",
+      "requireReworkDescription": "Remove the existing scaled files and QC results. After vendor rematch, the order returns to the Designer queue for new files.",
+      "keepScaleDescription": "Rematch the vendor while retaining current scale files. If QC has passed, the order will automatically submit to the new vendor."
+    },
     "actions": {
       "refresh": "Refresh",
       "retry": "Retry",

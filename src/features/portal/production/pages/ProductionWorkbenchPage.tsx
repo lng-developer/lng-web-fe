@@ -30,6 +30,7 @@ import {
   assignProductionTask,
   bulkAssignProductionTasks,
   claimProductionTask,
+  deleteFileCheck,
   exportProductionQcTasks,
   exportProductionTasksCsv,
   type FileCheck,
@@ -970,6 +971,22 @@ export function ProductionWorkbenchPage({
     (fileCheckId: string) => handleSetInspectionDecision(fileCheckId, 'PASSED'),
     [handleSetInspectionDecision],
   )
+  const handleDeleteSlot = useCallback(
+    async (taskId: string, fileCheckId: string) => {
+      try {
+        await deleteFileCheck(taskId, fileCheckId)
+        await refresh()
+        toast(
+          'success',
+          t('portal.production.feedback.deleteSlotSuccessTitle'),
+          t('portal.production.feedback.deleteSlotSuccessDescription'),
+        )
+      } catch (error) {
+        await handleMutationError(error)
+      }
+    },
+    [handleMutationError, refresh, t, toast],
+  )
   const renderSingleTaskRow = useCallback(
     (task: ProductionTask) => (
       <ProductionWorkbenchExpandedRow
@@ -992,6 +1009,7 @@ export function ProductionWorkbenchPage({
         onInspectSlot={handleInspectionSlotAction}
         onPassSlot={handleQcSlotPass}
         onManualSlotUploaded={refresh}
+        onDeleteSlot={handleDeleteSlot}
         onClaimTask={(taskId) => claimTask.mutate(taskId)}
       />
     ),
@@ -1002,6 +1020,7 @@ export function ProductionWorkbenchPage({
       claimTask,
       currentAccountId,
       decisions,
+      handleDeleteSlot,
       handleInspectionSlotAction,
       handleQcSlotPass,
       handleSaveNote,

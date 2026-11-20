@@ -360,11 +360,16 @@ export async function cancelOrderItem(orderItemId: string, reason: string) {
   return unwrap(await apiClient.post(`/api/orders/items/${orderItemId}/cancel`, { reason }))
 }
 
-export async function recoverOrderItemForVendorRematch(orderItemId: string, reason: string) {
+export async function recoverOrderItemForVendorRematch(
+  orderItemId: string,
+  reason: string,
+  options?: { requireRework?: boolean },
+) {
   return unwrap(
     await apiClient.post(`/api/orders/items/${orderItemId}/vendor-rematch-recovery`, {
       externalCancellationConfirmed: true,
       reason,
+      requireRework: Boolean(options?.requireRework),
     }),
   )
 }

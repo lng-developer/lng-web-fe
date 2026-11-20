@@ -1,6 +1,6 @@
 import { memo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Descriptions, Input, InputNumber, Typography } from 'antd'
+import { Checkbox, Descriptions, Input, InputNumber, Typography } from 'antd'
 
 import { CopyableSku, PopupModal, type PopupModalAnchor } from '@/shared/ui'
 
@@ -53,6 +53,7 @@ function OrderItemConfirmationModalInner({
   const { t } = useTranslation()
   const [reason, setReason] = useState('')
   const [quantity, setQuantity] = useState(confirmation.item.item?.quantity || 1)
+  const [requireRework, setRequireRework] = useState(false)
 
   const isCancel = confirmation.kind === 'cancel'
   const isVendorRematch = confirmation.kind === 'vendor-rematch-recovery'
@@ -64,6 +65,7 @@ function OrderItemConfirmationModalInner({
         kind: isVendorRematch ? 'vendor-rematch-recovery' : 'cancel',
         itemId,
         reason: reason.trim(),
+        ...(isVendorRematch ? { requireRework } : {}),
       })
     } else {
       onConfirm({
@@ -111,12 +113,18 @@ function OrderItemConfirmationModalInner({
           <Input.TextArea value={reason} onChange={(event) => setReason(event.target.value)} />
         </label>
         {isVendorRematch ? (
-          <Typography.Text type="warning">
-            Vendor must already be cancelled externally. Production, Scale and QC will restart for
-            the next vendor.
-          </Typography.Text>
+          <>
+            <Checkbox checked={requireRework} onChange={(e) => setRequireRework(e.target.checked)}>
+              {t('orders.vendorRematch.requireRework')}
+            </Checkbox>
+            <Typography.Text type={requireRework ? 'danger' : 'warning'}>
+              {requireRework
+                ? t('orders.vendorRematch.requireReworkDescription')
+                : t('orders.vendorRematch.keepScaleDescription')}
+            </Typography.Text>
+          </>
         ) : null}
-        {!isCancel ? (
+        {confirmation.kind === 'replacement' ? (
           <label>
             <Typography.Text>{t('orders.fields.quantity')}</Typography.Text>
             <InputNumber
