@@ -14,6 +14,7 @@ import {
   type DateRangeValue,
   FeedbackAlert,
   FilterBar,
+  getDefaultDateRange,
   SearchInput,
   SectionCard,
   StatusTag,
@@ -68,7 +69,7 @@ export const FinanceWorkspacePage = ({
   const [sellerEmployeeCode, setSellerEmployeeCode] = useState<string>()
   const [teamId, setTeamId] = useState<string>()
   const [departmentId, setDepartmentId] = useState<string>()
-  const [dates, setDates] = useState<DateRangeValue>({})
+  const [dates, setDates] = useState<DateRangeValue>(getDefaultDateRange)
   const [selected, setSelected] = useState<FinanceSnapshot>()
   const [selectedItemId, setSelectedItemId] = useState<string>()
   const activeItemId = selectedItemId || searchParams.get('orderItemId') || undefined

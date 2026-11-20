@@ -20,6 +20,7 @@ import {
   FeedbackAlert,
   FilterBar,
   FormattedDateTime,
+  getDefaultDateRange,
   MetricCard,
   PageHeader,
   SearchInput,
@@ -50,7 +51,7 @@ const shortId = (value: string | null) => (value ? `#${value.slice(-8)}` : '')
 export function AuditLogPage() {
   const { t } = useTranslation()
   const permissions = usePermissions()
-  const [filters, setFilters] = useState<AuditFilters>({})
+  const [filters, setFilters] = useState<AuditFilters>(() => ({ ...getDefaultDateRange() }))
   const [selected, setSelected] = useState<AuditEvent>()
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState<number>(DEFAULT_TABLE_PAGINATION.defaultPageSize)

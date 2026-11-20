@@ -6,6 +6,7 @@ import i18n from '@/shared/i18n/i18n'
 import {
   DateRangePicker,
   getDateRangePreset,
+  getDefaultDateRange,
   serializeDateRange,
 } from '@/shared/ui/DateRangePicker'
 
@@ -48,5 +49,14 @@ describe('DateRangePicker', () => {
 
     expect(dayjs(result.dateFrom).format('YYYY-MM-DD HH:mm:ss.SSS')).toBe('2026-07-05 00:00:00.000')
     expect(dayjs(result.dateTo).format('YYYY-MM-DD HH:mm:ss.SSS')).toBe('2026-07-07 23:59:59.999')
+  })
+
+  it('provides default date range of 7 days (last 1 week)', () => {
+    const today = dayjs('2026-09-06T12:00:00')
+    const result = getDefaultDateRange(7, today)
+
+    expect(dayjs(result.dateFrom).format('YYYY-MM-DD')).toBe('2026-08-31')
+    expect(dayjs(result.dateTo).format('YYYY-MM-DD')).toBe('2026-09-06')
+    expect(dayjs(result.dateTo).diff(dayjs(result.dateFrom), 'day')).toBe(6)
   })
 })

@@ -28,6 +28,7 @@ import {
   DateRangePicker,
   type DateRangeValue,
   FilterBar,
+  getDefaultDateRange,
   MetricCard,
   PageHeader,
   SearchInput,
@@ -66,7 +67,7 @@ export function ReportOrderCostPage({
   const [teamId, setTeamId] = useState<string>()
   const [departmentId, setDepartmentId] = useState<string>()
   const [costCoverage, setCostCoverage] = useState<'MISSING' | 'COMPLETE' | undefined>()
-  const [dates, setDates] = useState<DateRangeValue>({})
+  const [dates, setDates] = useState<DateRangeValue>(getDefaultDateRange)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
 

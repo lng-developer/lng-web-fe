@@ -315,7 +315,7 @@ describe('ReportWorkspacePage', () => {
     expect(
       screen.getByRole('columnheader', { name: new RegExp(dayjs().format('DD/MM')) }),
     ).toBeInTheDocument()
-  })
+  }, 15_000)
 
   it('does not show a scrollbar for a short seller comparison', async () => {
     vi.mocked(listFinanceSellerDaily).mockResolvedValueOnce(

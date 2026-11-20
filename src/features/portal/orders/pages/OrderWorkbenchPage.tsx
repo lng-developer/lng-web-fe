@@ -32,6 +32,8 @@ import {
   DataFreshness,
   FeedbackAlert,
   FormattedDateTime,
+  getDefaultDateRange,
+  type DateRangeValue,
   type PopupModalAnchor,
   StatusTag,
   UiTabLabel,
@@ -68,7 +70,6 @@ const TABS = [
   'OPEN_CASE',
 ] as const
 type TabKey = (typeof TABS)[number]
-const EMPTY_DATES = { dateFrom: undefined, dateTo: undefined } as const
 const SALES_CHANNEL_BY_QUERY = {
   amazon: 'AMAZON',
   etsy: 'ETSY',
@@ -94,7 +95,7 @@ export const OrderWorkbenchPage = () => {
   const [shopId, setShopId] = useState<string>()
   const [vendorId, setVendorId] = useState<string>()
   const [stage, setStage] = useState<string | undefined>(searchParams.get('stage') || undefined)
-  const [dates, setDates] = useState<{ dateFrom?: string; dateTo?: string }>(EMPTY_DATES)
+  const [dates, setDates] = useState<DateRangeValue>(getDefaultDateRange)
   const canWriteOrder = useCallback(
     (row: OrderWorkbenchRow) =>
       canUseScopedPermission(account, 'ORDERS:WRITE', {
@@ -214,7 +215,7 @@ export const OrderWorkbenchPage = () => {
     setShopId(undefined)
     setVendorId(undefined)
     setStage(undefined)
-    setDates(EMPTY_DATES)
+    setDates(getDefaultDateRange())
     setPage(1)
   }, [])
   const orderItems = useMemo(() => {

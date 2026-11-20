@@ -25,6 +25,7 @@ import {
   type DateRangeValue,
   EmployeeIdentity,
   FormattedDateTime,
+  getDefaultDateRange,
   MetricCard,
   StatusPill,
   useDebouncedValue,
@@ -156,7 +157,7 @@ export function PsdFileWorkspacePage() {
   const [role, setRole] = useState<'REFERENCE' | 'SUBMISSION' | 'APPROVED'>()
   const [designerId, setDesignerId] = useState<string>()
   const [taskStatus, setTaskStatus] = useState<string>()
-  const [dates, setDates] = useState<{ dateFrom?: string; dateTo?: string }>({})
+  const [dates, setDates] = useState<DateRangeValue>(getDefaultDateRange)
 
   const params = useMemo(
     () => ({
@@ -239,7 +240,7 @@ export function PsdFileWorkspacePage() {
     setRole(undefined)
     setDesignerId(undefined)
     setTaskStatus(undefined)
-    setDates({})
+    setDates(getDefaultDateRange())
     setPage(1)
   }
 

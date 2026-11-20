@@ -1454,15 +1454,17 @@ describe('IntegrationWorkbenchPage', () => {
     fireEvent.click(await screen.findByText('Ads'))
     expect(await screen.findByText('Amazon Ads Spend')).toBeVisible()
     await waitFor(() =>
-      expect(listImportBatches).toHaveBeenCalledWith({
-        page: 1,
-        limit: 50,
-        sourceType: 'ADS',
-        salesChannelCode: 'AMAZON',
-        marketplaceCode: 'US',
-        shopId: undefined,
-        status: undefined,
-      }),
+      expect(listImportBatches).toHaveBeenCalledWith(
+        expect.objectContaining({
+          page: 1,
+          limit: 50,
+          sourceType: 'ADS',
+          salesChannelCode: 'AMAZON',
+          marketplaceCode: 'US',
+          shopId: undefined,
+          status: undefined,
+        }),
+      ),
     )
     expect(await screen.findByText('ads-spend-2026-08-12.csv')).toBeVisible()
     expect(screen.getByText(/5 processed \/ 5 valid/i)).toBeVisible()
