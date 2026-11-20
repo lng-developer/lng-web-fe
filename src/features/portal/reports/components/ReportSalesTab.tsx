@@ -539,6 +539,7 @@ export function ReportSalesTab({
         {
           title: t('reports.columns.total'),
           width: 110,
+          fixed: 'left',
           align: 'center',
           className: styles.dailyTotalCell,
           render: (_, row) => renderMatrixCellValue(row.metricKey, row.totalValue, group.currency),

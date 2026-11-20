@@ -70,4 +70,14 @@ describe('Report styling and color contracts', () => {
     expect(page).toContain('amount < 0')
     expect(page).toContain('styles.dailyMoneyLoss')
   })
+
+  it('pins seller, type, and total columns to the left in ReportSalesTab', () => {
+    expect(salesTab).toContain("title: t('reports.columns.seller')")
+    expect(salesTab).toContain("title: t('reports.columns.type')")
+    expect(salesTab).toContain("title: t('reports.columns.total')")
+    const totalColIndex = salesTab.indexOf("title: t('reports.columns.total')")
+    const nextColIndex = salesTab.indexOf('group.dates.map', totalColIndex)
+    const totalColSnippet = salesTab.slice(totalColIndex, nextColIndex)
+    expect(totalColSnippet).toContain("fixed: 'left'")
+  })
 })

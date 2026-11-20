@@ -85,6 +85,12 @@ describe('VendorProductCostCentersPage', () => {
   })
 
   it('does not restore the removed unsaved-change confirmation', () => {
-    expect(editorTemplateSource).not.toContain("actionFeedback.unsaved")
+    expect(editorTemplateSource).not.toContain('actionFeedback.unsaved')
+  })
+
+  it('renders a switch toggle in the status column for quick variant activation', () => {
+    expect(costCentersPageSource).toContain('updateVendorCostCenter')
+    expect(costCentersPageSource).toContain('<Switch')
+    expect(costCentersPageSource).toContain("status: checked ? 'ACTIVE' : 'INACTIVE'")
   })
 })

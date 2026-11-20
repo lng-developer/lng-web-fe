@@ -224,3 +224,50 @@ it('renders tracking number in a single copyable chip with history button', asyn
   fireEvent.click(historyBtn)
   expect(onHistory).toHaveBeenCalledWith(expect.anything(), 'item-tracking')
 })
+
+it('stacks multiple scale outputs vertically', async () => {
+  await i18n.changeLanguage('vi')
+  const item = {
+    item: { id: 'item-scaled-2', salesChannelCode: 'AMAZON', asin: 'B0HQN286S5', quantity: 1 },
+    workflow: { nextActions: [], blockers: [] },
+    pricing: {},
+    production: {
+      status: 'QC_PENDING',
+      scaleStatus: 'SCALED',
+      scaledOutputs: [
+        {
+          id: 'scale-front',
+          slotKey: 'FRONT',
+          slotLabel: 'Front',
+          outputAssetId: 'asset-front',
+          outputAssetDownloadUrl: '/api/media/assets/asset-front/download',
+        },
+        {
+          id: 'scale-back',
+          slotKey: 'BACK',
+          slotLabel: 'Back',
+          outputAssetId: 'asset-back',
+          outputAssetDownloadUrl: '/api/media/assets/asset-back/download',
+        },
+      ],
+    },
+  } as unknown as OrderWorkbenchItem
+  const { container } = render(
+    <AppProviders>
+      <OrderItemPanel
+        item={item}
+        canWrite={false}
+        canOperate={false}
+        pending={false}
+        mappingRecheckPending={false}
+        onAction={vi.fn()}
+        onConfirm={vi.fn()}
+        onHistory={vi.fn()}
+        onOpenImageViewer={vi.fn()}
+      />
+    </AppProviders>,
+  )
+  expect(screen.getByText('File output scale (Front)')).toBeInTheDocument()
+  expect(screen.getByText('File output scale (Back)')).toBeInTheDocument()
+  expect(container.querySelector('[class*="scaledOutputsStack"]')).toBeInTheDocument()
+})

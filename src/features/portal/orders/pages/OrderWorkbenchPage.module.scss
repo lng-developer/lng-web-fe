@@ -531,6 +531,11 @@
   gap: 10px;
   align-items: flex-start;
 }
+.scaledOutputsStack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 .assetImageBlock {
   display: grid;
   gap: 4px;

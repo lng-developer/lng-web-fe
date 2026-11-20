@@ -10,7 +10,7 @@ import {
 } from '@ant-design/icons'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Button, Space, Typography } from 'antd'
+import { Button, Space, Switch, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import { hasAnyPermission } from '@/shared/auth/permissions'
@@ -29,6 +29,7 @@ import {
   getVendorProduct,
   listVendorCostCenters,
   syncVendorProduct,
+  updateVendorCostCenter,
   type VendorCostCenter,
 } from '../api/vendorApi'
 import { vendorKeys } from '../api/vendorKeys'
@@ -64,6 +65,16 @@ export function VendorProductCostCentersPage() {
   })
   const sync = useMutation({
     mutationFn: () => syncVendorProduct(productId!),
+    onSuccess: () => void costCenters.refetch(),
+  })
+  const toggleStatus = useMutation({
+    mutationFn: ({
+      costCenterId,
+      status,
+    }: {
+      costCenterId: string
+      status: 'ACTIVE' | 'INACTIVE'
+    }) => updateVendorCostCenter(productId!, costCenterId, { status }),
     onSuccess: () => void costCenters.refetch(),
   })
 
@@ -137,9 +148,25 @@ export function VendorProductCostCentersPage() {
         title: t('portal.vendors.statusLabel'),
         width: '10%',
         render: (_, row) => (
-          <StatusTag status={row.status === 'ACTIVE' ? 'operational' : 'draft'}>
-            {t(`portal.vendors.status.${row.status}`)}
-          </StatusTag>
+          <Space size={8} align="center">
+            {canWrite ? (
+              <Switch
+                size="small"
+                checked={row.status === 'ACTIVE'}
+                loading={toggleStatus.isPending && toggleStatus.variables?.costCenterId === row.id}
+                aria-label={t('portal.vendors.toggleStatus', { defaultValue: 'Toggle status' })}
+                onChange={(checked) =>
+                  toggleStatus.mutate({
+                    costCenterId: row.id,
+                    status: checked ? 'ACTIVE' : 'INACTIVE',
+                  })
+                }
+              />
+            ) : null}
+            <StatusTag status={row.status === 'ACTIVE' ? 'operational' : 'draft'}>
+              {t(`portal.vendors.status.${row.status}`)}
+            </StatusTag>
+          </Space>
         ),
       },
       {
@@ -187,7 +214,7 @@ export function VendorProductCostCentersPage() {
           ) : null,
       },
     ],
-    [canWrite, selectedCostCenter?.id, t],
+    [canWrite, selectedCostCenter?.id, t, toggleStatus],
   )
 
   const error = product.error ?? costCenters.error
