@@ -20,8 +20,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  release-source:
+    name: release-source
+    if: ${{ github.event_name == 'pull_request' && github.base_ref == 'main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require develop as the release source
+        env:
+          RELEASE_SOURCE: ${{ github.head_ref }}
+        run: test "$RELEASE_SOURCE" = 'develop'
+
   quality-gate:
-    if: ${{ inputs.ui_test_file == '' }}
+    if: ${{ inputs.ui_test_file == '' && (github.ref == 'refs/heads/develop' || github.base_ref == 'develop') }}
     name: lint-unit-build
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -49,7 +59,7 @@ jobs:
           retention-days: 1
 
   ui-tests:
-    if: ${{ inputs.ui_test_file == '' }}
+    if: ${{ inputs.ui_test_file == '' && (github.ref == 'refs/heads/develop' || github.base_ref == 'develop') }}
     name: ui-tests-${{ matrix.shard }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -89,17 +99,20 @@ jobs:
 
   deploy:
     name: deploy-server
-    needs: [quality-gate, ui-tests]
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && inputs.ui_test_file == '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
       TZ: Asia/Ho_Chi_Minh
     steps:
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          name: frontend-build
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm i -g npm@11.6.2
+      - run: npm ci
+      - run: npm run build
       - name: Configure deployment SSH
         env:
           ECOMATRIX_SSH_PRIVATE_KEY: ${{ secrets.ECOMATRIX_SSH_PRIVATE_KEY }}
