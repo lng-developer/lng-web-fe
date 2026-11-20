@@ -6,7 +6,7 @@ import { orderKeys } from '../api/orderKeys'
 export function useOrderWorkbenchQuery(params: OrderWorkbenchParams) {
   return useQuery({
     queryKey: orderKeys.workbench(params),
-    queryFn: () => listOrderWorkbench(params),
+    queryFn: ({ signal }) => listOrderWorkbench(params, signal),
     retry: false,
     staleTime: 20_000,
     refetchOnWindowFocus: false,

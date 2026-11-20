@@ -99,6 +99,22 @@ describe('orderApi', () => {
     })
   })
 
+  it('passes the query cancellation signal to workbench requests', async () => {
+    const controller = new AbortController()
+
+    await listOrderWorkbench({ page: 1, limit: 10 }, controller.signal)
+    await getOrderSummary({ page: 1, limit: 10 }, controller.signal)
+
+    expect(apiClient.get).toHaveBeenCalledWith('/api/orders/workbench', {
+      params: { page: 1, limit: 10 },
+      signal: controller.signal,
+    })
+    expect(apiClient.get).toHaveBeenCalledWith('/api/orders/summary', {
+      params: { page: 1, limit: 10 },
+      signal: controller.signal,
+    })
+  })
+
   it('uses the existing order write contracts', async () => {
     vi.mocked(apiClient.patch).mockResolvedValue({ data: {} })
     vi.mocked(apiClient.post).mockResolvedValue({
