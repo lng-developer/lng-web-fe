@@ -218,7 +218,12 @@ describe('ProductionWorkbenchPage', () => {
 
     await waitFor(() => expect(summarizeProductionQueueCounts).toHaveBeenCalledTimes(1))
     expect(listProductionTasks).toHaveBeenCalledTimes(1)
-    expect(summarizeProductionQueueCounts).toHaveBeenCalledWith({})
+    expect(summarizeProductionQueueCounts).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dateFrom: expect.any(String),
+        dateTo: expect.any(String),
+      }),
+    )
   })
 
   it('loads scale assignees for a Scale Leader without production write access', async () => {
@@ -449,7 +454,9 @@ describe('ProductionWorkbenchPage', () => {
     expect(summarizeProductionTasks).toHaveBeenCalledWith(
       expect.objectContaining({ salesChannelCode: 'ETSY' }),
     )
-    expect(summarizeProductionQueueCounts).toHaveBeenCalledWith({ salesChannelCode: 'ETSY' })
+    expect(summarizeProductionQueueCounts).toHaveBeenCalledWith(
+      expect.objectContaining({ salesChannelCode: 'ETSY' }),
+    )
   })
 
   it('renders a dedicated queue route with specialized scale tabs without toolbar channel filter', async () => {

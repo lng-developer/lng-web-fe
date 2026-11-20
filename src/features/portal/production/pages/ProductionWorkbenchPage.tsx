@@ -346,9 +346,11 @@ export function ProductionWorkbenchPage({
     () => ({
       search: deferredSearch || undefined,
       salesChannelCode,
+      scaleDifficultyLevel,
       designType: designTypeProp,
+      ...createdDates,
     }),
-    [deferredSearch, designTypeProp, salesChannelCode],
+    [createdDates, deferredSearch, designTypeProp, salesChannelCode, scaleDifficultyLevel],
   )
   const tasks = useQuery({
     queryKey: productionKeys.list(params),
