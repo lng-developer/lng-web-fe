@@ -18,6 +18,7 @@ import {
   FormattedDateTime,
   humanizeCode,
   StatusTag,
+  getDefaultDateRange,
   type DateRangeValue,
   type UiButtonTabItem,
   UiButtonTabs,
@@ -170,7 +171,7 @@ export function ProductionWorkbenchPage({
   const [search, setSearch] = useState('')
   const deferredSearch = useDeferredValue(search)
   const [scaleDifficultyLevel, setScaleDifficultyLevel] = useState<'NORMAL' | 'HARD' | 'SPECIAL'>()
-  const [createdDates, setCreatedDates] = useState<DateRangeValue>({})
+  const [createdDates, setCreatedDates] = useState<DateRangeValue>(getDefaultDateRange)
   const [inspect, setInspect] = useState<{
     task?: ProductionTask
     check: FileCheck
@@ -345,9 +346,11 @@ export function ProductionWorkbenchPage({
     () => ({
       search: deferredSearch || undefined,
       salesChannelCode,
+      scaleDifficultyLevel,
       designType: designTypeProp,
+      ...createdDates,
     }),
-    [deferredSearch, designTypeProp, salesChannelCode],
+    [createdDates, deferredSearch, designTypeProp, salesChannelCode, scaleDifficultyLevel],
   )
   const tasks = useQuery({
     queryKey: productionKeys.list(params),

@@ -20,6 +20,8 @@ export {
   DateRangePicker,
   type DateRangePickerProps,
   type DateRangeValue,
+  getDateRangePreset,
+  getDefaultDateRange,
   serializeDateRange,
 } from './DateRangePicker'
 export { DataFreshness, type DataFreshnessProps } from './DataFreshness'

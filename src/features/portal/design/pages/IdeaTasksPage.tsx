@@ -41,6 +41,7 @@ import {
   EmployeeIdentity,
   FileUpload,
   FormattedDateTime,
+  getDefaultDateRange,
   StatusTag,
   UiTabLabel,
   UiTabs,
@@ -206,7 +207,7 @@ export function IdeaTasksPage() {
   const [search, setSearch] = useState('')
   const deferredSearch = useDeferredValue(search)
   const [activeTabKey, setActiveTabKey] = useState<string>('all')
-  const [dates, setDates] = useState<DateRangeValue>({})
+  const [dates, setDates] = useState<DateRangeValue>(getDefaultDateRange)
 
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<DesignTask | null>(null)

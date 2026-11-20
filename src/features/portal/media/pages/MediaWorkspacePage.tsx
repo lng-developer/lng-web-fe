@@ -21,6 +21,7 @@ import {
   FeedbackAlert,
   FilterBar,
   FormattedDateTime,
+  getDefaultDateRange,
   SearchInput,
   SectionCard,
   StatusTag,
@@ -64,7 +65,7 @@ export function MediaWorkspacePage() {
   const [resourceType, setResourceType] = useState<string>()
   const [ownerType, setOwnerType] = useState<string>()
   const [status, setStatus] = useState<MediaAssetStatus>()
-  const [dates, setDates] = useState<DateRangeValue>({})
+  const [dates, setDates] = useState<DateRangeValue>(getDefaultDateRange)
   const [selected, setSelected] = useState<MediaAsset | null>(null)
   const [uploadOpen, setUploadOpen] = useState(false)
 

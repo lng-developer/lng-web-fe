@@ -30,6 +30,7 @@ import {
   type DateRangeValue,
   EmployeeIdentity,
   FileUpload,
+  getDefaultDateRange,
   StatusPill,
   UiTabLabel,
   UiTabs,
@@ -235,7 +236,7 @@ export function PsdTasksPage() {
   const deferredEtsyListingId = useDeferredValue(etsyListingId)
   const [activeTabKey, setActiveTabKey] = useState<string>('all')
   const [selectedSellerId, setSelectedSellerId] = useState<string>()
-  const [dateRange, setDateRange] = useState<DateRangeValue>({})
+  const [dateRange, setDateRange] = useState<DateRangeValue>(getDefaultDateRange)
 
   const [prevChannel, setPrevChannel] = useState(salesChannelCode)
   if (prevChannel !== salesChannelCode) {

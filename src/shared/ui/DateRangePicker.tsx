@@ -35,6 +35,11 @@ export function serializeDateRange(value: DayjsRange): DateRangeValue {
   }
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- exported for default date filtering across modules
+export function getDefaultDateRange(days: 1 | 7 | 30 = 7, today = dayjs()): DateRangeValue {
+  return serializeDateRange(getDateRangePreset(days, today))
+}
+
 export const DateRangePicker = memo(function DateRangePicker({
   value,
   onChange,

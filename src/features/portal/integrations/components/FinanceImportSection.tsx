@@ -35,8 +35,10 @@ import {
   CopyableOrderId,
   DetailDrawer,
   DateRangePicker,
+  type DateRangeValue,
   FilterBar,
   FormattedDateTime,
+  getDefaultDateRange,
   humanizeCode,
   SectionCard,
   StatusTag,
@@ -102,7 +104,7 @@ export function FinanceImportSection({
   const [page, setPage] = useState(1)
   const [shopId, setShopId] = useState<string>()
   const [status, setStatus] = useState<string>()
-  const [dates, setDates] = useState<{ dateFrom?: string; dateTo?: string }>({})
+  const [dates, setDates] = useState<DateRangeValue>(getDefaultDateRange)
   const [selectedBatch, setSelectedBatch] = useState<ImportBatch>()
   const [selectedRefund, setSelectedRefund] = useState<UnallocatedRefund>()
   const [allocationItemId, setAllocationItemId] = useState<string>()
