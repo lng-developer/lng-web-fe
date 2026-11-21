@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
   createAmazonTrackingSubmission,
+  createExtensionCommand,
   previewAmazonTrackingSubmission,
 } from '@/features/portal/integrations/api/integrationApi'
 import { TrackingUploadPreviewModal } from '@/features/portal/integrations/components/TrackingUploadPreviewModal'
@@ -11,6 +12,7 @@ import i18n from '@/shared/i18n/i18n'
 
 vi.mock('@/features/portal/integrations/api/integrationApi', () => ({
   createAmazonTrackingSubmission: vi.fn(),
+  createExtensionCommand: vi.fn(),
   previewAmazonTrackingSubmission: vi.fn(),
   listExtensionManagementAgents: vi.fn().mockResolvedValue({ items: [] }),
 }))
@@ -150,6 +152,43 @@ describe('TrackingUploadPreviewModal', () => {
         shopId: 'shop-1',
         agentId: 'agent-1',
         shipmentIds: ['shipment-1'],
+      })
+      expect(onClose).toHaveBeenCalled()
+    })
+  })
+
+  it('creates one Etsy command from the selected preview rows', async () => {
+    vi.mocked(createExtensionCommand).mockResolvedValue({ id: 'command-1' } as never)
+    const onClose = vi.fn()
+
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <TrackingUploadPreviewModal
+          shopId="shop-1"
+          agentId="agent-1"
+          mode="ETSY"
+          onClose={onClose}
+        />
+      </QueryClientProvider>,
+    )
+
+    await waitFor(() => expect(screen.getByText('114-1234567-1234567')).toBeVisible())
+    screen.getByRole('button', { name: /Create Etsy command for 1 order/i }).click()
+
+    await waitFor(() => {
+      expect(createExtensionCommand).toHaveBeenCalledWith({
+        type: 'UPLOAD_TRACKING',
+        shopId: 'shop-1',
+        agentId: 'agent-1',
+        items: [
+          {
+            orderId: '114-1234567-1234567',
+            trackingNumber: '9400111899223856928499',
+            carrier: 'USPS',
+          },
+        ],
       })
       expect(onClose).toHaveBeenCalled()
     })
