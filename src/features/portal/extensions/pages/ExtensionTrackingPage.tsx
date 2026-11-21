@@ -12,6 +12,7 @@ import { Button, Segmented, Space, Table, Tag } from 'antd'
 
 import { MetricCard, PageHeader, SectionCard } from '@/shared/ui'
 import { TrackingUploadPreviewModal } from '@/features/portal/integrations/components/TrackingUploadPreviewModal'
+import { EtsyTrackingCommandModal } from '../components/EtsyTrackingCommandModal'
 import { ExtensionPlatformBadge } from '../components/ExtensionPlatformBadge'
 import { useExtensionHub } from '../hooks/useExtensionHub'
 import styles from './ExtensionTrackingPage.module.scss'
@@ -32,6 +33,7 @@ export function ExtensionTrackingPage() {
   const [platformFilter, setPlatformFilter] = useState<'ALL' | 'AMAZON' | 'ETSY'>('ALL')
   const [previewShopId, setPreviewShopId] = useState<string>()
   const [previewAgentId, setPreviewAgentId] = useState<string>()
+  const [etsyCommandRow, setEtsyCommandRow] = useState<ShopTrackingStatus>()
 
   const trackingRows: ShopTrackingStatus[] = useMemo(() => {
     return shops.map((shop) => {
@@ -85,18 +87,29 @@ export function ExtensionTrackingPage() {
       key: 'actions',
       width: 180,
       render: (_, row) => (
-        <Button
-          size="small"
-          icon={<EyeOutlined />}
-          onClick={() => {
-            setPreviewShopId(row.shopId)
-            setPreviewAgentId(row.agentId)
-          }}
-        >
-          {t('portal.extensions.tracking.actions.preview', {
-            defaultValue: 'Preview Fulfillments',
-          })}
-        </Button>
+        <Space>
+          <Button
+            size="small"
+            icon={<EyeOutlined />}
+            onClick={() => {
+              setPreviewShopId(row.shopId)
+              setPreviewAgentId(row.agentId)
+            }}
+          >
+            {t('portal.extensions.tracking.actions.preview', {
+              defaultValue: 'Preview Fulfillments',
+            })}
+          </Button>
+          {row.platform === 'ETSY' ? (
+            <Button
+              size="small"
+              disabled={!row.agentOnline || !row.agentId}
+              onClick={() => setEtsyCommandRow(row)}
+            >
+              Push Etsy tracking
+            </Button>
+          ) : null}
+        </Space>
       ),
     },
   ]
@@ -200,6 +213,13 @@ export function ExtensionTrackingPage() {
             setPreviewShopId(undefined)
             setPreviewAgentId(undefined)
           }}
+        />
+      ) : null}
+      {etsyCommandRow?.agentId ? (
+        <EtsyTrackingCommandModal
+          shopId={etsyCommandRow.shopId}
+          agentId={etsyCommandRow.agentId}
+          onClose={() => setEtsyCommandRow(undefined)}
         />
       ) : null}
     </div>

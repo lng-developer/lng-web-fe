@@ -74,6 +74,7 @@ export type ExtensionCommandType =
   | 'IMPORT_ADS_SPEND'
   | 'IMPORT_TRANSACTIONS'
   | 'IMPORT_SETTLEMENTS'
+  | 'UPLOAD_TRACKING'
   | 'TEST_CONNECTION'
 export type ExtensionImportDays = 1 | 2 | 7 | 15 | 30
 export type ExtensionScheduleType = 'INTERVAL' | 'FIXED_TIMES'
@@ -404,6 +405,7 @@ export async function createExtensionCommand(input: {
   numDays?: ExtensionImportDays
   dateFrom?: string
   dateTo?: string
+  items?: Array<{ orderId: string; trackingNumber: string; carrier?: string }>
 }) {
   return unwrap<ExtensionCommand>(await apiClient.post(`${extensionCommandPath}/commands`, input))
 }
