@@ -42,6 +42,7 @@ import {
 } from '@/shared/ui'
 
 import { downloadOrdersCsv, type OrderWorkbenchRow } from '../api/orderApi'
+import { OrderActionModalsContainer } from '../components/OrderActionModalsContainer'
 import { type OrderModal, useOrderActionStore } from '../hooks/useOrderActionStore'
 import { useOrderSummaryQuery } from '../hooks/useOrderSummaryQuery'
 import { useOrderWorkbenchQuery } from '../hooks/useOrderWorkbenchQuery'
@@ -688,6 +689,7 @@ export const OrderWorkbenchPage = () => {
           }}
         />
       </div>
+      <OrderActionModalsContainer orderItems={orderItems} />
     </section>
   )
 }

@@ -221,41 +221,49 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
         />
       ))}
 
-      <OrderAddressModal
-        open={requestedModal === 'address'}
-        anchor={requestedPopupAnchor}
-        order={row.order}
-        pending={mutation.isPending}
-        onClose={closeOrderModal}
-        onAction={mutation.mutate}
-      />
+      {requestedModal === 'address' ? (
+        <OrderAddressModal
+          open
+          anchor={requestedPopupAnchor}
+          order={row.order}
+          pending={mutation.isPending}
+          onClose={closeOrderModal}
+          onAction={mutation.mutate}
+        />
+      ) : null}
 
-      <OrderCustomerModal
-        open={requestedModal === 'customer'}
-        anchor={requestedPopupAnchor}
-        initialBuyer={row.order?.buyer}
-        pending={mutation.isPending}
-        onClose={closeOrderModal}
-        onAction={mutation.mutate}
-      />
+      {requestedModal === 'customer' ? (
+        <OrderCustomerModal
+          open
+          anchor={requestedPopupAnchor}
+          initialBuyer={row.order?.buyer}
+          pending={mutation.isPending}
+          onClose={closeOrderModal}
+          onAction={mutation.mutate}
+        />
+      ) : null}
 
-      <OrderShippingModal
-        open={requestedModal === 'shipping'}
-        anchor={requestedPopupAnchor}
-        initialShipping={row.order?.shippingService}
-        pending={mutation.isPending}
-        onClose={closeOrderModal}
-        onAction={mutation.mutate}
-      />
+      {requestedModal === 'shipping' ? (
+        <OrderShippingModal
+          open
+          anchor={requestedPopupAnchor}
+          initialShipping={row.order?.shippingService}
+          pending={mutation.isPending}
+          onClose={closeOrderModal}
+          onAction={mutation.mutate}
+        />
+      ) : null}
 
-      <OrderCaseModal
-        open={requestedModal === 'case'}
-        anchor={requestedPopupAnchor}
-        orderId={row.order?.id ?? ''}
-        pending={mutation.isPending}
-        onClose={closeOrderModal}
-        onAction={mutation.mutate}
-      />
+      {requestedModal === 'case' ? (
+        <OrderCaseModal
+          open
+          anchor={requestedPopupAnchor}
+          orderId={row.order?.id ?? ''}
+          pending={mutation.isPending}
+          onClose={closeOrderModal}
+          onAction={mutation.mutate}
+        />
+      ) : null}
 
       {(requestedModal === 'timeline' || itemTimelineId) && row.order?.id ? (
         <OrderTimelineModal
@@ -267,31 +275,37 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
         />
       ) : null}
 
-      <OrderReplacementModal
-        open={requestedModal === 'replacement'}
-        anchor={requestedPopupAnchor}
-        items={row.items ?? []}
-        pending={mutation.isPending}
-        onClose={closeOrderModal}
-        onAction={mutation.mutate}
-      />
+      {requestedModal === 'replacement' ? (
+        <OrderReplacementModal
+          open
+          anchor={requestedPopupAnchor}
+          items={row.items ?? []}
+          pending={mutation.isPending}
+          onClose={closeOrderModal}
+          onAction={mutation.mutate}
+        />
+      ) : null}
 
-      <OrderItemConfirmationModal
-        confirmation={confirmation}
-        anchor={confirmationAnchor}
-        pending={mutation.isPending}
-        onClose={closeConfirmation}
-        onConfirm={mutation.mutate}
-      />
+      {confirmation ? (
+        <OrderItemConfirmationModal
+          confirmation={confirmation}
+          anchor={confirmationAnchor}
+          pending={mutation.isPending}
+          onClose={closeConfirmation}
+          onConfirm={mutation.mutate}
+        />
+      ) : null}
 
-      <InteractiveImageViewerModal
-        open={Boolean(imageViewer)}
-        anchor={imageViewerAnchor}
-        imageUrl={imageViewer}
-        images={imageViewerList}
-        onClose={closeImageViewer}
-        onSelectImage={setImageViewer}
-      />
+      {imageViewer ? (
+        <InteractiveImageViewerModal
+          open
+          anchor={imageViewerAnchor}
+          imageUrl={imageViewer}
+          images={imageViewerList}
+          onClose={closeImageViewer}
+          onSelectImage={setImageViewer}
+        />
+      ) : null}
     </div>
   )
 })
