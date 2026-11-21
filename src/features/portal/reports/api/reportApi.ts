@@ -1,7 +1,7 @@
-import { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
+import { compactParams, unwrapResponse } from '@/shared/api/helpers'
 
-const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
+const unwrap = unwrapResponse
 
 export type ReportFilters = {
   externalOrderId?: string
@@ -244,42 +244,54 @@ export type ReportFilterOptions = {
   shops: Array<{ id: string; code: string | null; name: string | null }>
 }
 
-const params = (value: ReportFilters) =>
-  Object.fromEntries(Object.entries(value).filter(([, item]) => item !== undefined && item !== ''))
-const get = async <T>(path: string, filters?: ReportFilters) =>
-  unwrap<T>(await apiClient.get(path, ...(filters ? [{ params: params(filters) }] : [])))
+const params = compactParams
+const get = async <T>(path: string, filters?: ReportFilters, signal?: AbortSignal) => {
+  const config = {
+    ...(filters ? { params: params(filters) } : {}),
+    ...(signal ? { signal } : {}),
+  }
+  return unwrap<T>(
+    await (Object.keys(config).length > 0 ? apiClient.get(path, config) : apiClient.get(path)),
+  )
+}
 const getBlob = async (path: string, filters?: ReportFilters) =>
   (await apiClient.get(path, {
     params: params(filters || {}),
     responseType: 'blob',
   })) as unknown as Blob
 
-export const getReportFilterOptions = () => get<ReportFilterOptions>('/api/reports/filter-options')
+type SignalOptions = { signal?: AbortSignal } | AbortSignal
+
+const extractSignal = (options?: SignalOptions): AbortSignal | undefined =>
+  options instanceof AbortSignal ? options : options?.signal
+
+export const getReportFilterOptions = (options?: SignalOptions) =>
+  get<ReportFilterOptions>('/api/reports/filter-options', undefined, extractSignal(options))
 export const exportReportCsv = (filters: ReportFilters) =>
   getBlob('/api/reports/export.csv', filters)
-export const listFinanceDaily = (filters: ReportFilters) =>
-  get<FinanceDaily[]>('/api/reports/finance/daily', filters)
-export const listFinanceCoverage = (filters: ReportFilters) =>
-  get<FinanceCoverage[]>('/api/reports/finance/coverage', filters)
-export const listFinanceDailyProfit = (filters: ReportFilters) =>
-  get<FinanceDaily[]>('/api/reports/finance/daily-profit', filters)
-export const listFinanceOrderProfitability = (filters: ReportFilters) =>
-  get<OrderProfitabilityReport>('/api/reports/finance/orders-profitability', filters)
-export const listFinanceBySeller = (filters: ReportFilters) =>
-  get<SellerPerformance[]>('/api/reports/finance/by-seller', filters)
-export const listFinanceSellerDaily = (filters: ReportFilters) =>
-  get<SellerDailyProfit[]>('/api/reports/finance/seller-daily', filters)
-export const listFinanceByTeam = (filters: ReportFilters) =>
-  get<TeamPerformance[]>('/api/reports/finance/by-team', filters)
-export const getBuyerInsights = (filters: ReportFilters) =>
-  get<BuyerInsights>('/api/reports/buyers/insights', filters)
-export const listChannelPerformance = (filters: ReportFilters) =>
-  get<ChannelPerformance[]>('/api/reports/ads/channel-performance', filters)
-export const listAdsDaily = (filters: ReportFilters) =>
-  get<AdsDaily[]>('/api/reports/ads/daily', filters)
-export const listAdsSellerDaily = (filters: ReportFilters) =>
-  get<AdsSellerDaily[]>('/api/reports/ads/seller-daily', filters)
-export const getOperationsOverview = (filters: ReportFilters) =>
-  get<OperationsOverview>('/api/reports/operations/overview', filters)
-export const listVendorPerformance = (filters: ReportFilters) =>
-  get<{ items: VendorPerformance[] }>('/api/reports/vendor/performance', filters)
+export const listFinanceDaily = (filters: ReportFilters, signal?: AbortSignal) =>
+  get<FinanceDaily[]>('/api/reports/finance/daily', filters, signal)
+export const listFinanceCoverage = (filters: ReportFilters, signal?: AbortSignal) =>
+  get<FinanceCoverage[]>('/api/reports/finance/coverage', filters, signal)
+export const listFinanceDailyProfit = (filters: ReportFilters, signal?: AbortSignal) =>
+  get<FinanceDaily[]>('/api/reports/finance/daily-profit', filters, signal)
+export const listFinanceOrderProfitability = (filters: ReportFilters, signal?: AbortSignal) =>
+  get<OrderProfitabilityReport>('/api/reports/finance/orders-profitability', filters, signal)
+export const listFinanceBySeller = (filters: ReportFilters, signal?: AbortSignal) =>
+  get<SellerPerformance[]>('/api/reports/finance/by-seller', filters, signal)
+export const listFinanceSellerDaily = (filters: ReportFilters, signal?: AbortSignal) =>
+  get<SellerDailyProfit[]>('/api/reports/finance/seller-daily', filters, signal)
+export const listFinanceByTeam = (filters: ReportFilters, signal?: AbortSignal) =>
+  get<TeamPerformance[]>('/api/reports/finance/by-team', filters, signal)
+export const getBuyerInsights = (filters: ReportFilters, signal?: AbortSignal) =>
+  get<BuyerInsights>('/api/reports/buyers/insights', filters, signal)
+export const listChannelPerformance = (filters: ReportFilters, signal?: AbortSignal) =>
+  get<ChannelPerformance[]>('/api/reports/ads/channel-performance', filters, signal)
+export const listAdsDaily = (filters: ReportFilters, signal?: AbortSignal) =>
+  get<AdsDaily[]>('/api/reports/ads/daily', filters, signal)
+export const listAdsSellerDaily = (filters: ReportFilters, signal?: AbortSignal) =>
+  get<AdsSellerDaily[]>('/api/reports/ads/seller-daily', filters, signal)
+export const getOperationsOverview = (filters: ReportFilters, signal?: AbortSignal) =>
+  get<OperationsOverview>('/api/reports/operations/overview', filters, signal)
+export const listVendorPerformance = (filters: ReportFilters, signal?: AbortSignal) =>
+  get<{ items: VendorPerformance[] }>('/api/reports/vendor/performance', filters, signal)

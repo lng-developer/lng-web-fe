@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { EmployeeAvatar, SearchInput, useFeedbackToast } from '@/shared/ui'
 
+import { organizationKeys } from '../api/organizationKeys'
 import {
   addTeamMember,
   loadMemberCandidates,
@@ -36,15 +37,16 @@ export const TeamStaffBranch = memo(function TeamStaffBranch({
   const [selectedAccounts, setSelectedAccounts] = useState<string[]>([])
   const [memberType, setMemberType] = useState<TeamMemberInput['memberType']>('member')
   const members = useQuery({
-    queryKey: ['organization', 'teams', team.id, 'members'],
-    queryFn: () => loadTeamMembers(team.id),
+    queryKey: organizationKeys.teamMembers(team.id),
+    queryFn: ({ signal }) => loadTeamMembers(team.id, signal),
   })
   const candidates = useQuery({
-    queryKey: ['organization', 'member-candidates'],
-    queryFn: loadMemberCandidates,
+    queryKey: organizationKeys.memberCandidates(),
+    queryFn: ({ signal }) => loadMemberCandidates(signal),
     enabled: canManageMembers,
   })
-  const refreshOrganization = () => queryClient.invalidateQueries({ queryKey: ['organization'] })
+  const refreshOrganization = () =>
+    queryClient.invalidateQueries({ queryKey: organizationKeys.all })
   const addMembersMutation = useMutation({
     mutationFn: () =>
       Promise.all(

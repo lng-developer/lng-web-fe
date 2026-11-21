@@ -39,6 +39,7 @@ import {
   useFeedbackToast,
 } from '@/shared/ui'
 
+import { organizationKeys } from '../api/organizationKeys'
 import {
   createDepartment,
   createTeam,
@@ -142,14 +143,18 @@ export function OrganizationPage() {
   const canManageMembers = canManageOrganization || permissions.includes('TEAMS:WRITE')
 
   const departments = useQuery({
-    queryKey: ['organization', 'departments'],
-    queryFn: loadDepartments,
+    queryKey: organizationKeys.departments(),
+    queryFn: ({ signal }) => loadDepartments(signal),
   })
-  const teams = useQuery({ queryKey: ['organization', 'teams'], queryFn: loadTeams })
+  const teams = useQuery({
+    queryKey: organizationKeys.teams(),
+    queryFn: ({ signal }) => loadTeams(signal),
+  })
 
   const [selectedDeptId, setSelectedDeptId] = useState<string | null>(null)
 
-  const refreshOrganization = () => queryClient.invalidateQueries({ queryKey: ['organization'] })
+  const refreshOrganization = () =>
+    queryClient.invalidateQueries({ queryKey: organizationKeys.all })
   const saveMutation = useMutation<Department | Team, Error, EditorValues>({
     mutationFn: async (values) => {
       if (!editor) throw new Error('Editor is closed')

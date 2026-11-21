@@ -5,7 +5,6 @@ import { type PopupModalAnchor } from '@/shared/ui'
 
 import { type OrderWorkbenchRow } from '../api/orderApi'
 import type { OrderModal } from '../components/orderTypes'
-import { useOrderActionStore } from '../hooks/useOrderActionStore'
 import { OrderInlinePanel } from './OrderInlinePanel'
 import styles from './OrderWorkbenchPage.module.scss'
 
@@ -99,20 +98,10 @@ export const OrderWorkbenchExpandedRow = memo(function OrderWorkbenchExpandedRow
   row,
   canWrite,
   canOperate,
-  requestedModal: propModal,
-  requestedPopupAnchor: propAnchor,
-  onOrderModalClose: propOnClose,
+  requestedModal,
+  requestedPopupAnchor,
+  onOrderModalClose,
 }: OrderWorkbenchExpandedRowProps) {
-  const orderId = row?.order?.id
-  const storeAction = useOrderActionStore((state) =>
-    orderId && state.orderAction?.orderId === orderId ? state.orderAction : undefined,
-  )
-  const storeClose = useOrderActionStore((state) => state.closeOrderModal)
-
-  const requestedModal = propModal ?? storeAction?.modal
-  const requestedPopupAnchor = propAnchor ?? storeAction?.anchor
-  const onOrderModalClose = propOnClose ?? storeClose
-
   if (!row?.order) {
     return null
   }

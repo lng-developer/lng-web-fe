@@ -757,11 +757,11 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #faad14;
+  background: var(--ant-color-warning, #faad14);
 }
 
 .badgeDotSuccess {
-  background: #52c41a;
+  background: var(--ant-color-success, #52c41a);
 }
 
 .inspectPanel img {
@@ -824,7 +824,7 @@
   top: 0;
   bottom: 0;
   width: 4px;
-  background: #1677ff;
+  background: var(--ant-color-primary, #1677ff);
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
   z-index: 10;
   cursor: ew-resize;
@@ -839,7 +839,7 @@
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: #1677ff;
+    background: var(--ant-color-primary, #1677ff);
     color: #fff;
     font-size: 14px;
     font-weight: bold;

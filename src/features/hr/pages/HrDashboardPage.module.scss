@@ -113,15 +113,15 @@
 }
 
 .breakdownWarning {
-  color: #f59e0b !important;
+  color: var(--ant-color-warning, #f59e0b) !important;
 }
 
 .breakdownDanger {
-  color: #ef4444 !important;
+  color: var(--ant-color-error, #ef4444) !important;
 }
 
 .breakdownSuccess {
-  color: #10b981 !important;
+  color: var(--ant-color-success, #10b981) !important;
 }
 
 /* Action Queue */
@@ -307,8 +307,8 @@
 /* Dark mode overrides */
 :global(html[data-theme='dark']) {
   .header {
-    background: #1e293b;
-    border-color: #334155;
+    background: var(--ant-color-bg-container);
+    border-color: var(--ant-color-border-secondary);
   }
 
   .breakdownItem,
@@ -316,16 +316,16 @@
   .departmentItem,
   .announcementCard,
   .quickNavCard {
-    background: #1e293b;
-    border-color: #334155;
+    background: var(--ant-color-bg-container);
+    border-color: var(--ant-color-border-secondary);
 
     &:hover {
-      background: #283548;
-      border-color: #475569;
+      background: var(--ant-color-fill-secondary);
+      border-color: var(--ant-color-border);
     }
   }
 
   .quickNavIcon {
-    background: #24344d;
+    background: var(--ant-color-fill-tertiary);
   }
 }

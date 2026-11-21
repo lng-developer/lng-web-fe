@@ -49,7 +49,7 @@
   font-size: 11px;
   font-weight: 700;
   line-height: 1;
-  background: #ffffff;
+  background: var(--ant-color-bg-container, #ffffff);
   color: var(--ant-color-primary);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
   transition: all 0.2s ease;
@@ -77,9 +77,9 @@
   font-size: 11px;
   font-weight: 600;
   line-height: 1;
-  background: #fff1f0;
-  color: #ff4d4f;
-  border: 1px solid #ffccc7;
+  background: var(--ant-color-error-bg, #fff1f0);
+  color: var(--ant-color-error, #ff4d4f);
+  border: 1px solid var(--ant-color-error-border, #ffccc7);
 }
 
 .tabCountBadgeActive {
@@ -93,7 +93,7 @@
   font-size: 11px;
   font-weight: 700;
   line-height: 1;
-  background: #ffffff;
+  background: var(--ant-color-bg-container, #ffffff);
   color: var(--ant-color-primary);
   box-shadow: 0 1px 2px rgb(0 0 0 / 12%);
 }
@@ -205,23 +205,23 @@
 }
 
 .metricIcon.blocked {
-  background: #fff1f0;
-  color: #ff4d4f;
+  background: var(--ant-color-error-bg, #fff1f0);
+  color: var(--ant-color-error, #ff4d4f);
 }
 
 .metricIcon.ready {
-  background: #f0f9ff;
-  color: #1677ff;
+  background: var(--ant-color-info-bg, #f0f9ff);
+  color: var(--ant-color-primary, #1677ff);
 }
 
 .metricIcon.confirmed {
-  background: #f6ffed;
-  color: #52c41a;
+  background: var(--ant-color-success-bg, #f6ffed);
+  color: var(--ant-color-success, #52c41a);
 }
 
 .metricIcon.ambiguous {
-  background: #fffbe6;
-  color: #faad14;
+  background: var(--ant-color-warning-bg, #fffbe6);
+  color: var(--ant-color-warning, #faad14);
 }
 
 .metricBody {
@@ -355,28 +355,28 @@
 }
 
 .stageBadge.SKU_CLEANUP {
-  background: #f0f5ff;
-  color: #2f54eb;
+  background: var(--ant-color-primary-bg, #f0f5ff);
+  color: var(--ant-color-primary, #2f54eb);
 }
 
 .stageBadge.PRODUCT_MAPPING {
-  background: #fff0f6;
-  color: #c41d7f;
+  background: var(--ant-color-magenta-1, #fff0f6);
+  color: var(--ant-color-magenta, #c41d7f);
 }
 
 .stageBadge.INPUT_SEMANTICS {
-  background: #fffbe6;
-  color: #ad6800;
+  background: var(--ant-color-warning-bg, #fffbe6);
+  color: var(--ant-color-warning-text, #ad6800);
 }
 
 .stageBadge.VALUE_ALIASES {
-  background: #f0f9ff;
-  color: #0958d9;
+  background: var(--ant-color-info-bg, #f0f9ff);
+  color: var(--ant-color-info, #0958d9);
 }
 
 .stageBadge.VENDOR_ROUTING {
-  background: #f6ffed;
-  color: #389e0d;
+  background: var(--ant-color-success-bg, #f6ffed);
+  color: var(--ant-color-success-text, #389e0d);
 }
 
 .queueList {
@@ -440,8 +440,8 @@
 }
 
 .candidateCard.autoMatch {
-  border-color: #52c41a;
-  background: #f6ffed;
+  border-color: var(--ant-color-success, #52c41a);
+  background: var(--ant-color-success-bg, #f6ffed);
 }
 
 .candidateMeta {
@@ -480,18 +480,18 @@
 }
 
 .confidenceBadge.HIGH {
-  background: #f6ffed;
-  color: #389e0d;
+  background: var(--ant-color-success-bg, #f6ffed);
+  color: var(--ant-color-success-text, #389e0d);
 }
 
 .confidenceBadge.MEDIUM {
-  background: #fffbe6;
-  color: #ad6800;
+  background: var(--ant-color-warning-bg, #fffbe6);
+  color: var(--ant-color-warning-text, #ad6800);
 }
 
 .confidenceBadge.LOW {
-  background: #fff1f0;
-  color: #cf1322;
+  background: var(--ant-color-error-bg, #fff1f0);
+  color: var(--ant-color-error-text, #cf1322);
 }
 
 /* ── Rule page layout ─────────────────────────────────── */

@@ -15,6 +15,7 @@ import {
   useFeedbackToast,
 } from '@/shared/ui'
 
+import { authKeys } from '@/features/auth/api/authKeys'
 import {
   createPermission,
   deletePermission,
@@ -35,10 +36,10 @@ export function PermissionsPage() {
   const [isEditorOpen, setIsEditorOpen] = useState(false)
   const [permissionToDelete, setPermissionToDelete] = useState<Permission>()
   const { data, error, isLoading, refetch } = useQuery({
-    queryKey: ['auth-permissions'],
+    queryKey: authKeys.permissions.all(),
     queryFn: loadPermissions,
   })
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['auth-permissions'] })
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: authKeys.permissions.all() })
   const saveMutation = useMutation({
     mutationFn: (values: PermissionInput) =>
       editingPermission ? updatePermission(editingPermission.id, values) : createPermission(values),

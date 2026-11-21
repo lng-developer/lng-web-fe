@@ -29,6 +29,7 @@ export function ListingVariantCard({ listing, canWrite }: ListingVariantCardProp
   const variants = useQuery({
     queryKey: catalogKeys.variants(listing.id),
     queryFn: () => listListingVariants(listing.id),
+    enabled: Boolean(listing?.id),
   })
 
   const requestPsd = useMutation({

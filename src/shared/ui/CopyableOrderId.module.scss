@@ -36,79 +36,120 @@
   }
 }
 .skuBadge {
-  color: #2563eb;
+  color: var(--ant-color-info, #2563eb);
   background: color-mix(in srgb, var(--ant-color-info-bg) 64%, var(--ant-color-bg-container));
-  border: 1px solid color-mix(in srgb, #2563eb 42%, var(--ant-color-border));
+  border: 1px solid color-mix(in srgb, var(--ant-color-info, #2563eb) 42%, var(--ant-color-border));
 
   &:hover {
-    border-color: #2563eb;
+    border-color: var(--ant-color-info, #2563eb);
     background: color-mix(in srgb, var(--ant-color-info-bg) 85%, var(--ant-color-bg-container));
   }
 }
 .asinBadge {
-  color: #7c3aed;
-  background: color-mix(in srgb, #f5f3ff 64%, var(--ant-color-bg-container));
-  border: 1px solid color-mix(in srgb, #7c3aed 42%, var(--ant-color-border));
+  color: var(--ant-color-purple, #7c3aed);
+  background: color-mix(
+    in srgb,
+    var(--ant-color-purple-1, #f5f3ff) 64%,
+    var(--ant-color-bg-container)
+  );
+  border: 1px solid
+    color-mix(in srgb, var(--ant-color-purple, #7c3aed) 42%, var(--ant-color-border));
 
   &:hover {
-    border-color: #7c3aed;
-    background: color-mix(in srgb, #ede9fe 85%, var(--ant-color-bg-container));
+    border-color: var(--ant-color-purple, #7c3aed);
+    background: color-mix(
+      in srgb,
+      var(--ant-color-purple-2, #ede9fe) 85%,
+      var(--ant-color-bg-container)
+    );
   }
 }
 
 .listingIdBadge {
-  color: #0891b2;
-  background: color-mix(in srgb, #ecfeff 64%, var(--ant-color-bg-container));
-  border: 1px solid color-mix(in srgb, #0891b2 42%, var(--ant-color-border));
+  color: var(--ant-color-cyan, #0891b2);
+  background: color-mix(
+    in srgb,
+    var(--ant-color-cyan-1, #ecfeff) 64%,
+    var(--ant-color-bg-container)
+  );
+  border: 1px solid color-mix(in srgb, var(--ant-color-cyan, #0891b2) 42%, var(--ant-color-border));
 
   &:hover {
-    border-color: #0891b2;
-    background: color-mix(in srgb, #cffafe 85%, var(--ant-color-bg-container));
+    border-color: var(--ant-color-cyan, #0891b2);
+    background: color-mix(
+      in srgb,
+      var(--ant-color-cyan-2, #cffafe) 85%,
+      var(--ant-color-bg-container)
+    );
   }
 }
 
 :global(html[data-theme='dark']) {
   .orderIdBadge {
-    border-color: color-mix(in srgb, var(--ant-color-primary) 42%, #393a3b);
-    background: color-mix(in srgb, var(--ant-color-primary) 14%, #242526);
-    color: #93c5fd;
+    border-color: color-mix(in srgb, var(--ant-color-primary) 42%, var(--ant-color-border));
+    background: color-mix(in srgb, var(--ant-color-primary) 14%, var(--ant-color-bg-container));
+    color: var(--ant-color-primary-text-hover, #93c5fd);
 
     &:hover {
       border-color: var(--ant-color-primary);
-      background: color-mix(in srgb, var(--ant-color-primary) 22%, #242526);
+      background: color-mix(in srgb, var(--ant-color-primary) 22%, var(--ant-color-bg-container));
     }
   }
 
   .skuBadge {
-    border-color: color-mix(in srgb, #3b82f6 42%, #393a3b);
-    background: color-mix(in srgb, #3b82f6 14%, #242526);
-    color: #93c5fd;
+    border-color: color-mix(in srgb, var(--ant-color-info, #3b82f6) 42%, var(--ant-color-border));
+    background: color-mix(
+      in srgb,
+      var(--ant-color-info, #3b82f6) 14%,
+      var(--ant-color-bg-container)
+    );
+    color: var(--ant-color-info-text-hover, #93c5fd);
 
     &:hover {
-      border-color: #3b82f6;
-      background: color-mix(in srgb, #3b82f6 22%, #242526);
+      border-color: var(--ant-color-info, #3b82f6);
+      background: color-mix(
+        in srgb,
+        var(--ant-color-info, #3b82f6) 22%,
+        var(--ant-color-bg-container)
+      );
     }
   }
 
   .asinBadge {
-    border-color: color-mix(in srgb, #8b5cf6 42%, #393a3b);
-    background: color-mix(in srgb, #8b5cf6 14%, #242526);
-    color: #c4b5fd;
+    border-color: color-mix(in srgb, var(--ant-color-purple, #8b5cf6) 42%, var(--ant-color-border));
+    background: color-mix(
+      in srgb,
+      var(--ant-color-purple, #8b5cf6) 14%,
+      var(--ant-color-bg-container)
+    );
+    color: var(--ant-color-purple-hover, #c4b5fd);
 
     &:hover {
-      border-color: #8b5cf6;
-      background: color-mix(in srgb, #8b5cf6 22%, #242526);
+      border-color: var(--ant-color-purple, #8b5cf6);
+      background: color-mix(
+        in srgb,
+        var(--ant-color-purple, #8b5cf6) 22%,
+        var(--ant-color-bg-container)
+      );
     }
   }
 
   .listingIdBadge {
-    border-color: color-mix(in srgb, #06b6d4 42%, #393a3b);
-    background: color-mix(in srgb, #06b6d4 14%, #242526);
-    color: #67e8f9;
+    border-color: color-mix(in srgb, var(--ant-color-cyan, #06b6d4) 42%, var(--ant-color-border));
+    background: color-mix(
+      in srgb,
+      var(--ant-color-cyan, #06b6d4) 14%,
+      var(--ant-color-bg-container)
+    );
+    color: var(--ant-color-cyan-hover, #67e8f9);
 
     &:hover {
-      border-color: #06b6d4;
-      background: color-mix(in srgb, #06b6d4 22%, #242526);
+      border-color: var(--ant-color-cyan, #06b6d4);
+      background: color-mix(
+        in srgb,
+        var(--ant-color-cyan, #06b6d4) 22%,
+        var(--ant-color-bg-container)
+      );
     }
   }
 }

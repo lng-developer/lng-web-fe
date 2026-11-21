@@ -11,26 +11,26 @@
 }
 
 .headerChatButtonActive {
-  color: #2563eb !important;
-  background: rgb(37 99 235 / 12%) !important;
+  color: var(--ant-color-primary) !important;
+  background: color-mix(in srgb, var(--ant-color-primary) 12%, transparent) !important;
 }
 
 .headerChatButtonActive:hover,
 .headerChatButtonActive:focus-visible {
-  color: #2563eb !important;
-  background: rgb(37 99 235 / 18%) !important;
+  color: var(--ant-color-primary) !important;
+  background: color-mix(in srgb, var(--ant-color-primary) 18%, transparent) !important;
 }
 
 .headerChatButtonUnread {
-  color: #2563eb !important;
-  background: rgb(37 99 235 / 12%) !important;
-  box-shadow: 0 0 0 1px rgb(37 99 235 / 18%);
+  color: var(--ant-color-primary) !important;
+  background: color-mix(in srgb, var(--ant-color-primary) 12%, transparent) !important;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ant-color-primary) 18%, transparent);
 }
 
 .headerChatButtonUnread:hover,
 .headerChatButtonUnread:focus-visible {
-  color: #2563eb !important;
-  background: rgb(37 99 235 / 18%) !important;
+  color: var(--ant-color-primary) !important;
+  background: color-mix(in srgb, var(--ant-color-primary) 18%, transparent) !important;
 }
 
 .chatMenuWrapper {

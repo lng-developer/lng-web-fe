@@ -1,5 +1,6 @@
-import { ApiResponse, Paginated } from '@/server/type'
+import { Paginated } from '@/server/type'
 import { apiClient } from '@/shared/api'
+import { compactParams, unwrapResponse } from '@/shared/api/helpers'
 
 export type MappingRuleType =
   | 'skuNormalize'
@@ -272,18 +273,17 @@ const rulePaths: Record<MappingRuleType, string> = {
   valueAliases: 'value-aliases',
   vendorRouting: 'vendor-routing-rules',
 }
-const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
-const compact = <T extends object>(params: T) =>
-  Object.fromEntries(Object.entries(params).filter(([, value]) => value !== '' && value != null))
+const unwrap = unwrapResponse
+const compact = compactParams
 
-export async function getMappingWorkbench(params: MappingContextParams = {}) {
+export async function getMappingWorkbench(params: MappingContextParams = {}, signal?: AbortSignal) {
   return unwrap<MappingWorkbench>(
-    await apiClient.get('/api/mapping/config-workbench', { params: compact(params) }),
+    await apiClient.get('/api/mapping/config-workbench', { params: compact(params), signal }),
   )
 }
-export async function getMappingSummary(params: MappingContextParams = {}) {
+export async function getMappingSummary(params: MappingContextParams = {}, signal?: AbortSignal) {
   return unwrap<MappingSummary>(
-    await apiClient.get('/api/mapping/summary', { params: compact(params) }),
+    await apiClient.get('/api/mapping/summary', { params: compact(params), signal }),
   )
 }
 export async function listAuthorableShops() {

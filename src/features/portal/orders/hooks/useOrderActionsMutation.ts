@@ -84,6 +84,31 @@ export function useOrderActionsMutation({
         return
       }
 
+      // Targeted cache update for inline CS note: update active workbench cache directly
+      // with 0ms delay without triggering a full page refetch.
+      if (action.kind === 'note') {
+        queryClient.setQueriesData<{
+          items?: Array<{ items: Array<{ id: string; csNote?: string | null }> }>
+        }>({ queryKey: [...orderKeys.all, 'workbench'] }, (old) => {
+          if (!old?.items) return old
+          return {
+            ...old,
+            items: old.items.map((row) => ({
+              ...row,
+              items: row.items.map((item) =>
+                item.id === action.itemId ? { ...item, csNote: action.note } : item,
+              ),
+            })),
+          }
+        })
+        await queryClient.invalidateQueries({
+          queryKey: orderKeys.timeline(orderId, action.itemId),
+        })
+        await queryClient.invalidateQueries({ queryKey: orderKeys.timeline(orderId) })
+        onSuccess?.(result, action)
+        return
+      }
+
       // Targeted cache invalidation
       if (
         action.kind === 'case-save' ||
@@ -97,7 +122,6 @@ export function useOrderActionsMutation({
           })
         }
       } else if (
-        action.kind === 'note' ||
         action.kind === 'ready' ||
         action.kind === 'cancel' ||
         action.kind === 'vendor-rematch-recovery' ||

@@ -84,4 +84,32 @@ describe('VendorSubmissionWorkbenchPage', () => {
     expect(await screen.findByText('Total')).toBeInTheDocument()
     expect(await screen.findByText('Ready')).toBeInTheDocument()
   })
+
+  it('falls back to row items for summary metrics when api summary returns zeros', async () => {
+    vi.mocked(getVendorSubmissionSummary).mockResolvedValue({
+      total: 0,
+      ready: 0,
+      submitted: 0,
+      failed: 0,
+      cancelled: 0,
+      byStatus: {},
+    })
+    vi.mocked(listVendorSubmissions).mockResolvedValue({
+      items: [
+        {
+          id: 'sub-1',
+          externalOrderId: '113-4423297-7689028',
+          sku: 'J2512-TS25-111126-01',
+          status: 'SUBMITTED',
+          submitAttemptCount: 1,
+        } as unknown as import('@/features/portal/vendor-submissions/api/vendorSubmissionApi').VendorSubmission,
+      ],
+      pagination: { total: 1, page: 1, limit: 50 },
+    })
+
+    renderPage()
+
+    await waitFor(() => expect(screen.getByText('113-4423297-7689028')).toBeInTheDocument())
+    expect(screen.getAllByText('1').length).toBeGreaterThanOrEqual(2)
+  })
 })

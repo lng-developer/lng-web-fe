@@ -1,5 +1,5 @@
-import { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
+import { unwrapResponse } from '@/shared/api/helpers'
 
 export type ShipmentStatus =
   | 'TRACKING_PENDING'
@@ -103,17 +103,19 @@ export type TrackingSyncRunResult = {
 }
 
 const basePath = '/api/shipments'
-const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
+const unwrap = unwrapResponse
 
-export const listShipments = async (params: ShipmentParams) =>
-  unwrap<ShipmentList>(await apiClient.get(basePath, { params }))
+export const listShipments = async (params: ShipmentParams, signal?: AbortSignal) =>
+  unwrap<ShipmentList>(await apiClient.get(basePath, { params, signal }))
 export const exportShipmentsCsv = async (params: ShipmentParams) =>
   (await apiClient.get(`${basePath}/export.csv`, {
     params: { ...params, page: 1, limit: 5000 },
     responseType: 'blob',
   })) as unknown as Blob
-export const summarizeShipments = async (params: Omit<ShipmentParams, 'page' | 'limit'>) =>
-  unwrap<ShipmentSummary>(await apiClient.get(`${basePath}/summary`, { params }))
+export const summarizeShipments = async (
+  params: Omit<ShipmentParams, 'page' | 'limit'>,
+  signal?: AbortSignal,
+) => unwrap<ShipmentSummary>(await apiClient.get(`${basePath}/summary`, { params, signal }))
 export const getShipment = async (id: string) =>
   unwrap<Shipment>(await apiClient.get(`${basePath}/${id}`))
 export const listWebhookLogs = async (params: {

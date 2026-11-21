@@ -1,5 +1,5 @@
-import { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
+import { compactParams, unwrapResponse } from '@/shared/api/helpers'
 
 export type WorkScoreSourceType = 'DESIGN_SUBMISSION' | 'PRODUCTION_SCALE'
 export type WorkScoreStatus = 'ACTIVE' | 'VOIDED'
@@ -91,16 +91,15 @@ export type WorkScoreRuleFormInput = Omit<
 }
 
 const basePath = '/api/work-scores'
-const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
-const compact = <T extends object>(params: T) =>
-  Object.fromEntries(
-    Object.entries(params).filter(([, value]) => value !== undefined && value !== ''),
-  )
+const unwrap = unwrapResponse
+const compact = compactParams
 
-export const listWorkScores = async (params: WorkScoreListParams) =>
-  unwrap<WorkScoreList>(await apiClient.get(basePath, { params: compact(params) }))
-export const getWorkScoreSummary = async (params: WorkScoreListParams) =>
-  unwrap<WorkScoreSummary>(await apiClient.get(`${basePath}/summary`, { params: compact(params) }))
+export const listWorkScores = async (params: WorkScoreListParams, signal?: AbortSignal) =>
+  unwrap<WorkScoreList>(await apiClient.get(basePath, { params: compact(params), signal }))
+export const getWorkScoreSummary = async (params: WorkScoreListParams, signal?: AbortSignal) =>
+  unwrap<WorkScoreSummary>(
+    await apiClient.get(`${basePath}/summary`, { params: compact(params), signal }),
+  )
 export const getWorkScore = async (id: string) =>
   unwrap<WorkScoreDetail>(await apiClient.get(`${basePath}/${id}`))
 export const listWorkScoreRules = async () =>

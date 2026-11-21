@@ -1,13 +1,8 @@
-import { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
+import { compactParams, unwrapResponse } from '@/shared/api/helpers'
 
-const unwrap = <T>(response: ApiResponse<T>) => response.data
-const compact = <T extends Record<string, unknown>>(params: T) =>
-  Object.fromEntries(
-    Object.entries(params).filter(
-      ([, value]) => value !== undefined && value !== null && value !== '',
-    ),
-  )
+const unwrap = unwrapResponse
+const compact = compactParams
 
 export type CustomerLifecycle = 'NEW' | 'RETURNING' | 'VIP' | 'AT_RISK' | 'ISSUE_PRONE'
 export type CustomerCareStatus = 'NONE' | 'NEEDS_FOLLOW_UP' | 'IN_PROGRESS' | 'RESOLVED'
@@ -76,9 +71,9 @@ export type CustomerListResponse = {
   total: number
 }
 
-export async function listCustomers(params: CustomerListParams) {
+export async function listCustomers(params: CustomerListParams, signal?: AbortSignal) {
   return unwrap<CustomerListResponse>(
-    await apiClient.get('/api/customers', { params: compact(params) }),
+    await apiClient.get('/api/customers', { params: compact(params), signal }),
   )
 }
 

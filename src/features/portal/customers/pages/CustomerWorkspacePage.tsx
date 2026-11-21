@@ -29,7 +29,14 @@ import {
 } from '@/features/portal/customers/hooks'
 import { getPermissions } from '@/shared/auth/session'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
-import { DetailModal, FeedbackAlert, FilterBar, FormattedDateTime, MetricCard } from '@/shared/ui'
+import {
+  DetailModal,
+  FeedbackAlert,
+  FilterBar,
+  FormattedDateTime,
+  MetricCard,
+  useDebouncedValue,
+} from '@/shared/ui'
 
 import styles from './CustomerWorkspacePage.module.scss'
 
@@ -49,6 +56,7 @@ export const CustomerWorkspacePage = () => {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [search, setSearch] = useState('')
+  const debouncedSearch = useDebouncedValue(search, 300)
   const [lifecycle, setLifecycle] = useState<CustomerLifecycle | undefined>()
   const [careStatus, setCareStatus] = useState<CustomerCareStatus | undefined>()
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -74,12 +82,23 @@ export const CustomerWorkspacePage = () => {
   )
 
   const params = useMemo(
-    () => ({ page, limit: pageSize, search, lifecycle, careStatus, sort: 'lastOrderDesc' }),
-    [page, pageSize, search, lifecycle, careStatus],
+    () => ({
+      page,
+      limit: pageSize,
+      search: debouncedSearch || undefined,
+      lifecycle,
+      careStatus,
+      sort: 'lastOrderDesc',
+    }),
+    [page, pageSize, debouncedSearch, lifecycle, careStatus],
   )
   const summaryParams = useMemo(
-    () => ({ search, lifecycle, careStatus }),
-    [search, lifecycle, careStatus],
+    () => ({
+      search: debouncedSearch || undefined,
+      lifecycle,
+      careStatus,
+    }),
+    [debouncedSearch, lifecycle, careStatus],
   )
 
   const customers = useCustomersQuery(params)

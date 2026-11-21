@@ -32,7 +32,7 @@ export function AuthenticatedMediaImage({
           observer.disconnect()
         }
       },
-      { rootMargin: '300px 0px' },
+      { rootMargin: '150px 0px' },
     )
     observer.observe(imageRef.current)
     return () => observer.disconnect()

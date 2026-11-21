@@ -1,5 +1,5 @@
-import { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
+import { compactParams, unwrapResponse } from '@/shared/api/helpers'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 
 export type OrderWorkbenchParams = {
@@ -230,9 +230,8 @@ export type OrderRecheckJob = {
   reused?: boolean
 }
 
-const compact = (params: OrderWorkbenchParams) =>
-  Object.fromEntries(Object.entries(params).filter(([, value]) => value !== '' && value != null))
-const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
+const compact = compactParams
+const unwrap = unwrapResponse
 
 export async function listOrderWorkbench(params: OrderWorkbenchParams, signal?: AbortSignal) {
   return unwrap<OrderWorkbenchResult>(

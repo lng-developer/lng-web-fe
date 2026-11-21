@@ -15,6 +15,7 @@ import {
   useFeedbackToast,
 } from '@/shared/ui'
 
+import { authKeys } from '@/features/auth/api/authKeys'
 import {
   createRole,
   deleteRole,
@@ -35,10 +36,10 @@ export function RolesPage() {
   const [isEditorOpen, setIsEditorOpen] = useState(false)
   const [roleToDelete, setRoleToDelete] = useState<Role>()
   const { data, error, isLoading, refetch } = useQuery({
-    queryKey: ['auth-roles'],
+    queryKey: authKeys.roles.all(),
     queryFn: loadRoleCatalog,
   })
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['auth-roles'] })
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: authKeys.roles.all() })
   const saveMutation = useMutation({
     mutationFn: (values: RoleInput) =>
       editingRole ? updateRole(editingRole.id, values) : createRole(values),

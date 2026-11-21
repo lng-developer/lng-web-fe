@@ -17,7 +17,7 @@ export function useProductionTasksQuery(params: UseProductionTasksQueryParams) {
 
   return useQuery({
     queryKey: productionKeys.list(queryParams),
-    queryFn: () => listProductionTasks(queryParams),
+    queryFn: ({ signal }) => listProductionTasks(queryParams, signal),
     placeholderData: keepPreviousData,
     staleTime: 20_000,
     refetchOnWindowFocus: false,
@@ -32,7 +32,7 @@ export function useProductionQueueCountsQuery(
 ) {
   return useQuery({
     queryKey: productionKeys.queueSummary(filters),
-    queryFn: () => summarizeProductionQueueCounts(filters),
+    queryFn: ({ signal }) => summarizeProductionQueueCounts(filters, signal),
     staleTime: 20_000,
     refetchOnWindowFocus: false,
     retry: false,
@@ -46,7 +46,7 @@ export function useProductionSummaryQuery(
 ) {
   return useQuery({
     queryKey: productionKeys.summary(filters),
-    queryFn: () => summarizeProductionTasks(filters),
+    queryFn: ({ signal }) => summarizeProductionTasks(filters, signal),
     staleTime: 20_000,
     refetchOnWindowFocus: false,
     retry: false,

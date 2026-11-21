@@ -19,6 +19,7 @@ import {
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import type { ImportBatch } from '@/features/portal/finance/api/financeApi'
+import { financeKeys } from '@/features/portal/finance/api/financeKeys'
 import {
   allocateRefund,
   confirmRefund,
@@ -128,14 +129,14 @@ export function FinanceImportSection({
         { orderItemId: allocationItemId!, amount: allocationMinorUnits! },
       ]),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['finance'] })
+      await queryClient.invalidateQueries({ queryKey: financeKeys.all })
       setSelectedRefund(undefined)
     },
   })
   const confirm = useMutation({
     mutationFn: confirmRefund,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['finance'] })
+      await queryClient.invalidateQueries({ queryKey: financeKeys.all })
     },
   })
   const canWriteRefunds = account.permissions.includes('FINANCE:WRITE')

@@ -16,6 +16,7 @@ import {
   useFeedbackToast,
 } from '@/shared/ui'
 
+import { authKeys } from '@/features/auth/api/authKeys'
 import {
   createScope,
   deactivateScope,
@@ -37,10 +38,10 @@ export function ScopesPage() {
   const [isEditorOpen, setIsEditorOpen] = useState(false)
   const [scopeToDeactivate, setScopeToDeactivate] = useState<Scope>()
   const { data, error, isLoading, refetch } = useQuery({
-    queryKey: ['auth-scopes'],
+    queryKey: authKeys.scopes.all(),
     queryFn: loadScopes,
   })
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['auth-scopes'] })
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: authKeys.scopes.all() })
   const saveMutation = useMutation({
     mutationFn: (values: ScopeInput) =>
       editingScope ? updateScope(editingScope.id, { name: values.name }) : createScope(values),
