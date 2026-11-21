@@ -21,7 +21,22 @@ export type PostImportStatus =
   | 'FAILED'
   | 'SKIPPED'
 export type ImportUploadSource = 'AMAZON_ORDER_REPORT' | 'ETSY_SOLD_ORDER_ITEMS'
-export type ExtensionCommandStatus = 'QUEUED' | 'CLAIMED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED'
+export type ExtensionCommandStatus =
+  | 'QUEUED'
+  | 'CLAIMED'
+  | 'RUNNING'
+  | 'SUCCEEDED'
+  | 'PARTIAL_FAILED'
+  | 'FAILED'
+export type ExtensionTrackingResult = {
+  orderId: string
+  trackingNumber: string
+  carrier?: string | null
+  etsyStatus: 'PENDING' | 'ETSY_ACCEPTED' | 'VERIFIED' | 'FAILED'
+  acceptedAt?: string | null
+  verifiedAt?: string | null
+  errorMessage?: string | null
+}
 export type ExtensionAgent = {
   provider?: 'ETSY' | null
   protocolVersion?: number | null
@@ -53,6 +68,7 @@ export type ExtensionCommand = {
   maxOrders?: number | null
   numDays?: ExtensionImportDays | null
   result?: { importedCount: number; failedCount: number }
+  trackingResults?: ExtensionTrackingResult[]
   id: string
   type: ExtensionCommandType
   status: ExtensionCommandStatus
@@ -74,6 +90,7 @@ export type ExtensionCommandType =
   | 'IMPORT_ADS_SPEND'
   | 'IMPORT_TRANSACTIONS'
   | 'IMPORT_SETTLEMENTS'
+  | 'UPLOAD_TRACKING'
   | 'TEST_CONNECTION'
 export type ExtensionImportDays = 1 | 2 | 7 | 15 | 30
 export type ExtensionScheduleType = 'INTERVAL' | 'FIXED_TIMES'
@@ -404,6 +421,7 @@ export async function createExtensionCommand(input: {
   numDays?: ExtensionImportDays
   dateFrom?: string
   dateTo?: string
+  items?: Array<{ orderId: string; trackingNumber: string; carrier?: string }>
 }) {
   return unwrap<ExtensionCommand>(await apiClient.post(`${extensionCommandPath}/commands`, input))
 }

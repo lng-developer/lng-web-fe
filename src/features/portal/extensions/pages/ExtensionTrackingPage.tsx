@@ -32,6 +32,7 @@ export function ExtensionTrackingPage() {
   const [platformFilter, setPlatformFilter] = useState<'ALL' | 'AMAZON' | 'ETSY'>('ALL')
   const [previewShopId, setPreviewShopId] = useState<string>()
   const [previewAgentId, setPreviewAgentId] = useState<string>()
+  const [previewMode, setPreviewMode] = useState<'AMAZON' | 'ETSY'>('AMAZON')
 
   const trackingRows: ShopTrackingStatus[] = useMemo(() => {
     return shops.map((shop) => {
@@ -85,18 +86,21 @@ export function ExtensionTrackingPage() {
       key: 'actions',
       width: 180,
       render: (_, row) => (
-        <Button
-          size="small"
-          icon={<EyeOutlined />}
-          onClick={() => {
-            setPreviewShopId(row.shopId)
-            setPreviewAgentId(row.agentId)
-          }}
-        >
-          {t('portal.extensions.tracking.actions.preview', {
-            defaultValue: 'Preview Fulfillments',
-          })}
-        </Button>
+        <Space>
+          <Button
+            size="small"
+            icon={<EyeOutlined />}
+            onClick={() => {
+              setPreviewShopId(row.shopId)
+              setPreviewAgentId(row.agentId)
+              setPreviewMode(row.platform === 'ETSY' ? 'ETSY' : 'AMAZON')
+            }}
+          >
+            {t('portal.extensions.tracking.actions.preview', {
+              defaultValue: 'Preview Fulfillments',
+            })}
+          </Button>
+        </Space>
       ),
     },
   ]
@@ -196,6 +200,7 @@ export function ExtensionTrackingPage() {
         <TrackingUploadPreviewModal
           shopId={previewShopId}
           agentId={previewAgentId}
+          mode={previewMode}
           onClose={() => {
             setPreviewShopId(undefined)
             setPreviewAgentId(undefined)
