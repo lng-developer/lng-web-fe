@@ -123,11 +123,10 @@ export function VendorSubmissionWorkbenchPage({
 
   const summaryFilters = useMemo(
     () => ({
-      status,
       externalOrderId: debouncedExternalOrderId || undefined,
       ...dates,
     }),
-    [status, debouncedExternalOrderId, dates],
+    [debouncedExternalOrderId, dates],
   )
 
   const submissions = useVendorSubmissionsQuery(params)
@@ -462,10 +461,13 @@ export function VendorSubmissionWorkbenchPage({
   )
 
   const orderSummary = useMemo(() => {
-    if (!externalOrderId && summary.data) {
+    if (!debouncedExternalOrderId && summary.data && summary.data.total > 0) {
       return summary.data
     }
-    if (externalOrderId) {
+    if (
+      debouncedExternalOrderId ||
+      (rows.length > 0 && (!summary.data || summary.data.total === 0))
+    ) {
       const total = rows.length
       const ready = rows.filter(
         (r) =>
@@ -495,7 +497,7 @@ export function VendorSubmissionWorkbenchPage({
       }
     }
     return summary.data
-  }, [externalOrderId, rows, summary.data])
+  }, [debouncedExternalOrderId, rows, summary.data])
 
   return (
     <section className={styles.page}>
