@@ -13,7 +13,7 @@ import { ScheduleEditor } from './ScheduleEditor'
 import { ShiftAssignments } from './ShiftAssignments'
 import { useScheduleCalendar } from './useScheduleCalendar'
 
-export const ScheduleCalendarPage = ({ teamId }: { readonly teamId?: string }) => {
+export const ScheduleCalendarPage = ({ teamId }: { readonly teamId?: string } = {}) => {
   const { t } = useTranslation()
   const [
     {
