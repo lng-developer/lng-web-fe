@@ -1,5 +1,6 @@
-import { ApiResponse, Paginated } from '@/server/type'
+import { Paginated } from '@/server/type'
 import { apiClient } from '@/shared/api'
+import { unwrapResponse } from '@/shared/api/helpers'
 import type { PrintMethod } from '@/shared/constants/printMethods'
 
 export type RecordStatus = 'ACTIVE' | 'INACTIVE'
@@ -246,16 +247,16 @@ export type VendorIntegrationConfigInput = {
   metadata?: Record<string, unknown>
 }
 
-const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
+const unwrap = unwrapResponse
 
 function toListParams<T extends { q?: string }>({ q, ...params }: T) {
   const search = q?.trim()
   return { ...params, ...(search ? { q: search } : {}) }
 }
 
-export async function listVendors(params: VendorListParams = {}) {
+export async function listVendors(params: VendorListParams = {}, signal?: AbortSignal) {
   return unwrap<Paginated<Vendor>>(
-    await apiClient.get('/api/vendors', { params: toListParams(params) }),
+    await apiClient.get('/api/vendors', { params: toListParams(params), signal }),
   )
 }
 

@@ -1,5 +1,6 @@
-import { ApiResponse, Page } from '@/server/type'
+import { Page } from '@/server/type'
 import { apiClient } from '@/shared/api'
+import { unwrapResponse } from '@/shared/api/helpers'
 
 export type Department = {
   id: string
@@ -36,22 +37,34 @@ export type MemberCandidate = {
   id: string
 }
 
-function unwrap<T>(response: unknown): T {
-  return (response as ApiResponse<T>).data
-}
+const unwrap = unwrapResponse
 
-async function get<T>(path: string, params?: Record<string, string | number | undefined>) {
-  const response = await apiClient.get<T>(path, { params })
+async function get<T>(
+  path: string,
+  params?: Record<string, string | number | undefined>,
+  signal?: AbortSignal,
+) {
+  const response = await apiClient.get<T>(path, { params, signal })
   return unwrap<T>(response)
 }
 
-export const loadDepartments = () =>
-  get<Page<Department>>('/api/organization/departments', { limit: 100 })
-export const loadTeams = () => get<Page<Team>>('/api/organization/teams', { limit: 100 })
-export const loadTeamMembers = (teamId: string) =>
-  get<TeamMembers>(`/api/organization/teams/${teamId}/members`)
-export const loadMemberCandidates = () =>
-  get<{ items: MemberCandidate[]; total: number }>('/api/organization/member-candidates')
+type SignalOptions = { signal?: AbortSignal } | AbortSignal
+
+const extractSignal = (options?: SignalOptions): AbortSignal | undefined =>
+  options instanceof AbortSignal ? options : options?.signal
+
+export const loadDepartments = (options?: SignalOptions) =>
+  get<Page<Department>>('/api/organization/departments', { limit: 100 }, extractSignal(options))
+export const loadTeams = (options?: SignalOptions) =>
+  get<Page<Team>>('/api/organization/teams', { limit: 100 }, extractSignal(options))
+export const loadTeamMembers = (teamId: string, signal?: AbortSignal) =>
+  get<TeamMembers>(`/api/organization/teams/${teamId}/members`, undefined, signal)
+export const loadMemberCandidates = (options?: SignalOptions) =>
+  get<{ items: MemberCandidate[]; total: number }>(
+    '/api/organization/member-candidates',
+    undefined,
+    extractSignal(options),
+  )
 export const createDepartment = async (input: DepartmentInput) =>
   unwrap<Department>(await apiClient.post('/api/organization/departments', input))
 export const updateDepartment = async (departmentId: string, input: DepartmentInput) =>

@@ -252,7 +252,7 @@ export function IdeaTasksPage() {
 
   const tasksQuery = useQuery({
     queryKey: designKeys.list(queryParams),
-    queryFn: () => listDesignTasks(queryParams),
+    queryFn: ({ signal }) => listDesignTasks(queryParams, signal),
     placeholderData: keepPreviousData,
     staleTime: 15_000,
   })

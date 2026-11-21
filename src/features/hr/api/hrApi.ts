@@ -1,5 +1,5 @@
-import { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
+import { unwrapResponse } from '@/shared/api/helpers'
 
 type OrgRef = { id: string; code?: string; name: string } | null
 
@@ -146,7 +146,7 @@ export type PersonalProfileInput = {
   }>
 }
 
-const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
+const unwrap = unwrapResponse
 
 function blobToDataUrl(blob: Blob) {
   return new Promise<string>((resolve, reject) => {
@@ -162,9 +162,12 @@ export async function loadEmployeeAvatar(avatarUrl: string) {
   return blobToDataUrl(blob)
 }
 
-export async function loadEmployeeProfiles(includeDeleted = false) {
+export async function loadEmployeeProfiles(includeDeleted = false, signal?: AbortSignal) {
   return unwrap<EmployeeProfileList>(
-    await apiClient.get('/api/hr/employee-profiles', { params: { includeDeleted, limit: 100 } }),
+    await apiClient.get('/api/hr/employee-profiles', {
+      params: { includeDeleted, limit: 100 },
+      signal,
+    }),
   )
 }
 

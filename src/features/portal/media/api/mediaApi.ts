@@ -1,5 +1,5 @@
-import { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
+import { compactParams, unwrapResponse } from '@/shared/api/helpers'
 
 export type MediaAssetStatus = 'ACTIVE' | 'DISCARDED'
 export type MediaMimeGroup = 'IMAGE' | 'DOCUMENT' | 'ARCHIVE' | 'OTHER'
@@ -54,14 +54,12 @@ export type MediaAssetPage = {
   pagination: { total: number; page: number; limit: number }
 }
 
-const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
+const unwrap = unwrapResponse
 
-export async function listMediaAssets(params: MediaAssetListParams = {}) {
+export async function listMediaAssets(params: MediaAssetListParams = {}, signal?: AbortSignal) {
   const q = params.q?.trim()
-  const clean = Object.fromEntries(
-    Object.entries({ ...params, q: q || undefined }).filter(([, value]) => value !== undefined),
-  )
-  return unwrap<MediaAssetPage>(await apiClient.get('/api/media/assets', { params: clean }))
+  const clean = compactParams({ ...params, q: q || undefined })
+  return unwrap<MediaAssetPage>(await apiClient.get('/api/media/assets', { params: clean, signal }))
 }
 
 export async function uploadMediaAsset(file: File) {

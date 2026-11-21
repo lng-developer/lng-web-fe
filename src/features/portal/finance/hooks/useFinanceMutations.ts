@@ -10,6 +10,7 @@ import {
   recalculateOrders,
   recalculateOrderItem,
 } from '../api/financeApi'
+import { financeKeys } from '../api/financeKeys'
 
 export const useFinanceMutations = (queryParams: FinanceParams = {}) => {
   const { t } = useTranslation()
@@ -21,8 +22,8 @@ export const useFinanceMutations = (queryParams: FinanceParams = {}) => {
     onSuccess: async (_, orderId) => {
       toast('success', t('finance.feedback.recalculated'))
       await Promise.all([
-        client.invalidateQueries({ queryKey: ['finance', 'orders', orderId] }),
-        client.invalidateQueries({ queryKey: ['finance', 'snapshots'] }),
+        client.invalidateQueries({ queryKey: financeKeys.orderDetail(orderId) }),
+        client.invalidateQueries({ queryKey: financeKeys.snapshots() }),
       ])
     },
     onError: (error: Error) => toast('error', t('finance.feedback.failed'), error.message),
@@ -33,9 +34,9 @@ export const useFinanceMutations = (queryParams: FinanceParams = {}) => {
     onSuccess: async (_, itemId) => {
       toast('success', t('finance.feedback.recalculated'))
       await Promise.all([
-        client.invalidateQueries({ queryKey: ['finance', 'order-items', itemId] }),
-        client.invalidateQueries({ queryKey: ['finance', 'orders'] }),
-        client.invalidateQueries({ queryKey: ['finance', 'snapshots'] }),
+        client.invalidateQueries({ queryKey: financeKeys.orderItemDetail(itemId) }),
+        client.invalidateQueries({ queryKey: financeKeys.orders() }),
+        client.invalidateQueries({ queryKey: financeKeys.snapshots() }),
       ])
     },
     onError: (error: Error) => toast('error', t('finance.feedback.failed'), error.message),
@@ -70,7 +71,7 @@ export const useFinanceMutations = (queryParams: FinanceParams = {}) => {
         )
       }
       await Promise.all([
-        client.invalidateQueries({ queryKey: ['finance'] }),
+        client.invalidateQueries({ queryKey: financeKeys.all }),
         client.invalidateQueries({ queryKey: ['reports'] }),
       ])
     },

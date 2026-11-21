@@ -25,7 +25,7 @@ export function useVendorSubmissionsQuery(params: UseVendorSubmissionsQueryParam
 
   return useQuery({
     queryKey: vendorSubmissionKeys.list(queryParams),
-    queryFn: () => listVendorSubmissions(queryParams),
+    queryFn: ({ signal }) => listVendorSubmissions(queryParams, signal),
     placeholderData: keepPreviousData,
     staleTime: 20_000,
     refetchOnWindowFocus: false,

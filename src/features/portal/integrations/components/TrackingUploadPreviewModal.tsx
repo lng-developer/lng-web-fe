@@ -18,6 +18,7 @@ import {
 } from 'antd'
 import { CopyOutlined, CheckOutlined, FileTextOutlined } from '@ant-design/icons'
 
+import { shipmentKeys } from '@/features/portal/shipments/api/shipmentKeys'
 import {
   createAmazonTrackingSubmission,
   createExtensionCommand,
@@ -153,7 +154,7 @@ export function TrackingUploadPreviewModal({
           { defaultValue: 'Tracking command queued for Etsy Extension.' },
         ),
       )
-      queryClient.invalidateQueries({ queryKey: ['shipments'] })
+      queryClient.invalidateQueries({ queryKey: shipmentKeys.all })
       queryClient.invalidateQueries({ queryKey: ['amazon-tracking-preview'] })
       queryClient.invalidateQueries({ queryKey: ['extension-commands'] })
       onClose()

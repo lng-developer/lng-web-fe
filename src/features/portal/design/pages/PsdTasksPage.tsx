@@ -39,6 +39,7 @@ import {
 } from '@/shared/ui'
 
 import { listShops } from '@/features/portal/shops/api/shopApi'
+import { shopKeys } from '@/features/portal/shops/api/shopKeys'
 import {
   approveDesignTask,
   assignDesignTask,
@@ -297,14 +298,15 @@ export function PsdTasksPage() {
 
   const tasksQuery = useQuery({
     queryKey: designKeys.list(queryParams),
-    queryFn: () => listDesignTasks(queryParams),
+    queryFn: ({ signal }) => listDesignTasks(queryParams, signal),
     placeholderData: keepPreviousData,
     staleTime: 15_000,
   })
 
+  const shopsParams = useMemo(() => ({ page: 1, limit: 100, status: 'ACTIVE' as const }), [])
   const shopsQuery = useQuery({
-    queryKey: ['shops', 'active'],
-    queryFn: () => listShops({ page: 1, limit: 100, status: 'ACTIVE' }),
+    queryKey: shopKeys.list(shopsParams),
+    queryFn: () => listShops(shopsParams),
     staleTime: 5 * 60 * 1000,
     enabled: !canPsdRequest || canWrite,
   })

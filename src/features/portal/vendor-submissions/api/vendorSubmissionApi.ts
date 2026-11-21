@@ -1,5 +1,5 @@
-import { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
+import { unwrapResponse } from '@/shared/api/helpers'
 
 export type VendorSubmissionStatus =
   | 'READY'
@@ -66,10 +66,10 @@ export type VendorSubmissionSummary = {
 }
 
 const basePath = '/api/vendor-submissions'
-const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
+const unwrap = unwrapResponse
 
-export async function listVendorSubmissions(params: VendorSubmissionParams) {
-  return unwrap<VendorSubmissionList>(await apiClient.get(basePath, { params }))
+export async function listVendorSubmissions(params: VendorSubmissionParams, signal?: AbortSignal) {
+  return unwrap<VendorSubmissionList>(await apiClient.get(basePath, { params, signal }))
 }
 
 export async function exportVendorSubmissionsCsv(params: VendorSubmissionParams) {

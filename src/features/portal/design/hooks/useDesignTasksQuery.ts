@@ -24,7 +24,7 @@ export function useDesignTasksQuery(params: UseDesignTasksQueryParams) {
 
   return useQuery({
     queryKey: designKeys.list(queryParams),
-    queryFn: () => listDesignTasks(queryParams),
+    queryFn: ({ signal }) => listDesignTasks(queryParams, signal),
     placeholderData: keepPreviousData,
     staleTime: 20_000,
     refetchOnWindowFocus: false,

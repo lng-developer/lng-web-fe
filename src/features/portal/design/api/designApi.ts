@@ -1,5 +1,5 @@
-import { ApiResponse } from '@/server/type'
 import { apiClient, uploadApiClient } from '@/shared/api'
+import { compactParams, unwrapResponse } from '@/shared/api/helpers'
 import { uploadMultipartAsset } from '@/shared/media'
 
 export type DesignAsset = {
@@ -269,13 +269,12 @@ export type CreateDesignTaskInput = {
   sourceListingId?: string
   sourceInternalTemplateId?: string
 }
-const compact = (params: object) =>
-  Object.fromEntries(Object.entries(params).filter(([, value]) => value !== '' && value != null))
-const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
+const compact = compactParams
+const unwrap = unwrapResponse
 
-export const listDesignTasks = async (params: DesignListParams) =>
+export const listDesignTasks = async (params: DesignListParams, signal?: AbortSignal) =>
   unwrap<{ items: DesignTask[]; pagination: { total: number; page: number; limit: number } }>(
-    await apiClient.get('/api/design/tasks', { params: compact(params) }),
+    await apiClient.get('/api/design/tasks', { params: compact(params), signal }),
   )
 export const exportDesignTasksCsv = (params: DesignListParams) =>
   apiClient.get('/api/design/tasks/export.csv', {

@@ -1,11 +1,17 @@
-import { ApiResponse, Page } from '@/server/type'
+import { Page } from '@/server/type'
 import { apiClient } from '@/shared/api'
+import { compactParams, unwrapResponse } from '@/shared/api/helpers'
 
 type Query = Record<string, boolean | number | string | null | undefined>
 
-const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
-const get = async <T>(path: string, params?: Query) =>
-  unwrap<T>(await apiClient.get(path, ...(params ? [{ params }] : [])))
+const unwrap = unwrapResponse
+const get = async <T>(path: string, params?: Query, signal?: AbortSignal) =>
+  unwrap<T>(
+    await apiClient.get(path, {
+      ...(params ? { params: compactParams(params) } : {}),
+      signal,
+    }),
+  )
 const post = async <T>(path: string, input?: object) =>
   unwrap<T>(await apiClient.post(path, ...(input ? [input] : [])))
 const put = async <T>(path: string, input?: object) =>

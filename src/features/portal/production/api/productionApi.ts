@@ -1,7 +1,7 @@
-import { ApiResponse } from '@/server/type'
 import { apiClient, uploadApiClient } from '@/shared/api'
+import { unwrapResponse } from '@/shared/api/helpers'
 
-const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
+const unwrap = unwrapResponse
 
 export type ProductionStatus =
   | 'BLOCKED'
@@ -162,8 +162,10 @@ export type ProductionAssignee = {
 
 const basePath = '/api/production'
 
-export const listProductionTasks = async (params: ProductionParams) => {
-  const result = unwrap<ProductionList>(await apiClient.get(`${basePath}/tasks`, { params }))
+export const listProductionTasks = async (params: ProductionParams, signal?: AbortSignal) => {
+  const result = unwrap<ProductionList>(
+    await apiClient.get(`${basePath}/tasks`, { params, signal }),
+  )
   return {
     ...result,
     items: result.items.map((task) => ({
@@ -180,15 +182,20 @@ export const listProductionTasks = async (params: ProductionParams) => {
 }
 export const summarizeProductionTasks = async (
   params: Omit<ProductionParams, 'page' | 'limit'>,
+  signal?: AbortSignal,
 ) => {
   const result = unwrap<ProductionSummary>(
-    await apiClient.get(`${basePath}/tasks/summary`, { params }),
+    await apiClient.get(`${basePath}/tasks/summary`, { params, signal }),
   )
   return { ...result, ready: result.ready ?? result.readyToSendVendor ?? 0 } as ProductionSummary
 }
 export const summarizeProductionQueueCounts = async (
   params: Omit<ProductionParams, 'page' | 'limit'>,
-) => unwrap<ProductionSummary>(await apiClient.get(`${basePath}/tasks/queue-summary`, { params }))
+  signal?: AbortSignal,
+) =>
+  unwrap<ProductionSummary>(
+    await apiClient.get(`${basePath}/tasks/queue-summary`, { params, signal }),
+  )
 export const getProductionTask = async (id: string) =>
   unwrap<ProductionTask>(await apiClient.get(`${basePath}/tasks/${id}`))
 export const claimProductionTask = async (id: string) =>

@@ -17,6 +17,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Avatar, Button, Form, Modal, Select, Tag, Tooltip, Typography } from 'antd'
 import dayjs from 'dayjs'
 
+import { authKeys } from '@/features/auth/api/authKeys'
 import { AccessDeniedResult } from '@/shared/auth/AccessDeniedResult'
 import { hasAnyPermission } from '@/shared/auth/permissions'
 import {
@@ -68,14 +69,14 @@ export function AccessEditorPage() {
   const canWrite = hasAnyPermission(['AUTH:WRITE'], { globalOnly: true })
 
   const { data, error, isLoading, refetch } = useQuery({
-    queryKey: ['access-explorer', accountId],
+    queryKey: authKeys.accessExplorer.detail(accountId),
     queryFn: () => loadAccessExplorer(accountId),
     enabled: Boolean(accountId),
   })
 
   const invalidate = async () => {
-    await queryClient.invalidateQueries({ queryKey: ['access-explorer', accountId] })
-    await queryClient.invalidateQueries({ queryKey: ['access-accounts'] })
+    await queryClient.invalidateQueries({ queryKey: authKeys.accessExplorer.detail(accountId) })
+    await queryClient.invalidateQueries({ queryKey: authKeys.accounts.all() })
   }
 
   const globalMutation = useMutation({

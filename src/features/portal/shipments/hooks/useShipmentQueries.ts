@@ -30,7 +30,7 @@ export function useShipmentsQuery(params: UseShipmentsQueryParams) {
 
   return useQuery({
     queryKey: shipmentKeys.list(queryParams),
-    queryFn: () => listShipments(queryParams),
+    queryFn: ({ signal }) => listShipments(queryParams, signal),
     placeholderData: keepPreviousData,
     staleTime: 20_000,
     refetchOnWindowFocus: false,
@@ -45,7 +45,7 @@ export function useShipmentSummaryQuery(
 ) {
   return useQuery({
     queryKey: shipmentKeys.summary(params),
-    queryFn: () => summarizeShipments(params),
+    queryFn: ({ signal }) => summarizeShipments(params, signal),
     staleTime: 20_000,
     refetchOnWindowFocus: false,
     retry: false,

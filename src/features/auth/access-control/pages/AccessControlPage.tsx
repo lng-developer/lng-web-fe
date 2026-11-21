@@ -107,7 +107,7 @@ const RolePermissions = memo(function RolePermissions({
       }),
     onSuccess: () => {
       showFeedbackToast('success', t('actionFeedback.saved'))
-      return queryClient.invalidateQueries({ queryKey: ['auth-roles'] })
+      return queryClient.invalidateQueries({ queryKey: authKeys.roles.all() })
     },
     onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
   })

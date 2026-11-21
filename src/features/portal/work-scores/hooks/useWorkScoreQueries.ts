@@ -14,7 +14,7 @@ import { workScoreKeys } from '../api/workScoreKeys'
 export function useWorkScoresQuery(params: WorkScoreListParams) {
   return useQuery({
     queryKey: workScoreKeys.list(params),
-    queryFn: () => listWorkScores(params),
+    queryFn: ({ signal }) => listWorkScores(params, signal),
     retry: false,
   })
 }
@@ -22,7 +22,7 @@ export function useWorkScoresQuery(params: WorkScoreListParams) {
 export function useWorkScoreSummaryQuery(params: WorkScoreListParams) {
   return useQuery({
     queryKey: workScoreKeys.summary(params),
-    queryFn: () => getWorkScoreSummary(params),
+    queryFn: ({ signal }) => getWorkScoreSummary(params, signal),
     retry: false,
   })
 }

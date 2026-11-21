@@ -68,14 +68,14 @@ export function useCatalogListingsQuery({
 
   const listings = useQuery({
     queryKey: catalogKeys.list(params),
-    queryFn: () => listListings(params),
+    queryFn: ({ signal }) => listListings(params, signal),
     placeholderData: keepPreviousData,
     retry: false,
   })
 
   const summary = useQuery({
     queryKey: catalogKeys.summary(summaryParams),
-    queryFn: () => getListingSummary(summaryParams),
+    queryFn: ({ signal }) => getListingSummary(summaryParams, signal),
     retry: false,
   })
 

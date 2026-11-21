@@ -326,7 +326,7 @@ export function AccessExplorerPage() {
     onSuccess: async () => {
       setQuickAccessAccount(undefined)
       quickAccessForm.resetFields()
-      await queryClient.invalidateQueries({ queryKey: ['access-accounts'] })
+      await queryClient.invalidateQueries({ queryKey: accountKeys.all() })
       showFeedbackToast('success', t('actionFeedback.saved'))
     },
     onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
@@ -336,7 +336,7 @@ export function AccessExplorerPage() {
       resetAccountPassword(accountId, password),
     onSuccess: async () => {
       securityPasswordForm.resetFields()
-      await queryClient.invalidateQueries({ queryKey: ['access-accounts'] })
+      await queryClient.invalidateQueries({ queryKey: accountKeys.all() })
       showFeedbackToast('success', t('actionFeedback.saved'))
     },
     onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
@@ -345,7 +345,7 @@ export function AccessExplorerPage() {
     mutationFn: (accountId: string) => revokeAccountSessions(accountId),
     onSuccess: async () => {
       setPendingInspectorSecurityAction(undefined)
-      await queryClient.invalidateQueries({ queryKey: ['access-accounts'] })
+      await queryClient.invalidateQueries({ queryKey: accountKeys.all() })
       showFeedbackToast('success', t('actionFeedback.saved'))
     },
     onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
@@ -354,7 +354,7 @@ export function AccessExplorerPage() {
     mutationFn: (accountId: string) => updateAccountStatus(accountId, 'inactive'),
     onSuccess: async () => {
       setPendingInspectorSecurityAction(undefined)
-      await queryClient.invalidateQueries({ queryKey: ['access-accounts'] })
+      await queryClient.invalidateQueries({ queryKey: accountKeys.all() })
       showFeedbackToast('success', t('actionFeedback.deactivated'))
     },
     onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
@@ -365,7 +365,7 @@ export function AccessExplorerPage() {
       setIsBulkAssignOpen(false)
       bulkAccessForm.resetFields()
       setSelectedAccountIds([])
-      await queryClient.invalidateQueries({ queryKey: ['access-accounts'] })
+      await queryClient.invalidateQueries({ queryKey: accountKeys.all() })
       showFeedbackToast('success', t('actionFeedback.saved'))
     },
     onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
@@ -375,7 +375,7 @@ export function AccessExplorerPage() {
     onSuccess: async () => {
       setIsBulkRevokeOpen(false)
       setSelectedAccountIds([])
-      await queryClient.invalidateQueries({ queryKey: ['access-accounts'] })
+      await queryClient.invalidateQueries({ queryKey: accountKeys.all() })
       showFeedbackToast('success', t('actionFeedback.saved'))
     },
     onError: (error) => showFeedbackToast('error', t('actionFeedback.failed'), error.message),
@@ -550,7 +550,7 @@ export function AccessExplorerPage() {
     mutationFn: (targetStatus: 'active' | 'inactive') =>
       updateAccountStatus(inspectedAccount!.id, targetStatus),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['access-accounts'] })
+      await queryClient.invalidateQueries({ queryKey: accountKeys.all() })
       if (inspectedAccountId) {
         await queryClient.invalidateQueries({ queryKey: accountKeys.detail(inspectedAccountId) })
       }

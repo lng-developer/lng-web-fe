@@ -1,9 +1,9 @@
-import type { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
+import { unwrapResponse } from '@/shared/api/helpers'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 
 const basePath = '/api/integration/listing-image-sync'
-const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
+const unwrap = unwrapResponse
 export type ImageJobAction = 'pause' | 'resume' | 'retry'
 export type ImageJob = {
   id: string
