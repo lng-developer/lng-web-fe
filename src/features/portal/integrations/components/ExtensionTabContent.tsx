@@ -100,7 +100,8 @@ export function ExtensionTabContent({
     [schedules, financeSchedules],
   )
   const failedCommandsCount = useMemo(
-    () => commands.filter((command) => command.status === 'FAILED').length,
+    () =>
+      commands.filter((command) => ['FAILED', 'PARTIAL_FAILED'].includes(command.status)).length,
     [commands],
   )
 

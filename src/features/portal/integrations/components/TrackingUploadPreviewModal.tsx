@@ -121,7 +121,7 @@ export function TrackingUploadPreviewModal({
   const readyItemCount = selectedShipmentIds.length
 
   const submitMutation = useMutation({
-    mutationFn: (shipmentIds: string[]) => {
+    mutationFn: async (shipmentIds: string[]) => {
       if (!effectiveAgentId) {
         throw new Error(
           t('portal.shipments.trackingPreview.agentRequired', {
@@ -130,7 +130,7 @@ export function TrackingUploadPreviewModal({
         )
       }
       if (isEtsy) {
-        return createExtensionCommand({
+        await createExtensionCommand({
           type: 'UPLOAD_TRACKING',
           shopId,
           agentId: effectiveAgentId,
@@ -140,8 +140,9 @@ export function TrackingUploadPreviewModal({
             carrier: row.carrierCode || row.carrier,
           })),
         })
+      } else {
+        await createAmazonTrackingSubmission({ shopId, agentId: effectiveAgentId, shipmentIds })
       }
-      return createAmazonTrackingSubmission({ shopId, agentId: effectiveAgentId, shipmentIds })
     },
     onSuccess: () => {
       message.success(

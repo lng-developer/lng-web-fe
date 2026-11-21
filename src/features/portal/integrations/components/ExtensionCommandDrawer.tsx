@@ -32,7 +32,9 @@ export function ExtensionCommandDrawer({ command, onClose }: ExtensionCommandDra
                   ? 'operational'
                   : command.status === 'FAILED'
                     ? 'critical'
-                    : 'pending'
+                    : command.status === 'PARTIAL_FAILED'
+                      ? 'warning'
+                      : 'pending'
               }
             >
               {humanizeCode(command.status)}
@@ -70,7 +72,7 @@ export function ExtensionCommandDrawer({ command, onClose }: ExtensionCommandDra
             ['Claimed', command.claimedAt],
             ['Started', command.startedAt],
             [
-              command.status === 'FAILED'
+              command.status === 'FAILED' || command.status === 'PARTIAL_FAILED'
                 ? 'Failed'
                 : command.status === 'SUCCEEDED'
                   ? 'Completed'
@@ -87,6 +89,36 @@ export function ExtensionCommandDrawer({ command, onClose }: ExtensionCommandDra
             ))}
           {command.errorMessage ? (
             <Alert type="error" showIcon title={command.errorMessage} />
+          ) : null}
+          {command.trackingResults?.length ? (
+            <div>
+              <Typography.Text strong>Tracking verification</Typography.Text>
+              {command.trackingResults.map((result) => (
+                <div
+                  className={styles.commandTimelineRow}
+                  key={`${result.orderId}-${result.trackingNumber}`}
+                >
+                  <Typography.Text>{result.orderId}</Typography.Text>
+                  <Typography.Text>
+                    {result.carrier || 'Other'} · {result.trackingNumber}
+                  </Typography.Text>
+                  <StatusTag
+                    status={
+                      result.etsyStatus === 'VERIFIED'
+                        ? 'operational'
+                        : result.etsyStatus === 'FAILED'
+                          ? 'critical'
+                          : 'warning'
+                    }
+                  >
+                    {humanizeCode(result.etsyStatus)}
+                  </StatusTag>
+                  {result.errorMessage ? (
+                    <Typography.Text type="warning">{result.errorMessage}</Typography.Text>
+                  ) : null}
+                </div>
+              ))}
+            </div>
           ) : null}
         </div>
       ) : null}
