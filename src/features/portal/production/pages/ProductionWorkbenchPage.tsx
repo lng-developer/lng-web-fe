@@ -48,15 +48,22 @@ import {
   summarizeProductionQueueCounts,
   summarizeProductionTasks,
   updateDesignNote,
+  uploadManualScaledOutput,
   uploadScaledOutput,
+  type ManualScaledOutput,
 } from '../api/productionApi'
 import { productionKeys } from '../api/productionKeys'
 import { ArtworkInspector } from './ArtworkInspector'
 import { inspectionReference } from './inspectionReference'
+import { ManualSlotUploadModal } from './ManualSlotUploadModal'
 import { ProductionWorkbenchExpandedRow } from './ProductionWorkbenchExpandedRow'
 import { ProductionWorkbenchFilterBar } from './ProductionWorkbenchFilterBar'
 import { isForbiddenProductionError, isOwnProductionOutput } from './productionAuthorization'
-import { formatProductionError, validateScaledOutputFile } from '../utils/productionFeedback'
+import {
+  formatProductionError,
+  formatSlotLabel,
+  validateScaledOutputFile,
+} from '../utils/productionFeedback'
 import styles from './ProductionWorkbenchPage.module.scss'
 
 const PAGE_SIZE = DEFAULT_PAGE_SIZE
@@ -990,6 +997,39 @@ export function ProductionWorkbenchPage({
     },
     [handleMutationError, refresh, t, toast],
   )
+  const [manualSlotUploadTask, setManualSlotUploadTask] = useState<{
+    taskId: string
+    existingSlotKeys: string[]
+  } | null>(null)
+
+  const uploadManualSlot = useMutation({
+    mutationFn: (input: ManualScaledOutput) =>
+      manualSlotUploadTask
+        ? uploadManualScaledOutput(manualSlotUploadTask.taskId, input)
+        : Promise.reject(new Error('No task selected for upload')),
+    onSuccess: async (_, variables) => {
+      setManualSlotUploadTask(null)
+      await refresh()
+      const slotName = formatSlotLabel(variables.slotKey, variables.slotLabel)
+      toast(
+        'success',
+        t('portal.production.feedback.addSlotSuccessTitle'),
+        t('portal.production.feedback.addSlotSuccessDescription', { slot: slotName }),
+      )
+    },
+    onError: (error) => {
+      const { title, description } = formatProductionError(
+        error,
+        t('portal.production.feedback.defaultFailedTitle'),
+      )
+      toast('error', title, description)
+    },
+  })
+
+  const handleOpenManualSlotUpload = useCallback((taskId: string, existingSlotKeys: string[]) => {
+    setManualSlotUploadTask({ taskId, existingSlotKeys })
+  }, [])
+
   const renderSingleTaskRow = useCallback(
     (task: ProductionTask) => (
       <ProductionWorkbenchExpandedRow
@@ -1012,6 +1052,7 @@ export function ProductionWorkbenchPage({
         onInspectSlot={handleInspectionSlotAction}
         onPassSlot={handleQcSlotPass}
         onManualSlotUploaded={refresh}
+        onOpenManualSlotUpload={handleOpenManualSlotUpload}
         onDeleteSlot={handleDeleteSlot}
         onClaimTask={(taskId) => claimTask.mutate(taskId)}
       />
@@ -1025,6 +1066,7 @@ export function ProductionWorkbenchPage({
       decisions,
       handleDeleteSlot,
       handleInspectionSlotAction,
+      handleOpenManualSlotUpload,
       handleQcSlotPass,
       handleSaveNote,
       handleSubmitQc,
@@ -1476,6 +1518,15 @@ export function ProductionWorkbenchPage({
           onClose={handleInspectClose}
           onPass={handleInspectionPass}
           onReject={handleInspectionReject}
+        />
+      ) : null}
+      {manualSlotUploadTask ? (
+        <ManualSlotUploadModal
+          open
+          saving={uploadManualSlot.isPending}
+          existingSlotKeys={manualSlotUploadTask.existingSlotKeys}
+          onClose={() => setManualSlotUploadTask(null)}
+          onSubmit={(input) => uploadManualSlot.mutate(input)}
         />
       ) : null}
     </section>
