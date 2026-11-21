@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { Alert, Button, Input, Modal, Space, Typography } from 'antd'
+import { useState } from 'react'
+import { Alert, Button, Form, Input, Modal, Space, Typography } from 'antd'
 import { createExtensionCommand } from '@/features/portal/integrations/api/integrationApi'
 
 function resolveCarrier(trackingNumber: string, carrier: string) {
@@ -7,6 +7,8 @@ function resolveCarrier(trackingNumber: string, carrier: string) {
     ? 'USPS'
     : carrier.trim()
 }
+
+type Values = { orderId: string; trackingNumber: string; carrier: string }
 
 export function EtsyTrackingCommandModal({
   shopId,
@@ -17,30 +19,19 @@ export function EtsyTrackingCommandModal({
   agentId: string
   onClose: () => void
 }) {
-  const [value, setValue] = useState('')
+  const [form] = Form.useForm<Values>()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string>()
-  const rows = useMemo(
-    () =>
-      value
-        .split(/\r?\n/)
-        .filter(Boolean)
-        .map((line) => {
-          const [orderId = '', trackingNumber = '', carrier = ''] = line
-            .split(/[\t,]/)
-            .map((cell) => cell.trim())
-          return { orderId, trackingNumber, carrier: resolveCarrier(trackingNumber, carrier) }
-        }),
-    [value],
-  )
-  const invalid = rows.filter((row) => !/^\d+$/.test(row.orderId) || !row.trackingNumber)
-  const submit = async () => {
-    if (!rows.length || invalid.length)
-      return setError('Each row needs a numeric Etsy order ID and tracking number.')
+  const submit = async (values: Values) => {
     setSaving(true)
     setError(undefined)
     try {
-      await createExtensionCommand({ type: 'UPLOAD_TRACKING', shopId, agentId, items: rows })
+      await createExtensionCommand({
+        type: 'UPLOAD_TRACKING',
+        shopId,
+        agentId,
+        items: [{ ...values, carrier: resolveCarrier(values.trackingNumber, values.carrier) }],
+      })
       onClose()
     } catch (nextError) {
       setError(
@@ -51,33 +42,32 @@ export function EtsyTrackingCommandModal({
     }
   }
   return (
-    <Modal open title="Push Etsy tracking" onCancel={onClose} footer={null} destroyOnHidden>
+    <Modal open title="Push one Etsy tracking" onCancel={onClose} footer={null} destroyOnHidden>
       <Typography.Paragraph type="secondary">
-        Paste one row per line: <code>orderId, trackingNumber, carrier</code>. Viettel Post
-        USPS-format tracking is changed to USPS.
-      </Typography.Paragraph>
-      <Input.TextArea
-        aria-label="Etsy tracking rows"
-        rows={10}
-        value={value}
-        onChange={(event) => setValue(event.target.value)}
-        placeholder="4231418315, 9214490374008505076402, VIETTEL_POST"
-      />
-      <Typography.Paragraph>
-        {rows.length} rows ready{invalid.length ? ` · ${invalid.length} invalid` : ''}
+        Create one command for one Etsy order. Viettel Post USPS-format tracking is changed to USPS.
       </Typography.Paragraph>
       {error ? <Alert type="error" showIcon message={error} /> : null}
-      <Space style={{ marginTop: 16 }}>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button
-          type="primary"
-          loading={saving}
-          disabled={!rows.length || Boolean(invalid.length)}
-          onClick={submit}
+      <Form form={form} layout="vertical" onFinish={submit}>
+        <Form.Item
+          label="Etsy order ID"
+          name="orderId"
+          rules={[{ required: true, pattern: /^\d+$/ }]}
         >
-          Create command
-        </Button>
-      </Space>
+          <Input inputMode="numeric" placeholder="4231418315" />
+        </Form.Item>
+        <Form.Item label="Tracking number" name="trackingNumber" rules={[{ required: true }]}>
+          <Input placeholder="9214490374008505076402" />
+        </Form.Item>
+        <Form.Item label="Carrier (optional)" name="carrier">
+          <Input placeholder="USPS" />
+        </Form.Item>
+        <Space>
+          <Button onClick={onClose}>Cancel</Button>
+          <Button htmlType="submit" type="primary" loading={saving}>
+            Create command
+          </Button>
+        </Space>
+      </Form>
     </Modal>
   )
 }
