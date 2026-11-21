@@ -1,46 +1,55 @@
 import { describe, expect, it } from 'vitest'
 
+import columnsSource from '@/features/portal/production/components/ProductionWorkbenchColumns.tsx?raw'
+import modalsSource from '@/features/portal/production/components/ProductionWorkbenchActionModals.tsx?raw'
+import rowSource from '@/features/portal/production/components/ProductionGroupedOrderRow.tsx?raw'
 import source from '@/features/portal/production/pages/ProductionWorkbenchPage.tsx?raw'
+
+const combinedSource = `${source}\n${columnsSource}\n${modalsSource}\n${rowSource}`
 
 describe('ProductionWorkbenchPage source contract', () => {
   it('uses deferred search and cached lists', () => {
-    expect(source).toContain('useDeferredValue(search)')
-    expect(source).toContain('placeholderData: keepPreviousData')
-    expect(source).toContain('const displayedTasks = useDeferredValue(tasks.data)')
+    expect(combinedSource).toContain('useDeferredValue(search)')
+    expect(combinedSource).toContain('placeholderData: keepPreviousData')
+    expect(combinedSource).toContain('const displayedTasks = useDeferredValue(tasks.data)')
   })
 
   it('keeps expanded inline rows with full toolbar context', () => {
-    expect(source).toContain('expandedRowRender: (row) =>')
-    expect(source).toContain('expandedRowKeys')
-    expect(source).toContain('showExpandColumn: false')
-    expect(source).toContain('ProductionWorkbenchExpandedRow')
+    expect(combinedSource).toContain('expandedRowRender: (row) =>')
+    expect(combinedSource).toContain('expandedRowKeys')
+    expect(combinedSource).toContain('showExpandColumn: false')
+    expect(combinedSource).toContain('ProductionWorkbenchExpandedRow')
   })
 
   it('supports bulk actions with single-item fast path', () => {
-    expect(source).toContain("if (input.kind === 'bulk-assign')")
-    expect(source).toContain(
+    expect(combinedSource).toContain("if (input.kind === 'bulk-assign')")
+    expect(combinedSource).toContain(
       'if (taskIds.length === 1) return assignProductionTask(taskIds[0], scaleAssigneeId!)',
     )
-    expect(source).toContain('return bulkAssignProductionTasks(taskIds, scaleAssigneeId!)')
-    expect(source).toContain('onBulkAssign={handleBulkAssign}')
+    expect(combinedSource).toContain('return bulkAssignProductionTasks(taskIds, scaleAssigneeId!)')
+    expect(combinedSource).toMatch(
+      /onBulkAssign=\{handleBulkAssign\}|onBulkAssign=\{.*bulk-assign.*\}/,
+    )
   })
 
   it('scopes assign permissions to the Scale queue and keeps QC operations separate', () => {
-    expect(source).toContain('const canAssignScale =')
-    expect(source).toMatch(
+    expect(combinedSource).toContain('const canAssignScale =')
+    expect(combinedSource).toMatch(
       /allowed\.has\('PRODUCTION:WRITE'\)\s*\|\|\s*allowed\.has\('PRODUCTION:SCALE_ASSIGN'\)/,
     )
-    expect(source).toContain("canUseScopedPermission(account, 'PRODUCTION:QC_REVIEW'")
-    expect(source).toContain('rowSelection={')
-    expect(source).toContain('preserveSelectedRowKeys: true')
-    expect(source).toContain('onPassSlot={handleQcSlotPass}')
-    expect(source).toContain('onPass={handleInspectionPass}')
+    expect(combinedSource).toContain("canUseScopedPermission(account, 'PRODUCTION:QC_REVIEW'")
+    expect(combinedSource).toContain('rowSelection={')
+    expect(combinedSource).toContain('preserveSelectedRowKeys: true')
+    expect(combinedSource).toMatch(
+      /onPassSlot=\{handleQcSlotPass\}|onPassSlot=\{.*handleSetInspectionDecision.*PASSED.*\}/,
+    )
+    expect(combinedSource).toMatch(/onPass=\{handleInspectionPass\}|onPass=\{onPassInspect\}/)
   })
 
   it('keeps PSD-missing tasks in the blocked queue and shows their blockers', () => {
-    expect(source).toContain("psdReadyOnly: tab !== 'blocked'")
-    expect(source).toContain("title: t('portal.production.blockers')")
-    expect(source).toContain("(row.blockers || []).join(', ')")
+    expect(combinedSource).toContain("psdReadyOnly: tab !== 'blocked'")
+    expect(combinedSource).toContain("title: t('portal.production.blockers')")
+    expect(combinedSource).toContain("(row.blockers || []).join(', ')")
   })
 
   it('keeps queue navigation outside the queue card', () => {
