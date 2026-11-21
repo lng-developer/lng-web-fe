@@ -56,6 +56,7 @@ export function TrackingUploadPreviewModal({
   const previewQuery = useQuery({
     queryKey: ['amazon-tracking-preview', shopId],
     queryFn: () => previewAmazonTrackingSubmission({ shopId }),
+    enabled: Boolean(shopId),
     staleTime: 20_000,
     retry: false,
   })

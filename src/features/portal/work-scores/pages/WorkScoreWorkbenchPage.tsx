@@ -1,4 +1,4 @@
-import { useCallback, useDeferredValue, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
 import {
@@ -35,6 +35,7 @@ import {
   StatusTag,
   TableTextCell,
   type DateRangeValue,
+  useDebouncedValue,
   useFeedbackToast,
 } from '@/shared/ui'
 
@@ -85,7 +86,7 @@ export function WorkScoreWorkbenchPage({
 
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
-  const deferredSearch = useDeferredValue(search)
+  const debouncedSearch = useDebouncedValue(search, 300)
   const [sourceType, setSourceType] = useState<WorkScoreSourceType>()
   const [taskType, setTaskType] = useState<string>()
   const [scaleDifficultyLevel, setScaleDifficultyLevel] = useState<'NORMAL' | 'HARD' | 'SPECIAL'>()
@@ -117,7 +118,7 @@ export function WorkScoreWorkbenchPage({
     () => ({
       page,
       limit: DEFAULT_PAGE_SIZE,
-      search: deferredSearch || undefined,
+      search: debouncedSearch || undefined,
       sourceType: effectiveSourceType,
       taskType: scope === 'DESIGN' ? taskType : undefined,
       scaleDifficultyLevel: scope === 'PRODUCTION' ? scaleDifficultyLevel : undefined,
@@ -126,7 +127,7 @@ export function WorkScoreWorkbenchPage({
     }),
     [
       page,
-      deferredSearch,
+      debouncedSearch,
       effectiveSourceType,
       scope,
       taskType,
@@ -138,7 +139,7 @@ export function WorkScoreWorkbenchPage({
 
   const summaryParams = useMemo(
     () => ({
-      search: deferredSearch || undefined,
+      search: debouncedSearch || undefined,
       sourceType: effectiveSourceType,
       taskType: scope === 'DESIGN' ? taskType : undefined,
       scaleDifficultyLevel: scope === 'PRODUCTION' ? scaleDifficultyLevel : undefined,
@@ -146,7 +147,7 @@ export function WorkScoreWorkbenchPage({
       ...dates,
     }),
     [
-      deferredSearch,
+      debouncedSearch,
       effectiveSourceType,
       scope,
       taskType,

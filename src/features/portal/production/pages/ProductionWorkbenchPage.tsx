@@ -12,6 +12,7 @@ import {
   getDefaultDateRange,
   type DateRangeValue,
   UiButtonTabs,
+  useDebouncedValue,
   useFeedbackToast,
   useResourceSelection,
 } from '@/shared/ui'
@@ -165,6 +166,7 @@ export function ProductionWorkbenchPage({
   const [pageSize, setPageSize] = useState(PAGE_SIZE)
   const [search, setSearch] = useState('')
   const deferredSearch = useDeferredValue(search)
+  const debouncedSearch = useDebouncedValue(deferredSearch, 300)
   const [scaleDifficultyLevel, setScaleDifficultyLevel] = useState<'NORMAL' | 'HARD' | 'SPECIAL'>()
   const [createdDates, setCreatedDates] = useState<DateRangeValue>(getDefaultDateRange)
   const [inspect, setInspect] = useState<InspectState>()
@@ -303,7 +305,7 @@ export function ProductionWorkbenchPage({
     }
 
     return {
-      search: deferredSearch || undefined,
+      search: debouncedSearch || undefined,
       salesChannelCode,
       psdReadyOnly: tab !== 'blocked' && psdReadyOnly,
       ...createdDates,
@@ -315,7 +317,7 @@ export function ProductionWorkbenchPage({
     }
   }, [
     createdDates,
-    deferredSearch,
+    debouncedSearch,
     designTypeProp,
     salesChannelCode,
     scaleDifficultyLevel,
@@ -326,13 +328,13 @@ export function ProductionWorkbenchPage({
   const params = useMemo(() => ({ ...filters, page, limit: pageSize }), [filters, page, pageSize])
   const summaryFilters = useMemo(
     () => ({
-      search: deferredSearch || undefined,
+      search: debouncedSearch || undefined,
       salesChannelCode,
       scaleDifficultyLevel,
       designType: designTypeProp,
       ...createdDates,
     }),
-    [createdDates, deferredSearch, designTypeProp, salesChannelCode, scaleDifficultyLevel],
+    [createdDates, debouncedSearch, designTypeProp, salesChannelCode, scaleDifficultyLevel],
   )
 
   const tasks = useQuery({
@@ -362,7 +364,7 @@ export function ProductionWorkbenchPage({
   const { activeTabItems } = useProductionQueueSummary({
     tab,
     viewMode,
-    deferredSearch,
+    deferredSearch: debouncedSearch,
     summaryRows,
     tasksTotal: tasks.data?.total,
     summaryTotal: summary.data?.total,
@@ -893,7 +895,7 @@ export function ProductionWorkbenchPage({
             pagination={{
               current: page,
               pageSize,
-              total: deferredSearch ? rows.length : displayedTasks?.total,
+              total: debouncedSearch ? rows.length : displayedTasks?.total,
               showSizeChanger: true,
               onChange: handlePageChange,
             }}

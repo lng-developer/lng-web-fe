@@ -1,4 +1,4 @@
-import { useCallback, useDeferredValue, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -7,7 +7,12 @@ import type { UploadFile } from 'antd'
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
-import { type DateRangeValue, getDefaultDateRange, useFeedbackToast } from '@/shared/ui'
+import {
+  type DateRangeValue,
+  getDefaultDateRange,
+  useDebouncedValue,
+  useFeedbackToast,
+} from '@/shared/ui'
 import { listShops } from '@/features/portal/shops/api/shopApi'
 import { shopKeys } from '@/features/portal/shops/api/shopKeys'
 
@@ -62,9 +67,9 @@ export function PsdTasksPage() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [search, setSearch] = useState('')
-  const deferredSearch = useDeferredValue(search)
+  const debouncedSearch = useDebouncedValue(search, 300)
   const [etsyListingId, setEtsyListingId] = useState('')
-  const deferredEtsyListingId = useDeferredValue(etsyListingId)
+  const debouncedEtsyListingId = useDebouncedValue(etsyListingId, 300)
   const [activeTabKey, setActiveTabKey] = useState<string>('all')
   const [selectedSellerId, setSelectedSellerId] = useState<string>()
   const [dateRange, setDateRange] = useState<DateRangeValue>(getDefaultDateRange)
@@ -100,8 +105,8 @@ export function PsdTasksPage() {
     () => ({
       page,
       limit: pageSize,
-      search: deferredSearch || undefined,
-      etsyListingId: deferredEtsyListingId.trim() || undefined,
+      search: debouncedSearch || undefined,
+      etsyListingId: debouncedEtsyListingId.trim() || undefined,
       taskType: 'PSD_TEMPLATE' as const,
       salesChannelCode,
       status: activeTabConfig.status,
@@ -113,8 +118,8 @@ export function PsdTasksPage() {
     [
       page,
       pageSize,
-      deferredSearch,
-      deferredEtsyListingId,
+      debouncedSearch,
+      debouncedEtsyListingId,
       salesChannelCode,
       activeTabConfig.status,
       selectedSellerId,
@@ -141,14 +146,14 @@ export function PsdTasksPage() {
     () => ({
       taskType: 'PSD_TEMPLATE' as const,
       salesChannelCode,
-      search: deferredSearch || undefined,
-      etsyListingId: deferredEtsyListingId.trim() || undefined,
+      search: debouncedSearch || undefined,
+      etsyListingId: debouncedEtsyListingId.trim() || undefined,
       sellerId: selectedSellerId || undefined,
       shopId: selectedSellerId || undefined,
       dateFrom: dateRange.dateFrom,
       dateTo: dateRange.dateTo,
     }),
-    [salesChannelCode, deferredSearch, deferredEtsyListingId, selectedSellerId, dateRange],
+    [salesChannelCode, debouncedSearch, debouncedEtsyListingId, selectedSellerId, dateRange],
   )
 
   const summaryQuery = useQuery({

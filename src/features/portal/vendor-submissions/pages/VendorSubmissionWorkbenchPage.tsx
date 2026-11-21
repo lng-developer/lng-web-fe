@@ -28,6 +28,7 @@ import {
   StatusTag,
   TableTextCell,
   type DateRangeValue,
+  useDebouncedValue,
   useFeedbackToast,
   useResourceSelection,
 } from '@/shared/ui'
@@ -85,6 +86,7 @@ export function VendorSubmissionWorkbenchPage({
   const [page, setPage] = useState(1)
   const [status, setStatus] = useState<VendorSubmissionStatus>()
   const [externalOrderId, setExternalOrderId] = useState('')
+  const debouncedExternalOrderId = useDebouncedValue(externalOrderId, 300)
   const [dates, setDates] = useState<DateRangeValue>(getDefaultDateRange)
   const [selectedId, setSelectedId] = useResourceSelection()
   const [reconcileRow, setReconcileRow] = useState<VendorSubmission>()
@@ -113,19 +115,19 @@ export function VendorSubmissionWorkbenchPage({
       page,
       limit: PAGE_SIZE,
       status,
-      externalOrderId: externalOrderId || undefined,
+      externalOrderId: debouncedExternalOrderId || undefined,
       ...dates,
     }),
-    [page, status, externalOrderId, dates],
+    [page, status, debouncedExternalOrderId, dates],
   )
 
   const summaryFilters = useMemo(
     () => ({
       status,
-      externalOrderId: externalOrderId || undefined,
+      externalOrderId: debouncedExternalOrderId || undefined,
       ...dates,
     }),
-    [status, externalOrderId, dates],
+    [status, debouncedExternalOrderId, dates],
   )
 
   const submissions = useVendorSubmissionsQuery(params)

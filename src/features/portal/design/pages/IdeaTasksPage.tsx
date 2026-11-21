@@ -1,4 +1,4 @@
-import { useCallback, useDeferredValue, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import {
@@ -45,6 +45,7 @@ import {
   StatusTag,
   UiTabLabel,
   UiTabs,
+  useDebouncedValue,
   useFeedbackToast,
   ZoomableImage,
 } from '@/shared/ui'
@@ -205,7 +206,7 @@ export function IdeaTasksPage() {
 
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [search, setSearch] = useState('')
-  const deferredSearch = useDeferredValue(search)
+  const debouncedSearch = useDebouncedValue(search, 300)
   const [activeTabKey, setActiveTabKey] = useState<string>('all')
   const [dates, setDates] = useState<DateRangeValue>(getDefaultDateRange)
 
@@ -232,7 +233,7 @@ export function IdeaTasksPage() {
     () => ({
       page,
       limit: pageSize,
-      search: deferredSearch || undefined,
+      search: debouncedSearch || undefined,
       taskType: 'IDEA' as const,
       status: activeTabConfig.status,
       salesChannelCode,
@@ -242,7 +243,7 @@ export function IdeaTasksPage() {
     [
       page,
       pageSize,
-      deferredSearch,
+      debouncedSearch,
       activeTabConfig.status,
       salesChannelCode,
       dates.dateFrom,
@@ -261,11 +262,11 @@ export function IdeaTasksPage() {
     () => ({
       taskType: 'IDEA' as const,
       salesChannelCode,
-      search: deferredSearch || undefined,
+      search: debouncedSearch || undefined,
       dateFrom: dates.dateFrom,
       dateTo: dates.dateTo,
     }),
-    [salesChannelCode, deferredSearch, dates.dateFrom, dates.dateTo],
+    [salesChannelCode, debouncedSearch, dates.dateFrom, dates.dateTo],
   )
 
   const summaryQuery = useQuery({
