@@ -1,53 +1,21 @@
 import { useCallback, useDeferredValue, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData, useSearchParams } from 'react-router-dom'
-import {
-  CheckCircleOutlined,
-  DeleteOutlined,
-  DownloadOutlined,
-  HistoryOutlined,
-  HourglassOutlined,
-  PlayCircleOutlined,
-  ReloadOutlined,
-  RollbackOutlined,
-  SolutionOutlined,
-  UploadOutlined,
-} from '@ant-design/icons'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { TableColumnsType, UploadFile } from 'antd'
-import { Button, Input, Modal, Popover, Progress, Select, Space, Tooltip, Typography } from 'antd'
-import dayjs from 'dayjs'
-import relativeTime from 'dayjs/plugin/relativeTime'
+import type { UploadFile } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
-import { downloadMediaAsset } from '@/shared/media'
-import {
-  ConfirmDangerModal,
-  DATA_COLORS,
-  DateRangePicker,
-  type DateRangeValue,
-  EmployeeIdentity,
-  FileUpload,
-  getDefaultDateRange,
-  StatusPill,
-  UiTabLabel,
-  UiTabs,
-  useFeedbackToast,
-  ZoomableImage,
-} from '@/shared/ui'
-
+import { type DateRangeValue, getDefaultDateRange, useFeedbackToast } from '@/shared/ui'
 import { listShops } from '@/features/portal/shops/api/shopApi'
 import { shopKeys } from '@/features/portal/shops/api/shopKeys'
+
 import {
   approveDesignTask,
   assignDesignTask,
   deleteDesignTask,
-  type DesignTask,
   type DesignTaskPriority,
-  formatTaskSeller,
-  getTaskSellerIdentity,
   getDesignSummary,
   listDesignAssignees,
   listDesignTasks,
@@ -60,149 +28,11 @@ import {
   uploadDesignAsset,
 } from '../api/designApi'
 import { designKeys } from '../api/designKeys'
+import { PsdTasksActionModals } from '../components/PsdTasksActionModals'
+import { usePsdTasksColumns } from '../components/PsdTasksColumns'
+import { PsdTasksFilterBar } from '../components/PsdTasksFilterBar'
+import { STATUS_TABS } from '../constants/psdTasksConstants'
 import styles from './PsdTasksPage.module.scss'
-
-dayjs.extend(relativeTime)
-
-const { Text } = Typography
-
-const STATUS_TABS = [
-  { key: 'all', titleKey: 'portal.design.tabs.all', defaultTitle: 'All', status: undefined },
-  { key: 'New', titleKey: 'portal.design.tabs.new', defaultTitle: 'New', status: 'NEW' },
-  {
-    key: 'Requested',
-    titleKey: 'portal.design.tabs.requested',
-    defaultTitle: 'Requested',
-    status: 'REQUESTED',
-  },
-  {
-    key: 'Assigned',
-    titleKey: 'portal.design.tabs.assigned',
-    defaultTitle: 'Assigned',
-    status: 'ASSIGNED',
-  },
-  {
-    key: 'In Progress',
-    titleKey: 'portal.design.tabs.inProgress',
-    defaultTitle: 'In Progress',
-    status: 'IN_PROGRESS',
-  },
-  {
-    key: 'Uploaded',
-    titleKey: 'portal.design.tabs.uploaded',
-    defaultTitle: 'Uploaded',
-    status: 'SUBMITTED',
-  },
-  {
-    key: 'QC Rejected',
-    titleKey: 'portal.design.tabs.qcRejected',
-    defaultTitle: 'QC Rejected',
-    status: 'REJECTED',
-  },
-  {
-    key: 'QC Passed',
-    titleKey: 'portal.design.tabs.qcPassed',
-    defaultTitle: 'QC Passed',
-    status: 'APPROVED',
-  },
-] as const
-
-type TaskHistoryItem = {
-  action?: string
-  status?: string
-  from?: string
-  to?: string
-  at?: string
-  createdAt?: string
-}
-
-function renderHistoryContent(history: TaskHistoryItem[] = []) {
-  if (!history || history.length === 0) {
-    return (
-      <div style={{ color: 'var(--ant-color-text-secondary)', padding: '4px 8px' }}>
-        No history recorded
-      </div>
-    )
-  }
-  return (
-    <div style={{ maxHeight: 240, overflowY: 'auto', padding: '4px 0' }}>
-      {history.map((item, idx) => (
-        <div key={idx} style={{ marginBottom: 8, minWidth: 180 }}>
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            {item.from ? <span style={{ fontWeight: 500 }}>{item.from}</span> : null}
-            <span style={{ color: DATA_COLORS.success, fontSize: 13 }}>➔</span>
-            <span style={{ fontWeight: 500 }}>
-              {item.to || item.action || item.status || 'Updated'}
-            </span>
-          </div>
-          <div style={{ fontSize: 11, color: 'var(--ant-color-text-tertiary)', marginLeft: 16 }}>
-            {item.at
-              ? dayjs(item.at).format('YYYY-MM-DD HH:mm')
-              : item.createdAt
-                ? dayjs(item.createdAt).format('YYYY-MM-DD HH:mm')
-                : '-'}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function getStatusInfo(status?: string) {
-  switch (status) {
-    case 'NEW':
-    case 'New':
-      return { label: 'New', color: DATA_COLORS.success }
-    case 'REQUESTED':
-    case 'Requested':
-      return { label: 'Requested', color: DATA_COLORS.process }
-    case 'ASSIGNED':
-    case 'Assigned':
-      return { label: 'Assigned', color: DATA_COLORS.process }
-    case 'IN_PROGRESS':
-    case 'In Progress':
-      return { label: 'In Progress', color: DATA_COLORS.process }
-    case 'SUBMITTED':
-    case 'Uploaded':
-      return { label: 'Uploaded', color: DATA_COLORS.success }
-    case 'REJECTED':
-    case 'QC Rejected':
-      return { label: 'QC Rejected', color: DATA_COLORS.cancelled }
-    case 'APPROVED':
-    case 'QC Passed':
-      return { label: 'QC Passed', color: DATA_COLORS.success }
-    default:
-      return { label: status || '-', color: DATA_COLORS.default }
-  }
-}
-
-function getPriorityInfo(priority?: string) {
-  switch (priority) {
-    case 'LOW':
-    case 'Low':
-      return { label: 'Low', color: DATA_COLORS.yellow }
-    case 'NORMAL':
-    case 'Normal':
-      return { label: 'Normal', color: DATA_COLORS.process }
-    case 'HIGH':
-    case 'High':
-      return { label: 'High', color: DATA_COLORS.process }
-    case 'URGENT':
-    case 'Urgent':
-      return { label: 'Urgent', color: DATA_COLORS.purple }
-    case 'EASY':
-    case 'Easy':
-      return { label: 'Easy', color: DATA_COLORS.success }
-    case 'HARD':
-    case 'Hard':
-      return { label: 'Hard', color: DATA_COLORS.pink }
-    case 'EXTREMELY':
-    case 'Extremely':
-      return { label: 'Extremely', color: DATA_COLORS.purple }
-    default:
-      return { label: priority || 'Normal', color: DATA_COLORS.default }
-  }
-}
 
 export function PsdTasksPage() {
   const { t } = useTranslation()
@@ -245,21 +75,18 @@ export function PsdTasksPage() {
     setPage(1)
   }
 
-  const [assignModalOpen, setAssignModalOpen] = useState(false)
+  // Modal target & control states
   const [targetTaskId, setTargetTaskId] = useState<string | null>(null)
+  const [assignModalOpen, setAssignModalOpen] = useState(false)
   const [selectedDesignerId, setSelectedDesignerId] = useState<string>()
-
   const [rejectModalOpen, setRejectModalOpen] = useState(false)
   const [rejectReason, setRejectReason] = useState('')
   const [reopenModalOpen, setReopenModalOpen] = useState(false)
   const [reopenReason, setReopenReason] = useState('')
-
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
   const [uploadFiles, setUploadFiles] = useState<UploadFile[]>([])
   const [uploadNote, setUploadNote] = useState('')
   const [uploadProgress, setUploadProgress] = useState(0)
-  const selectedUploadFile = uploadFiles[0]
-
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [requestModalOpen, setRequestModalOpen] = useState(false)
   const [requestNote, setRequestNote] = useState('')
@@ -291,8 +118,7 @@ export function PsdTasksPage() {
       salesChannelCode,
       activeTabConfig.status,
       selectedSellerId,
-      dateRange.dateFrom,
-      dateRange.dateTo,
+      dateRange,
     ],
   )
 
@@ -322,14 +148,7 @@ export function PsdTasksPage() {
       dateFrom: dateRange.dateFrom,
       dateTo: dateRange.dateTo,
     }),
-    [
-      salesChannelCode,
-      deferredSearch,
-      deferredEtsyListingId,
-      selectedSellerId,
-      dateRange.dateFrom,
-      dateRange.dateTo,
-    ],
+    [salesChannelCode, deferredSearch, deferredEtsyListingId, selectedSellerId, dateRange],
   )
 
   const summaryQuery = useQuery({
@@ -361,8 +180,7 @@ export function PsdTasksPage() {
       invalidate()
     },
     onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : 'Assign failed'
-      toast('error', msg)
+      toast('error', err instanceof Error ? err.message : 'Assign failed')
     },
   })
 
@@ -373,8 +191,7 @@ export function PsdTasksPage() {
       invalidate()
     },
     onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : 'Failed to start task'
-      toast('error', msg)
+      toast('error', err instanceof Error ? err.message : 'Failed to start task')
     },
   })
 
@@ -411,8 +228,7 @@ export function PsdTasksPage() {
       invalidate()
     },
     onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : 'Submit failed'
-      toast('error', msg)
+      toast('error', err instanceof Error ? err.message : 'Submit failed')
       setUploadProgress(0)
     },
   })
@@ -425,8 +241,7 @@ export function PsdTasksPage() {
       invalidate()
     },
     onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : 'Approve failed'
-      toast('error', msg)
+      toast('error', err instanceof Error ? err.message : 'Approve failed')
     },
   })
 
@@ -450,8 +265,7 @@ export function PsdTasksPage() {
       invalidate()
     },
     onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : 'Reject failed'
-      toast('error', msg)
+      toast('error', err instanceof Error ? err.message : 'Reject failed')
     },
   })
 
@@ -479,8 +293,7 @@ export function PsdTasksPage() {
       invalidate()
     },
     onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : 'Failed to delete task'
-      toast('error', msg)
+      toast('error', err instanceof Error ? err.message : 'Failed to delete task')
     },
   })
 
@@ -495,8 +308,7 @@ export function PsdTasksPage() {
       invalidate()
     },
     onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : 'Failed to request upload'
-      toast('error', msg)
+      toast('error', err instanceof Error ? err.message : 'Failed to request upload')
     },
   })
 
@@ -536,493 +348,6 @@ export function PsdTasksPage() {
   }, [tasksQuery.data?.items, salesChannelCode, selectedSellerId])
 
   const paginationTotal = tasksQuery.data?.pagination?.total ?? displayedTasks.length
-
-  const columns = useMemo<TableColumnsType<DesignTask>>(() => {
-    const baseColumns: TableColumnsType<DesignTask> = [
-      {
-        title: t('portal.design.createdAt', { defaultValue: 'Created At' }),
-        dataIndex: 'createdAt',
-        key: 'createdAt',
-        width: 140,
-        align: 'center',
-        render: (val: string) => {
-          if (!val) return '-'
-          const d = dayjs(val)
-          if (!d.isValid()) return '-'
-          const primary = d.format('MMM D, YYYY')
-          const relative = d
-            .fromNow()
-            .replace(/^about /, '')
-            .replace(/^less than /, '')
-          return (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <span style={{ fontWeight: 500, whiteSpace: 'nowrap' }}>{primary}</span>
-              <span style={{ fontSize: 12, whiteSpace: 'nowrap', color: DATA_COLORS.title }}>
-                ({relative})
-              </span>
-            </div>
-          )
-        },
-      },
-      {
-        title: t('portal.design.productImage', { defaultValue: 'Product Image' }),
-        key: 'image',
-        width: 120,
-        align: 'center',
-        render: (_, record) => {
-          const img =
-            record.image ||
-            record.imageUrl ||
-            record.thumbnailAsset?.downloadUrl ||
-            record.listing?.productImageUrl ||
-            record.latestSubmission?.assets?.[0]?.downloadUrl ||
-            undefined
-          return (
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <div
-                style={{
-                  width: 100,
-                  height: 100,
-                  borderRadius: 8,
-                  overflow: 'hidden',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: 'var(--ant-color-fill-quaternary, #f8fafc)',
-                  boxShadow:
-                    'var(--ui-surface-elevate-shadow, rgba(9, 30, 66, 0.25) 0px 4px 8px -2px)',
-                }}
-              >
-                <ZoomableImage
-                  src={img}
-                  alt={record.title || 'Product Image'}
-                  width={100}
-                  height={100}
-                  style={{ objectFit: 'cover', borderRadius: 8, width: 100, height: 100 }}
-                />
-              </div>
-            </div>
-          )
-        },
-      },
-      {
-        title:
-          salesChannelCode === 'ETSY'
-            ? t('portal.design.listingId', { defaultValue: 'Listing ID' })
-            : salesChannelCode === 'AMAZON'
-              ? t('portal.design.asin', { defaultValue: 'ASIN' })
-              : `${t('portal.design.asin', { defaultValue: 'ASIN' })} / ${t('portal.design.listingId', { defaultValue: 'Listing ID' })}`,
-        key: 'asin',
-        width: 130,
-        align: 'center',
-        render: (_, record) => {
-          const rawChannel = String(
-            record.listing?.salesChannelCode || salesChannelCode || '',
-          ).toUpperCase()
-          const isEtsy =
-            rawChannel === 'ETSY' || Boolean(record.listing?.etsyListingId && !record.listing?.asin)
-          const identifier = isEtsy
-            ? record.listing?.etsyListingId ||
-              record.listing?.asin ||
-              (record as { asin?: string }).asin
-            : record.listing?.asin ||
-              (record as { asin?: string }).asin ||
-              record.listing?.etsyListingId
-          const url = identifier
-            ? isEtsy
-              ? `https://www.etsy.com/listing/${encodeURIComponent(identifier)}`
-              : `https://www.amazon.com/dp/${encodeURIComponent(identifier)}`
-            : null
-          const pill = <StatusPill title={identifier || '-'} color={DATA_COLORS.pending} />
-
-          return url ? (
-            <a
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`Open ${identifier}`}
-              onClick={(event) => event.stopPropagation()}
-              style={{ display: 'inline-flex', textDecoration: 'none' }}
-            >
-              {pill}
-            </a>
-          ) : (
-            pill
-          )
-        },
-      },
-      {
-        title: t('portal.design.statusTask', { defaultValue: 'Status Task' }),
-        key: 'status',
-        width: 150,
-        align: 'center',
-        render: (_, record) => {
-          const { label, color } = getStatusInfo(record.status)
-          return (
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6,
-              }}
-            >
-              <StatusPill title={label} color={color} />
-              <Popover
-                placement="bottomLeft"
-                title="History"
-                content={renderHistoryContent(
-                  (record as { history?: TaskHistoryItem[] }).history || [],
-                )}
-                arrow={false}
-              >
-                <HistoryOutlined
-                  style={{ fontSize: 16, cursor: 'pointer', color: DATA_COLORS.title }}
-                />
-              </Popover>
-            </div>
-          )
-        },
-      },
-      {
-        title: t('portal.design.assignedTo', { defaultValue: 'Assigned' }),
-        key: 'assignedDesigner',
-        width: 150,
-        render: (_, record) => {
-          const assignedName =
-            record.assignedDesigner?.fullName ||
-            (record.assignedDesigner as { name?: string })?.name ||
-            (record.assignedDesigner as { full_name?: string })?.full_name ||
-            null
-          return (
-            <Space orientation="vertical" size={2}>
-              {assignedName ? (
-                <EmployeeIdentity
-                  size="small"
-                  mode="code"
-                  name={assignedName}
-                  employeeCode={
-                    (record.assignedDesigner as { employeeCode?: string | null })?.employeeCode
-                  }
-                  avatarUrl={(record.assignedDesigner as { avatarUrl?: string | null })?.avatarUrl}
-                />
-              ) : (
-                <Typography.Text type="secondary" style={{ fontSize: 13 }}>
-                  {t('portal.design.unassigned', { defaultValue: 'Pending assign' })}
-                </Typography.Text>
-              )}
-              {canWrite && record.status === 'ASSIGNED' ? (
-                <Button
-                  size="small"
-                  type="link"
-                  onClick={() => {
-                    setTargetTaskId(record.id)
-                    setSelectedDesignerId(record.assignedDesignerId || undefined)
-                    setAssignModalOpen(true)
-                  }}
-                >
-                  {t('portal.design.reassignDesigner')}
-                </Button>
-              ) : null}
-            </Space>
-          )
-        },
-      },
-      {
-        title: t('common.priority', { defaultValue: 'Priority' }),
-        dataIndex: 'priority',
-        key: 'priority',
-        width: 110,
-        align: 'center',
-        render: (priority: DesignTaskPriority, record) => {
-          const { label, color } = getPriorityInfo(priority)
-          if (canReprioritize) {
-            return (
-              <Select
-                aria-label={t('common.priority')}
-                size="small"
-                value={priority}
-                loading={
-                  priorityMutation.isPending && priorityMutation.variables?.taskId === record.id
-                }
-                onChange={(nextPriority) =>
-                  priorityMutation.mutate({ taskId: record.id, priority: nextPriority })
-                }
-                options={['LOW', 'NORMAL', 'HIGH', 'URGENT'].map((value) => ({
-                  value,
-                  label: value,
-                }))}
-              />
-            )
-          }
-          return <StatusPill title={label} color={color} />
-        },
-      },
-      {
-        title: t('portal.design.psdStatus', { defaultValue: 'PSD Status' }),
-        key: 'psdStatus',
-        width: 130,
-        align: 'center',
-        render: (_, record) => {
-          const isAvailable =
-            record.listing?.psdStatus === 'Available' ||
-            record.listing?.psdStatus === 'PRESENT' ||
-            record.status === 'APPROVED'
-          return (
-            <StatusPill
-              title={isAvailable ? 'Available' : 'Unavailable'}
-              color={isAvailable ? DATA_COLORS.success : DATA_COLORS.cancelled}
-            />
-          )
-        },
-      },
-      {
-        title: t('portal.design.shop', { defaultValue: 'Shop' }),
-        key: 'shop',
-        width: 140,
-        align: 'center',
-        render: (_, record) => (
-          <StatusPill title={record.shop?.name || '-'} color={DATA_COLORS.pending} />
-        ),
-      },
-      {
-        title: t('portal.design.seller', { defaultValue: 'Seller' }),
-        key: 'seller',
-        width: 160,
-        align: 'center',
-        render: (_, record) => {
-          const seller = getTaskSellerIdentity(record)
-          if (seller?.name || seller?.employeeCode) {
-            return (
-              <EmployeeIdentity
-                size="small"
-                mode="code"
-                name={seller.name}
-                employeeCode={seller.employeeCode}
-                avatarUrl={seller.avatarUrl}
-              />
-            )
-          }
-          const sellerName = formatTaskSeller(record)
-          return <StatusPill title={sellerName} color={DATA_COLORS.process} />
-        },
-      },
-      {
-        title: t('portal.design.asinType', { defaultValue: 'Asin Type' }),
-        key: 'asinType',
-        width: 120,
-        align: 'center',
-        render: (_, record) => {
-          const asinType =
-            record.asinType ||
-            record.asin_type ||
-            record.listing?.asinType ||
-            record.listing?.asin_type ||
-            'Normal'
-          return <StatusPill title={asinType} color={DATA_COLORS.asin} />
-        },
-      },
-    ]
-
-    if (activeTabKey !== 'all' && activeTabKey !== 'New') {
-      baseColumns.push({
-        title: t('common.note', { defaultValue: 'Note' }),
-        dataIndex: 'note',
-        key: 'note',
-        width: 180,
-        align: 'left',
-        render: (_, record) => (
-          <Typography.Paragraph
-            ellipsis={{ rows: 2, tooltip: record.latestSubmission?.note }}
-            style={{ margin: 0 }}
-          >
-            {record.latestSubmission?.note || '-'}
-          </Typography.Paragraph>
-        ),
-      })
-    }
-
-    baseColumns.push({
-      title: t('common.actions', { defaultValue: 'Actions' }),
-      key: 'actions',
-      width: 180,
-      align: 'center',
-      render: (_, record) => {
-        const latestAsset = record.latestSubmission?.assets?.[0]
-        const approvedId = record.approvedAssetId || record.latestSubmission?.approvedAssetId
-        const isAssignedDesigner = String(record.assignedDesignerId) === String(account.account.id)
-        const canSubmitTask = canWork && isAssignedDesigner
-        const downloadAsset =
-          record.status === 'APPROVED'
-            ? record.latestSubmission?.assets?.find((asset) => asset.id === approvedId)
-            : canWork
-              ? latestAsset
-              : null
-
-        return (
-          <Space size={4} wrap align="center" style={{ justifyContent: 'center' }}>
-            {/* Upload button (not for QC Passed) */}
-            {canSubmitTask && ['IN_PROGRESS', 'REJECTED'].includes(record.status) ? (
-              <Tooltip title="Upload">
-                <Button
-                  size="small"
-                  aria-label={t('portal.design.psdFile')}
-                  icon={<UploadOutlined />}
-                  onClick={() => {
-                    setTargetTaskId(record.id)
-                    setUploadModalOpen(true)
-                  }}
-                />
-              </Tooltip>
-            ) : null}
-
-            {/* Download button */}
-            <Tooltip title={t('common.download')}>
-              <Button
-                size="small"
-                aria-label={t('common.download')}
-                disabled={!downloadAsset?.downloadUrl}
-                icon={<DownloadOutlined />}
-                onClick={() => {
-                  if (downloadAsset?.downloadUrl) {
-                    void downloadMediaAsset(
-                      downloadAsset.downloadUrl,
-                      downloadAsset.originalFilename ?? undefined,
-                    ).catch(() => toast('error', t('common.downloadFailed')))
-                  }
-                }}
-              />
-            </Tooltip>
-
-            {/* New: Request upload */}
-            {record.status === 'NEW' ? (
-              <Tooltip title="Request upload">
-                <Button
-                  size="small"
-                  icon={<PlayCircleOutlined />}
-                  onClick={() => {
-                    setTargetTaskId(record.id)
-                    setRequestModalOpen(true)
-                  }}
-                />
-              </Tooltip>
-            ) : null}
-
-            {/* Requested: Assign */}
-            {canWrite && record.status === 'REQUESTED' ? (
-              <Tooltip title="Assign">
-                <Button
-                  size="small"
-                  aria-label={t('portal.design.assignDesigner')}
-                  icon={<SolutionOutlined />}
-                  onClick={() => {
-                    setTargetTaskId(record.id)
-                    setSelectedDesignerId(record.assignedDesignerId || undefined)
-                    setAssignModalOpen(true)
-                  }}
-                />
-              </Tooltip>
-            ) : null}
-
-            {/* Assigned: Start doing */}
-            {canSubmitTask && record.status === 'ASSIGNED' ? (
-              <Tooltip title="Start doing">
-                <Button
-                  size="small"
-                  icon={<HourglassOutlined />}
-                  onClick={() => startMutation.mutate(record.id)}
-                  loading={startMutation.isPending && startMutation.variables === record.id}
-                />
-              </Tooltip>
-            ) : null}
-
-            {/* Uploaded / SUBMITTED: Pass & Reject */}
-            {(canWrite || canReview) && record.status === 'SUBMITTED' ? (
-              <>
-                <Tooltip title="Passed">
-                  <Button
-                    size="small"
-                    icon={<CheckCircleOutlined style={{ color: DATA_COLORS.success }} />}
-                    onClick={() =>
-                      approveMutation.mutate({
-                        taskId: record.id,
-                        assetId: latestAsset?.id || '',
-                      })
-                    }
-                    loading={
-                      approveMutation.isPending && approveMutation.variables?.taskId === record.id
-                    }
-                  />
-                </Tooltip>
-                <Tooltip title="Reject">
-                  <Button
-                    size="small"
-                    icon={<RollbackOutlined style={{ color: DATA_COLORS.cancelled }} />}
-                    onClick={() => {
-                      setTargetTaskId(record.id)
-                      setRejectModalOpen(true)
-                    }}
-                  />
-                </Tooltip>
-              </>
-            ) : null}
-
-            {(canWrite || canReview) && record.status === 'APPROVED' ? (
-              <Tooltip title="Reopen for revision">
-                <Button
-                  size="small"
-                  aria-label="Reopen for revision"
-                  icon={<RollbackOutlined />}
-                  onClick={() => {
-                    setTargetTaskId(record.id)
-                    setReopenModalOpen(true)
-                  }}
-                />
-              </Tooltip>
-            ) : null}
-
-            {/* Delete */}
-            {canWrite ? (
-              <Tooltip title="Delete">
-                <Button
-                  size="small"
-                  aria-label="Delete task"
-                  icon={<DeleteOutlined style={{ color: DATA_COLORS.cancelled }} />}
-                  onClick={() => {
-                    setTargetTaskId(record.id)
-                    setDeleteModalOpen(true)
-                  }}
-                />
-              </Tooltip>
-            ) : null}
-          </Space>
-        )
-      },
-    })
-
-    return baseColumns
-  }, [
-    activeTabKey,
-    approveMutation,
-    canReprioritize,
-    canReview,
-    canWork,
-    canWrite,
-    account.account.id,
-    priorityMutation,
-    salesChannelCode,
-    startMutation,
-    t,
-    toast,
-  ])
-
   const assignmentTask = tasksQuery.data?.items.find((task) => task.id === targetTaskId)
   const canConfirmAssignment = Boolean(
     selectedDesignerId &&
@@ -1031,96 +356,87 @@ export function PsdTasksPage() {
       assignmentTask.assignedDesignerId !== selectedDesignerId),
   )
 
+  const columns = usePsdTasksColumns({
+    activeTabKey,
+    salesChannelCode,
+    currentAccountId: account.account.id,
+    canWrite,
+    canWork,
+    canReview,
+    canReprioritize,
+    onOpenUploadModal: (taskId) => {
+      setTargetTaskId(taskId)
+      setUploadModalOpen(true)
+    },
+    onOpenRequestModal: (taskId) => {
+      setTargetTaskId(taskId)
+      setRequestModalOpen(true)
+    },
+    onOpenAssignModal: (taskId, currentDesignerId) => {
+      setTargetTaskId(taskId)
+      setSelectedDesignerId(currentDesignerId)
+      setAssignModalOpen(true)
+    },
+    onStartTask: (taskId) => startMutation.mutate(taskId),
+    isStartingTask: (taskId) => startMutation.isPending && startMutation.variables === taskId,
+    onApproveTask: (taskId, assetId) => approveMutation.mutate({ taskId, assetId }),
+    isApprovingTask: (taskId) =>
+      approveMutation.isPending && approveMutation.variables?.taskId === taskId,
+    onOpenRejectModal: (taskId) => {
+      setTargetTaskId(taskId)
+      setRejectModalOpen(true)
+    },
+    onOpenReopenModal: (taskId) => {
+      setTargetTaskId(taskId)
+      setReopenModalOpen(true)
+    },
+    onOpenDeleteModal: (taskId) => {
+      setTargetTaskId(taskId)
+      setDeleteModalOpen(true)
+    },
+    onChangePriority: (taskId, priority) => priorityMutation.mutate({ taskId, priority }),
+    isChangingPriority: (taskId) =>
+      priorityMutation.isPending && priorityMutation.variables?.taskId === taskId,
+  })
+
   return (
     <section className={styles.page}>
-      {/* Top row: Status Tabs + Refresh action */}
-      <div className={styles.topRow}>
-        <div className={styles.tabs}>
-          <UiTabs
-            activeKey={activeTabKey}
-            onChange={(key) => {
-              setActiveTabKey(key)
-              setPage(1)
-            }}
-            items={STATUS_TABS.map((tab) => ({
-              key: tab.key,
-              label: (
-                <UiTabLabel count={counts[tab.key]} active={activeTabKey === tab.key}>
-                  {t(tab.titleKey, { defaultValue: tab.defaultTitle })}
-                </UiTabLabel>
-              ),
-            }))}
-          />
-        </div>
+      <PsdTasksFilterBar
+        activeTabKey={activeTabKey}
+        onTabChange={(key) => {
+          setActiveTabKey(key)
+          setPage(1)
+        }}
+        counts={counts}
+        salesChannelCode={salesChannelCode}
+        search={search}
+        onSearchChange={(val) => {
+          setSearch(val)
+          setPage(1)
+        }}
+        etsyListingId={etsyListingId}
+        onEtsyListingIdChange={(val) => {
+          setEtsyListingId(val)
+          setPage(1)
+        }}
+        selectedSellerId={selectedSellerId}
+        onSellerChange={(val) => {
+          setSelectedSellerId(val)
+          setPage(1)
+        }}
+        shopOptions={(shopsQuery.data?.items || []).map((shop) => ({
+          label: shop.name,
+          value: shop.id,
+        }))}
+        dateRange={dateRange}
+        onDateRangeChange={(val) => {
+          setDateRange(val)
+          setPage(1)
+        }}
+        onRefresh={invalidate}
+        isRefreshing={tasksQuery.isFetching}
+      />
 
-        <div className={styles.headerActions}>
-          <DateRangePicker
-            allowClear
-            value={dateRange}
-            onChange={(val) => {
-              setDateRange(val)
-              setPage(1)
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Filter bar: Search + Seller + Refresh */}
-      <div className={styles.filterBar}>
-        <Input
-          placeholder={
-            salesChannelCode === 'ETSY'
-              ? t('portal.design.searchEtsyPlaceholder', {
-                  defaultValue: 'Search Listing ID, SKU...',
-                })
-              : salesChannelCode === 'AMAZON'
-                ? t('portal.design.searchAmazonPlaceholder', {
-                    defaultValue: 'Search ASIN, SKU...',
-                  })
-                : t('portal.design.searchAllPlaceholder', {
-                    defaultValue: 'Search ASIN, Etsy Listing ID, SKU...',
-                  })
-          }
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value)
-            setPage(1)
-          }}
-          allowClear
-          className={styles.search}
-        />
-        <Input
-          placeholder={t('portal.design.etsyListingId', { defaultValue: 'Etsy Listing ID' })}
-          value={etsyListingId}
-          onChange={(e) => {
-            setEtsyListingId(e.target.value)
-            setPage(1)
-          }}
-          allowClear
-          style={{ width: 180 }}
-        />
-        <Select
-          allowClear
-          showSearch
-          optionFilterProp="label"
-          placeholder={t('portal.design.shop', { defaultValue: 'Shop' })}
-          value={selectedSellerId}
-          onChange={(val) => {
-            setSelectedSellerId(val)
-            setPage(1)
-          }}
-          className={styles.sellerSelect}
-          options={(shopsQuery.data?.items || []).map((shop) => ({
-            label: shop.name,
-            value: shop.id,
-          }))}
-        />
-        <Tooltip title={t('common.refresh', { defaultValue: 'Refresh' })}>
-          <Button icon={<ReloadOutlined />} onClick={invalidate} loading={tasksQuery.isFetching} />
-        </Tooltip>
-      </div>
-
-      {/* Table area using standard CoreDataTable */}
       <div className={styles.tableArea}>
         <CoreDataTable
           fillViewport
@@ -1142,120 +458,61 @@ export function PsdTasksPage() {
         />
       </div>
 
-      {/* Assign Designer Modal */}
-      <Modal
-        open={assignModalOpen}
-        title={t(
-          assignmentTask?.status === 'ASSIGNED'
-            ? 'portal.design.reassignDesigner'
-            : 'portal.design.assignDesigner',
-        )}
-        okText={t('portal.design.confirmAssignment')}
-        okButtonProps={{ disabled: !canConfirmAssignment }}
-        confirmLoading={assignMutation.isPending}
-        onCancel={() => {
+      <PsdTasksActionModals
+        assignModalOpen={assignModalOpen}
+        onCloseAssignModal={() => {
           setAssignModalOpen(false)
           setTargetTaskId(null)
           setSelectedDesignerId(undefined)
         }}
-        onOk={() => {
+        onConfirmAssign={() => {
           if (targetTaskId && selectedDesignerId && canConfirmAssignment) {
             assignMutation.mutate({ taskId: targetTaskId, designerId: selectedDesignerId })
           }
         }}
-      >
-        <div style={{ padding: '16px 0' }}>
-          <Text strong style={{ display: 'block', marginBottom: 8 }}>
-            {t('portal.design.selectDesigner')}
-          </Text>
-          <Select
-            style={{ width: '100%' }}
-            placeholder={t('portal.design.selectDesigner')}
-            value={selectedDesignerId}
-            onChange={(val) => setSelectedDesignerId(val)}
-            options={(assigneesQuery.data || []).map((a) => ({
-              label: a.fullName || a.name || a.id,
-              value: a.id,
-            }))}
-          />
-        </div>
-      </Modal>
-
-      {/* Reject Reason Modal */}
-      <Modal
-        open={rejectModalOpen}
-        title="Reject Task"
-        okText="Reject"
-        okButtonProps={{ danger: true }}
-        confirmLoading={rejectMutation.isPending}
-        onCancel={() => {
+        selectedDesignerId={selectedDesignerId}
+        onSelectDesignerId={setSelectedDesignerId}
+        assignees={assigneesQuery.data || []}
+        isAssigning={assignMutation.isPending}
+        isReassign={assignmentTask?.status === 'ASSIGNED'}
+        canConfirmAssignment={canConfirmAssignment}
+        rejectModalOpen={rejectModalOpen}
+        onCloseRejectModal={() => {
           setRejectModalOpen(false)
           setTargetTaskId(null)
           setRejectReason('')
         }}
-        onOk={() => {
+        onConfirmReject={() => {
           if (targetTaskId && rejectReason) {
             rejectMutation.mutate({ taskId: targetTaskId, reason: rejectReason })
           }
         }}
-      >
-        <div style={{ padding: '16px 0' }}>
-          <Text strong style={{ display: 'block', marginBottom: 8 }}>
-            Reject Reason
-          </Text>
-          <Input.TextArea
-            rows={4}
-            value={rejectReason}
-            onChange={(e) => setRejectReason(e.target.value)}
-            placeholder="Enter reason for rejection..."
-          />
-        </div>
-      </Modal>
-
-      <Modal
-        open={reopenModalOpen}
-        title="Reopen PSD Task"
-        okText="Reopen"
-        okButtonProps={{ danger: true }}
-        confirmLoading={reopenMutation.isPending}
-        onCancel={() => {
+        rejectReason={rejectReason}
+        onRejectReasonChange={setRejectReason}
+        isRejecting={rejectMutation.isPending}
+        reopenModalOpen={reopenModalOpen}
+        onCloseReopenModal={() => {
           setReopenModalOpen(false)
           setTargetTaskId(null)
           setReopenReason('')
         }}
-        onOk={() => {
+        onConfirmReopen={() => {
           if (targetTaskId && reopenReason.trim()) {
             reopenMutation.mutate({ taskId: targetTaskId, reason: reopenReason.trim() })
           }
         }}
-      >
-        <div style={{ padding: '16px 0' }}>
-          <Text strong style={{ display: 'block', marginBottom: 8 }}>
-            Revision reason
-          </Text>
-          <Input.TextArea
-            rows={4}
-            value={reopenReason}
-            onChange={(e) => setReopenReason(e.target.value)}
-            placeholder="Explain what needs to change..."
-          />
-        </div>
-      </Modal>
-
-      {/* Upload Finished PSD Modal */}
-      <Modal
-        open={uploadModalOpen}
-        title="Upload Finished PSD"
-        okText="Submit"
-        confirmLoading={submitMutation.isPending}
-        onCancel={() => {
+        reopenReason={reopenReason}
+        onReopenReasonChange={setReopenReason}
+        isReopening={reopenMutation.isPending}
+        uploadModalOpen={uploadModalOpen}
+        onCloseUploadModal={() => {
           setUploadModalOpen(false)
           setTargetTaskId(null)
           setUploadFiles([])
           setUploadNote('')
           setUploadProgress(0)
         }}
-        onOk={() => {
+        onConfirmUpload={() => {
           if (targetTaskId && uploadFiles.length > 0) {
             setUploadProgress(0)
             submitMutation.mutate({
@@ -1265,102 +522,37 @@ export function PsdTasksPage() {
             })
           }
         }}
-      >
-        <div style={{ padding: '16px 0', display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div>
-            <FileUpload
-              title={
-                selectedUploadFile
-                  ? t('portal.design.replaceSelectedFile', { name: selectedUploadFile.name })
-                  : t('portal.design.finishedPsdUpload')
-              }
-              description={
-                selectedUploadFile
-                  ? t('portal.design.replaceSelectedFileHint')
-                  : t('portal.design.finishedPsdUploadHint')
-              }
-              accept=".psd,.zip,.rar,.png,.jpg,.jpeg"
-              fileList={uploadFiles}
-              onChange={({ fileList }) => setUploadFiles(fileList)}
-              onRemove={() => {
-                setUploadFiles([])
-                setUploadProgress(0)
-                return false
-              }}
-              showUploadList={{ showRemoveIcon: true }}
-              maxCount={1}
-            />
-            {submitMutation.isPending ? (
-              <div style={{ marginTop: 12 }}>
-                <Text type="secondary">{t('portal.design.uploadingFile')}</Text>
-                <Progress
-                  percent={uploadProgress}
-                  status={uploadProgress < 100 ? 'active' : 'success'}
-                  style={{ marginTop: 6 }}
-                />
-              </div>
-            ) : null}
-          </div>
-          <div>
-            <Text strong style={{ display: 'block', marginBottom: 8 }}>
-              Note
-            </Text>
-            <Input.TextArea
-              rows={3}
-              value={uploadNote}
-              onChange={(e) => setUploadNote(e.target.value)}
-              placeholder="Optional notes about the design..."
-            />
-          </div>
-        </div>
-      </Modal>
-
-      {/* Request Upload Modal */}
-      <Modal
-        open={requestModalOpen}
-        title="Request Upload PSD"
-        okText="Request"
-        confirmLoading={requestMutation.isPending}
-        onCancel={() => {
+        uploadFiles={uploadFiles}
+        onUploadFilesChange={setUploadFiles}
+        uploadNote={uploadNote}
+        onUploadNoteChange={setUploadNote}
+        uploadProgress={uploadProgress}
+        isSubmittingUpload={submitMutation.isPending}
+        requestModalOpen={requestModalOpen}
+        onCloseRequestModal={() => {
           setRequestModalOpen(false)
           setRequestNote('')
           setTargetTaskId(null)
         }}
-        onOk={() => {
+        onConfirmRequest={() => {
           if (targetTaskId) {
             requestMutation.mutate({ taskId: targetTaskId, note: requestNote })
           }
         }}
-      >
-        <div style={{ padding: '16px 0' }}>
-          <Text strong style={{ display: 'block', marginBottom: 8 }}>
-            Note (optional)
-          </Text>
-          <Input.TextArea
-            rows={4}
-            value={requestNote}
-            onChange={(e) => setRequestNote(e.target.value)}
-            placeholder="Enter request note..."
-          />
-        </div>
-      </Modal>
-
-      {/* Delete Task Confirmation Modal */}
-      <ConfirmDangerModal
-        open={deleteModalOpen}
-        title="Delete task"
-        description="Delete this PSD task? Tasks with an approved PSD must be cancelled instead."
-        confirmLabel="Delete"
-        loading={deleteMutation.isPending}
-        onConfirm={() => {
+        requestNote={requestNote}
+        onRequestNoteChange={setRequestNote}
+        isRequesting={requestMutation.isPending}
+        deleteModalOpen={deleteModalOpen}
+        onCloseDeleteModal={() => {
+          setDeleteModalOpen(false)
+          setTargetTaskId(null)
+        }}
+        onConfirmDelete={() => {
           if (targetTaskId) {
             deleteMutation.mutate(targetTaskId)
           }
         }}
-        onCancel={() => {
-          setDeleteModalOpen(false)
-          setTargetTaskId(null)
-        }}
+        isDeleting={deleteMutation.isPending}
       />
     </section>
   )
