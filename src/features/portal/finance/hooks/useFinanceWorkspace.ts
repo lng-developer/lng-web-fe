@@ -68,7 +68,7 @@ export const useFinanceWorkspace = ({
 
   const snapshots = useQuery({
     queryKey: financeKeys.snapshots(queryParams),
-    queryFn: ({ signal }) => listFinanceSnapshots(queryParams, signal),
+    queryFn: () => listFinanceSnapshots(queryParams),
     retry: false,
   })
 
