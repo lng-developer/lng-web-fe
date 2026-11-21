@@ -248,7 +248,20 @@ export function PsdTasksPage() {
   const priorityMutation = useMutation({
     mutationFn: ({ taskId, priority }: { taskId: string; priority: DesignTaskPriority }) =>
       updateDesignTaskPriority(taskId, priority),
-    onSuccess: invalidate,
+    onSuccess: (_, { taskId, priority }) => {
+      // Targeted cache update: reflect priority changes in 0ms without re-fetching entire list
+      queryClient.setQueriesData<{ items?: Array<{ id: string; priority: DesignTaskPriority }> }>(
+        { queryKey: designKeys.lists() },
+        (old) => {
+          if (!old?.items) return old
+          return {
+            ...old,
+            items: old.items.map((task) => (task.id === taskId ? { ...task, priority } : task)),
+          }
+        },
+      )
+      toast('success', t('portal.design.priorityUpdated', { defaultValue: 'Priority updated' }))
+    },
     onError: (err: unknown) => {
       toast('error', err instanceof Error ? err.message : t('portal.design.updateFailed'))
     },

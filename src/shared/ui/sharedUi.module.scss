@@ -320,7 +320,7 @@
   min-width: 20px;
   padding: 2px 8px;
   border-radius: 10px;
-  background: #fff;
+  background: var(--ant-color-bg-container, #ffffff);
   color: var(--ant-color-primary);
   font-size: 11px;
   font-weight: 700;

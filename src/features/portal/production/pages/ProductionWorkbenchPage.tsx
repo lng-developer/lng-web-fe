@@ -493,8 +493,20 @@ export function ProductionWorkbenchPage({
   const saveNote = useMutation({
     mutationFn: (input: { taskId: string; note: string }) =>
       updateDesignNote(input.taskId, input.note),
-    onSuccess: async () => {
-      await refresh()
+    onSuccess: async (_, input) => {
+      // Targeted cache update: update designNote directly in cache with 0ms delay
+      queryClient.setQueriesData<{ items?: Array<{ id: string; designNote?: string | null }> }>(
+        { queryKey: productionKeys.lists() },
+        (old) => {
+          if (!old?.items) return old
+          return {
+            ...old,
+            items: old.items.map((task) =>
+              task.id === input.taskId ? { ...task, designNote: input.note } : task,
+            ),
+          }
+        },
+      )
       toast(
         'success',
         t('portal.production.feedback.saveNoteSuccessTitle'),
@@ -506,8 +518,19 @@ export function ProductionWorkbenchPage({
 
   const claimTask = useMutation({
     mutationFn: (taskId: string) => claimProductionTask(taskId),
-    onSuccess: async () => {
-      await refresh()
+    onSuccess: async (_, taskId) => {
+      queryClient.setQueriesData<{
+        items?: Array<{ id: string; status?: string; claimedBy?: string | null }>
+      }>({ queryKey: productionKeys.lists() }, (old) => {
+        if (!old?.items) return old
+        return {
+          ...old,
+          items: old.items.map((task) =>
+            task.id === taskId ? { ...task, status: 'IN_PROGRESS' } : task,
+          ),
+        }
+      })
+      void queryClient.invalidateQueries({ queryKey: productionKeys.summaries() })
       toast(
         'success',
         t('portal.production.taskClaimed', { defaultValue: 'Đã nhận việc thành công' }),

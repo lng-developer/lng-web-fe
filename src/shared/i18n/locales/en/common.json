@@ -87,7 +87,17 @@
     "table": {
       "viewDetails": "View details"
     },
-    "seller": "Seller"
+    "seller": "Seller",
+    "all": "All Platforms",
+    "cancel": "Cancel",
+    "clearSelection": "Deselect",
+    "copied": "Copied",
+    "done": "Done",
+    "empty": "No trend data recorded for this range",
+    "selectAllCurrentPage": "Select all on this page",
+    "view": "Details",
+    "viewDetails": "View details",
+    "delete": "Delete"
   },
   "language": {
     "label": "Language",
@@ -266,7 +276,9 @@
         "shop": "Shop",
         "vendor": "Vendor"
       }
-    }
+    },
+    "switchToHr": "Switch to HR",
+    "switchToPortal": "Switch to Portal"
   },
   "finance": {
     "title": "Finance operations",
@@ -705,6 +717,16 @@
       "failed": "Failed",
       "shipped": "Shipped",
       "successRate": "Success rate"
+    },
+    "tooltips": {
+      "adSpend": "Advertising Spend (Amazon Ads / PPC)",
+      "discount": "Discount / Promotion",
+      "fee": "Marketplace Fee = Amazon Commission + Closing/Processing Fee",
+      "operatingCost": "Allocated Operating / Staff Cost",
+      "orders": "Total Orders",
+      "refund": "Customer Refund (Prior Orders)",
+      "revenue": "Revenue = Item Sales + Buyer Shipping",
+      "totalCost": "COGS = Base Cost + Print & Vendor Shipping"
     }
   },
   "customization": {
@@ -905,7 +927,8 @@
       "ruleEditor": "Rule editor",
       "ruleFields": "Rule fields",
       "ruleMetadata": "Rule metadata",
-      "additionalConditions": "Additional conditions"
+      "additionalConditions": "Additional conditions",
+      "testSample": "Test Rule with Sample SKU"
     },
     "filters": {
       "vendorProduct": "Vendor product",
@@ -1340,7 +1363,8 @@
       "missingCostNotice": "{{count}} items missing cost",
       "profitMargin": "{{percent}}% margin",
       "margin": "margin",
-      "avgOrderValue": "AOV"
+      "avgOrderValue": "AOV",
+      "totalCost": "Total Cost"
     },
     "accessDenied": "You do not have permission to access operations dashboard.",
     "metrics": {
@@ -1647,7 +1671,8 @@
       "permFull": "Full",
       "permWrite": "Read & Write",
       "permRead": "Read only",
-      "permNone": "—"
+      "permNone": "—",
+      "searchScopes": "Search organizational scopes..."
     },
     "accessEditor": {
       "title": "Manage access",
@@ -2009,7 +2034,12 @@
       "required": "Required field",
       "yes": "Yes",
       "no": "No",
-      "month": "Month"
+      "month": "Month",
+      "all": "All",
+      "requests": "requests",
+      "review": "Review",
+      "shifts": "shifts",
+      "details": "Details"
     },
     "messages": {
       "saved": "HR configuration saved",
@@ -2262,7 +2292,8 @@
         "HOLIDAY": "Holiday",
         "REST_DAY": "Rest day",
         "MISSING_CHECKOUT": "Missing check-out"
-      }
+      },
+      "reviewRequired": "Late check-ins and unrecorded check-outs"
     },
     "requests": {
       "title": "Leave & overtime",
@@ -2330,7 +2361,11 @@
         "HALF_DAY": "Half day",
         "MORNING": "Morning",
         "AFTERNOON": "Afternoon"
-      }
+      },
+      "approvalRequired": "Awaiting manager / HR decision",
+      "otRequired": "Submitted OT hours awaiting sign-off",
+      "entitledLeave": "Entitled Leave",
+      "usedLeave": "Used Leave"
     },
     "payroll": {
       "title": "Payroll",
@@ -2450,7 +2485,10 @@
         "weekday_night": "Weekday night OT",
         "weekend_night": "Weekend night OT",
         "holiday_night": "Holiday night OT"
-      }
+      },
+      "adjustmentsSubLabel": "Allowances, bonuses and deductions applied in this pay period.",
+      "payslipDetail": "Detailed Payslip",
+      "searchPlaceholder": "Search employees, code, department..."
     },
     "overview": {
       "title": "Overview",
@@ -3457,7 +3495,11 @@
       "voidScore": "Void score",
       "overrideReason": "Override reason",
       "voidReason": "Void reason",
-      "allTaskTypes": "All task types"
+      "allTaskTypes": "All task types",
+      "searchAllPlaceholder": "Search ASIN, Etsy Listing ID, SKU...",
+      "searchAmazonPlaceholder": "Search ASIN, SKU...",
+      "searchEtsyPlaceholder": "Search Listing ID, SKU...",
+      "sku": "SKU"
     },
     "integrations": {
       "title": "External order imports",
@@ -3669,7 +3711,11 @@
         "presetCommon": "10:00, 17:00",
         "presetThreeTimes": "09:00, 15:00, 21:00",
         "timezoneNote": "Timezone: Asia/Ho_Chi_Minh (UTC+7)",
-        "monthlyStatement": "Monthly statement"
+        "monthlyStatement": "Monthly statement",
+        "configure": "Configure",
+        "disabled": "Off",
+        "schedule": "Schedule",
+        "trackingUpload": "Tracking upload"
       },
       "panel": {
         "title": "Import job",
@@ -4079,7 +4125,10 @@
         "invalidDataTitle": "Invalid data",
         "defaultFailedTitle": "Action failed",
         "defaultFailedDescription": "An error occurred. Please try again.{{requestId}}"
-      }
+      },
+      "asin": "ASIN",
+      "listingId": "Listing ID",
+      "variantSelections": "Variant selections"
     },
     "vendorSubmissions": {
       "title": "Vendor Handoff",
@@ -4392,7 +4441,9 @@
         "level": "Level",
         "status": "Status",
         "scoredAt": "Scored at",
-        "action": "Actions"
+        "action": "Actions",
+        "designer": "Designer",
+        "scaler": "Scaler"
       },
       "fields": {
         "taskType": "Task Type",
@@ -4696,7 +4747,58 @@
       "cheapest": "Cheapest",
       "cheapestVendor": "Cheapest vendor",
       "priceRange": "Price range",
-      "variantsCount": "{{count}} variants"
+      "variantsCount": "{{count}} variants",
+      "mangotee": {
+        "emptyCatalog": "No products downloaded from MangoTee.",
+        "importFailed": "Failed to sync MangoTee products",
+        "loadingCatalog": "Connecting to MangoTee API...",
+        "modalSubtitle": "Search and select MangoTee products to automatically sync into the system.",
+        "modalTitle": "Sync MangoTee Catalog (On-Demand)",
+        "searchPlaceholder": "Enter SKU or MangoTee Product Name (e.g. TSHIRT, HOODIE...)",
+        "selectAll": "Select all products on this page",
+        "syncAction": "Sync MangoTee Catalog",
+        "baseCostFrom": "Base cost from",
+        "currency": "USD",
+        "emptySearch": "No MangoTee products match your search keyword",
+        "foundCount": "Found {{count}} products",
+        "importAction": "Sync {{count}} selected products",
+        "importSuccess": "Successfully synced {{count}} MangoTee products",
+        "selectedCount": "Selected: {{count}} products"
+      },
+      "merchize": {
+        "emptyCatalog": "No products downloaded from Merchize.",
+        "importFailed": "Failed to sync Merchize products",
+        "loadingCatalog": "Connecting to Merchize API...",
+        "modalSubtitle": "Search and select Merchize products to automatically sync into the system.",
+        "modalTitle": "Sync Merchize Catalog (On-Demand)",
+        "searchPlaceholder": "Enter SKU or Merchize Product Name (e.g. TSHIRT, HOODIE...)",
+        "selectAll": "Select all products on this page",
+        "syncAction": "Sync Merchize Catalog",
+        "tierLabel": "Pricing Tier:",
+        "baseCostFrom": "Base cost from",
+        "emptySearch": "No Merchize products match your search keyword",
+        "foundCount": "Found {{count}} products",
+        "importAction": "Sync {{count}} selected products",
+        "importSuccess": "Successfully synced {{count}} Merchize products",
+        "printMethod": "Print Method",
+        "variantsCount": "{{count}} variants"
+      },
+      "printway": {
+        "fetchShipping": "Fetch shipping rates from Printway",
+        "importFailed": "Failed to sync Printway products",
+        "loadFailed": "Unable to load catalog from Printway. Please check the Printway API connection settings in Settings.",
+        "loadingCatalog": "Connecting to Printway API...",
+        "location": "Preferred Facility:",
+        "modalSubtitle": "Search and select Printway products to automatically sync products, variants, and shipping rates.",
+        "modalTitle": "Sync Printway Catalog (API v3)",
+        "noProductsFound": "No products found from Printway",
+        "pricingTier": "Cost Tier:",
+        "searchPlaceholder": "Enter Product Code or Name from Printway (e.g. USJT, Jersey, Mug...)",
+        "syncAction": "Sync Printway Catalog",
+        "importAction": "Sync {{count}} selected products",
+        "importSuccess": "Successfully synced {{count}} Printway products",
+        "selectedCount": "Selected: {{count}} products"
+      }
     },
     "extensions": {
       "metrics": {
@@ -5205,7 +5307,8 @@
       "NEED_PSD": "Need PSD",
       "READY_FOR_SCALE": "Ready for scale",
       "IN_SCALE": "In scale",
-      "QC_PENDING": "QC pending"
+      "QC_PENDING": "QC pending",
+      "PENDING": "Pending"
     },
     "itemBreakdownTitle": "Item status breakdown ({{count}} items):"
   },
@@ -5354,7 +5457,14 @@
     "noSearchResults": "No results found",
     "startConversation": "Start a conversation",
     "deletedUser": "Deleted user",
-    "members": "members"
+    "members": "members",
+    "openWorkspace": "Open Workspace",
+    "relativeTime": {
+      "day": "{{count}}d ago",
+      "hour": "{{count}}h ago",
+      "justNow": "Just now",
+      "minute": "{{count}}m ago"
+    }
   },
   "systemDashboard": {
     "title": "System dashboard",
@@ -5423,5 +5533,141 @@
     "viewDetail": "View details",
     "titleFlashMessage": "🔔 New message!",
     "titleFlashNotification": "🔔 New notification!"
+  },
+  "vendors": {
+    "duplicateConflict": "A record with this code already exists. Review the form and choose another code.",
+    "sectionFulfillment": "Fulfillment & SLA",
+    "sectionIdentity": "Vendor Identity",
+    "sectionStatus": "Status",
+    "testConnection": "Test connection",
+    "accessToken": "Access Token",
+    "addCostCenter": "Add Cost Center",
+    "additionalAmount": "Additional Amount",
+    "addProduct": "Add Product",
+    "addVendor": "Add Vendor",
+    "apiKey": "API Key",
+    "apiSecret": "API Secret",
+    "attributes": "Attributes",
+    "authType": "Auth Type",
+    "authTypeOptions": {
+      "accessRefresh": "Access / Refresh Token",
+      "apiKey": "API Key / Secret",
+      "loginPassword": "Login / Password"
+    },
+    "backToCostCenters": "Back to Cost Centers",
+    "baseCostAmount": "Base Cost Amount",
+    "baseUrl": "Base URL",
+    "branchUnavailable": "Vendor details currently unavailable",
+    "cancel": "Cancel",
+    "close": "Close",
+    "code": "Code",
+    "configureIntegration": "Configure Integration",
+    "connectionStatus": "Connection Status",
+    "connectionTested": "Connection tested successfully",
+    "costCenterActions": "Actions",
+    "costCenters": "Cost Centers",
+    "createdAt": "Created At",
+    "credentialPlaceholders": {
+      "apiKey": "Enter API key",
+      "accessToken": "Enter access token",
+      "password": "Enter password",
+      "refreshToken": "Enter refresh token",
+      "username": "Enter username"
+    },
+    "currency": "Currency",
+    "days": "days",
+    "designTemplateUrl": "Design Template URL",
+    "dimensions": "Dimensions & Packaging",
+    "directory": "Vendor Directory",
+    "domesticShipping": "Domestic Shipping",
+    "edit": "Edit",
+    "editCostCenter": "Edit Cost Center: {{name}}",
+    "editProduct": "Edit Product",
+    "editVendor": "Edit Vendor",
+    "embroideryAmount": "Embroidery Surcharge",
+    "externalProductId": "External Product ID",
+    "fulfillment": "Fulfillment Details",
+    "imageUrl": "Image URL",
+    "importTaxAmount": "Import Tax Amount",
+    "integrationTabs": {
+      "credentials": "Credentials & Auth",
+      "endpoints": "Endpoints & Webhooks",
+      "health": "Connection Health",
+      "orders": "Order Sync Diagnostic",
+      "connection": "Connection"
+    },
+    "internationalShipping": "International Shipping",
+    "invalidJson": "Invalid JSON format",
+    "lastCheckedAt": "Last checked at",
+    "lngCode": "LNG Product Code",
+    "manualModeHint": "Switching to manual integration mode requires vendor orders to be processed via manual export.",
+    "manualModeSaved": "Manual integration mode saved",
+    "maxProductionDays": "Max Production Days",
+    "measurements": "Product Measurements",
+    "metadata": "Metadata",
+    "minProductionDays": "Min Production Days",
+    "name": "Name",
+    "noCostCenters": "No cost centers defined for this product",
+    "noProducts": "No products configured for this vendor",
+    "noVendors": "No vendors found",
+    "open": "Open",
+    "orderEndpointUrl": "Order Endpoint URL",
+    "orderLookup": "Order Lookup",
+    "orderLookupFailed": "Order lookup failed",
+    "orderNumber": "Order Number",
+    "overview": "Overview",
+    "password": "Password",
+    "paymentStatus": "Payment Status",
+    "pricing": "Pricing & Rates",
+    "printMethod": "Print Method",
+    "priorityShipping": "Priority Shipping",
+    "product": "Product",
+    "productionRangeInvalid": "Min production days cannot exceed max production days",
+    "productTypeGroup": "Product Type Group",
+    "productUrl": "Product Catalog URL",
+    "providerKey": "Provider Key",
+    "providerRequired": "Provider is required",
+    "pushOrderEndpointUrl": "Push Order Endpoint URL",
+    "quantity": "Quantity",
+    "refreshToken": "Refresh Token",
+    "retry": "Retry",
+    "save": "Save",
+    "search": "Search",
+    "searchCostCenters": "Search cost centers...",
+    "searchProducts": "Search products...",
+    "searchVendors": "Search vendors...",
+    "selectProductTypeGroup": "Select product type group...",
+    "shipping": "Shipping Methods",
+    "shippingMethod": "Shipping Method",
+    "sku": "SKU",
+    "standardColor": "Standard Color",
+    "standardSize": "Standard Size",
+    "status": {
+      "ACTIVE": "Active",
+      "INACTIVE": "Inactive"
+    },
+    "statusLabel": "Status",
+    "total": "Total Amount",
+    "trackingEndpointUrl": "Tracking Endpoint URL",
+    "twoPositionPrintAmount": "Two Position Print Surcharge",
+    "twoSidedPrintAmount": "Two Sided Print Surcharge",
+    "unavailable": "Vendor catalog service currently unavailable",
+    "unitSurchargeAmount": "Unit Surcharge Amount",
+    "username": "Username",
+    "variantSku": "Variant SKU",
+    "vendor": "Vendor",
+    "vendorColor": "Vendor Color",
+    "vendorSize": "Vendor Size",
+    "weight": "Weight (gram)",
+    "fulfillmentType": "Fulfillment Type",
+    "integrationModes": {
+      "manual": "Manual",
+      "genericApi": "Generic API",
+      "native": "Native"
+    },
+    "integrationFailed": "Integration configuration failed",
+    "integrationTitle": "Vendor Integration",
+    "integrationMode": "Integration Mode",
+    "genericApiHint": "Configure generic API connection for vendor"
   }
 }

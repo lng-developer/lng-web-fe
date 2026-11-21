@@ -48,7 +48,7 @@
   font-size: 11px;
   font-weight: 700;
   color: #ffffff;
-  background: #e41e3f;
+  background: var(--ant-color-error, #e41e3f);
 }
 
 .markAllReadButton {
@@ -201,32 +201,32 @@
 }
 
 .iconOrder {
-  background: #2563eb;
+  background: var(--ant-color-primary, #2563eb);
   color: #ffffff;
 }
 
 .iconProduction {
-  background: #10b981;
+  background: var(--ant-color-success, #10b981);
   color: #ffffff;
 }
 
 .iconHr {
-  background: #f59e0b;
+  background: var(--ant-color-warning, #f59e0b);
   color: #ffffff;
 }
 
 .iconWarning {
-  background: #ef4444;
+  background: var(--ant-color-error, #ef4444);
   color: #ffffff;
 }
 
 .iconMedia {
-  background: #0284c7;
+  background: var(--ant-color-info, #0284c7);
   color: #ffffff;
 }
 
 .iconDefault {
-  background: #8b5cf6;
+  background: var(--ant-color-purple, #8b5cf6);
   color: #ffffff;
 }
 
@@ -263,7 +263,7 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #1877f2;
+  background: var(--ant-color-primary, #1877f2);
   flex-shrink: 0;
   margin-top: 4px;
   box-shadow: 0 0 0 2px var(--ant-color-bg-elevated);
