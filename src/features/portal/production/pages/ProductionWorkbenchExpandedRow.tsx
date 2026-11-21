@@ -136,6 +136,7 @@ export function ProductionWorkbenchExpandedRow({
   onInspectSlot,
   onPassSlot,
   onManualSlotUploaded,
+  onOpenManualSlotUpload,
   onDeleteSlot,
   onClaimTask,
 }: {
@@ -162,6 +163,7 @@ export function ProductionWorkbenchExpandedRow({
   readonly onInspectSlot: (task: ProductionTask, check: FileCheck, readonly?: boolean) => void
   readonly onPassSlot: (checkId: string) => void
   readonly onManualSlotUploaded: () => void | Promise<void>
+  readonly onOpenManualSlotUpload?: (taskId: string, existingSlotKeys: string[]) => void
   readonly onDeleteSlot?: (taskId: string, fileCheckId: string) => void | Promise<void>
   readonly onClaimTask?: (taskId: string) => void
 }) {
@@ -478,11 +480,25 @@ export function ProductionWorkbenchExpandedRow({
               </Typography.Text>
             </div>
             {isScale && canScale ? (
-              <ManualSlotUploadAction
-                taskId={task.id}
-                existingSlotKeys={checks.map((check) => check.slotKey)}
-                onUploaded={onManualSlotUploaded}
-              />
+              onOpenManualSlotUpload ? (
+                <Button
+                  size="small"
+                  onClick={() =>
+                    onOpenManualSlotUpload(
+                      task.id,
+                      checks.map((c) => c.slotKey),
+                    )
+                  }
+                >
+                  {t('portal.production.addManualSlot')}
+                </Button>
+              ) : (
+                <ManualSlotUploadAction
+                  taskId={task.id}
+                  existingSlotKeys={checks.map((check) => check.slotKey)}
+                  onUploaded={onManualSlotUploaded}
+                />
+              )
             ) : isScale && !canScale && !task.assignedDesignUserId && onClaimTask ? (
               <Button
                 type="primary"

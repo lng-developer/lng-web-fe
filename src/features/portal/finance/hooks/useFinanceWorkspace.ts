@@ -2,10 +2,12 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
 import { listShops } from '@/features/portal/shops/api/shopApi'
+import { shopKeys } from '@/features/portal/shops/api/shopKeys'
 import type { DateRangeValue } from '@/shared/ui'
 import { useDebouncedValue } from '@/shared/ui'
 
 import { listFinanceFilterOptions, listFinanceSnapshots } from '../api/financeApi'
+import { financeKeys } from '../api/financeKeys'
 
 export interface UseFinanceWorkspaceParams {
   globalRead: boolean
@@ -65,20 +67,21 @@ export const useFinanceWorkspace = ({
   )
 
   const snapshots = useQuery({
-    queryKey: ['finance', 'snapshots', queryParams],
+    queryKey: financeKeys.snapshots(queryParams),
     queryFn: () => listFinanceSnapshots(queryParams),
     retry: false,
   })
 
   const filterOptions = useQuery({
-    queryKey: ['finance', 'filter-options'],
+    queryKey: financeKeys.filterOptions(),
     queryFn: listFinanceFilterOptions,
     retry: false,
   })
 
+  const shopParams = useMemo(() => ({ page: 1, limit: 100, status: 'ACTIVE' as const }), [])
   const shops = useQuery({
-    queryKey: ['shops', 'finance-import'],
-    queryFn: () => listShops({ page: 1, limit: 100, status: 'ACTIVE' }),
+    queryKey: shopKeys.list(shopParams),
+    queryFn: () => listShops(shopParams),
     enabled: globalRead,
     retry: false,
   })

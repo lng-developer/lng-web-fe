@@ -78,6 +78,7 @@ export function ListingVariantManager({
   const variants = useQuery({
     queryKey: catalogKeys.variants(listing.id),
     queryFn: () => listListingVariants(listing.id),
+    enabled: Boolean(listing?.id),
   })
   const refresh = async () => {
     await Promise.all([

@@ -1,5 +1,5 @@
-import { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
+import { unwrapResponse } from '@/shared/api/helpers'
 
 export type ImportSource = 'AMAZON_EXTENSION_REPORT' | 'MANUAL_EXCEL'
 export type ImportJobStatus =
@@ -334,10 +334,10 @@ export type RetryPostImportResult = {
 
 const basePath = '/api/integration/external-order-imports'
 const extensionCommandPath = '/api/integration/extension-commands'
-const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
+const unwrap = unwrapResponse
 
-export async function listImportJobs(params: ImportJobListParams = {}) {
-  return unwrap<Paginated<ImportJob>>(await apiClient.get(basePath, { params }))
+export async function listImportJobs(params: ImportJobListParams = {}, signal?: AbortSignal) {
+  return unwrap<Paginated<ImportJob>>(await apiClient.get(basePath, { params, signal }))
 }
 
 function toUploadForm(input: ImportUploadInput) {

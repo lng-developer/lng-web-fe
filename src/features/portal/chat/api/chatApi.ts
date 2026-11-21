@@ -1,5 +1,5 @@
-import { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
+import { compactParams, unwrapResponse } from '@/shared/api/helpers'
 
 type Page<T> = { items: T[]; pagination: { page: number; limit: number; total: number } }
 type Query = Record<string, number | string | undefined>
@@ -82,13 +82,12 @@ export type SendChatMessageInput = {
   assetIds: string[]
 }
 
-const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
-const compact = (params: Query = {}) =>
-  Object.fromEntries(Object.entries(params).filter(([, value]) => value !== undefined))
+const unwrap = unwrapResponse
+const compact = compactParams
 
-export const listChatConversations = async (params: Query = {}) =>
+export const listChatConversations = async (params: Query = {}, signal?: AbortSignal) =>
   unwrap<Page<ChatConversation>>(
-    await apiClient.get('/api/chat/conversations', { params: compact(params) }),
+    await apiClient.get('/api/chat/conversations', { params: compact(params), signal }),
   )
 
 export const getChatUnreadCount = async () =>

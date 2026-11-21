@@ -87,7 +87,17 @@
     "table": {
       "viewDetails": "Xem chi tiết"
     },
-    "seller": "Seller"
+    "seller": "Seller",
+    "all": "Tất cả nền tảng",
+    "cancel": "Hủy",
+    "clearSelection": "Bỏ chọn",
+    "copied": "Đã sao chép",
+    "done": "Xong",
+    "empty": "Không có dữ liệu xu hướng trong khoảng thời gian này",
+    "selectAllCurrentPage": "Chọn tất cả trang này",
+    "view": "Chi tiết",
+    "viewDetails": "Xem chi tiết",
+    "delete": "Xóa"
   },
   "language": {
     "label": "Ngôn ngữ",
@@ -266,7 +276,9 @@
         "shop": "Cửa hàng",
         "vendor": "Nhà cung cấp"
       }
-    }
+    },
+    "switchToHr": "Chuyển sang HR",
+    "switchToPortal": "Chuyển sang Portal"
   },
   "finance": {
     "title": "Vận hành tài chính",
@@ -705,6 +717,16 @@
       "failed": "Thất bại",
       "shipped": "Đã giao vận",
       "successRate": "Tỷ lệ thành công"
+    },
+    "tooltips": {
+      "adSpend": "Chi phí quảng cáo (Amazon Ads / PPC)",
+      "discount": "Chiết khấu / Giảm giá",
+      "fee": "Phí sàn = Phí hoa hồng Amazon + Phí đóng/thanh toán",
+      "operatingCost": "Chi phí vận hành / nhân sự phân bổ",
+      "orders": "Tổng số đơn hàng",
+      "refund": "Hoàn tiền cho khách hàng (đơn cũ)",
+      "revenue": "Doanh thu = Tiền hàng + Phí ship khách trả",
+      "totalCost": "Giá vốn = Giá phôi + Phí in ấn & Ship vendor"
     }
   },
   "customization": {
@@ -905,7 +927,8 @@
       "ruleEditor": "Sửa quy tắc",
       "ruleFields": "Trường quy tắc",
       "ruleMetadata": "Thông tin quy tắc",
-      "additionalConditions": "Điều kiện thêm"
+      "additionalConditions": "Điều kiện thêm",
+      "testSample": "Kiểm tra quy tắc với SKU mẫu"
     },
     "filters": {
       "vendorProduct": "Sản phẩm vendor",
@@ -1340,7 +1363,8 @@
       "integrationAndData": "Tích hợp & Dữ liệu",
       "integrationDesc": "Kênh bán hàng, cổng thanh toán & kho listing hoạt động ổn định",
       "otherIssuesLabel": "Tác vụ phát sinh khác:",
-      "viewCustomers": "Xem khách hàng"
+      "viewCustomers": "Xem khách hàng",
+      "totalCost": "Tổng chi phí"
     },
     "accessDenied": "Bạn không có quyền truy cập bảng điều khiển vận hành.",
     "metrics": {
@@ -1647,7 +1671,8 @@
       "permFull": "Toàn quyền",
       "permWrite": "Xem & Ghi",
       "permRead": "Chỉ xem",
-      "permNone": "—"
+      "permNone": "—",
+      "searchScopes": "Tìm kiếm phạm vi tổ chức..."
     },
     "accessEditor": {
       "title": "Quản lý quyền truy cập",
@@ -2009,7 +2034,12 @@
       "required": "Trường này là bắt buộc",
       "yes": "Có",
       "no": "Không",
-      "month": "Tháng"
+      "month": "Tháng",
+      "all": "Tất cả",
+      "requests": "yêu cầu",
+      "review": "Duyệt",
+      "shifts": "ca",
+      "details": "Chi tiết"
     },
     "messages": {
       "saved": "Đã lưu cấu hình HR",
@@ -2262,7 +2292,8 @@
         "HOLIDAY": "Ngày lễ",
         "REST_DAY": "Ngày nghỉ",
         "MISSING_CHECKOUT": "Thiếu check-out"
-      }
+      },
+      "reviewRequired": "Đi muộn và chưa ghi nhận giờ ra"
     },
     "requests": {
       "title": "Nghỉ phép & làm thêm",
@@ -2330,7 +2361,11 @@
         "HALF_DAY": "Nửa ngày",
         "MORNING": "Buổi sáng",
         "AFTERNOON": "Buổi chiều"
-      }
+      },
+      "approvalRequired": "Chờ quyết định quản lý / HR",
+      "otRequired": "Giờ làm thêm chờ ký duyệt",
+      "entitledLeave": "Phép năm tiêu chuẩn",
+      "usedLeave": "Phép đã nghỉ"
     },
     "payroll": {
       "title": "Bảng lương",
@@ -2450,7 +2485,10 @@
         "weekday_night": "OT đêm ngày thường",
         "weekend_night": "OT đêm cuối tuần",
         "holiday_night": "OT đêm ngày lễ"
-      }
+      },
+      "adjustmentsSubLabel": "Các khoản phụ cấp, thưởng và giảm trừ được áp dụng trong kỳ lương này.",
+      "payslipDetail": "Phiếu lương chi tiết",
+      "searchPlaceholder": "Tìm kiếm nhân viên, mã NV, phòng ban..."
     },
     "overview": {
       "title": "Tổng quan",
@@ -3457,7 +3495,11 @@
       "voidScore": "Hủy điểm",
       "overrideReason": "Lý do điều chỉnh",
       "voidReason": "Lý do hủy",
-      "allTaskTypes": "Tất cả loại task"
+      "allTaskTypes": "Tất cả loại task",
+      "searchAllPlaceholder": "Tìm kiếm ASIN, Etsy Listing ID, SKU...",
+      "searchAmazonPlaceholder": "Tìm kiếm ASIN, SKU...",
+      "searchEtsyPlaceholder": "Tìm kiếm Listing ID, SKU...",
+      "sku": "SKU"
     },
     "integrations": {
       "title": "Nhập đơn hàng bên ngoài",
@@ -3669,7 +3711,11 @@
         "presetCommon": "10:00, 17:00",
         "presetThreeTimes": "09:00, 15:00, 21:00",
         "timezoneNote": "Múi giờ: Asia/Ho_Chi_Minh (UTC+7)",
-        "monthlyStatement": "Sao kê hàng tháng"
+        "monthlyStatement": "Sao kê hàng tháng",
+        "configure": "Cấu hình",
+        "disabled": "Tắt",
+        "schedule": "Lịch trình",
+        "trackingUpload": "Đẩy mã vận đơn"
       },
       "panel": {
         "title": "Lượt nhập đơn",
@@ -4079,7 +4125,10 @@
         "invalidDataTitle": "Dữ liệu không hợp lệ",
         "defaultFailedTitle": "Thao tác không thành công",
         "defaultFailedDescription": "Đã có lỗi xảy ra. Vui lòng thử lại.{{requestId}}"
-      }
+      },
+      "asin": "ASIN",
+      "listingId": "Listing ID",
+      "variantSelections": "Lựa chọn biến thể"
     },
     "vendorSubmissions": {
       "title": "Bàn giao Vendor",
@@ -4392,7 +4441,9 @@
         "level": "Mức",
         "status": "Trạng thái",
         "scoredAt": "Thời điểm tính",
-        "action": "Thao tác"
+        "action": "Thao tác",
+        "designer": "Designer",
+        "scaler": "Scaler"
       },
       "fields": {
         "taskType": "Loại tác vụ",
@@ -4696,7 +4747,58 @@
       "cheapest": "Rẻ nhất",
       "cheapestVendor": "Vendor rẻ nhất",
       "priceRange": "Khoảng giá",
-      "variantsCount": "{{count}} biến thể"
+      "variantsCount": "{{count}} biến thể",
+      "mangotee": {
+        "emptyCatalog": "Chưa có sản phẩm nào được tải về từ MangoTee.",
+        "importFailed": "Đồng bộ sản phẩm MangoTee thất bại",
+        "loadingCatalog": "Đang kết nối API MangoTee...",
+        "modalSubtitle": "Tìm kiếm và tích chọn các sản phẩm MangoTee để đồng bộ tự động vào hệ thống.",
+        "modalTitle": "Đồng bộ Catalog MangoTee (On-Demand)",
+        "searchPlaceholder": "Nhập SKU hoặc Tên sản phẩm MangoTee (ví dụ: TSHIRT, HOODIE...)",
+        "selectAll": "Chọn tất cả sản phẩm trang này",
+        "syncAction": "Đồng bộ Catalog MangoTee",
+        "baseCostFrom": "Giá gốc từ",
+        "currency": "USD",
+        "emptySearch": "Không tìm thấy sản phẩm MangoTee nào phù hợp với từ khóa",
+        "foundCount": "Tìm thấy {{count}} sản phẩm",
+        "importAction": "Đồng bộ {{count}} sản phẩm đã chọn",
+        "importSuccess": "Đã đồng bộ thành công {{count}} sản phẩm MangoTee",
+        "selectedCount": "Đã chọn: {{count}} sản phẩm"
+      },
+      "merchize": {
+        "emptyCatalog": "Chưa có sản phẩm nào được tải về từ Merchize.",
+        "importFailed": "Đồng bộ sản phẩm Merchize thất bại",
+        "loadingCatalog": "Đang kết nối API Merchize...",
+        "modalSubtitle": "Tìm kiếm và tích chọn các sản phẩm Merchize để đồng bộ tự động vào hệ thống.",
+        "modalTitle": "Đồng bộ Catalog Merchize (On-Demand)",
+        "searchPlaceholder": "Nhập SKU hoặc Tên sản phẩm Merchize (ví dụ: TSHIRT, HOODIE...)",
+        "selectAll": "Chọn tất cả sản phẩm trang này",
+        "syncAction": "Đồng bộ Catalog Merchize",
+        "tierLabel": "Bảng giá (Tier):",
+        "baseCostFrom": "Giá gốc từ",
+        "emptySearch": "Không tìm thấy sản phẩm Merchize nào phù hợp với từ khóa",
+        "foundCount": "Tìm thấy {{count}} sản phẩm",
+        "importAction": "Đồng bộ {{count}} sản phẩm đã chọn",
+        "importSuccess": "Đã đồng bộ thành công {{count}} sản phẩm Merchize",
+        "printMethod": "Phương pháp in",
+        "variantsCount": "{{count}} biến thể"
+      },
+      "printway": {
+        "fetchShipping": "Lấy phí vận chuyển từ Printway",
+        "importFailed": "Đồng bộ sản phẩm Printway thất bại",
+        "loadFailed": "Không thể tải danh mục từ Printway. Vui lòng kiểm tra lại cấu hình kết nối API Printway trong Cài đặt.",
+        "loadingCatalog": "Đang kết nối API Printway...",
+        "location": "Xưởng ưu tiên:",
+        "modalSubtitle": "Tìm kiếm và tích chọn các sản phẩm Printway để đồng bộ tự động sản phẩm, biến thể và biểu phí vận chuyển.",
+        "modalTitle": "Đồng bộ Catalog Printway (API v3)",
+        "noProductsFound": "Không tìm thấy sản phẩm nào từ Printway",
+        "pricingTier": "Bảng giá vốn:",
+        "searchPlaceholder": "Nhập Mã sản phẩm hoặc Tên sản phẩm Printway (ví dụ: USJT, Jersey, Mug...)",
+        "syncAction": "Đồng bộ Catalog Printway",
+        "importAction": "Đồng bộ {{count}} sản phẩm đã chọn",
+        "importSuccess": "Đã đồng bộ thành công {{count}} sản phẩm Printway",
+        "selectedCount": "Đã chọn: {{count}} sản phẩm"
+      }
     },
     "extensions": {
       "metrics": {
@@ -5205,7 +5307,8 @@
       "NEED_PSD": "Thiếu file PSD",
       "READY_FOR_SCALE": "Chờ giao Scale",
       "IN_SCALE": "Đang Scale",
-      "QC_PENDING": "Chờ QC"
+      "QC_PENDING": "Chờ QC",
+      "PENDING": "Chờ xử lý"
     },
     "itemBreakdownTitle": "Chi tiết theo item ({{count}} items):"
   },
@@ -5363,7 +5466,14 @@
     "members": "thành viên",
     "noSearchResults": "Không tìm thấy kết quả",
     "startConversation": "Bắt đầu cuộc trò chuyện",
-    "deletedUser": "Người dùng đã xóa"
+    "deletedUser": "Người dùng đã xóa",
+    "openWorkspace": "Mở không gian làm việc",
+    "relativeTime": {
+      "day": "{{count}} ngày trước",
+      "hour": "{{count}} giờ trước",
+      "justNow": "Vừa xong",
+      "minute": "{{count}} phút trước"
+    }
   },
   "systemDashboard": {
     "title": "Bảng điều khiển hệ thống",
@@ -5423,5 +5533,141 @@
     "defaultAction": "Thao tác hoàn tất",
     "actionFailed": "Thao tác thất bại",
     "actionSucceeded": "Thao tác thành công"
+  },
+  "vendors": {
+    "duplicateConflict": "Bản ghi với mã này đã tồn tại. Vui lòng kiểm tra lại biểu mẫu và chọn mã khác.",
+    "sectionFulfillment": "Vận hành Fulfillment & SLA",
+    "sectionIdentity": "Thông tin Nhà cung cấp",
+    "sectionStatus": "Trạng thái",
+    "testConnection": "Kiểm tra kết nối",
+    "accessToken": "Access Token",
+    "addCostCenter": "Thêm Cost Center",
+    "additionalAmount": "Phụ phí thêm sản phẩm",
+    "addProduct": "Thêm sản phẩm",
+    "addVendor": "Thêm nhà cung cấp",
+    "apiKey": "API Key",
+    "apiSecret": "API Secret",
+    "attributes": "Thuộc tính",
+    "authType": "Phương thức xác thực",
+    "authTypeOptions": {
+      "accessRefresh": "Access / Refresh Token",
+      "apiKey": "API Key / Secret",
+      "loginPassword": "Tài khoản / Mật khẩu"
+    },
+    "backToCostCenters": "Quay lại danh sách Cost Center",
+    "baseCostAmount": "Giá vốn cơ sở",
+    "baseUrl": "Địa chỉ API cơ sở",
+    "branchUnavailable": "Thông tin nhà cung cấp hiện chưa khả dụng",
+    "cancel": "Hủy",
+    "close": "Đóng",
+    "code": "Mã",
+    "configureIntegration": "Cấu hình tích hợp",
+    "connectionStatus": "Trạng thái kết nối",
+    "connectionTested": "Đã kiểm tra kết nối thành công",
+    "costCenterActions": "Thao tác",
+    "costCenters": "Bảng giá Cost Center",
+    "createdAt": "Ngày tạo",
+    "credentialPlaceholders": {
+      "apiKey": "Nhập API key",
+      "accessToken": "Nhập access token",
+      "password": "Nhập mật khẩu",
+      "refreshToken": "Nhập refresh token",
+      "username": "Nhập tên đăng nhập"
+    },
+    "currency": "Loại tiền tệ",
+    "days": "ngày",
+    "designTemplateUrl": "Đường dẫn mẫu thiết kế (Template)",
+    "dimensions": "Kích thước & Đóng gói",
+    "directory": "Danh bạ Nhà cung cấp",
+    "domesticShipping": "Vận chuyển nội địa",
+    "edit": "Chỉnh sửa",
+    "editCostCenter": "Chỉnh sửa Cost Center: {{name}}",
+    "editProduct": "Chỉnh sửa sản phẩm",
+    "editVendor": "Chỉnh sửa nhà cung cấp",
+    "embroideryAmount": "Phụ phí thêu",
+    "externalProductId": "Mã sản phẩm bên ngoài",
+    "fulfillment": "Chi tiết hoàn tất đơn",
+    "imageUrl": "Đường dẫn hình ảnh",
+    "importTaxAmount": "Thuế nhập khẩu",
+    "integrationTabs": {
+      "credentials": "Thông tin đăng nhập & Xác thực",
+      "endpoints": "Endpoints & Webhook",
+      "health": "Trạng thái kết nối",
+      "orders": "Chẩn đoán đồng bộ đơn hàng",
+      "connection": "Kết nối"
+    },
+    "internationalShipping": "Vận chuyển quốc tế",
+    "invalidJson": "Định dạng JSON không hợp lệ",
+    "lastCheckedAt": "Kiểm tra gần nhất lúc",
+    "lngCode": "Mã sản phẩm LNG",
+    "manualModeHint": "Chuyển sang chế độ thủ công sẽ yêu cầu đơn hàng phải xử lý qua xuất file thủ công.",
+    "manualModeSaved": "Đã lưu chế độ tích hợp thủ công",
+    "maxProductionDays": "Thời gian sản xuất tối đa (ngày)",
+    "measurements": "Số đo kích thước",
+    "metadata": "Dữ liệu mở rộng (Metadata)",
+    "minProductionDays": "Thời gian sản xuất tối thiểu (ngày)",
+    "name": "Tên",
+    "noCostCenters": "Chưa có cost center nào cho sản phẩm này",
+    "noProducts": "Chưa có sản phẩm nào được cấu hình cho nhà cung cấp này",
+    "noVendors": "Không tìm thấy nhà cung cấp nào",
+    "open": "Mở",
+    "orderEndpointUrl": "Đường dẫn API đơn hàng",
+    "orderLookup": "Tra cứu đơn hàng",
+    "orderLookupFailed": "Tra cứu đơn hàng thất bại",
+    "orderNumber": "Mã đơn hàng",
+    "overview": "Tổng quan",
+    "password": "Mật khẩu",
+    "paymentStatus": "Trạng thái thanh toán",
+    "pricing": "Bảng giá & Chi phí",
+    "printMethod": "Phương pháp in",
+    "priorityShipping": "Vận chuyển ưu tiên",
+    "product": "Sản phẩm",
+    "productionRangeInvalid": "Số ngày sản xuất tối thiểu không được lớn hơn tối đa",
+    "productTypeGroup": "Nhóm loại sản phẩm",
+    "productUrl": "Đường dẫn trang sản phẩm",
+    "providerKey": "Mã nhà cung cấp tích hợp",
+    "providerRequired": "Vui lòng chọn nhà cung cấp",
+    "pushOrderEndpointUrl": "Đường dẫn đẩy đơn hàng",
+    "quantity": "Số lượng",
+    "refreshToken": "Refresh Token",
+    "retry": "Thử lại",
+    "save": "Lưu",
+    "search": "Tìm kiếm",
+    "searchCostCenters": "Tìm kiếm cost center...",
+    "searchProducts": "Tìm kiếm sản phẩm...",
+    "searchVendors": "Tìm kiếm nhà cung cấp...",
+    "selectProductTypeGroup": "Chọn nhóm loại sản phẩm...",
+    "shipping": "Phương thức vận chuyển",
+    "shippingMethod": "Phương thức vận chuyển",
+    "sku": "SKU",
+    "standardColor": "Màu sắc tiêu chuẩn",
+    "standardSize": "Kích cỡ tiêu chuẩn",
+    "status": {
+      "ACTIVE": "Hoạt động",
+      "INACTIVE": "Ngưng hoạt động"
+    },
+    "statusLabel": "Trạng thái",
+    "total": "Tổng tiền",
+    "trackingEndpointUrl": "Đường dẫn API tra cứu vận đơn",
+    "twoPositionPrintAmount": "Phụ phí in hai vị trí",
+    "twoSidedPrintAmount": "Phụ phí in hai mặt",
+    "unavailable": "Dịch vụ nhà cung cấp hiện chưa khả dụng",
+    "unitSurchargeAmount": "Phụ phí mỗi đơn vị",
+    "username": "Tên đăng nhập",
+    "variantSku": "SKU biến thể",
+    "vendor": "Nhà cung cấp",
+    "vendorColor": "Màu nhà cung cấp",
+    "vendorSize": "Kích cỡ nhà cung cấp",
+    "weight": "Khối lượng (gram)",
+    "fulfillmentType": "Hình thức xử lý",
+    "integrationModes": {
+      "manual": "Thủ công",
+      "genericApi": "Generic API",
+      "native": "Tích hợp trực tiếp (Native)"
+    },
+    "integrationFailed": "Cấu hình tích hợp thất bại",
+    "integrationTitle": "Tích hợp Vendor",
+    "integrationMode": "Chế độ tích hợp",
+    "genericApiHint": "Cấu hình kết nối API chung cho nhà cung cấp"
   }
 }

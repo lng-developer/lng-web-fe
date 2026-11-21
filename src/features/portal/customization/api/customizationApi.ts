@@ -1,7 +1,7 @@
-import { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
+import { compactParams, unwrapResponse } from '@/shared/api/helpers'
 
-const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
+const unwrap = unwrapResponse
 
 export type CustomizationStatus = 'PENDING' | 'NEEDS_REVIEW' | 'FAILED' | 'PARSED'
 export type CustomizationRow = {
@@ -51,21 +51,19 @@ export type CustomizationSummary = {
   oldestBlockedAt: string | null
 }
 
-const clean = (params: CustomizationParams) =>
-  Object.fromEntries(
-    Object.entries(params).filter(([, value]) => value !== undefined && value !== ''),
-  )
+const clean = compactParams
 
-export async function listCustomizations(params: CustomizationParams) {
+export async function listCustomizations(params: CustomizationParams, signal?: AbortSignal) {
   return unwrap<CustomizationPage>(
     await apiClient.get('/api/customizations', {
       params: clean({ ...params, q: params.q?.trim() }),
+      signal,
     }),
   )
 }
-export async function getCustomizationSummary(params: CustomizationParams) {
+export async function getCustomizationSummary(params: CustomizationParams, signal?: AbortSignal) {
   return unwrap<CustomizationSummary>(
-    await apiClient.get('/api/customizations/summary', { params: clean(params) }),
+    await apiClient.get('/api/customizations/summary', { params: clean(params), signal }),
   )
 }
 export async function retryCustomization(id: string) {

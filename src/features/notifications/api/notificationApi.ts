@@ -1,5 +1,5 @@
-import { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
+import { compactParams, unwrapResponse } from '@/shared/api/helpers'
 
 export type AppNotification = {
   id: string
@@ -17,14 +17,20 @@ export type NotificationInbox = {
   pagination: { total: number; page: number; limit: number }
 }
 
-const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
+const unwrap = unwrapResponse
 
 export async function listNotifications(
   unreadOnly = false,
   limit = 8,
   page = 1,
+  signal?: AbortSignal,
 ): Promise<NotificationInbox> {
-  return unwrap(await apiClient.get('/api/notifications', { params: { unreadOnly, page, limit } }))
+  return unwrap(
+    await apiClient.get('/api/notifications', {
+      params: compactParams({ unreadOnly, page, limit }),
+      signal,
+    }),
+  )
 }
 
 export async function getUnreadCount(): Promise<{ unreadCount: number }> {

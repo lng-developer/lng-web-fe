@@ -156,9 +156,9 @@ test('renders tabs and opens payslip drawer in management workspace', async () =
   expect(await screen.findByRole('tab', { name: /Staff payroll/i })).toBeVisible()
   expect(screen.getByRole('tab', { name: /Periods/i })).toBeVisible()
   expect(screen.getByRole('tab', { name: /Adjustments/i })).toBeVisible()
-  expect(screen.getByPlaceholderText(/Tìm kiếm nhân viên/i)).toBeInTheDocument()
+  expect(screen.getByPlaceholderText(/Search employees|Tìm kiếm nhân viên/i)).toBeInTheDocument()
 
   expect((await screen.findAllByText('Tran Thi B')).length).toBeGreaterThan(0)
   fireEvent.click((await screen.findAllByText('Tran Thi B'))[0])
-  expect(await screen.findByText(/Phiếu lương chi tiết/i)).toBeVisible()
+  expect(await screen.findByText(/Detailed Payslip|Phiếu lương chi tiết/i)).toBeVisible()
 })

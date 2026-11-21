@@ -1,5 +1,5 @@
-import { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
+import { compactParams, unwrapResponse } from '@/shared/api/helpers'
 import type { PrintMethod } from '@/shared/constants/printMethods'
 
 type CompactRef = {
@@ -188,22 +188,21 @@ export type PaginatedListings = {
   pagination: { total: number; page: number; limit: number }
 }
 
-const compact = <T extends object>(params: T) =>
-  Object.fromEntries(Object.entries(params).filter(([, value]) => value !== '' && value != null))
-const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
+const compact = compactParams
+const unwrap = unwrapResponse
 
-export const listListings = async (params: CatalogListParams) =>
+export const listListings = async (params: CatalogListParams, signal?: AbortSignal) =>
   unwrap<PaginatedListings>(
-    await apiClient.get('/api/catalog/listings', { params: compact(params) }),
+    await apiClient.get('/api/catalog/listings', { params: compact(params), signal }),
   )
 export const exportListingsCsv = (params: CatalogListParams) =>
   apiClient.get('/api/catalog/listings/export.csv', {
     params: compact({ ...params, page: 1, limit: 5000 }),
     responseType: 'blob',
   })
-export const getListingSummary = async (params: CatalogSummaryParams) =>
+export const getListingSummary = async (params: CatalogSummaryParams, signal?: AbortSignal) =>
   unwrap<CatalogSummary>(
-    await apiClient.get('/api/catalog/listings/summary', { params: compact(params) }),
+    await apiClient.get('/api/catalog/listings/summary', { params: compact(params), signal }),
   )
 export const getListing = async (id: string) =>
   unwrap<Listing>(await apiClient.get(`/api/catalog/listings/${id}`))

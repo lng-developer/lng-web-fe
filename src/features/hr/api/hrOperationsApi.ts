@@ -1,9 +1,10 @@
-import { ApiResponse, type Page } from '@/server/type'
+import { type Page } from '@/server/type'
 import { apiClient } from '@/shared/api'
+import { compactParams, unwrapResponse } from '@/shared/api/helpers'
 
 export type { Page } from '@/server/type'
 type Query = Record<string, boolean | number | string | null | undefined>
-const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
+const unwrap = unwrapResponse
 
 export type WorkLocation = {
   id: string
@@ -119,8 +120,8 @@ export type SaturdayRotationGenerateResponse = {
   items: SaturdayRotation[]
 }
 
-const list = async <T>(path: string, params: Query = {}) =>
-  unwrap<Page<T>>(await apiClient.get(path, { params }))
+const list = async <T>(path: string, params: Query = {}, signal?: AbortSignal) =>
+  unwrap<Page<T>>(await apiClient.get(path, { params: compactParams(params), signal }))
 const create = async <T>(path: string, input: object) =>
   unwrap<T>(await apiClient.post(path, input))
 const update = async <T>(path: string, input: object) =>

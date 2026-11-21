@@ -1,9 +1,6 @@
-import type { OrderWorkbenchParams } from './orderApi'
+import { compactParams } from '@/shared/api/helpers'
 
-const compactParams = (params: OrderWorkbenchParams) =>
-  Object.fromEntries(
-    Object.entries(params || {}).filter(([, value]) => value !== '' && value != null),
-  )
+import type { OrderWorkbenchParams } from './orderApi'
 
 export const orderKeys = {
   all: ['orders'] as const,

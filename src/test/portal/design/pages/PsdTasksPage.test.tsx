@@ -287,6 +287,7 @@ describe('PsdTasksPage', () => {
       await import('@/features/portal/design/api/designApi')
     expect(listDesignTasks).toHaveBeenCalledWith(
       expect.objectContaining({ salesChannelCode: 'AMAZON' }),
+      expect.anything(),
     )
     expect(getDesignSummary).toHaveBeenCalledWith(
       expect.objectContaining({ salesChannelCode: 'AMAZON' }),

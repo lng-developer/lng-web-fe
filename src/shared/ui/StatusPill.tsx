@@ -33,7 +33,9 @@ export const StatusPill = memo(function StatusPill({
 }: StatusPillProps) {
   const isHex =
     typeof color === 'string' && color.startsWith('#') && (color.length === 7 || color.length === 4)
-  const backgroundColor = isHex ? `${color}15` : 'rgba(0,0,0,0.04)'
+  const backgroundColor = isHex
+    ? `${color}15`
+    : 'var(--ant-color-fill-quaternary, rgba(0,0,0,0.04))'
 
   return (
     <div

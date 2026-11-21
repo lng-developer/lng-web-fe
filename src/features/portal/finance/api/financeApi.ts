@@ -1,7 +1,7 @@
-import { ApiResponse } from '@/server/type'
 import { apiClient } from '@/shared/api'
+import { compactParams, unwrapResponse } from '@/shared/api/helpers'
 
-const unwrap = <T>(response: unknown) => (response as ApiResponse<T>).data
+const unwrap = unwrapResponse
 
 export type FinanceSnapshot = {
   id: string
@@ -317,8 +317,7 @@ export type FinanceImportInput = {
   dryRun: boolean
 }
 
-const params = (value: Record<string, unknown>) =>
-  Object.fromEntries(Object.entries(value).filter(([, item]) => item !== undefined && item !== ''))
+const params = compactParams
 const normalizePagination = <T extends Paginated<unknown>>(
   data: T,
   fallback: { page?: number; limit?: number } = {},
@@ -330,9 +329,9 @@ const normalizePagination = <T extends Paginated<unknown>>(
     limit: data.limit ?? fallback.limit ?? 20,
   },
 })
-export async function listFinanceSnapshots(query: FinanceParams) {
+export async function listFinanceSnapshots(query: FinanceParams, signal?: AbortSignal) {
   const data = unwrap<FinancePageResponse>(
-    await apiClient.get('/api/finance/snapshots', { params: params(query) }),
+    await apiClient.get('/api/finance/snapshots', { params: params(query), signal }),
   )
   return normalizePagination(data, query)
 }

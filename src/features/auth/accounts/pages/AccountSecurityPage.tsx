@@ -12,6 +12,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Form, Input, Typography } from 'antd'
 
+import { authKeys } from '@/features/auth/api/authKeys'
 import { AccessDeniedResult } from '@/shared/auth/AccessDeniedResult'
 import { hasAnyPermission } from '@/shared/auth/permissions'
 import {
@@ -43,13 +44,13 @@ export function AccountSecurityPage() {
   const [pendingAction, setPendingAction] = useState<SecurityAction>()
   const canWrite = hasAnyPermission(['AUTH:WRITE'], { globalOnly: true })
   const { data, error, isLoading, refetch } = useQuery({
-    queryKey: ['auth-account', accountId],
+    queryKey: authKeys.accounts.detail(accountId),
     queryFn: () => loadAccount(accountId),
     enabled: Boolean(accountId),
   })
   const invalidate = async () => {
-    await queryClient.invalidateQueries({ queryKey: ['auth-account', accountId] })
-    await queryClient.invalidateQueries({ queryKey: ['access-accounts'] })
+    await queryClient.invalidateQueries({ queryKey: authKeys.accounts.detail(accountId) })
+    await queryClient.invalidateQueries({ queryKey: authKeys.accounts.all() })
   }
   const passwordMutation = useMutation({
     mutationFn: (password: string) => resetAccountPassword(accountId, password),

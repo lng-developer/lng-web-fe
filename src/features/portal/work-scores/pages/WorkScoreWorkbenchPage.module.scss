@@ -232,24 +232,24 @@
   }
 
   &.activeBASIC {
-    background: #e6f4ff;
-    border-color: #1677ff;
-    color: #1677ff;
+    background: var(--ant-color-primary-bg, #e6f4ff);
+    border-color: var(--ant-color-primary, #1677ff);
+    color: var(--ant-color-primary, #1677ff);
   }
   &.activeSTANDARD {
-    background: #e6fffb;
-    border-color: #13c2c2;
-    color: #13c2c2;
+    background: var(--ant-color-cyan-1, #e6fffb);
+    border-color: var(--ant-color-cyan, #13c2c2);
+    color: var(--ant-color-cyan, #13c2c2);
   }
   &.activeHARD {
-    background: #fff7e6;
-    border-color: #fa8c16;
-    color: #fa8c16;
+    background: var(--ant-color-warning-bg, #fff7e6);
+    border-color: var(--ant-color-warning, #fa8c16);
+    color: var(--ant-color-warning, #fa8c16);
   }
   &.activeBONUS {
-    background: #f9f0ff;
-    border-color: #722ed1;
-    color: #722ed1;
+    background: var(--ant-color-purple-1, #f9f0ff);
+    border-color: var(--ant-color-purple, #722ed1);
+    color: var(--ant-color-purple, #722ed1);
   }
 }
 

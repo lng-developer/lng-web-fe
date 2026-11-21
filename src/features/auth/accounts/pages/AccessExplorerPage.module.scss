@@ -223,21 +223,21 @@
 }
 
 .badgeFull {
-  background: color-mix(in srgb, #10b981 18%, transparent);
-  color: #059669;
-  border: 1px solid color-mix(in srgb, #10b981 35%, transparent);
+  background: color-mix(in srgb, var(--ant-color-success, #10b981) 18%, transparent);
+  color: var(--ant-color-success-text, #059669);
+  border: 1px solid color-mix(in srgb, var(--ant-color-success, #10b981) 35%, transparent);
 }
 
 .badgeWrite {
-  background: color-mix(in srgb, #3b82f6 18%, transparent);
-  color: #2563eb;
-  border: 1px solid color-mix(in srgb, #3b82f6 35%, transparent);
+  background: color-mix(in srgb, var(--ant-color-primary, #3b82f6) 18%, transparent);
+  color: var(--ant-color-primary, #2563eb);
+  border: 1px solid color-mix(in srgb, var(--ant-color-primary, #3b82f6) 35%, transparent);
 }
 
 .badgeRead {
-  background: color-mix(in srgb, #64748b 15%, transparent);
-  color: #475569;
-  border: 1px solid color-mix(in srgb, #64748b 30%, transparent);
+  background: color-mix(in srgb, var(--ant-color-text-secondary, #64748b) 15%, transparent);
+  color: var(--ant-color-text-secondary, #475569);
+  border: 1px solid color-mix(in srgb, var(--ant-color-text-secondary, #64748b) 30%, transparent);
 }
 
 .badgeNone {
