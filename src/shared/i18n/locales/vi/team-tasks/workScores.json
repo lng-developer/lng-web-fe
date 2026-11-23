@@ -1,147 +1,151 @@
 {
-  "title": "Điểm công việc",
-  "description": "Theo dõi điểm file Design và Scale cùng lịch sử điều chỉnh minh bạch.",
-  "refresh": "Tải lại",
-  "unavailable": "Không thể tải điểm công việc",
-  "filters": {
-    "label": "Bộ lọc điểm",
-    "allTaskTypes": "Tất cả loại tác vụ",
-    "allDifficulties": "Tất cả độ khó"
-  },
-  "search": "Tìm SKU, đơn hàng hoặc tác vụ",
-  "allSources": "Tất cả nguồn",
-  "detail": "Chi tiết điểm",
-  "history": "Lịch sử điều chỉnh",
-  "updated": "Đã cập nhật điểm",
-  "actionFailed": "Cập nhật điểm thất bại",
-  "topWorkers": "Nhân viên nổi bật",
-  "topDesigners": "Top Designer nổi bật",
-  "topScalers": "Top Nhân viên Scale nổi bật",
-  "searchDesign": "Tìm SKU, tác vụ hoặc designer...",
-  "searchScale": "Tìm mã đơn, SKU hoặc scaler...",
-  "allTaskTypes": "Tất cả loại tác vụ",
-  "noAssetPreview": "Không có ảnh xem trước cho tác vụ này",
-  "evalHeading": "Đánh giá và điều chỉnh điểm",
-  "reasonPlaceholder": "Nhập lý do audit khi điều chỉnh điểm...",
-  "voidReasonPlaceholder": "Lý do hủy điểm công việc này...",
-  "noAdjustments": "Chưa có điều chỉnh hoặc hủy điểm thủ công.",
-  "ruleSetup": {
-    "title": "Thiết lập điểm",
-    "taskType": "Loại tác vụ",
-    "scaleDifficulty": "Độ khó Scale",
-    "saveRule": "Lưu quy tắc"
-  },
-  "units": {
-    "points": "{{count}} điểm",
-    "basePoints": " / {{count}}đ",
-    "files": "{{count}} file"
-  },
-  "rules": {
-    "title": "Thiết lập điểm",
-    "rulesList": "Danh sách quy tắc",
-    "addRule": "Thêm quy tắc tính điểm",
-    "editRule": "Chỉnh sửa quy tắc",
-    "cancelEdit": "Hủy",
-    "sourceType": "Nguồn",
-    "taskType": "Loại tác vụ",
-    "priority": "Ưu tiên",
-    "allPriorities": "Mọi mức ưu tiên",
-    "scaleDifficulty": "Độ khó Scale",
-    "allDifficulties": "Mọi độ khó",
-    "points": "Điểm",
-    "status": "Trạng thái",
-    "save": "Lưu quy tắc",
-    "update": "Cập nhật"
-  },
-  "metrics": {
-    "totalFiles": "Số file",
-    "totalPoints": "Tổng điểm",
-    "designFiles": "File Design",
-    "scaleFiles": "File Scale",
-    "designTotalPoints": "Điểm Design",
-    "scaleTotalPoints": "Điểm Scale",
-    "psdFiles": "File PSD",
-    "ideaFiles": "File Idea / PNG",
-    "normalFiles": "File Thường",
-    "hardFiles": "File Khó / ĐB"
-  },
-  "sources": {
-    "DESIGN_SUBMISSION": "Design",
-    "PRODUCTION_SCALE": "Scale"
-  },
-  "statuses": {
-    "ACTIVE": "Đang hiệu lực",
-    "INACTIVE": "Không hiệu lực",
-    "VOIDED": "Đã hủy",
-    "ALL": "Tất cả trạng thái"
-  },
-  "taskTypes": {
-    "PSD_TEMPLATE": "Mẫu PSD",
-    "MOCKUP": "Mockup",
-    "PNG_ASSET": "Tệp PNG",
-    "IDEA": "Ý tưởng",
-    "CLONE": "Clone"
-  },
-  "priorities": {
-    "LOW": "Thấp",
-    "NORMAL": "Bình thường",
-    "HIGH": "Cao",
-    "URGENT": "Khẩn cấp"
-  },
-  "scaleDifficulties": {
-    "NORMAL": "Thường",
-    "HARD": "Khó",
-    "SPECIAL": "Đặc biệt"
-  },
-  "levelNames": {
-    "BASIC": "Cơ bản",
-    "STANDARD": "Tiêu chuẩn",
-    "HARD": "Khó",
-    "BONUS": "Thưởng"
-  },
-  "levels": {
-    "BASIC": "Cơ bản ({{points}}đ)",
-    "STANDARD": "Tiêu chuẩn ({{points}}đ)",
-    "HARD": "Khó ({{points}}đ)",
-    "BONUS": "Thưởng ({{points}}đ)"
-  },
-  "columns": {
-    "asset": "Tệp",
-    "source": "Nguồn",
-    "context": "File / ngữ cảnh",
-    "worker": "Nhân viên",
-    "points": "Điểm cuối / gốc",
-    "level": "Mức",
-    "status": "Trạng thái",
-    "scoredAt": "Thời điểm tính",
-    "action": "Thao tác",
-    "designer": "Designer",
-    "scaler": "Scaler"
-  },
-  "fields": {
-    "taskType": "Loại tác vụ",
-    "points": "Điểm",
-    "level": "Mức điểm",
-    "reason": "Lý do",
-    "context": "Ngữ cảnh nguồn",
-    "skuOrder": "SKU / đơn hàng",
-    "taskSlot": "Tác vụ / vị trí"
-  },
-  "actions": {
-    "view": "Xem",
-    "download": "Tải file",
-    "override": "Điều chỉnh điểm",
-    "void": "Hủy điểm",
-    "confirm": "Xác nhận",
-    "confirmVoid": "Xác nhận hủy",
-    "saveOverride": "Lưu điều chỉnh điểm"
-  },
-  "adjustments": {
-    "pointsChange": "{{oldPoints}} -> {{newPoints}} điểm",
-    "types": {
-      "OVERRIDE": "Điều chỉnh",
-      "VOID": "Hủy",
-      "SYSTEM_VOID": "Hệ thống hủy"
+  "portal": {
+    "workScores": {
+      "title": "Điểm công việc",
+      "description": "Theo dõi điểm file Design và Scale cùng lịch sử điều chỉnh minh bạch.",
+      "refresh": "Tải lại",
+      "unavailable": "Không thể tải điểm công việc",
+      "filters": {
+        "label": "Bộ lọc điểm",
+        "allTaskTypes": "Tất cả loại tác vụ",
+        "allDifficulties": "Tất cả độ khó"
+      },
+      "search": "Tìm SKU, đơn hàng hoặc tác vụ",
+      "allSources": "Tất cả nguồn",
+      "detail": "Chi tiết điểm",
+      "history": "Lịch sử điều chỉnh",
+      "updated": "Đã cập nhật điểm",
+      "actionFailed": "Cập nhật điểm thất bại",
+      "topWorkers": "Nhân viên nổi bật",
+      "topDesigners": "Top Designer nổi bật",
+      "topScalers": "Top Nhân viên Scale nổi bật",
+      "searchDesign": "Tìm SKU, tác vụ hoặc designer...",
+      "searchScale": "Tìm mã đơn, SKU hoặc scaler...",
+      "allTaskTypes": "Tất cả loại tác vụ",
+      "noAssetPreview": "Không có ảnh xem trước cho tác vụ này",
+      "evalHeading": "Đánh giá và điều chỉnh điểm",
+      "reasonPlaceholder": "Nhập lý do audit khi điều chỉnh điểm...",
+      "voidReasonPlaceholder": "Lý do hủy điểm công việc này...",
+      "noAdjustments": "Chưa có điều chỉnh hoặc hủy điểm thủ công.",
+      "ruleSetup": {
+        "title": "Thiết lập điểm",
+        "taskType": "Loại tác vụ",
+        "scaleDifficulty": "Độ khó Scale",
+        "saveRule": "Lưu quy tắc"
+      },
+      "units": {
+        "points": "{{count}} điểm",
+        "basePoints": " / {{count}}đ",
+        "files": "{{count}} file"
+      },
+      "rules": {
+        "title": "Thiết lập điểm",
+        "rulesList": "Danh sách quy tắc",
+        "addRule": "Thêm quy tắc tính điểm",
+        "editRule": "Chỉnh sửa quy tắc",
+        "cancelEdit": "Hủy",
+        "sourceType": "Nguồn",
+        "taskType": "Loại tác vụ",
+        "priority": "Ưu tiên",
+        "allPriorities": "Mọi mức ưu tiên",
+        "scaleDifficulty": "Độ khó Scale",
+        "allDifficulties": "Mọi độ khó",
+        "points": "Điểm",
+        "status": "Trạng thái",
+        "save": "Lưu quy tắc",
+        "update": "Cập nhật"
+      },
+      "metrics": {
+        "totalFiles": "Số file",
+        "totalPoints": "Tổng điểm",
+        "designFiles": "File Design",
+        "scaleFiles": "File Scale",
+        "designTotalPoints": "Điểm Design",
+        "scaleTotalPoints": "Điểm Scale",
+        "psdFiles": "File PSD",
+        "ideaFiles": "File Idea / PNG",
+        "normalFiles": "File Thường",
+        "hardFiles": "File Khó / ĐB"
+      },
+      "sources": {
+        "DESIGN_SUBMISSION": "Design",
+        "PRODUCTION_SCALE": "Scale"
+      },
+      "statuses": {
+        "ACTIVE": "Đang hiệu lực",
+        "INACTIVE": "Không hiệu lực",
+        "VOIDED": "Đã hủy",
+        "ALL": "Tất cả trạng thái"
+      },
+      "taskTypes": {
+        "PSD_TEMPLATE": "Mẫu PSD",
+        "MOCKUP": "Mockup",
+        "PNG_ASSET": "Tệp PNG",
+        "IDEA": "Ý tưởng",
+        "CLONE": "Clone"
+      },
+      "priorities": {
+        "LOW": "Thấp",
+        "NORMAL": "Bình thường",
+        "HIGH": "Cao",
+        "URGENT": "Khẩn cấp"
+      },
+      "scaleDifficulties": {
+        "NORMAL": "Thường",
+        "HARD": "Khó",
+        "SPECIAL": "Đặc biệt"
+      },
+      "levelNames": {
+        "BASIC": "Cơ bản",
+        "STANDARD": "Tiêu chuẩn",
+        "HARD": "Khó",
+        "BONUS": "Thưởng"
+      },
+      "levels": {
+        "BASIC": "Cơ bản ({{points}}đ)",
+        "STANDARD": "Tiêu chuẩn ({{points}}đ)",
+        "HARD": "Khó ({{points}}đ)",
+        "BONUS": "Thưởng ({{points}}đ)"
+      },
+      "columns": {
+        "asset": "Tệp",
+        "source": "Nguồn",
+        "context": "File / ngữ cảnh",
+        "worker": "Nhân viên",
+        "points": "Điểm cuối / gốc",
+        "level": "Mức",
+        "status": "Trạng thái",
+        "scoredAt": "Thời điểm tính",
+        "action": "Thao tác",
+        "designer": "Designer",
+        "scaler": "Scaler"
+      },
+      "fields": {
+        "taskType": "Loại tác vụ",
+        "points": "Điểm",
+        "level": "Mức điểm",
+        "reason": "Lý do",
+        "context": "Ngữ cảnh nguồn",
+        "skuOrder": "SKU / đơn hàng",
+        "taskSlot": "Tác vụ / vị trí"
+      },
+      "actions": {
+        "view": "Xem",
+        "download": "Tải file",
+        "override": "Điều chỉnh điểm",
+        "void": "Hủy điểm",
+        "confirm": "Xác nhận",
+        "confirmVoid": "Xác nhận hủy",
+        "saveOverride": "Lưu điều chỉnh điểm"
+      },
+      "adjustments": {
+        "pointsChange": "{{oldPoints}} -> {{newPoints}} điểm",
+        "types": {
+          "OVERRIDE": "Điều chỉnh",
+          "VOID": "Hủy",
+          "SYSTEM_VOID": "Hệ thống hủy"
+        }
+      }
     }
   }
 }

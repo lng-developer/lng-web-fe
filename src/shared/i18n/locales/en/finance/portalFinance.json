@@ -1,3 +1,7 @@
 {
-  "loadFailed": "Failed to load financial records"
+  "portal": {
+    "finance": {
+      "loadFailed": "Failed to load financial records"
+    }
+  }
 }

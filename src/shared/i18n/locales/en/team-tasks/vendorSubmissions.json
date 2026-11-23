@@ -1,65 +1,69 @@
 {
-  "title": "Vendor Handoff",
-  "description": "Monitor production handoffs and safely resolve failed or ambiguous vendor outcomes.",
-  "refresh": "Refresh",
-  "exportCsv": "Export CSV",
-  "unavailable": "Vendor handoff is unavailable",
-  "filters": "Handoff filters",
-  "externalOrderId": "External order ID",
-  "vendorOrderId": "Vendor external order ID",
-  "vendorProvider": "Vendor / provider",
-  "allStatuses": "All statuses",
-  "detail": "Submission detail",
-  "submitAttempts": "Submit attempts",
-  "updated": "Vendor submission updated",
-  "actionFailed": "Action failed",
-  "externalIdRequired": "Vendor external order ID is required",
-  "confirm": "Confirm",
-  "confirmSubmit": "Submit order to vendor?",
-  "confirmReconcile": "Confirm reconciliation result?",
-  "remoteMissingHelp": "This returns the submission to READY so it can be submitted safely.",
-  "remoteOrderTitle": "Confirm remote vendor order",
-  "markSubmitted": "Mark submitted",
-  "payloadPreview": "Vendor payload preview",
-  "payloadUnavailable": "Vendor payload is unavailable",
-  "reason": "Reason",
-  "metrics": {
-    "total": "Total",
-    "ready": "Ready",
-    "submitted": "Submitted",
-    "failed": "Failed",
-    "cancelled": "Cancelled"
-  },
-  "columns": {
-    "order": "Order",
-    "product": "Product",
-    "vendor": "Vendor",
-    "status": "Status",
-    "attempts": "Attempts",
-    "failure": "Failure",
-    "action": "Action"
-  },
-  "actions": {
-    "submit": "Submit",
-    "returnReady": "Return to ready",
-    "remoteFound": "Remote found",
-    "remoteMissing": "Not found",
-    "previewPayload": "Preview payload",
-    "markFailed": "Mark failed",
-    "fail": "Mark submission failed",
-    "cancel": "Cancel submission"
-  },
-  "statuses": {
-    "READY": "Ready",
-    "SUBMITTING": "Submitting",
-    "NEEDS_REVIEW": "Needs review",
-    "FAILED": "Failed",
-    "SUBMITTED": "Submitted",
-    "CANCELLED": "Cancelled"
-  },
-  "reasons": {
-    "payloadCorrected": "Operator confirmed payload is corrected",
-    "remoteMissing": "Operator confirmed provider has no order",
-    "remoteFound": "Operator confirmed order in provider portal"
+  "portal": {
+    "vendorSubmissions": {
+      "title": "Vendor Handoff",
+      "description": "Monitor production handoffs and safely resolve failed or ambiguous vendor outcomes.",
+      "refresh": "Refresh",
+      "exportCsv": "Export CSV",
+      "unavailable": "Vendor handoff is unavailable",
+      "filters": "Handoff filters",
+      "externalOrderId": "External order ID",
+      "vendorOrderId": "Vendor external order ID",
+      "vendorProvider": "Vendor / provider",
+      "allStatuses": "All statuses",
+      "detail": "Submission detail",
+      "submitAttempts": "Submit attempts",
+      "updated": "Vendor submission updated",
+      "actionFailed": "Action failed",
+      "externalIdRequired": "Vendor external order ID is required",
+      "confirm": "Confirm",
+      "confirmSubmit": "Submit order to vendor?",
+      "confirmReconcile": "Confirm reconciliation result?",
+      "remoteMissingHelp": "This returns the submission to READY so it can be submitted safely.",
+      "remoteOrderTitle": "Confirm remote vendor order",
+      "markSubmitted": "Mark submitted",
+      "payloadPreview": "Vendor payload preview",
+      "payloadUnavailable": "Vendor payload is unavailable",
+      "reason": "Reason",
+      "metrics": {
+        "total": "Total",
+        "ready": "Ready",
+        "submitted": "Submitted",
+        "failed": "Failed",
+        "cancelled": "Cancelled"
+      },
+      "columns": {
+        "order": "Order",
+        "product": "Product",
+        "vendor": "Vendor",
+        "status": "Status",
+        "attempts": "Attempts",
+        "failure": "Failure",
+        "action": "Action"
+      },
+      "actions": {
+        "submit": "Submit",
+        "returnReady": "Return to ready",
+        "remoteFound": "Remote found",
+        "remoteMissing": "Not found",
+        "previewPayload": "Preview payload",
+        "markFailed": "Mark failed",
+        "fail": "Mark submission failed",
+        "cancel": "Cancel submission"
+      },
+      "statuses": {
+        "READY": "Ready",
+        "SUBMITTING": "Submitting",
+        "NEEDS_REVIEW": "Needs review",
+        "FAILED": "Failed",
+        "SUBMITTED": "Submitted",
+        "CANCELLED": "Cancelled"
+      },
+      "reasons": {
+        "payloadCorrected": "Operator confirmed payload is corrected",
+        "remoteMissing": "Operator confirmed provider has no order",
+        "remoteFound": "Operator confirmed order in provider portal"
+      }
+    }
   }
 }
