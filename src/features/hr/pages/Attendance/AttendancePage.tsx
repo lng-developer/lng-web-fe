@@ -5,6 +5,7 @@ import {
   CalendarOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
+  DeleteOutlined,
   ExclamationCircleFilled,
   ExclamationCircleOutlined,
   InfoCircleOutlined,
@@ -14,14 +15,16 @@ import {
   SearchOutlined,
   SyncOutlined,
   TeamOutlined,
+  ToolOutlined,
   UnorderedListOutlined,
   WarningOutlined,
 } from '@ant-design/icons'
-import { useQuery } from '@tanstack/react-query'
-import { Button, Divider, Form, Input, Modal, Segmented, Space, Tag } from 'antd'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { Button, Divider, Form, Input, Modal, Popconfirm, Segmented, Space, Tag } from 'antd'
 import dayjs from 'dayjs'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
+import { useRoles } from '@/shared/auth/useAuthStore'
 import {
   CompactStatBar,
   DateTimePicker,
@@ -31,12 +34,14 @@ import {
   PageHeader,
   SectionCard,
 } from '@/shared/ui'
+import { useFeedbackToast } from '@/shared/ui/useFeedbackToast'
 
-import { listLeaveBalances } from '../../api/hrTimeApi'
+import { deleteAttendance, listLeaveBalances } from '../../api/hrTimeApi'
 import { useEmployeeProfilesQuery } from '../../hooks'
+import { AdminAttendanceAdjustmentModal } from './AdminAttendanceAdjustmentModal'
 import { AttendanceCalendarGrid, type CalendarDayItem } from './AttendanceCalendarGrid'
 import { AttendanceDayDrawer } from './AttendanceDayDrawer'
-import { AttendanceSummaryTable } from './AttendanceSummaryTable'
+import { AttendanceSummaryTable, type EmployeeAttendanceSummary } from './AttendanceSummaryTable'
 import styles from './AttendancePage.module.scss'
 import { type AttendanceWorkspace, useAttendance } from './useAttendance'
 
@@ -54,7 +59,6 @@ export const AttendancePage = ({
       month,
       setMonth,
       adjusting,
-      openAdjusting,
       closeAdjusting,
       attendanceCapabilities,
       completedCheckIn,
@@ -92,6 +96,45 @@ export const AttendancePage = ({
   const [isDayDrawerOpen, setIsDayDrawerOpen] = useState(false)
   const [searchText, setSearchText] = useState('')
   const [showErrorsOnly, setShowErrorsOnly] = useState(false)
+
+  const toast = useFeedbackToast()
+  const roles = useRoles().map((r) => r.toUpperCase())
+  const isSuperAdminOrAdmin = roles.some((r) => ['SUPER_ADMIN', 'ADMIN'].includes(r))
+  const [selectedAdjustmentProfile, setSelectedAdjustmentProfile] =
+    useState<EmployeeAttendanceSummary | null>(null)
+  const [selectedAdjustmentProfiles, setSelectedAdjustmentProfiles] = useState<
+    EmployeeAttendanceSummary[]
+  >([])
+  const [selectedSummaryKeys, setSelectedSummaryKeys] = useState<React.Key[]>([])
+  const [selectedTableKeys, setSelectedTableKeys] = useState<React.Key[]>([])
+  const [isAdminAdjustmentOpen, setIsAdminAdjustmentOpen] = useState(false)
+
+  const deleteBatchMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      return Promise.all(ids.map((id) => deleteAttendance(id)))
+    },
+    onSuccess: (_res, ids) => {
+      toast(
+        'success',
+        t(
+          'hrOperations.messages.attendanceBatchDeleted',
+          'Đã xóa {{count}} bản ghi chấm công thành công',
+          {
+            count: ids.length,
+          },
+        ),
+      )
+      setSelectedTableKeys([])
+      void records.refetch()
+    },
+    onError: (err: Error) => {
+      toast(
+        'error',
+        t('hrOperations.messages.attendanceDeleteFailed', 'Xóa bản ghi thất bại'),
+        err.message,
+      )
+    },
+  })
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -536,7 +579,12 @@ export const AttendancePage = ({
             <div className={styles.cardHeaderControls}>
               <Segmented
                 value={viewMode}
-                onChange={(val) => setViewMode(val as 'calendar' | 'table' | 'summary')}
+                onChange={(val) => {
+                  setViewMode(val as 'calendar' | 'table' | 'summary')
+                  setSelectedSummaryKeys([])
+                  setSelectedAdjustmentProfiles([])
+                  setSelectedTableKeys([])
+                }}
                 options={[
                   {
                     value: 'summary',
@@ -589,6 +637,170 @@ export const AttendancePage = ({
                   )}
                 </div>
 
+                <div className={styles.adminFilterActions}>
+                  {viewMode === 'summary' && selectedSummaryKeys.length > 0 ? (
+                    <Space size={8}>
+                      <div className={styles.selectedCountBadge}>
+                        <CheckCircleOutlined style={{ color: 'var(--ant-color-primary)' }} />
+                        <span>
+                          {t(
+                            'hrOperations.attendance.selectedStaffCount',
+                            'Đã chọn {{count}} nhân sự',
+                            {
+                              count: selectedSummaryKeys.length,
+                            },
+                          )}
+                        </span>
+                      </div>
+                      <Button
+                        onClick={() => {
+                          setSelectedSummaryKeys([])
+                          setSelectedAdjustmentProfiles([])
+                        }}
+                      >
+                        {t('hrOperations.common.deselectAll', 'Bỏ chọn')}
+                      </Button>
+                      {isSuperAdminOrAdmin && (
+                        <Button
+                          type="primary"
+                          icon={<ToolOutlined />}
+                          onClick={() => {
+                            if (selectedAdjustmentProfiles.length > 0) {
+                              setSelectedAdjustmentProfile(selectedAdjustmentProfiles[0])
+                              setIsAdminAdjustmentOpen(true)
+                            }
+                          }}
+                        >
+                          {t(
+                            'hrOperations.attendance.bulkAdjustBtn',
+                            'Hiệu chỉnh hàng loạt ({{count}})',
+                            {
+                              count: selectedSummaryKeys.length,
+                            },
+                          )}
+                        </Button>
+                      )}
+                    </Space>
+                  ) : viewMode === 'table' && selectedTableKeys.length > 0 ? (
+                    <Space size={8}>
+                      <div className={styles.selectedCountBadge}>
+                        <CheckCircleOutlined style={{ color: 'var(--ant-color-primary)' }} />
+                        <span>
+                          {t(
+                            'hrOperations.attendance.selectedRecordsCount',
+                            'Đã chọn {{count}} bản ghi',
+                            {
+                              count: selectedTableKeys.length,
+                            },
+                          )}
+                        </span>
+                      </div>
+                      <Button onClick={() => setSelectedTableKeys([])}>
+                        {t('hrOperations.common.deselectAll', 'Bỏ chọn')}
+                      </Button>
+                      {isSuperAdminOrAdmin && (
+                        <>
+                          <Button
+                            type="primary"
+                            icon={<ToolOutlined />}
+                            onClick={() => {
+                              const selectedRecords = items.filter((it) =>
+                                selectedTableKeys.includes(it.id),
+                              )
+                              const uniqueProfileIds = Array.from(
+                                new Set(selectedRecords.map((r) => r.profileId)),
+                              )
+                              const targetProfiles: EmployeeAttendanceSummary[] =
+                                uniqueProfileIds.map((pId) => {
+                                  const p = profilesQuery.data?.items.find(
+                                    (item) => item.id === pId,
+                                  )
+                                  return {
+                                    profileId: pId,
+                                    employeeCode: p?.employeeCode || '',
+                                    fullName: p?.fullName || '',
+                                    avatarUrl: p?.avatarUrl || null,
+                                    jobTitle: p?.jobTitle || null,
+                                    departmentName: p?.department?.name || null,
+                                    teamName: p?.team?.name || null,
+                                    status: p?.employmentType || 'ACTIVE',
+                                    totalWorkDays: 0,
+                                    totalWorkedMinutes: 0,
+                                    paidLeaveDays: 0,
+                                    unpaidLeaveDays: 0,
+                                    absentDays: 0,
+                                    lateCount: 0,
+                                    lateMinutes: 0,
+                                    earlyLeaveMinutes: 0,
+                                    entitledLeaveDays: 0,
+                                    usedLeaveDays: 0,
+                                    availableLeaveDays: 0,
+                                  }
+                                })
+                              setSelectedAdjustmentProfiles(targetProfiles)
+                              if (targetProfiles.length > 0) {
+                                setSelectedAdjustmentProfile(targetProfiles[0])
+                              }
+                              setIsAdminAdjustmentOpen(true)
+                            }}
+                          >
+                            {selectedTableKeys.length === 1
+                              ? t('hrOperations.attendance.adjust', 'Hiệu chỉnh')
+                              : t(
+                                  'hrOperations.attendance.bulkAdjustBtn',
+                                  'Hiệu chỉnh hàng loạt ({{count}})',
+                                  {
+                                    count: selectedTableKeys.length,
+                                  },
+                                )}
+                          </Button>
+                          <Popconfirm
+                            title={t(
+                              'hrOperations.attendance.confirmDeleteBatchTitle',
+                              'Xác nhận xóa {{count}} bản ghi đã chọn?',
+                              { count: selectedTableKeys.length },
+                            )}
+                            description={t(
+                              'hrOperations.attendance.confirmDeleteBatchDesc',
+                              'Dữ liệu chấm công của các ngày đã chọn sẽ bị xóa và tự động tính lại công.',
+                            )}
+                            onConfirm={() =>
+                              deleteBatchMutation.mutate(selectedTableKeys.map(String))
+                            }
+                            okText={t('hrOperations.common.delete', 'Xóa')}
+                            cancelText={t('hrOperations.common.cancel', 'Hủy')}
+                            okButtonProps={{ danger: true, loading: deleteBatchMutation.isPending }}
+                          >
+                            <Button
+                              danger
+                              icon={<DeleteOutlined />}
+                              loading={deleteBatchMutation.isPending}
+                            >
+                              {t('hrOperations.common.deleteBatch', 'Xóa đã chọn ({{count}})', {
+                                count: selectedTableKeys.length,
+                              })}
+                            </Button>
+                          </Popconfirm>
+                        </>
+                      )}
+                    </Space>
+                  ) : (
+                    isSuperAdminOrAdmin && (
+                      <Button
+                        type="primary"
+                        icon={<ToolOutlined />}
+                        onClick={() => {
+                          setSelectedAdjustmentProfile(null)
+                          setSelectedAdjustmentProfiles([])
+                          setIsAdminAdjustmentOpen(true)
+                        }}
+                      >
+                        {t('hrOperations.attendance.adminAdjustBtn', 'Hiệu chỉnh Công - Phép')}
+                      </Button>
+                    )
+                  )}
+                </div>
+
                 {viewMode !== 'summary' && exceptionCount > 0 && (
                   <div className={styles.errorBanner}>
                     <ExclamationCircleFilled />
@@ -610,9 +822,18 @@ export const AttendancePage = ({
                   balances={balancesQuery.data ?? []}
                   loading={records.isLoading || profilesQuery.isLoading || balancesQuery.isLoading}
                   searchText={searchText}
+                  canAdminEdit={isSuperAdminOrAdmin}
+                  selectedRowKeys={selectedSummaryKeys}
+                  onSelectedRowKeysChange={setSelectedSummaryKeys}
+                  onSelectedRowsChange={setSelectedAdjustmentProfiles}
                   onViewEmployeeSchedule={(code) => {
                     setSearchText(code)
                     setViewMode('table')
+                  }}
+                  onOpenAdminAdjustment={(item) => {
+                    setSelectedAdjustmentProfile(item)
+                    setSelectedAdjustmentProfiles([item])
+                    setIsAdminAdjustmentOpen(true)
                   }}
                 />
               ) : viewMode === 'calendar' ? (
@@ -635,8 +856,22 @@ export const AttendancePage = ({
                   dataSource={displayedItems}
                   pagination={pagination}
                   columns={columns}
+                  rowSelection={{
+                    selectedRowKeys: selectedTableKeys,
+                    onChange: setSelectedTableKeys,
+                    preserveSelectedRowKeys: true,
+                  }}
                   onRow={(record) => ({
-                    onClick: () => {
+                    onClick: (e) => {
+                      const target = e.target as HTMLElement
+                      if (
+                        target.closest('button') ||
+                        target.closest('.ant-btn') ||
+                        target.closest('.ant-checkbox-wrapper') ||
+                        target.closest('.ant-table-selection-column')
+                      ) {
+                        return
+                      }
                       setSelectedDayItem({
                         date: dayjs(record.workDateKey),
                         dateKey: record.workDateKey,
@@ -664,9 +899,32 @@ export const AttendancePage = ({
         open={isDayDrawerOpen}
         onClose={() => setIsDayDrawerOpen(false)}
         day={selectedDayItem}
-        onAdjust={(rec) => rec && openAdjusting(rec)}
-        canAdjust={canWrite}
       />
+
+      {/* Admin Attendance & Leave Adjustment Modal */}
+      {isSuperAdminOrAdmin && (
+        <AdminAttendanceAdjustmentModal
+          open={isAdminAdjustmentOpen}
+          onClose={() => {
+            setIsAdminAdjustmentOpen(false)
+            setSelectedAdjustmentProfile(null)
+            setSelectedAdjustmentProfiles([])
+          }}
+          currentMonth={month}
+          profiles={profilesQuery.data?.items ?? []}
+          selectedProfileId={selectedAdjustmentProfile?.profileId}
+          initialData={selectedAdjustmentProfile}
+          selectedProfiles={selectedAdjustmentProfiles}
+          existingAttendanceRecords={items}
+          balances={balancesQuery.data ?? []}
+          onSuccess={() => {
+            setSelectedSummaryKeys([])
+            setSelectedAdjustmentProfiles([])
+            void records.refetch()
+            void balancesQuery.refetch()
+          }}
+        />
+      )}
 
       {/* Adjust Modal */}
       <Modal

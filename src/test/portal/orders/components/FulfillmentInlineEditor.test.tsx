@@ -125,3 +125,58 @@ it('selects a product without selecting vendor first and saves its only variant'
     }),
   )
 })
+
+it('supports searching within product, size, and color dropdowns', async () => {
+  await i18n.changeLanguage('en')
+  vi.mocked(mappingApi.getMappingVendorProductOptions).mockResolvedValueOnce({
+    dimensions: { hasSize: true, hasColor: true },
+    options: {
+      sizes: ['Small 4in', 'Medium 6in', 'Large 8in'],
+      colors: ['Pink', 'White', 'Black'],
+    },
+    candidates: [],
+    allCandidates: [
+      { id: 'v1', size: 'Small 4in', color: 'Pink', baseCostAmount: 500, currency: 'USD' },
+      { id: 'v2', size: 'Medium 6in', color: 'White', baseCostAmount: 600, currency: 'USD' },
+      { id: 'v3', size: 'Large 8in', color: 'Black', baseCostAmount: 700, currency: 'USD' },
+    ],
+  })
+  render(
+    <AppProviders>
+      <QueryClientProvider client={new QueryClient()}>
+        <FulfillmentInlineEditor
+          canWrite
+          item={
+            {
+              item: { id: 'item' },
+              mapping: {
+                vendorProduct: { id: 'p1', name: 'Product 1' },
+                vendor: { id: 'v1', name: 'Vendor 1' },
+              },
+            } as OrderWorkbenchItem
+          }
+        />
+      </QueryClientProvider>
+    </AppProviders>,
+  )
+
+  const productSelect = screen.getByRole('combobox', { name: i18n.t('orders.fields.product') })
+  const sizeSelect = screen.getByRole('combobox', { name: i18n.t('orders.fields.size') })
+  const colorSelect = screen.getByRole('combobox', { name: i18n.t('orders.fields.color') })
+
+  await waitFor(() => {
+    expect(sizeSelect).not.toBeDisabled()
+  })
+
+  expect(productSelect).not.toHaveAttribute('readonly')
+  expect(sizeSelect).not.toHaveAttribute('readonly')
+  expect(colorSelect).not.toHaveAttribute('readonly')
+
+  fireEvent.mouseDown(sizeSelect)
+  expect(await screen.findByTitle('Small 4in')).toBeInTheDocument()
+  expect(screen.getByTitle('Large 8in')).toBeInTheDocument()
+
+  fireEvent.change(sizeSelect, { target: { value: 'Large' } })
+  expect(await screen.findByTitle('Large 8in')).toBeInTheDocument()
+  expect(screen.queryByTitle('Small 4in')).toBeNull()
+})

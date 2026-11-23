@@ -1,0 +1,117 @@
+.modalHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 8px;
+}
+
+.adminBadge {
+  background: #f6ffed;
+  border: 1px solid #b7eb8f;
+  color: #389e0d;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.profileCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--ant-color-fill-quaternary);
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+}
+
+.profileMeta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.profileName {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--ant-color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profileSub {
+  font-size: 12px;
+  color: var(--ant-color-text-secondary);
+}
+
+.statsOverview {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.statBox {
+  background: var(--ant-color-bg-container);
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+  padding: 10px 12px;
+  text-align: center;
+}
+
+.statBoxLabel {
+  font-size: 11px;
+  color: var(--ant-color-text-secondary);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.statBoxValue {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.daySelectionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--ant-color-fill-quaternary);
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 14px;
+}
+
+.dayPickerWrap {
+  flex: 1;
+}
+
+.dayStatusWrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.metricsPreviewBar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  background: var(--ant-color-fill-quaternary);
+  border: 1px dashed var(--ant-color-border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+
+.metricsShiftInfo {
+  font-weight: 500;
+  color: var(--ant-color-text-secondary);
+  font-size: 11px;
+}

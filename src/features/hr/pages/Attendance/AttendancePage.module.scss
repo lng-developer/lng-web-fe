@@ -657,15 +657,43 @@
   flex-wrap: wrap;
 }
 
-.errorBanner {
+.adminFilterActions {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
+  margin-left: auto;
+}
+
+.selectedCountBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  border-radius: 6px;
+  background: var(--ant-color-primary-bg);
+  border: 1px solid var(--ant-color-primary-border);
+  color: var(--ant-color-primary);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.errorBanner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  box-sizing: border-box;
+  padding: 0 12px;
   border-radius: 6px;
   background: var(--ant-color-error-bg);
   border: 1px solid var(--ant-color-error-border, #ffa39e);
   color: var(--ant-color-error);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
 }

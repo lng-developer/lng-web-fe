@@ -74,6 +74,7 @@ export type ProductionTask = {
   assignedDesignUserId: string | null
   assignedDesigner?: ProductionUser
   csAssigneeId?: string | null
+  csAssignee?: ProductionUser
   csStatus?: CsStatus
   csNote?: string | null
   designNote: string | null
@@ -135,6 +136,9 @@ export type ProductionSummary = Record<string, number>
 export type ProductionParams = {
   designType?: 'NORMAL' | 'CUSTOM_IMAGE' | 'UNCLASSIFIED'
   unassigned?: boolean
+  csUnassigned?: boolean
+  csAssigneeId?: string
+  assignedDesignUserId?: string
   page: number
   limit: number
   view?: 'SCALE' | 'QC'
@@ -235,6 +239,10 @@ export const exportProductionTasksCsv = (params: ProductionParams) =>
 export const bulkAssignProductionTasks = async (taskIds: string[], assignedDesignUserId: string) =>
   unwrap<unknown>(
     await apiClient.patch(`${basePath}/tasks/bulk-assign`, { taskIds, assignedDesignUserId }),
+  )
+export const bulkAssignCsTasks = async (taskIds: string[], csAssigneeId: string, csNote?: string) =>
+  unwrap<{ assigned: ProductionTask[]; failed: unknown[] }>(
+    await apiClient.patch(`${basePath}/tasks/bulk-assign-cs`, { taskIds, csAssigneeId, csNote }),
   )
 export const submitScaleForQc = async (id: string) =>
   unwrap<ProductionTask>(await apiClient.patch(`${basePath}/tasks/${id}/submit-scale-qc`))

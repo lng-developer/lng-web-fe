@@ -72,6 +72,7 @@ export {
   type PopupModalAnchor,
   type PopupModalProps,
 } from './PopupModal'
+export { ReasonModal, type ReasonModalProps } from './ReasonModal'
 export { SearchInput, type SearchInputProps } from './SearchInput'
 export { SectionCard, type SectionCardProps } from './SectionCard'
 export { DATA_COLORS, StatusPill, type StatusPillProps } from './StatusPill'
@@ -85,5 +86,5 @@ export { UiTabs, type UiTabsProps } from './UiTabs'
 export { useDebouncedValue } from './useDebouncedValue'
 export { useDocumentTitle } from '../hooks/useDocumentTitle'
 export { useResourceSelection } from '../hooks/useResourceSelection'
-export { useFeedbackToast } from './useFeedbackToast'
+export { type FeedbackToastFn, useFeedbackToast } from './useFeedbackToast'
 export { ZoomableImage, type ZoomableImageProps } from './ZoomableImage'
