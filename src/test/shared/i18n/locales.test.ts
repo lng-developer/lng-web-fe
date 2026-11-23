@@ -11,8 +11,8 @@ import importIssueQueueSource from '@/features/portal/integrations/pages/ImportI
 import importJobPanelSource from '@/features/portal/integrations/pages/ImportJobPanel.tsx?raw'
 import integrationWorkbenchSource from '@/features/portal/integrations/pages/IntegrationWorkbenchPage.tsx?raw'
 import issueResolutionModalSource from '@/features/portal/integrations/pages/IssueResolutionModal.tsx?raw'
-import en from '@/shared/i18n/locales/en/common.json'
-import vi from '@/shared/i18n/locales/vi/common.json'
+import en from '@/shared/i18n/locales/en'
+import vi from '@/shared/i18n/locales/vi'
 
 function flatten(value: Record<string, unknown>, prefix = ''): string[] {
   return Object.entries(value).flatMap(([key, entry]) => {

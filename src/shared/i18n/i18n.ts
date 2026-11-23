@@ -1,8 +1,8 @@
 import { initReactI18next } from 'react-i18next'
 import i18n from 'i18next'
 
-import en from './locales/en/common.json'
-import vi from './locales/vi/common.json'
+import en from './locales/en'
+import vi from './locales/vi'
 
 export const LANGUAGE_STORAGE_KEY = 'lng.language'
 export type Language = 'vi' | 'en'
@@ -31,9 +31,9 @@ export async function switchLanguage(nextLanguage: Language) {
   if (!i18n.hasResourceBundle(nextLanguage, 'common')) {
     const bundle =
       nextLanguage === 'vi'
-        ? await import('./locales/vi/common.json')
-        : await import('./locales/en/common.json')
-    i18n.addResourceBundle(nextLanguage, 'common', bundle.default || bundle, true, true)
+        ? (await import('./locales/vi')).default
+        : (await import('./locales/en')).default
+    i18n.addResourceBundle(nextLanguage, 'common', bundle, true, true)
   }
   return i18n.changeLanguage(nextLanguage)
 }
