@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '@/app/providers/AppProviders'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
+  assignProductionTask,
+  bulkAssignProductionTasks,
   bulkAssignCsTasks,
   listCsAssignees,
   listScaleAssignees,
@@ -25,6 +27,8 @@ vi.mock('react-router-dom', async (importOriginal) => ({
 vi.mock('@/features/portal/production/api/productionApi', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/features/portal/production/api/productionApi')>()),
   bulkAssignCsTasks: vi.fn(),
+  assignProductionTask: vi.fn(),
+  bulkAssignProductionTasks: vi.fn(),
   listCsAssignees: vi.fn(),
   listProductionTasks: vi.fn(),
   listScaleAssignees: vi.fn(),
@@ -245,6 +249,55 @@ describe('ProductionWorkbenchPage', () => {
 
     await waitFor(() => expect(listScaleAssignees).toHaveBeenCalledWith({ limit: 100 }))
   })
+
+  it.each([1, 2])(
+    'assigns %i selected Scale tasks to a Designer without changing CS assignment',
+    async (count) => {
+      const tasks = Array.from({ length: count }, (_, index) => ({
+        ...blockedTask,
+        id: `production-task-${index + 1}`,
+        status: 'NEED_SCALE' as const,
+        blockers: [],
+        orderItem: { externalOrderId: `113-2183249-076344${index}` },
+      }))
+      vi.mocked(listProductionTasks).mockResolvedValue({
+        items: tasks,
+        total: count,
+        page: 1,
+        limit: 10,
+      })
+      vi.mocked(listScaleAssignees).mockResolvedValue({
+        items: [{ id: 'designer-1', fullName: 'Design Employee', employeeCode: 'D01' }],
+      })
+      vi.mocked(assignProductionTask).mockResolvedValue({
+        ...blockedTask,
+        assignedDesignUserId: 'designer-1',
+      })
+      vi.mocked(bulkAssignProductionTasks).mockResolvedValue({ assigned: tasks, failed: [] })
+      renderPage('/portal/production/scale', scaleManagerAccount)
+      const picker = await screen.findByRole('combobox', { name: 'Select Scale assignee' })
+      const assignButton = screen.getByRole('button', { name: 'Assign 0 tasks' })
+      expect(assignButton).toBeDisabled()
+      fireEvent.mouseDown(picker)
+      fireEvent.click(await screen.findByText('Design Employee · D01'))
+      await screen.findByText('113-2183249-0763440')
+      fireEvent.click(screen.getAllByRole('checkbox')[0])
+      fireEvent.click(screen.getByRole('button', { name: `Assign ${count} tasks` }))
+      if (count === 1) {
+        await waitFor(() =>
+          expect(assignProductionTask).toHaveBeenCalledWith('production-task-1', 'designer-1'),
+        )
+      } else {
+        await waitFor(() =>
+          expect(bulkAssignProductionTasks).toHaveBeenCalledWith(
+            tasks.map((task) => task.id),
+            'designer-1',
+          ),
+        )
+      }
+      expect(bulkAssignCsTasks).not.toHaveBeenCalled()
+    },
+  )
 
   it('allows a team Scale assigner to select tasks from any shop', async () => {
     vi.mocked(listProductionTasks).mockResolvedValue({

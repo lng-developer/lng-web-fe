@@ -22,6 +22,7 @@ export const ProductionWorkbenchFilterBar: FC<{
   readonly viewMode?: 'scale' | 'qc' | 'general'
   readonly scaleAssigneeId?: string
   readonly canAssignScale: boolean
+  readonly canAssignDesigner: boolean
   readonly canRecheckBlocked?: boolean
   readonly scaleAssigneeOptions: AssigneeOption[]
   readonly selectedRowCount: number
@@ -54,6 +55,7 @@ export const ProductionWorkbenchFilterBar: FC<{
   viewMode = 'general',
   scaleAssigneeId,
   canAssignScale,
+  canAssignDesigner,
   canRecheckBlocked,
   scaleAssigneeOptions,
   selectedRowCount,
@@ -183,13 +185,15 @@ export const ProductionWorkbenchFilterBar: FC<{
         ) : null}
 
         {/* Bulk Assign Designer */}
-        {canAssignScale && !isScaleContext ? (
+        {canAssignDesigner ? (
           <>
             <Select
               showSearch
               allowClear
               className={styles.filter}
               value={scaleAssigneeId}
+              aria-label={t('portal.production.selectAssignee')}
+              optionFilterProp="label"
               placeholder={t('portal.production.selectAssignee')}
               options={scaleAssigneeOptions}
               onChange={onScaleAssigneeChange}

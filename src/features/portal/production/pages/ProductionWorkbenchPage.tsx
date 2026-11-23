@@ -903,6 +903,12 @@ export function ProductionWorkbenchPage({
             viewMode={viewMode}
             scaleAssigneeId={scaleAssigneeId}
             canAssignScale={canAssignScale}
+            canAssignDesigner={
+              canAssignScale &&
+              (allowed.has('PRODUCTION:WRITE') ||
+                allowed.has('DESIGN:REVIEW') ||
+                hasScopedDesignReview)
+            }
             canRecheckBlocked={allowed.has('PRODUCTION:WRITE')}
             scaleAssigneeOptions={scaleAssigneeOptions}
             selectedRowCount={selectedRowKeys.length}
