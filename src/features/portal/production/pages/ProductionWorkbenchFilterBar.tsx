@@ -1,6 +1,6 @@
 import { type FC } from 'react'
 import { useTranslation } from 'react-i18next'
-import { DownloadOutlined, SearchOutlined, SyncOutlined } from '@ant-design/icons'
+import { DownloadOutlined, SearchOutlined, SyncOutlined, UserAddOutlined } from '@ant-design/icons'
 import { Button, Input, Select, Space } from 'antd'
 
 import { DateRangePicker, FilterBar, type DateRangeValue } from '@/shared/ui'
@@ -38,6 +38,14 @@ export const ProductionWorkbenchFilterBar: FC<{
   readonly onRecheck: () => void
   readonly onScaleAssigneeChange: (value?: string) => void
   readonly onBulkAssign: () => void
+  // CS Assignment Filters & Bulk Actions
+  readonly csAssigneeFilter?: string
+  readonly onCsAssigneeFilterChange?: (value?: string) => void
+  readonly csAssigneeOptions?: AssigneeOption[]
+  readonly csAssigneeId?: string
+  readonly onCsAssigneeChange?: (value?: string) => void
+  readonly onBulkAssignCs?: () => void
+  readonly bulkAssignCsLoading?: boolean
 }> = ({
   search,
   scaleDifficultyLevel,
@@ -62,8 +70,16 @@ export const ProductionWorkbenchFilterBar: FC<{
   onRecheck,
   onScaleAssigneeChange,
   onBulkAssign,
+  csAssigneeFilter,
+  onCsAssigneeFilterChange,
+  csAssigneeOptions,
+  csAssigneeId,
+  onCsAssigneeChange,
+  onBulkAssignCs,
+  bulkAssignCsLoading,
 }) => {
   const { t } = useTranslation()
+  const isScaleContext = viewMode === 'scale' || tab === 'scale' || tab === 'need_scale'
 
   return (
     <div className={styles.queueControls}>
@@ -107,12 +123,67 @@ export const ProductionWorkbenchFilterBar: FC<{
           value={dates}
           onChange={onDatesChange}
         />
+        {/* CS / Assignee filter */}
+        {isScaleContext && onCsAssigneeFilterChange && csAssigneeOptions ? (
+          <Select
+            allowClear
+            className={styles.filter}
+            aria-label={t('portal.production.filterCsAssignee', { defaultValue: 'Lọc theo CS' })}
+            value={csAssigneeFilter}
+            placeholder={t('portal.production.filterCsAssignee', { defaultValue: 'Lọc theo CS' })}
+            options={[
+              {
+                value: 'UNASSIGNED',
+                label: t('portal.production.csUnassignedOption', {
+                  defaultValue: '⚠️ Chưa phân công CS',
+                }),
+              },
+              ...csAssigneeOptions,
+            ]}
+            onChange={onCsAssigneeFilterChange}
+          />
+        ) : null}
+
         {viewMode === 'qc' || tab === 'qc' ? (
           <Button icon={<DownloadOutlined />} loading={exportQcLoading} onClick={onExportQc}>
             {t('portal.production.exportQc')}
           </Button>
         ) : null}
-        {canAssignScale ? (
+
+        {/* Bulk Assign CS (Primary in Scale) */}
+        {canAssignScale && isScaleContext && onBulkAssignCs && csAssigneeOptions ? (
+          <>
+            <Select
+              showSearch
+              allowClear
+              className={styles.filter}
+              aria-label={t('portal.production.selectCsAssignee', {
+                defaultValue: 'Chọn CS để gán',
+              })}
+              value={csAssigneeId}
+              placeholder={t('portal.production.selectCsAssignee', {
+                defaultValue: 'Chọn CS để gán',
+              })}
+              options={csAssigneeOptions}
+              onChange={onCsAssigneeChange}
+            />
+            <Button
+              type="primary"
+              icon={<UserAddOutlined />}
+              disabled={!selectedRowCount || !csAssigneeId}
+              loading={bulkAssignCsLoading}
+              onClick={onBulkAssignCs}
+            >
+              {t('portal.production.bulkAssignCs', {
+                count: selectedRowCount,
+                defaultValue: `Gán CS (${selectedRowCount})`,
+              })}
+            </Button>
+          </>
+        ) : null}
+
+        {/* Bulk Assign Designer */}
+        {canAssignScale && !isScaleContext ? (
           <>
             <Select
               showSearch
@@ -132,6 +203,7 @@ export const ProductionWorkbenchFilterBar: FC<{
             </Button>
           </>
         ) : null}
+
         <Space className={styles.filterActions}>
           <Button icon={<DownloadOutlined />} loading={exportCsvLoading} onClick={onExportCsv}>
             {t('portal.production.exportCsv')}

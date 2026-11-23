@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { EditOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Form, Space, type TableProps, Tag, Tooltip, Typography } from 'antd'
+import { Form, Space, type TableProps, Tag, Typography } from 'antd'
 import dayjs from 'dayjs'
 
 import { getPermissions } from '@/shared/auth/session'
@@ -270,19 +269,6 @@ export const useAttendance = (workspace: AttendanceWorkspace = 'personal', teamI
         </StatusTag>
       ),
     },
-    ...(canManage
-      ? [
-          {
-            title: '',
-            width: 44,
-            render: (_: unknown, item: Attendance) => (
-              <Tooltip title={t('hrOperations.attendance.adjust')}>
-                <Button type="text" icon={<EditOutlined />} onClick={() => openAdjusting(item)} />
-              </Tooltip>
-            ),
-          },
-        ]
-      : []),
   ]
 
   const pagination = {

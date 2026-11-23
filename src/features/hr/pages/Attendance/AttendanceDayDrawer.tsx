@@ -3,14 +3,12 @@ import {
   CalendarOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
-  EditOutlined,
   ExclamationCircleOutlined,
   InfoCircleOutlined,
 } from '@ant-design/icons'
-import { Button, Descriptions, Divider, Drawer, Space, Tag, Typography } from 'antd'
+import { Descriptions, Divider, Drawer, Space, Tag, Typography } from 'antd'
 import dayjs from 'dayjs'
 
-import type { Attendance } from '../../api/hrTimeApi'
 import type { CalendarDayItem } from './AttendanceCalendarGrid'
 import styles from './AttendancePage.module.scss'
 
@@ -18,17 +16,9 @@ interface AttendanceDayDrawerProps {
   open: boolean
   onClose: () => void
   day: CalendarDayItem | null
-  onAdjust?: (record: Attendance) => void
-  canAdjust?: boolean
 }
 
-export const AttendanceDayDrawer = ({
-  open,
-  onClose,
-  day,
-  onAdjust,
-  canAdjust = true,
-}: AttendanceDayDrawerProps) => {
+export const AttendanceDayDrawer = ({ open, onClose, day }: AttendanceDayDrawerProps) => {
   const { t } = useTranslation()
 
   if (!day) return null
@@ -56,21 +46,6 @@ export const AttendanceDayDrawer = ({
           <CalendarOutlined style={{ color: 'var(--ant-color-primary)' }} />
           <span>{dateFormatted}</span>
         </Space>
-      }
-      extra={
-        rec && canAdjust && onAdjust ? (
-          <Button
-            size="small"
-            type="primary"
-            icon={<EditOutlined />}
-            onClick={() => {
-              onClose()
-              onAdjust(rec)
-            }}
-          >
-            {t('hrOperations.attendance.adjust', 'Điều chỉnh')}
-          </Button>
-        ) : null
       }
     >
       <div className={styles.drawerBody}>
@@ -185,8 +160,8 @@ export const AttendanceDayDrawer = ({
           <InfoCircleOutlined style={{ color: 'var(--ant-color-info)', marginTop: 2 }} />
           <Typography.Text type="secondary" style={{ fontSize: 12 }}>
             {t(
-              'hrOperations.attendance.drawerExplanationHint',
-              'Nếu có sai lệch về giờ quẹt thẻ do máy chấm công hoặc công tác bên ngoài, vui lòng bấm "Điều chỉnh" để gửi yêu cầu giải trình tới quản lý.',
+              'hrOperations.attendance.drawerInfoHint',
+              'Thông tin chi tiết giờ vào, giờ ra và trạng thái chấm công ghi nhận từ hệ thống.',
             )}
           </Typography.Text>
         </div>

@@ -322,6 +322,17 @@ export const checkOut = (input: object = {}) =>
   post<Attendance>('/api/hr/attendance/check-out', input)
 export const adjustAttendance = async (id: string, input: object) =>
   unwrap<Attendance>(await apiClient.patch(`/api/hr/attendance/${id}`, input))
+export const createOrAdjustManualAttendance = async (input: {
+  profileId: string
+  workDateKey: string
+  status: string
+  workDayValue?: number
+  checkInAt?: string | null
+  checkOutAt?: string | null
+  reason: string
+}) => unwrap<Attendance>(await apiClient.post('/api/hr/attendance/manual', input))
+export const deleteAttendance = async (id: string) =>
+  unwrap<{ deleted: boolean; id: string }>(await apiClient.delete(`/api/hr/attendance/${id}`))
 
 export type SqlAttendanceSyncResult = {
   fetched: number

@@ -300,12 +300,31 @@ export const OrderWorkbenchPage = () => {
       tab === 'NO_COST_CENTER' && orderItems.length < (orders.data?.items?.length ?? 0)
         ? orderItems.length
         : rawTotal
+    const rawTotalItems = orders.data?.pagination?.totalItems ?? orders.data?.totalItems ?? total
+    const totalItems =
+      tab === 'NO_COST_CENTER' && orderItems.length < (orders.data?.items?.length ?? 0)
+        ? orderItems.reduce(
+            (sum, r) => sum + (r.items?.reduce((s, it) => s + (it.item.quantity || 1), 0) ?? 1),
+            0,
+          )
+        : rawTotalItems
     return {
       current: page,
       pageSize,
       total,
+      totalItems,
     }
-  }, [orders.data?.items, orders.data?.pagination.total, orderItems.length, page, pageSize, tab])
+  }, [
+    orders.data?.items,
+    orders.data?.pagination,
+    orders.data?.totalItems,
+    orderItems,
+    page,
+    pageSize,
+    tab,
+  ])
+  const totalOrders = pagination.total
+  const totalItems = pagination.totalItems ?? totalOrders
   const handlePageChange = useCallback(
     (nextPage: number, nextPageSize: number) => {
       setPage(nextPageSize === pageSize ? nextPage : 1)
@@ -594,6 +613,18 @@ export const OrderWorkbenchPage = () => {
               items={tabItems}
             />
           </div>
+        </div>
+
+        <div className={styles.statsBadge}>
+          <span className={styles.statsLabel}>
+            {t('orders.summary.orders', { defaultValue: 'Đơn' })}:
+          </span>
+          <strong className={styles.statsValue}>{totalOrders.toLocaleString()}</strong>
+          <span className={styles.statsDivider}>•</span>
+          <span className={styles.statsLabel}>
+            {t('orders.summary.items', { defaultValue: 'Items' })}:
+          </span>
+          <strong className={styles.statsValuePrimary}>{totalItems.toLocaleString()}</strong>
         </div>
 
         <DataFreshness
