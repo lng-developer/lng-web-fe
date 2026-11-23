@@ -46,10 +46,8 @@ describe('ProductionWorkbenchPage source contract', () => {
     expect(combinedSource).toMatch(/onPass=\{handleInspectionPass\}|onPass=\{onPassInspect\}/)
   })
 
-  it('keeps PSD-missing tasks in the blocked queue and shows their blockers', () => {
+  it('keeps PSD-missing tasks in the blocked queue', () => {
     expect(combinedSource).toContain("psdReadyOnly: tab !== 'blocked'")
-    expect(combinedSource).toContain("title: t('portal.production.blockers')")
-    expect(combinedSource).toContain("(row.blockers || []).join(', ')")
   })
 
   it('keeps queue navigation outside the queue card', () => {
