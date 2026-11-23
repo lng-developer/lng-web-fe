@@ -585,30 +585,16 @@ describe('ProductionWorkbenchPage', () => {
     )
   })
 
-  it('renders CS filter options and filters unassigned CS tasks in scale view', async () => {
-    renderPage('/portal/production/scale', scaleLeaderAccount)
-
-    await waitFor(() =>
-      expect(listProductionTasks).toHaveBeenCalledWith(expect.objectContaining({ view: 'SCALE' })),
-    )
-
-    const csFilterSelect = await screen.findByRole('combobox', { name: 'Filter by CS' })
-    expect(csFilterSelect).toBeInTheDocument()
-
-    fireEvent.mouseDown(csFilterSelect)
-    const unassignedOption = await screen.findByText('⚠️ Unassigned CS')
-    expect(unassignedOption).toBeInTheDocument()
-
-    fireEvent.click(unassignedOption)
-
-    await waitFor(() =>
-      expect(listProductionTasks).toHaveBeenCalledWith(
-        expect.objectContaining({
-          view: 'SCALE',
-          csUnassigned: true,
-          csAssigneeId: undefined,
-        }),
-      ),
-    )
+  it('keeps Designer assignment without CS toolbar controls', async () => {
+    renderPage('/portal/production/scale', scaleManagerAccount)
+    expect(
+      await screen.findByRole('combobox', { name: 'Select Scale assignee' }),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('combobox', { name: 'Filter by CS' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('combobox', { name: 'Select CS assignee' })).not.toBeInTheDocument()
+    await waitFor(() => expect(listProductionTasks).toHaveBeenCalled())
+    const query = vi.mocked(listProductionTasks).mock.calls.at(-1)?.[0]
+    expect(query).not.toHaveProperty('csUnassigned')
+    expect(query).not.toHaveProperty('csAssigneeId')
   })
 })
