@@ -69,10 +69,13 @@ export function normalizeApiError(error: unknown): ApiError {
   if (!axios.isAxiosError<BackendErrorResponse>(error)) {
     const rawMessage = error instanceof Error ? error.message : 'Unexpected error'
     console.error('[LNG] request failed', error)
-    return new ApiError(error instanceof Error && error.message ? error.message : getLocalizedMessage(), {
-      code: 'UNEXPECTED_ERROR',
-      rawMessage,
-    })
+    return new ApiError(
+      error instanceof Error && error.message ? error.message : getLocalizedMessage(),
+      {
+        code: 'UNEXPECTED_ERROR',
+        rawMessage,
+      },
+    )
   }
 
   const data = error.response?.data
@@ -95,4 +98,70 @@ export function normalizeApiError(error: unknown): ApiError {
     requestId: backendError?.requestId,
     rawMessage,
   })
+}
+
+export function extractApiErrorMessage(
+  error: unknown,
+  fallbackTitle?: string,
+): { title: string; description?: string } {
+  const defaultTitle = fallbackTitle || i18n.t('errors.unexpected', 'Thao tác thất bại')
+  const apiError = normalizeApiError(error)
+  let detailText: string | undefined
+
+  if (Array.isArray(apiError.details) && apiError.details.length > 0) {
+    detailText = apiError.details
+      .map((d: unknown) => {
+        const obj = d as { message?: unknown } | null
+        return typeof obj?.message === 'string' ? obj.message : ''
+      })
+      .filter(Boolean)
+      .join('; ')
+  } else if (apiError.details && typeof apiError.details === 'object') {
+    detailText = Object.values(apiError.details)
+      .map((v: unknown) => {
+        const obj = v as { message?: unknown } | null
+        return typeof obj?.message === 'string' ? obj.message : String(v || '')
+      })
+      .filter(Boolean)
+      .join('; ')
+  }
+
+  const raw =
+    apiError.rawMessage &&
+    !apiError.rawMessage.toLowerCase().includes('request failed') &&
+    !apiError.rawMessage.toLowerCase().includes('unexpected')
+      ? apiError.rawMessage
+      : undefined
+
+  const candidate =
+    detailText ||
+    raw ||
+    (apiError.message && !apiError.message.toLowerCase().includes('unexpected')
+      ? apiError.message
+      : undefined)
+
+  if (candidate) {
+    const lower = candidate.toLowerCase()
+    if (lower.includes('psd-compatible filename') || lower.includes('psd template asset')) {
+      return {
+        title: defaultTitle,
+        description: i18n.t('portal.design.psdInvalidExtension'),
+      }
+    }
+    if (lower.includes('rejectreason is required')) {
+      return {
+        title: defaultTitle,
+        description: i18n.t('portal.design.reasonRequired'),
+      }
+    }
+    return {
+      title: defaultTitle,
+      description: candidate,
+    }
+  }
+
+  return {
+    title: defaultTitle,
+    description: apiError.message || undefined,
+  }
 }

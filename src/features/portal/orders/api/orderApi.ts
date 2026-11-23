@@ -215,7 +215,8 @@ export type OrderWorkbenchRow = {
 }
 export type OrderWorkbenchResult = {
   items: OrderWorkbenchRow[]
-  pagination: { total: number; page: number; limit: number }
+  pagination: { total: number; page: number; limit: number; totalItems?: number }
+  totalItems?: number
 }
 export type OrderSummary = { tabCounts: Record<string, number> }
 export type OrderRecheckJob = {

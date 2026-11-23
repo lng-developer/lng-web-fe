@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '@/app/providers/AppProviders'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
+  bulkAssignCsTasks,
+  listCsAssignees,
   listScaleAssignees,
   listProductionTasks,
   summarizeProductionQueueCounts,
@@ -22,6 +24,8 @@ vi.mock('react-router-dom', async (importOriginal) => ({
 
 vi.mock('@/features/portal/production/api/productionApi', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/features/portal/production/api/productionApi')>()),
+  bulkAssignCsTasks: vi.fn(),
+  listCsAssignees: vi.fn(),
   listProductionTasks: vi.fn(),
   listScaleAssignees: vi.fn(),
   summarizeProductionQueueCounts: vi.fn(),
@@ -129,6 +133,16 @@ describe('ProductionWorkbenchPage', () => {
       qcQueue: 0,
     })
     vi.mocked(listScaleAssignees).mockResolvedValue({ items: [] })
+    vi.mocked(listCsAssignees).mockResolvedValue({
+      items: [
+        {
+          id: 'cs-user-1',
+          fullName: 'CS Staff 1',
+          employeeCode: 'CS01',
+        },
+      ],
+    })
+    vi.mocked(bulkAssignCsTasks).mockResolvedValue({ assigned: [], failed: [] })
   })
 
   it.each([true, false])(
@@ -514,6 +528,33 @@ describe('ProductionWorkbenchPage', () => {
     await waitFor(() =>
       expect(listProductionTasks).toHaveBeenCalledWith(
         expect.objectContaining({ limit: 100, page: 1, view: undefined }),
+      ),
+    )
+  })
+
+  it('renders CS filter options and filters unassigned CS tasks in scale view', async () => {
+    renderPage('/portal/production/scale', scaleLeaderAccount)
+
+    await waitFor(() =>
+      expect(listProductionTasks).toHaveBeenCalledWith(expect.objectContaining({ view: 'SCALE' })),
+    )
+
+    const csFilterSelect = await screen.findByRole('combobox', { name: 'Filter by CS' })
+    expect(csFilterSelect).toBeInTheDocument()
+
+    fireEvent.mouseDown(csFilterSelect)
+    const unassignedOption = await screen.findByText('⚠️ Unassigned CS')
+    expect(unassignedOption).toBeInTheDocument()
+
+    fireEvent.click(unassignedOption)
+
+    await waitFor(() =>
+      expect(listProductionTasks).toHaveBeenCalledWith(
+        expect.objectContaining({
+          view: 'SCALE',
+          csUnassigned: true,
+          csAssigneeId: undefined,
+        }),
       ),
     )
   })

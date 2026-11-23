@@ -63,7 +63,7 @@ export function FulfillmentInlineEditor({
   const productOptions = useQuery({
     queryKey: mappingKeys.vendorProductOptions(productId ?? ''),
     queryFn: () => getMappingVendorProductOptions(productId!),
-    enabled: active && canWrite && Boolean(productId),
+    enabled: canWrite && Boolean(productId),
     ...modalQueryOptions,
     staleTime: 5 * 60_000,
     retry: false,
@@ -114,22 +114,38 @@ export function FulfillmentInlineEditor({
     },
     onError: (error) => toast('error', normalizeApiError(error).message),
   })
+  const activate = () => setActive(true)
+  const filterByLabel = (input: string, option?: { label?: unknown }) =>
+    String(option?.label ?? '')
+      .toLowerCase()
+      .includes(input.trim().toLowerCase())
+
   const common = {
     style: { minWidth: 0, width: '100%' },
     size: 'small' as const,
     variant: 'borderless' as const,
-    popupMatchSelectWidth: 300,
+    popupMatchSelectWidth: 320,
     onOpenChange: (open: boolean) => open && setActive(true),
+    onFocus: activate,
   }
   const notSet = t('orders.fields.notSet')
   const error = products.error || productOptions.error
+  const searchLower = productSearchDraft.trim().toLowerCase()
+  const matchingSelected =
+    selectedProduct &&
+    (!searchLower ||
+      (selectedProduct.name && selectedProduct.name.toLowerCase().includes(searchLower)) ||
+      (selectedProduct.code && selectedProduct.code.toLowerCase().includes(searchLower)) ||
+      (selectedProduct.vendor?.name &&
+        selectedProduct.vendor.name.toLowerCase().includes(searchLower)))
+      ? [selectedProduct]
+      : []
+
   const productSelectOptions = unique(
-    [...(selectedProduct ? [selectedProduct] : []), ...(products.data?.items ?? [])].map(
-      (product) => ({
-        value: product.id,
-        label: `${product.name || product.code || '—'} · ${product.vendor?.name || product.vendor?.code || '—'}`,
-      }),
-    ),
+    [...matchingSelected, ...(products.data?.items ?? [])].map((product) => ({
+      value: product.id,
+      label: `${product.name || product.code || '—'} · ${product.vendor?.name || product.vendor?.code || '—'}`,
+    })),
   )
 
   if (!canWrite) {
@@ -165,7 +181,7 @@ export function FulfillmentInlineEditor({
   }
 
   return (
-    <Flex vertical gap={6}>
+    <Flex vertical gap={6} onMouseEnter={activate}>
       <Descriptions
         size="small"
         column={1}
@@ -187,6 +203,13 @@ export function FulfillmentInlineEditor({
                 onSearch={(value) => {
                   setProductSearchDraft(value)
                   setPage(1)
+                }}
+                onOpenChange={(open) => {
+                  setActive(true)
+                  if (!open) {
+                    setProductSearchDraft('')
+                    setPage(1)
+                  }
                 }}
                 aria-label={t('orders.fields.product')}
                 disabled={save.isPending}
@@ -228,6 +251,9 @@ export function FulfillmentInlineEditor({
             children: (
               <Select
                 {...common}
+                showSearch
+                optionFilterProp="label"
+                filterOption={filterByLabel}
                 aria-label={t('orders.fields.size')}
                 allowClear
                 disabled={!productId || !dimensions?.hasSize}
@@ -255,6 +281,9 @@ export function FulfillmentInlineEditor({
             children: (
               <Select
                 {...common}
+                showSearch
+                optionFilterProp="label"
+                filterOption={filterByLabel}
                 aria-label={t('orders.fields.color')}
                 allowClear
                 disabled={!productId || !dimensions?.hasColor}
@@ -284,6 +313,9 @@ export function FulfillmentInlineEditor({
                   children: (
                     <Select
                       {...common}
+                      showSearch
+                      optionFilterProp="label"
+                      filterOption={filterByLabel}
                       aria-label={t('orders.fields.costCenter')}
                       placeholder={notSet}
                       value={costCenterId}

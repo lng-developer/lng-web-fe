@@ -1,12 +1,21 @@
-import { memo, useMemo } from 'react'
+import { memo, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   CalendarOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
+  EditOutlined,
   RestOutlined,
 } from '@ant-design/icons'
-import { Button, Space, type TableColumnsType, Tag, Tooltip, Typography } from 'antd'
+import {
+  Button,
+  Space,
+  type TableColumnsType,
+  type TableProps,
+  Tag,
+  Tooltip,
+  Typography,
+} from 'antd'
 import type dayjs from 'dayjs'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
@@ -40,14 +49,19 @@ export interface EmployeeAttendanceSummary {
   availableLeaveDays: number
 }
 
-interface AttendanceSummaryTableProps {
+export interface AttendanceSummaryTableProps {
   month: dayjs.Dayjs
   records: Attendance[]
   profiles: EmployeeProfile[]
   balances: LeaveBalance[]
   loading?: boolean
   searchText?: string
+  canAdminEdit?: boolean
+  selectedRowKeys?: React.Key[]
+  onSelectedRowKeysChange?: (keys: React.Key[]) => void
+  onSelectedRowsChange?: (items: EmployeeAttendanceSummary[]) => void
   onViewEmployeeSchedule?: (employeeCode: string) => void
+  onOpenAdminAdjustment?: (item: EmployeeAttendanceSummary) => void
 }
 
 export const AttendanceSummaryTable = memo(function AttendanceSummaryTable({
@@ -57,9 +71,18 @@ export const AttendanceSummaryTable = memo(function AttendanceSummaryTable({
   balances,
   loading = false,
   searchText = '',
+  canAdminEdit = false,
+  selectedRowKeys,
+  onSelectedRowKeysChange,
+  onSelectedRowsChange,
   onViewEmployeeSchedule,
+  onOpenAdminAdjustment,
 }: AttendanceSummaryTableProps) {
   const { t } = useTranslation()
+
+  const [internalSelectedKeys, setInternalSelectedKeys] = useState<React.Key[]>([])
+  const selectedKeys = selectedRowKeys ?? internalSelectedKeys
+  const setSelectedKeys = onSelectedRowKeysChange ?? setInternalSelectedKeys
 
   // Tạo map balances theo profileId
   const balancesByProfile = useMemo(() => {
@@ -316,28 +339,56 @@ export const AttendanceSummaryTable = memo(function AttendanceSummaryTable({
     {
       title: t('hrOperations.common.action', 'Thao tác'),
       key: 'action',
-      width: 110,
+      width: canAdminEdit ? 180 : 110,
       align: 'center',
       render: (_, item) => (
-        <Tooltip title={`Xem chi tiết chấm công của ${item.fullName}`}>
-          <Button
-            type="link"
-            size="small"
-            icon={<CalendarOutlined />}
-            onClick={() => onViewEmployeeSchedule?.(item.employeeCode)}
-          >
-            {t('hrOperations.common.details', 'Chi tiết')}
-          </Button>
-        </Tooltip>
+        <Space size={4}>
+          <Tooltip title={`Xem chi tiết chấm công của ${item.fullName}`}>
+            <Button
+              type="link"
+              size="small"
+              icon={<CalendarOutlined />}
+              onClick={() => onViewEmployeeSchedule?.(item.employeeCode)}
+            >
+              {t('hrOperations.common.details', 'Chi tiết')}
+            </Button>
+          </Tooltip>
+          {canAdminEdit && onOpenAdminAdjustment && (
+            <Tooltip title={`Hiệu chỉnh công, nghỉ, phép của ${item.fullName} (Admin)`}>
+              <Button
+                type="link"
+                size="small"
+                icon={<EditOutlined />}
+                style={{ color: 'var(--ant-color-primary)', fontWeight: 500 }}
+                onClick={() => onOpenAdminAdjustment(item)}
+              >
+                {t('hrOperations.attendance.adjustAction', 'Hiệu chỉnh')}
+              </Button>
+            </Tooltip>
+          )}
+        </Space>
       ),
     },
   ]
+
+  const rowSelection: TableProps<EmployeeAttendanceSummary>['rowSelection'] = {
+    selectedRowKeys: selectedKeys,
+    onChange: (keys) => {
+      setSelectedKeys(keys)
+      if (onSelectedRowsChange) {
+        const items = summaryData.filter((item) => keys.includes(item.profileId))
+        onSelectedRowsChange(items)
+      }
+    },
+    preserveSelectedRowKeys: true,
+  }
 
   return (
     <CoreDataTable
       fitContainer
       size="small"
       rowKey="profileId"
+      rowSelection={rowSelection}
       loading={loading}
       dataSource={filteredData}
       columns={columns}

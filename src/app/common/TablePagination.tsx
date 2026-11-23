@@ -55,6 +55,15 @@ export function CommonTablePagination({ pagination }: { pagination: TablePaginat
       <div className={styles.tablePaginationLeft}>
         <span className={styles.tablePaginationSummary}>
           {t('common.pagination.showingEntries', { from, to, total })}
+          {(pagination as { totalItems?: number })?.totalItems !== undefined ? (
+            <span style={{ marginLeft: 6, color: 'var(--ant-color-text-secondary, #666)' }}>
+              (
+              <strong style={{ color: 'var(--ant-color-primary, #1677ff)' }}>
+                {(pagination as { totalItems?: number }).totalItems?.toLocaleString()}
+              </strong>{' '}
+              {t('common.pagination.items', { defaultValue: 'items' })})
+            </span>
+          ) : null}
         </span>
         {showSizeChanger ? (
           <div className={styles.tablePaginationPageSize}>
