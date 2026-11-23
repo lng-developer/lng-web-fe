@@ -45,8 +45,25 @@ npm run build
 
 - Do not commit directly to `main` or `develop` unless the user explicitly asks for that exact action.
 - **NEVER automatically merge a Pull Request into `develop` or `main`** without explicit user confirmation/testing. Always create a branch, push, open the PR, provide the PR link, and wait for the user to review and test.
-- Inspect `git diff` before committing or summarizing changes.
-- Commit messages should follow `<type>(<scope>): <description>` when commits are requested.
+- **Strict Commit Standards**:
+  - Follow Conventional Commits format: `<type>(<scope>): <description>` (e.g., `feat(portal): add search to fulfillment select`, `fix(auth): correct token refresh`, `refactor(ui): extract action modals`).
+  - Always inspect `git diff` and `git status` before staging and committing.
+  - Stage only files related to the task. Never commit `.env`, secrets, private keys, tokens, or unrelated dirty worktree files.
+  - Do not revert user changes or unrelated work without explicit request.
+  - Ensure pre-commit hooks (Husky, ESLint, Prettier) pass cleanly without bypassing (`--no-verify` is forbidden).
+- **Mandatory Code Push Workflow** (triggered when the user requests to "push code" / "đẩy code lên"):
+  1. **Stash uncommitted changes**: Run `git stash` to temporarily save uncommitted changes if present.
+  2. **Pull latest develop & Resolve conflicts**:
+     - Pull the latest commits from `origin/develop` into the current branch (`git pull origin develop` or merge).
+     - If merge conflicts arise: resolve all conflicts thoroughly, verify with `git diff --check`, restore stash (`git stash pop` if stashed), and commit cleanly following **Strict Commit Standards**.
+  3. **Local CI/CD Verification**:
+     - Run full local quality gates before pushing: `npm run typecheck` (`tsc -b`), `npm run lint` (`eslint .`), `npm run build` (`vite build`), and relevant test suites. Ensure 0 errors.
+  4. **Push current branch**: Push the updated branch to remote (`git push origin <current-branch>`).
+  5. **Checkout develop**: Switch to the `develop` branch (`git checkout develop`).
+  6. **Create PR & Verify CI/CD**:
+     - Open a Pull Request from the current branch into `develop` using `gh pr create`.
+     - Provide the PR link to the user / leader for review.
+     - Monitor GitHub Actions CI/CD pipeline (`gh pr checks` or `gh run view`) to ensure all checks pass cleanly before handoff.
 - **Hotfix & Release Flow**:
   - All feature work, bug fixes, and hotfixes must target `develop` via PR (`feat/*`, `fix/*`, `hotfix/*` ➔ `develop`).
   - Releases to `main` only promote from `develop` (`develop` ➔ `main`).
