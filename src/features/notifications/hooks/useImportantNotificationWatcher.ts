@@ -11,9 +11,11 @@ import {
 import { notificationTarget } from '@/features/notifications/notificationTarget'
 import { isImportantNotification } from '@/features/notifications/utils/notificationUrgency'
 import { getSharedChatSocket } from '@/features/portal/chat/realtime/chatSocket'
+import { useChatSocketReady } from '@/features/portal/chat/realtime/useChatSocketReady'
 import { useNotificationAlerts } from '@/shared/notification'
 
 export function useImportantNotificationWatcher() {
+  const socketReady = useChatSocketReady()
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { alertImportantNotification } = useNotificationAlerts()
@@ -26,7 +28,7 @@ export function useImportantNotificationWatcher() {
     queryFn: getUnreadCount,
     staleTime: 30_000,
     refetchOnWindowFocus: false,
-    refetchInterval: 60_000,
+    refetchInterval: socketReady ? false : 60_000,
   })
 
   const currentCount = countQuery.data?.unreadCount
