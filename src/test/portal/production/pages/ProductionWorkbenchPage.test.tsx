@@ -592,6 +592,10 @@ describe('ProductionWorkbenchPage', () => {
     ).toBeInTheDocument()
     expect(screen.queryByRole('combobox', { name: 'Filter by CS' })).not.toBeInTheDocument()
     expect(screen.queryByRole('combobox', { name: 'Select CS assignee' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('columnheader', { name: /CS/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('columnheader', { name: 'Required slots' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('columnheader', { name: 'Blockers' })).not.toBeInTheDocument()
+    expect(listCsAssignees).not.toHaveBeenCalled()
     await waitFor(() => expect(listProductionTasks).toHaveBeenCalled())
     const query = vi.mocked(listProductionTasks).mock.calls.at(-1)?.[0]
     expect(query).not.toHaveProperty('csUnassigned')

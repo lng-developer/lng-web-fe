@@ -27,7 +27,6 @@ import {
   type FileCheck,
   type FileDecision,
   getProductionTask,
-  listCsAssignees,
   listProductionTasks,
   listScaleAssignees,
   type ProductionStatus,
@@ -389,14 +388,6 @@ export function ProductionWorkbenchPage({
       })),
     [scaleAssignees.data?.items],
   )
-  const csAssignees = useQuery({
-    queryKey: ['production', 'cs-assignees'],
-    queryFn: () => listCsAssignees({ limit: 100 }),
-    staleTime: 60_000,
-    refetchOnWindowFocus: false,
-    enabled: canAssignScale || viewMode === 'scale' || isScaleTab,
-    retry: false,
-  })
   const refresh = useCallback(async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['production', 'notification-target'] }),
@@ -754,8 +745,6 @@ export function ProductionWorkbenchPage({
     tab,
     viewMode,
     allowed,
-    isScaleTab,
-    csAssignees: csAssignees.data?.items,
     claimTask: {
       isPending: claimTask.isPending,
       variables: claimTask.variables,
