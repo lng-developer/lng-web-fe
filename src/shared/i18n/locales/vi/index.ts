@@ -1,27 +1,35 @@
-import common from './common.json'
-import auth from './auth.json'
-import hr from './hr.json'
-import portal from './portal.json'
-import orders from './orders.json'
-import vendors from './vendors.json'
-import finance from './finance.json'
-import mapping from './mapping.json'
-import chat from './chat.json'
-import customers from './customers.json'
-import organization from './organization.json'
+import common from './common'
+import configuration from './configuration'
+import costCenters from './cost-centers'
+import finance from './finance'
+import hr from './hr'
+import listing from './listing'
+import monitoring from './monitoring'
+import orders from './orders'
+import reports from './reports'
+import teamTasks from './team-tasks'
+import { deepMerge } from '../../deepMerge'
 
-export const vi = {
-  ...common,
-  ...auth,
-  ...hr,
-  ...portal,
-  ...orders,
-  ...vendors,
-  ...finance,
-  ...mapping,
-  ...chat,
-  ...customers,
-  ...organization,
-}
+const vi = deepMerge(
+  common,
+  orders,
+  teamTasks,
+  listing,
+  costCenters,
+  reports,
+  monitoring,
+  configuration,
+  finance,
+  hr,
+) as typeof common &
+  typeof orders &
+  typeof teamTasks &
+  typeof listing &
+  typeof costCenters &
+  typeof reports &
+  typeof monitoring &
+  typeof configuration &
+  typeof finance &
+  typeof hr
 
 export default vi

@@ -583,82 +583,6 @@
       }
     }
   },
-  "audit": {
-    "title": "Audit log",
-    "description": "Trace system activity, changes, and failed operations.",
-    "loadFailed": "Audit events could not be loaded",
-    "retry": "Retry",
-    "exportCsv": "Export CSV",
-    "empty": "No audit events match these filters.",
-    "loadMore": "Load more",
-    "globalScope": "System-wide",
-    "notAvailable": "Not available",
-    "metrics": {
-      "total": "Total events",
-      "succeeded": "Successful actions",
-      "failed": "Failed actions",
-      "security": "Audit scope",
-      "systemWide": "System-wide"
-    },
-    "sources": {
-      "HTTP": "HTTP request",
-      "WORKER": "Background worker",
-      "SYSTEM": "System",
-      "IMPORT": "Data import"
-    },
-    "codeTerms": {
-      "AUTH": "Authentication",
-      "SESSION": "Session",
-      "ACCOUNT": "Account",
-      "ROLE": "Role",
-      "PERMISSION": "Permission",
-      "SCOPE": "Scope",
-      "ORDER": "Order",
-      "USER": "User",
-      "PROFILE": "Profile",
-      "CREATED": "Created",
-      "UPDATED": "Updated",
-      "DELETED": "Deleted",
-      "LOGIN": "Login",
-      "LOGOUT": "Logout",
-      "ASSIGNED": "Assigned",
-      "REVOKED": "Revoked",
-      "APPROVED": "Approved",
-      "REJECTED": "Rejected"
-    },
-    "entities": {
-      "session": "Login session"
-    },
-    "detailTitle": "Audit event details",
-    "loadingDetail": "Loading audit event details",
-    "filters": {
-      "label": "Audit filters",
-      "action": "Action",
-      "entityType": "Entity type",
-      "entityId": "Entity ID",
-      "outcome": "Outcome",
-      "source": "Source"
-    },
-    "columns": {
-      "time": "Time",
-      "actor": "Actor",
-      "action": "Action",
-      "entity": "Entity",
-      "scope": "Scope",
-      "source": "Source",
-      "outcome": "Outcome"
-    },
-    "outcomes": {
-      "SUCCEEDED": "Succeeded",
-      "FAILED": "Failed"
-    },
-    "detail": {
-      "requestId": "Request ID",
-      "ip": "IP address",
-      "changes": "Changes",
-      "metadata": "Metadata"
-    }
-  },
   "notifications": {
     "openResource": "Open details",
     "resourceUnavailable": "This record is unavailable or you no longer have access.",
@@ -695,12 +619,6 @@
     "health": "System health",
     "infrastructure": "Infrastructure",
     "recentAudit": "Recent audit activity"
-  },
-  "teamTasks": {
-    "title": "Team Tasks is under development",
-    "description": "The Team Tasks workspace is currently being built.",
-    "hint": "Please check back later.",
-    "backToDashboard": "Back to dashboard"
   },
   "errors": {
     "unexpected": "Something went wrong. Please try again.",

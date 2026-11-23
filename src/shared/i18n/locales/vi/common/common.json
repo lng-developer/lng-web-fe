@@ -583,82 +583,6 @@
       }
     }
   },
-  "audit": {
-    "title": "Nhật ký hệ thống",
-    "description": "Theo dõi hoạt động, thay đổi và thao tác thất bại trong hệ thống.",
-    "loadFailed": "Không thể tải nhật ký hệ thống",
-    "retry": "Thử lại",
-    "exportCsv": "Xuất CSV",
-    "empty": "Không có sự kiện phù hợp với bộ lọc.",
-    "loadMore": "Tải thêm",
-    "globalScope": "Toàn hệ thống",
-    "notAvailable": "Không có dữ liệu",
-    "metrics": {
-      "total": "Tổng sự kiện",
-      "succeeded": "Thao tác thành công",
-      "failed": "Thao tác thất bại",
-      "security": "Phạm vi nhật ký",
-      "systemWide": "Toàn hệ thống"
-    },
-    "sources": {
-      "HTTP": "Yêu cầu HTTP",
-      "WORKER": "Tiến trình nền",
-      "SYSTEM": "Hệ thống",
-      "IMPORT": "Nhập dữ liệu"
-    },
-    "codeTerms": {
-      "AUTH": "Xác thực",
-      "SESSION": "Phiên đăng nhập",
-      "ACCOUNT": "Tài khoản",
-      "ROLE": "Vai trò",
-      "PERMISSION": "Quyền",
-      "SCOPE": "Phạm vi",
-      "ORDER": "Đơn hàng",
-      "USER": "Người dùng",
-      "PROFILE": "Hồ sơ",
-      "CREATED": "Đã tạo",
-      "UPDATED": "Đã cập nhật",
-      "DELETED": "Đã xóa",
-      "LOGIN": "Đăng nhập",
-      "LOGOUT": "Đăng xuất",
-      "ASSIGNED": "Đã gán",
-      "REVOKED": "Đã thu hồi",
-      "APPROVED": "Đã duyệt",
-      "REJECTED": "Đã từ chối"
-    },
-    "entities": {
-      "session": "Phiên đăng nhập"
-    },
-    "detailTitle": "Chi tiết sự kiện",
-    "loadingDetail": "Đang tải chi tiết sự kiện",
-    "filters": {
-      "label": "Bộ lọc nhật ký",
-      "action": "Hành động",
-      "entityType": "Loại dữ liệu",
-      "entityId": "Mã dữ liệu",
-      "outcome": "Kết quả",
-      "source": "Nguồn"
-    },
-    "columns": {
-      "time": "Thời gian",
-      "actor": "Người thực hiện",
-      "action": "Hành động",
-      "entity": "Dữ liệu",
-      "scope": "Phạm vi",
-      "source": "Nguồn",
-      "outcome": "Kết quả"
-    },
-    "outcomes": {
-      "SUCCEEDED": "Thành công",
-      "FAILED": "Thất bại"
-    },
-    "detail": {
-      "requestId": "Mã yêu cầu",
-      "ip": "Địa chỉ IP",
-      "changes": "Thay đổi",
-      "metadata": "Dữ liệu bổ sung"
-    }
-  },
   "notifications": {
     "openResource": "Mở chi tiết",
     "resourceUnavailable": "Bản ghi không còn khả dụng hoặc bạn không có quyền truy cập.",
@@ -695,12 +619,6 @@
     "health": "Sức khỏe hệ thống",
     "infrastructure": "Hạ tầng",
     "recentAudit": "Hoạt động kiểm toán gần đây"
-  },
-  "teamTasks": {
-    "title": "Công việc nhóm đang được phát triển",
-    "description": "Không gian làm việc Công việc nhóm hiện đang được xây dựng.",
-    "hint": "Vui lòng quay lại sau.",
-    "backToDashboard": "Về bảng điều khiển"
   },
   "errors": {
     "unexpected": "Đã có lỗi xảy ra. Vui lòng thử lại.",
