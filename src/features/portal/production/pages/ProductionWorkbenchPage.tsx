@@ -19,7 +19,6 @@ import {
 
 import {
   assignProductionTask,
-  bulkAssignCsTasks,
   bulkAssignProductionTasks,
   claimProductionTask,
   deleteFileCheck,
@@ -28,7 +27,6 @@ import {
   type FileCheck,
   type FileDecision,
   getProductionTask,
-  listCsAssignees,
   listProductionTasks,
   listScaleAssignees,
   type ProductionStatus,
@@ -175,8 +173,6 @@ export function ProductionWorkbenchPage({
   const [decisions, setDecisions] = useState<Record<string, FileDecision>>({})
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [scaleAssigneeId, setScaleAssigneeId] = useState<string>()
-  const [csAssigneeFilter, setCsAssigneeFilter] = useState<string>()
-  const [targetCsAssigneeId, setTargetCsAssigneeId] = useState<string>()
   const [uploadingFileCheckIds, setUploadingFileCheckIds] = useState<ReadonlySet<string>>(
     () => new Set(),
   )
@@ -318,13 +314,9 @@ export function ProductionWorkbenchPage({
       status: filterStatus,
       qcStatus: filterQcStatus,
       view: filterView,
-      csUnassigned: csAssigneeFilter === 'UNASSIGNED' ? true : undefined,
-      csAssigneeId:
-        csAssigneeFilter && csAssigneeFilter !== 'UNASSIGNED' ? csAssigneeFilter : undefined,
     }
   }, [
     createdDates,
-    csAssigneeFilter,
     debouncedSearch,
     designTypeProp,
     salesChannelCode,
@@ -395,22 +387,6 @@ export function ProductionWorkbenchPage({
         label: `${item.fullName || item.employeeCode || item.id}${item.employeeCode ? ` · ${item.employeeCode}` : ''}`,
       })),
     [scaleAssignees.data?.items],
-  )
-  const csAssignees = useQuery({
-    queryKey: ['production', 'cs-assignees'],
-    queryFn: () => listCsAssignees({ limit: 100 }),
-    staleTime: 60_000,
-    refetchOnWindowFocus: false,
-    enabled: canAssignScale || viewMode === 'scale' || isScaleTab,
-    retry: false,
-  })
-  const csAssigneeOptions = useMemo(
-    () =>
-      (csAssignees.data?.items ?? []).map((item) => ({
-        value: item.id,
-        label: `${item.fullName || item.employeeCode || item.id}${item.employeeCode ? ` · ${item.employeeCode}` : ''}`,
-      })),
-    [csAssignees.data?.items],
   )
   const refresh = useCallback(async () => {
     await Promise.all([
@@ -645,28 +621,6 @@ export function ProductionWorkbenchPage({
     [operations],
   )
 
-  const bulkAssignCs = useMutation({
-    mutationFn: async () => {
-      const taskIds = selectedTasks.map((task) => task.id)
-      return bulkAssignCsTasks(taskIds, targetCsAssigneeId!)
-    },
-    onSuccess: async (result) => {
-      setSelectedRowKeys([])
-      await refresh()
-      const count = result.assigned?.length ?? 0
-      toast(
-        'success',
-        t('portal.production.bulkAssignCsSuccessTitle', { defaultValue: 'Gán CS thành công' }),
-        t('portal.production.bulkAssignCsSuccessDescription', {
-          count,
-          defaultValue: `Đã phân công ${count} đơn cho CS.`,
-        }),
-      )
-    },
-    onError: (error) => handleMutationError(error),
-  })
-  const handleBulkAssignCs = useCallback(() => bulkAssignCs.mutate(), [bulkAssignCs])
-
   const exportQc = useMutation({
     mutationFn: () =>
       exportProductionQcTasks({
@@ -791,8 +745,6 @@ export function ProductionWorkbenchPage({
     tab,
     viewMode,
     allowed,
-    isScaleTab,
-    csAssignees: csAssignees.data?.items,
     claimTask: {
       isPending: claimTask.isPending,
       variables: claimTask.variables,
@@ -903,6 +855,12 @@ export function ProductionWorkbenchPage({
             viewMode={viewMode}
             scaleAssigneeId={scaleAssigneeId}
             canAssignScale={canAssignScale}
+            canAssignDesigner={
+              canAssignScale &&
+              (allowed.has('PRODUCTION:WRITE') ||
+                allowed.has('DESIGN:REVIEW') ||
+                hasScopedDesignReview)
+            }
             canRecheckBlocked={allowed.has('PRODUCTION:WRITE')}
             scaleAssigneeOptions={scaleAssigneeOptions}
             selectedRowCount={selectedRowKeys.length}
@@ -919,13 +877,6 @@ export function ProductionWorkbenchPage({
             onRecheck={() => operations.mutate({ kind: 'recheck' })}
             onScaleAssigneeChange={handleScaleAssigneeChange}
             onBulkAssign={handleBulkAssign}
-            csAssigneeFilter={csAssigneeFilter}
-            onCsAssigneeFilterChange={setCsAssigneeFilter}
-            csAssigneeOptions={csAssigneeOptions}
-            csAssigneeId={targetCsAssigneeId}
-            onCsAssigneeChange={setTargetCsAssigneeId}
-            onBulkAssignCs={handleBulkAssignCs}
-            bulkAssignCsLoading={bulkAssignCs.isPending}
           />
 
           <CoreDataTable
