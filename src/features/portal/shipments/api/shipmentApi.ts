@@ -81,13 +81,26 @@ export type ShipmentStatusInput = {
   status: Extract<ShipmentStatus, 'DELIVERED' | 'EXCEPTION' | 'RETURNED' | 'CANCELLED'>
   note?: string | null
 }
+export type TrackingProviderProgress = {
+  provider: string
+  waiting: number
+  processing: number
+  scheduled: number
+  completed: number
+  errors: number
+  lastAttemptAt: string | null
+}
 export type TrackingSyncConfig = {
+  queueEnabled?: boolean
+  monitoring?: { available: boolean; capturedAt?: string; providers: TrackingProviderProgress[] }
   enabled: boolean
   intervalMinutes: 5 | 15 | 30 | 60
   batchSize: 10 | 25 | 50 | 100
   lastRunAt: string | null
   lastRunFinishedAt: string | null
   lastRunSummary: {
+    queued?: number
+    failedProviders?: string[]
     checked: number
     applied: number
     skipped: number
