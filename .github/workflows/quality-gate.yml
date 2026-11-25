@@ -116,14 +116,15 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: frontend-build
-          path: deploy-artifact
+          path: ${{ runner.temp }}/fe-develop-${{ github.run_id }}-${{ github.run_attempt }}
       - uses: actions/setup-node@v4
         with:
           node-version: 24
       - name: Deploy same-origin develop frontend
         env:
           DEPLOY_SHA: ${{ github.sha }}
-        run: bash deploy-artifact/scripts/deploy-develop.sh "$PWD/deploy-artifact"
+          ARTIFACT_DIR: ${{ runner.temp }}/fe-develop-${{ github.run_id }}-${{ github.run_attempt }}
+        run: bash "$ARTIFACT_DIR/scripts/deploy-develop.sh" "$ARTIFACT_DIR"
 
   deploy:
     name: deploy-server

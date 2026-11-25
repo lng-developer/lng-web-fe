@@ -24,7 +24,8 @@ rollback() {
   status=$?
   if [ "$status" -ne 0 ]; then
     if [ -n "$previous" ] && [ -f "$previous/ecosystem.develop.json" ]; then
-      pm2 startOrReload "$previous/ecosystem.develop.json" --update-env
+      pm2 delete lng-web-fe || true
+      pm2 start "$previous/ecosystem.develop.json"
     else
       pm2 delete lng-web-fe
       pm2 start /home/lng/apps/lng-web-fe/server.mjs --name lng-web-fe --cwd /home/lng/apps/lng-web-fe
@@ -34,7 +35,8 @@ rollback() {
   exit "$status"
 }
 trap rollback EXIT
-pm2 startOrReload "$release/ecosystem.develop.json" --update-env
+pm2 delete lng-web-fe || true
+pm2 start "$release/ecosystem.develop.json"
 node --input-type=commonjs - <<'NODE'
 const apps = JSON.parse(require('child_process').execFileSync('pm2', ['jlist'], { encoding: 'utf8' }));
 if (apps.find(item => item.name === 'lng-web-fe')?.pm2_env.pm_cwd !== process.cwd()) {
@@ -49,8 +51,8 @@ for i in {1..15}; do
   sleep 2
 done
 printf '%s\n' "$DEPLOY_SHA" > "$release/DEPLOYED_SHA"
+pm2 save
 ln -sfn "$release" "$base/current.next"
 mv -Tf "$base/current.next" "$base/current"
-pm2 save
 trap - EXIT
 printf 'Develop FE deployed: %s\n' "$DEPLOY_SHA"
