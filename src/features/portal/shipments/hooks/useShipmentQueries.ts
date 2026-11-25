@@ -57,6 +57,8 @@ export function useTrackingSyncConfigQuery(options?: { readonly enabled?: boolea
   return useQuery({
     queryKey: shipmentKeys.trackingSyncConfig(),
     queryFn: getTrackingSyncConfig,
+    refetchInterval: (query) => (query.state.data?.queueEnabled ? 5_000 : 30_000),
+    refetchIntervalInBackground: false,
     enabled: options?.enabled ?? true,
     staleTime: 20_000,
     refetchOnWindowFocus: false,
