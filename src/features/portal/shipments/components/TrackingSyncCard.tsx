@@ -1,9 +1,9 @@
 import { useTranslation } from 'react-i18next'
-import { Button, Select, Space, Switch, Typography } from 'antd'
+import { Alert, Button, Select, Space, Switch, Table, Typography } from 'antd'
 
 import { FormattedDateTime, SectionCard, StatusTag } from '@/shared/ui'
 
-import type { TrackingSyncConfig } from '../api/shipmentApi'
+import type { TrackingProviderProgress, TrackingSyncConfig } from '../api/shipmentApi'
 import styles from '../pages/ShipmentWorkbenchPage.module.scss'
 
 export interface TrackingSyncCardProps {
@@ -92,8 +92,58 @@ export function TrackingSyncCard({
         </Space>
         {config?.lastRunSummary ? (
           <Typography.Text type="secondary">
-            {t('portal.shipments.trackingSync.lastResult', config.lastRunSummary)}
+            {config.queueEnabled && config.lastRunSummary.queued !== undefined
+              ? t('portal.shipments.trackingSync.dispatched', {
+                  count: config.lastRunSummary.queued,
+                })
+              : t('portal.shipments.trackingSync.lastResult', config.lastRunSummary)}
           </Typography.Text>
+        ) : null}
+        {config?.lastRunSummary?.failedProviders?.length ? (
+          <Alert
+            type="warning"
+            showIcon
+            title={t('portal.shipments.trackingSync.dispatchFailed', {
+              providers: config.lastRunSummary.failedProviders.join(', '),
+            })}
+          />
+        ) : null}
+        {config?.queueEnabled && config.monitoring ? (
+          config.monitoring.available ? (
+            <>
+              <Typography.Text type="secondary">
+                {t('portal.shipments.trackingSync.progressHint')}
+              </Typography.Text>
+              <Table<TrackingProviderProgress>
+                size="small"
+                rowKey="provider"
+                pagination={false}
+                scroll={{ x: 820 }}
+                dataSource={config.monitoring.providers}
+                columns={[
+                  { title: t('portal.shipments.trackingSync.provider'), dataIndex: 'provider' },
+                  ...(['waiting', 'processing', 'scheduled', 'completed', 'errors'] as const).map(
+                    (key) => ({
+                      title: t('portal.shipments.trackingSync.' + key),
+                      dataIndex: key,
+                      align: 'right' as const,
+                    }),
+                  ),
+                  {
+                    title: t('portal.shipments.trackingSync.lastAttempt'),
+                    dataIndex: 'lastAttemptAt',
+                    render: (value: string | null) => <FormattedDateTime value={value} />,
+                  },
+                ]}
+              />
+              <Typography.Text type="secondary">
+                {t('portal.shipments.trackingSync.capturedAt')}{' '}
+                <FormattedDateTime value={config.monitoring.capturedAt} />
+              </Typography.Text>
+            </>
+          ) : (
+            <Alert type="warning" showIcon title={t('portal.shipments.trackingSync.unavailable')} />
+          )
         ) : null}
       </div>
     </SectionCard>
