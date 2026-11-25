@@ -70,6 +70,7 @@ export function CatalogListingEditorModal({
             etsyListingId: listing.etsyListingId,
             previewImageUrl: listing.previewImageUrl,
             defaultPsdTemplateAssetId: listing.defaultPsdTemplateAssetId,
+            designType: listing.designType ?? null,
             baseCostAmount: listing.baseCostAmount,
             currency: listing.currency,
             costCenterStatus: listing.costCenterStatus,
@@ -82,6 +83,7 @@ export function CatalogListingEditorModal({
   const submit = (values: CreateListingInput) => {
     const channelValues = {
       ...values,
+      designType: values.designType ?? null,
       asin: identityField === 'asin' ? values.asin : null,
       etsyListingId: identityField === 'etsyListingId' ? values.etsyListingId : null,
     }
@@ -216,6 +218,20 @@ export function CatalogListingEditorModal({
               rules={[{ required: true }]}
             >
               <Input />
+            </Form.Item>
+            <Form.Item
+              label={t('portal.catalog.fields.designType')}
+              name="designType"
+              extra={t('portal.catalog.fields.designTypeHelp')}
+            >
+              <Select
+                allowClear
+                placeholder={t('portal.catalog.designTypes.AUTO')}
+                options={['NORMAL', 'CUSTOM_IMAGE'].map((value) => ({
+                  value,
+                  label: t(`portal.catalog.designTypes.${value}`),
+                }))}
+              />
             </Form.Item>
             {identityField === 'asin' ? (
               <Form.Item label={t('portal.catalog.fields.asin')} name="asin">
