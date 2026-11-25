@@ -3,10 +3,6 @@ name: Quality Gate
 on:
   workflow_dispatch:
     inputs:
-      deploy_develop:
-        description: Deploy this tested revision to the develop server
-        type: boolean
-        default: false
       ui_test_file:
         description: UI test file to run by itself
         required: false
@@ -106,7 +102,7 @@ jobs:
 
   deploy-develop:
     needs: [quality-gate, ui-tests]
-    if: ${{ inputs.ui_test_file == '' && ((github.event_name == 'push' && github.ref == 'refs/heads/develop') || (github.event_name == 'workflow_dispatch' && inputs.deploy_develop && github.ref != 'refs/heads/main')) }}
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
     runs-on: [self-hosted, Linux, X64]
     timeout-minutes: 10
     concurrency:
