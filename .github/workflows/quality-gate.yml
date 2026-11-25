@@ -31,7 +31,7 @@ jobs:
         run: test "$RELEASE_SOURCE" = 'develop'
 
   quality-gate:
-    if: ${{ inputs.ui_test_file == '' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/develop') || (github.event_name == 'pull_request' && github.base_ref == 'develop')) }}
+    if: ${{ inputs.ui_test_file == '' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.base_ref == 'develop')) }}
     name: lint-unit-build
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -47,22 +47,26 @@ jobs:
           cache: npm
       - run: npm i -g npm@11.6.2
       - run: npm ci
+      - run: node --test .github/scripts/verify-pr-ci.check.cjs
       - run: npm run lint
       - run: npm run test:unit
       - run: npm run build:dev
       - run: npm run performance:bundle
+      - id: source
+        run: echo "tree=$(git rev-parse HEAD^{tree})" >> "$GITHUB_OUTPUT"
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: frontend-build
+          name: frontend-build-${{ steps.source.outputs.tree }}
           path: |
             dist
             server.mjs
             scripts/deploy-develop.sh
-          retention-days: 1
+          retention-days: 14
+          overwrite: true
 
   ui-tests:
-    if: ${{ inputs.ui_test_file == '' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/develop') || (github.event_name == 'pull_request' && github.base_ref == 'develop')) }}
+    if: ${{ inputs.ui_test_file == '' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.base_ref == 'develop')) }}
     name: ui-tests-${{ matrix.shard }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -100,8 +104,37 @@ jobs:
       - run: npm ci
       - run: npm run test:ui:ci -- "$UI_TEST_FILE"
 
+  verify-pr-ci:
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
+    outputs:
+      run-id: ${{ steps.verify.outputs.run-id }}
+      artifact-id: ${{ steps.verify.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/github-script@v7
+        id: verify
+        with:
+          script: |
+            const verify = require('./.github/scripts/verify-pr-ci.cjs');
+            const result = await verify({ github, context,
+              workflow: 'quality-gate.yml', artifactPrefix: 'frontend-build',
+              requiredJobs: ["lint-unit-build","ui-tests-1/6","ui-tests-2/6","ui-tests-3/6","ui-tests-4/6","ui-tests-5/6","ui-tests-6/6"] });
+            core.setOutput('run-id', result.runId);
+            core.setOutput('artifact-id', result.artifactId);
+            core.info(`Using PR #${result.prNumber}, run ${result.runId}, tree ${result.tree}`);
+
   deploy-develop:
-    needs: [quality-gate, ui-tests]
+    needs: verify-pr-ci
+    permissions:
+      contents: read
+      actions: read
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
     runs-on: [self-hosted, Linux, X64]
     timeout-minutes: 10
@@ -111,7 +144,10 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: frontend-build
+          merge-multiple: true
+          artifact-ids: ${{ needs.verify-pr-ci.outputs.artifact-id }}
+          run-id: ${{ needs.verify-pr-ci.outputs.run-id }}
+          github-token: ${{ github.token }}
           path: ${{ runner.temp }}/fe-develop-${{ github.run_id }}-${{ github.run_attempt }}
       - uses: actions/setup-node@v4
         with:
