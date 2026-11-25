@@ -234,6 +234,22 @@ export type OrderRecheckJob = {
 const compact = compactParams
 const unwrap = unwrapResponse
 
+export type AddressValidationDetails = {
+  provider: string | null
+  reason: string | null
+  checkedAt: string | null
+  cached: boolean
+  normalizedAddress: ShippingAddress | null
+}
+
+export async function getOrderAddressValidation(orderId: string, signal?: AbortSignal) {
+  return (
+    unwrap<{ addressValidation?: AddressValidationDetails | null }>(
+      await apiClient.get(`/api/orders/${orderId}`, { signal }),
+    ).addressValidation ?? null
+  )
+}
+
 export async function listOrderWorkbench(params: OrderWorkbenchParams, signal?: AbortSignal) {
   return unwrap<OrderWorkbenchResult>(
     await apiClient.get('/api/orders/workbench', { params: compact(params), signal }),

@@ -10,6 +10,7 @@ import {
   createOrderItemReplacement,
   createOrderReplacement,
   getOrderCase,
+  getOrderAddressValidation,
   getOrderSummary,
   listOrderCases,
   listOrderItemTimeline,
@@ -29,6 +30,15 @@ import {
 import { apiClient } from '@/shared/api'
 
 describe('orderApi', () => {
+  it('reads validation details from the existing order endpoint with cancellation support', async () => {
+    const signal = new AbortController().signal
+    const details = { reason: 'unknown-secondary', cached: true }
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: { addressValidation: details } })
+    expect(await getOrderAddressValidation('order-1', signal)).toEqual(details)
+    expect(apiClient.get).toHaveBeenCalledWith('/api/orders/order-1', { signal })
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: {} })
+    expect(await getOrderAddressValidation('order-1')).toBeNull()
+  })
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(apiClient.get).mockResolvedValue({

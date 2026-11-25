@@ -4,6 +4,8 @@ import type { OrderWorkbenchParams } from './orderApi'
 
 export const orderKeys = {
   all: ['orders'] as const,
+  addressValidation: (orderId: string) =>
+    [...orderKeys.all, 'address-validation', orderId] as const,
   workbench: (params: OrderWorkbenchParams) =>
     [...orderKeys.all, 'workbench', compactParams(params)] as const,
   summary: (params: OrderWorkbenchParams) =>

@@ -5142,7 +5142,17 @@
       "stateOrProvinceCode": "Bang / tỉnh",
       "postalCode": "Mã bưu chính",
       "countryCode": "Mã quốc gia",
-      "phoneMasked": "Số điện thoại"
+      "phoneMasked": "Số điện thoại",
+      "validationLoadFailed": "Không tải được chi tiết kiểm tra địa chỉ.",
+      "validationResult": "Chi tiết kiểm tra địa chỉ",
+      "cachedResult": "Đang sử dụng kết quả kiểm tra đã lưu.",
+      "suggestedAddress": "Địa chỉ chuẩn hóa",
+      "validationReasons": {
+        "postal-match": "Địa chỉ chính khớp dữ liệu bưu chính.",
+        "unknown-secondary": "Chưa xác nhận được số tầng, căn hộ hoặc phòng.",
+        "missing-secondary": "Có thể cần bổ sung số căn hộ hoặc phòng.",
+        "ignored-input": "Một phần thông tin nhập vào không được dùng để đối chiếu."
+      }
     },
     "messages": {
       "updated": "Đã cập nhật đơn hàng",

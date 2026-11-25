@@ -5142,7 +5142,17 @@
       "stateOrProvinceCode": "State / province",
       "postalCode": "Postal code",
       "countryCode": "Country code",
-      "phoneMasked": "Phone"
+      "phoneMasked": "Phone",
+      "validationLoadFailed": "Could not load address validation details.",
+      "validationResult": "Address check details",
+      "cachedResult": "Using a saved validation result.",
+      "suggestedAddress": "Standardized address",
+      "validationReasons": {
+        "postal-match": "The main address matches postal records.",
+        "unknown-secondary": "The floor, apartment or suite could not be confirmed.",
+        "missing-secondary": "An apartment or suite number may be required.",
+        "ignored-input": "Some input was not used to find the match."
+      }
     },
     "messages": {
       "updated": "Order updated",
