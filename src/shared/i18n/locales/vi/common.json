@@ -5752,5 +5752,14 @@
     "integrationTitle": "Tích hợp Vendor",
     "integrationMode": "Chế độ tích hợp",
     "genericApiHint": "Cấu hình kết nối API chung cho nhà cung cấp"
+  },
+  "taskQueue": {
+    "assignment": "Phân công task",
+    "all": "Tất cả",
+    "mine": "Của tôi",
+    "unassigned": "Chưa phân công",
+    "shipBy": "Hạn giao",
+    "overdue": "Quá hạn",
+    "age": "Đã chờ {{days}} ngày"
   }
 }

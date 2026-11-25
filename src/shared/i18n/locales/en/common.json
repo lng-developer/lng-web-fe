@@ -5752,5 +5752,14 @@
     "integrationTitle": "Vendor Integration",
     "integrationMode": "Integration Mode",
     "genericApiHint": "Configure generic API connection for vendor"
+  },
+  "taskQueue": {
+    "assignment": "Task assignment",
+    "all": "All tasks",
+    "mine": "My tasks",
+    "unassigned": "Unassigned",
+    "shipBy": "Ship by",
+    "overdue": "Overdue",
+    "age": "Waiting {{days}} days"
   }
 }

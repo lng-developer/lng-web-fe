@@ -202,6 +202,9 @@ export function formatTaskSeller(task: DesignTask): string {
   return '-'
 }
 export type DesignListParams = {
+  assignedDesignerId?: string
+  sortBy?: 'urgency'
+
   page: number
   limit: number
   search?: string

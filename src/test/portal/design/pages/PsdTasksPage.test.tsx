@@ -128,6 +128,33 @@ describe('PsdTasksPage', () => {
     mockPermissions = ['DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW']
   })
 
+  it('keeps a single tab row and filters Unassigned without changing other counts', async () => {
+    const { listDesignTasks, getDesignSummary } =
+      await import('@/features/portal/design/api/designApi')
+    render(
+      <AppProviders>
+        <PsdTasksPage />
+      </AppProviders>,
+    )
+    await screen.findByText('B001TESTASIN')
+    expect(screen.queryByText('My tasks')).not.toBeInTheDocument()
+    expect(screen.queryByText('All tasks')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('tab', { name: /Unassigned/ }))
+    await waitFor(() =>
+      expect(listDesignTasks).toHaveBeenLastCalledWith(
+        expect.objectContaining({ unassigned: true, page: 1, sortBy: 'urgency' }),
+        expect.anything(),
+      ),
+    )
+    expect(getDesignSummary).not.toHaveBeenCalledWith(expect.objectContaining({ unassigned: true }))
+    fireEvent.click(screen.getByRole('tab', { name: /^All/ }))
+    expect(screen.getByRole('tab', { name: /^All/ })).toHaveAttribute('aria-selected', 'true')
+    expect(listDesignTasks).toHaveBeenCalledWith(
+      expect.objectContaining({ unassigned: undefined }),
+      expect.anything(),
+    )
+  })
+
   it('lets a manager change the recipient before the assigned task is claimed', async () => {
     mockTaskStatus = 'ASSIGNED'
     render(

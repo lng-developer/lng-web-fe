@@ -106,6 +106,7 @@ export const ProductionWorkbenchFilterBar: FC<{
         <DateRangePicker
           aria-label={t('foundation.controls.dateRange')}
           className={styles.dateRange}
+          allowClear
           value={dates}
           onChange={onDatesChange}
         />

@@ -205,6 +205,54 @@ describe('ProductionWorkbenchPage', () => {
     },
   )
 
+  it('refreshes a cached queue summary that predates the Unassigned count', async () => {
+    queryClient.setQueryData(
+      [
+        'production',
+        'queue-summary',
+        {
+          search: undefined,
+          salesChannelCode: undefined,
+          scaleDifficultyLevel: undefined,
+          designType: undefined,
+        },
+      ],
+      { total: 401 },
+    )
+    vi.mocked(summarizeProductionQueueCounts).mockResolvedValue({ total: 401, unassigned: 17 })
+    renderPage('/portal/production/scale')
+    await waitFor(() => expect(summarizeProductionQueueCounts).toHaveBeenCalled())
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /Unassigned/ })).toHaveTextContent('17'),
+    )
+  })
+
+  it('uses one tab row with Unassigned and preserves the other queue counts', async () => {
+    renderPage('/portal/production/scale')
+    await waitFor(() =>
+      expect(listProductionTasks).toHaveBeenCalledWith(
+        expect.objectContaining({ sort: 'urgency' }),
+      ),
+    )
+    expect(screen.queryByRole('radio', { name: 'My tasks' })).not.toBeInTheDocument()
+    expect(screen.queryByText('All tasks')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Unassigned/ }))
+    await waitFor(() =>
+      expect(listProductionTasks).toHaveBeenLastCalledWith(
+        expect.objectContaining({ unassigned: true, status: 'NEED_SCALE,QC_REJECTED', page: 1 }),
+      ),
+    )
+    expect(summarizeProductionQueueCounts).not.toHaveBeenCalledWith(
+      expect.objectContaining({ unassigned: true }),
+    )
+    fireEvent.click(screen.getByRole('button', { name: /Need scale/ }))
+    await waitFor(() =>
+      expect(listProductionTasks).toHaveBeenLastCalledWith(
+        expect.objectContaining({ unassigned: undefined, status: 'NEED_SCALE' }),
+      ),
+    )
+  })
+
   it('stretches every table layer across the available width', async () => {
     renderPage()
 
@@ -238,8 +286,7 @@ describe('ProductionWorkbenchPage', () => {
     expect(listProductionTasks).toHaveBeenCalledTimes(1)
     expect(summarizeProductionQueueCounts).toHaveBeenCalledWith(
       expect.objectContaining({
-        dateFrom: expect.any(String),
-        dateTo: expect.any(String),
+        search: undefined,
       }),
     )
   })

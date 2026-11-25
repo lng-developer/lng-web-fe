@@ -9,7 +9,6 @@ import { canUseScopedPermission, hasScopedPermission } from '@/shared/auth/permi
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
   FeedbackAlert,
-  getDefaultDateRange,
   type DateRangeValue,
   UiButtonTabs,
   useDebouncedValue,
@@ -70,6 +69,7 @@ const PRODUCTION_TABS = [
   'all',
   'scale',
   'need_scale',
+  'unassigned',
   'qc_rejected',
   'unclassified',
   'qc_pending',
@@ -129,6 +129,7 @@ export function ProductionWorkbenchPage({
       const validTabs: ProductionTab[] = [
         'all',
         'need_scale',
+        'unassigned',
         'qc_rejected',
         'unclassified',
         'qc_pending',
@@ -168,7 +169,7 @@ export function ProductionWorkbenchPage({
   const deferredSearch = useDeferredValue(search)
   const debouncedSearch = useDebouncedValue(deferredSearch, 300)
   const [scaleDifficultyLevel, setScaleDifficultyLevel] = useState<'NORMAL' | 'HARD' | 'SPECIAL'>()
-  const [createdDates, setCreatedDates] = useState<DateRangeValue>(getDefaultDateRange)
+  const [createdDates, setCreatedDates] = useState<DateRangeValue>({})
   const [inspect, setInspect] = useState<InspectState>()
   const [decisions, setDecisions] = useState<Record<string, FileDecision>>({})
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
@@ -211,7 +212,8 @@ export function ProductionWorkbenchPage({
         })),
     [account, canWriteProductionTask, currentAccountId],
   )
-  const isScaleTab = tab === 'need_scale' || tab === 'qc_rejected' || tab === 'unclassified'
+  const isScaleTab =
+    tab === 'unassigned' || tab === 'need_scale' || tab === 'qc_rejected' || tab === 'unclassified'
   const hasTeamDesignReview = hasScopedPermission(account, 'DESIGN:REVIEW', 'team')
   const hasScopedDesignReview =
     hasTeamDesignReview || hasScopedPermission(account, 'DESIGN:REVIEW', 'shop')
@@ -247,7 +249,9 @@ export function ProductionWorkbenchPage({
 
     if (viewMode === 'scale') {
       filterView = 'SCALE'
-      if (tab === 'need_scale') {
+      if (tab === 'unassigned') {
+        filterStatus = 'NEED_SCALE,QC_REJECTED' as ProductionStatus
+      } else if (tab === 'need_scale') {
         filterStatus = 'NEED_SCALE'
         filterDesignType = undefined
         psdReadyOnly = true
@@ -286,7 +290,9 @@ export function ProductionWorkbenchPage({
         psdReadyOnly = false
       }
     } else {
-      if (tab === 'scale') {
+      if (tab === 'unassigned') {
+        filterStatus = 'NEED_SCALE,QC_REJECTED' as ProductionStatus
+      } else if (tab === 'scale') {
         filterView = 'SCALE'
         psdReadyOnly = true
       } else if (tab === 'qc') {
@@ -307,6 +313,8 @@ export function ProductionWorkbenchPage({
     return {
       search: debouncedSearch || undefined,
       salesChannelCode,
+      sort: 'urgency' as const,
+      unassigned: tab === 'unassigned' ? true : undefined,
       psdReadyOnly: tab !== 'blocked' && psdReadyOnly,
       ...createdDates,
       scaleDifficultyLevel,
