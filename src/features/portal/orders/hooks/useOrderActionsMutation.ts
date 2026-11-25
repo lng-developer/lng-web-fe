@@ -136,6 +136,9 @@ export function useOrderActionsMutation({
       }
 
       // Invalidate active workbench and summary queries without clearing unrelated orders' caches
+      if (['address', 'validate-address', 'override-address'].includes(action.kind)) {
+        await queryClient.invalidateQueries({ queryKey: orderKeys.addressValidation(orderId) })
+      }
       await queryClient.invalidateQueries({ queryKey: [...orderKeys.all, 'workbench'] })
       await queryClient.invalidateQueries({ queryKey: [...orderKeys.all, 'summary'] })
 
