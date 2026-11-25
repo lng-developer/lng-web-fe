@@ -31,7 +31,11 @@ const task: ProductionTask = {
   ],
 }
 
-function renderExpandedRow(displayTask = task) {
+function renderExpandedRow(
+  displayTask = task,
+  scale = false,
+  onOpenManualSlotUpload?: (taskId: string, existingSlotKeys: string[]) => void,
+) {
   const onInspectSlot =
     vi.fn<(productionTask: ProductionTask, check: FileCheck, readonly?: boolean) => void>()
   const onPassSlot = vi.fn<(fileCheckId: string) => void>()
@@ -40,8 +44,8 @@ function renderExpandedRow(displayTask = task) {
     <AppProviders>
       <ProductionWorkbenchExpandedRow
         task={displayTask}
-        tab="qc"
-        canScale={false}
+        tab={scale ? 'scale' : 'qc'}
+        canScale={scale}
         canQc
         decisions={{}}
         submittingQc={false}
@@ -53,6 +57,7 @@ function renderExpandedRow(displayTask = task) {
         onUploadScaledOutput={vi.fn()}
         onInspectSlot={onInspectSlot}
         onPassSlot={onPassSlot}
+        onOpenManualSlotUpload={onOpenManualSlotUpload}
         onManualSlotUploaded={vi.fn()}
       />
     </AppProviders>,
@@ -401,5 +406,51 @@ describe('ProductionWorkbenchExpandedRow', () => {
       'noopener,noreferrer',
     )
     openSpy.mockRestore()
+  })
+})
+
+describe('hidden empty print positions', () => {
+  afterEach(cleanup)
+  beforeEach(async () => {
+    await i18n.changeLanguage('en')
+  })
+  const empty: FileCheck = {
+    id: 'empty-front',
+    slotKey: 'FRONT',
+    slotLabel: 'Front',
+    sourceType: 'CUSTOMER_IMAGE',
+    required: false,
+    outputRequired: false,
+    scaleStatus: 'NOT_REQUIRED',
+    inputAssetDownloadUrl: null,
+    outputAssetDownloadUrl: null,
+    outputAssetId: null,
+    outputStatus: 'NOT_REQUIRED',
+    qcStatus: 'NOT_READY',
+    note: null,
+  }
+  const displayTask: ProductionTask = {
+    ...task,
+    status: 'NEED_SCALE',
+    fileChecks: [
+      empty,
+      { ...empty, id: 'empty-left', slotKey: 'LEFT_SLEEVE', slotLabel: 'Left sleeve' },
+      { ...empty, id: 'visible-back', slotKey: 'BACK', required: true, scaleStatus: 'NEED_SCALE' },
+      { ...empty, id: 'stored-right', slotKey: 'RIGHT_SLEEVE', outputAssetId: 'existing-output' },
+    ],
+  }
+  it('offers hidden empty positions in the inline upload popup without offering stored outputs', () => {
+    renderExpandedRow(displayTask, true)
+    fireEvent.click(screen.getByRole('button', { name: /Add output file/i }))
+    expect(screen.getByRole('radio', { name: 'Front' })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: 'Left sleeve' })).toBeInTheDocument()
+    expect(screen.queryByRole('radio', { name: 'Back' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('radio', { name: 'Right sleeve' })).not.toBeInTheDocument()
+  })
+  it('passes the same exclusions to the page-level upload popup', () => {
+    const open = vi.fn()
+    renderExpandedRow(displayTask, true, open)
+    fireEvent.click(screen.getByRole('button', { name: /Add output file/i }))
+    expect(open).toHaveBeenCalledWith(task.id, ['BACK', 'RIGHT_SLEEVE'])
   })
 })
