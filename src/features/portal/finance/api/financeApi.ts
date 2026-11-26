@@ -456,8 +456,8 @@ export type UnallocatedRefund = {
   remainingAmount: number
   items: Array<{ id: string; sku: string | null; quantity: number }>
 }
-export const listUnallocatedRefunds = () =>
-  unwrap<UnallocatedRefund[]>(apiClient.get('/api/finance/refunds/unallocated'))
+export const listUnallocatedRefunds = async () =>
+  unwrap<UnallocatedRefund[]>(await apiClient.get('/api/finance/refunds/unallocated'))
 export type RefundReview = {
   orderItemId: string
   orderId: string | null
@@ -468,8 +468,8 @@ export type RefundReview = {
   canConfirmRefund: boolean
   itemStatus: string | null
 }
-export const listRefundReviews = () =>
-  unwrap<RefundReview[]>(apiClient.get('/api/finance/refunds/reviews'))
+export const listRefundReviews = async () =>
+  unwrap<RefundReview[]>(await apiClient.get('/api/finance/refunds/reviews'))
 export async function confirmRefund(orderItemId: string) {
   return unwrap<{ orderItemId: string; status: string }>(
     await apiClient.post(`/api/finance/refunds/order-items/${orderItemId}/confirm`),

@@ -186,6 +186,7 @@
       "status": "Status",
       "allPeriods": "All periods",
       "noData": "No settlement data found.",
+      "detailLoadFailed": "Could not load settlement activity.",
       "unavailable": "Amazon has not provided a detailed settlement breakdown for this record.",
       "currencyNote": "Totals are kept separate by currency.",
       "showing": "Showing {{count}} ledger lines",

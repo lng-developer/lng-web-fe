@@ -4,14 +4,14 @@ import { Checkbox, Input, InputNumber } from 'antd'
 
 import { CopyableSku, PopupModal, type PopupModalAnchor } from '@/shared/ui'
 
-import type { OrderWorkbenchItem } from '../api/orderApi'
+import type { OrderWorkbenchSummaryItem } from '../api/orderApi'
 import styles from '../pages/OrderWorkbenchPage.module.scss'
 import type { OrderAction } from './orderTypes'
 
 type OrderReplacementModalProps = {
   readonly open: boolean
   readonly anchor?: PopupModalAnchor
-  readonly items: OrderWorkbenchItem[]
+  readonly items: OrderWorkbenchSummaryItem[]
   readonly pending: boolean
   readonly onClose: () => void
   readonly onAction: (action: OrderAction) => void
@@ -40,7 +40,7 @@ export const OrderReplacementModal = memo(function OrderReplacementModal({
 
 type OrderReplacementModalInnerProps = {
   readonly anchor?: PopupModalAnchor
-  readonly items: OrderWorkbenchItem[]
+  readonly items: OrderWorkbenchSummaryItem[]
   readonly pending: boolean
   readonly onClose: () => void
   readonly onAction: (action: OrderAction) => void

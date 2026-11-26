@@ -202,6 +202,7 @@
       },
       "metrics": {
         "total": "Tổng",
+        "allListings": "Tất cả",
         "totalListings": "Tổng listing",
         "noPsd": "Thiếu PSD",
         "psdMissing": "Thiếu PSD",

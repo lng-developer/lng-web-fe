@@ -3,6 +3,7 @@
     "title": "Bàn làm việc đơn hàng",
     "description": "Theo dõi người phụ trách, điểm nghẽn và trạng thái xử lý ngay trong hàng đợi.",
     "error": "Không thể tải danh sách đơn hàng",
+    "detailError": "Không thể tải chi tiết đơn hàng",
     "vendorRematch": {
       "requireRework": "Làm lại file thiết kế (Rework)",
       "requireReworkDescription": "Hủy file scale và kết quả QC cũ. Sau khi bắt lại vendor, đơn sẽ về hàng chờ Designer làm lại file mới.",
@@ -251,10 +252,6 @@
       "button": "Xuất CSV",
       "success": "Đã tải file đơn hàng",
       "error": "Không thể xuất đơn hàng"
-    },
-    "summary": {
-      "orders": "Đơn",
-      "items": "Items"
     },
     "addressStatuses": {
       "NOT_CHECKED": "Chưa kiểm tra",

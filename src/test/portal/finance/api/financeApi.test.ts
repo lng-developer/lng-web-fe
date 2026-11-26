@@ -7,7 +7,9 @@ import {
   listFinanceSnapshots,
   listImportBatches,
   listImportedFinanceData,
+  listRefundReviews,
   listSettlements,
+  listUnallocatedRefunds,
   recalculateOrderItem,
   reconcileSettlement,
 } from '@/features/portal/finance/api/financeApi'
@@ -38,6 +40,16 @@ describe('financeApi', () => {
     await expect(listImportBatches()).resolves.toMatchObject({
       pagination: { total: 3, page: 1, limit: 20 },
     })
+  })
+
+  it.each([
+    ['unallocated', listUnallocatedRefunds, [{ id: 'refund-1', remainingAmount: 1500 }]],
+    ['reviews', listRefundReviews, [{ orderItemId: 'item-1', reviewStatus: 'EXACT_FULL' }]],
+  ] as const)('unwraps the %s refunds response before returning rows', async (path, list, rows) => {
+    vi.mocked(apiClient.get).mockResolvedValue({ success: true, data: rows })
+
+    await expect(list()).resolves.toEqual(rows)
+    expect(apiClient.get).toHaveBeenCalledWith(`/api/finance/refunds/${path}`)
   })
 
   it('uses the finance investigation contracts', async () => {

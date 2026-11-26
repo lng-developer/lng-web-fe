@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { ReloadOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Button, Descriptions, Modal, Progress, Typography } from 'antd'
+import { Alert, Button, Modal, Progress, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
@@ -30,6 +30,7 @@ import {
 } from '../api/integrationApi'
 import { integrationKeys } from '../api/integrationKeys'
 import { canWriteOrdersForShop } from '../auth/integrationAccess'
+import { getExtensionCommandErrorKey } from '../components/extensionHelpers'
 import { useImportJobPolling } from '../hooks/useImportJobPolling'
 import styles from './IntegrationWorkbenchPage.module.scss'
 
@@ -40,13 +41,15 @@ function recordTone(status: string) {
     return 'operational'
   }
   if (status === 'FAILED') return 'critical'
-  if (status === 'SKIPPED') return 'cancelled'
+  if (status === 'PARTIAL_FAILED') return 'warning'
+  if (status === 'SKIPPED' || status === 'CANCELLED') return 'cancelled'
   return 'pending'
 }
 
 export interface ImportJobPanelProps {
   readonly account?: CurrentAccount
   readonly jobId?: string
+  readonly commandError?: string | null
   readonly status?: ImportJobStatus
   readonly open: boolean
   readonly onClose: () => void
@@ -60,6 +63,7 @@ export function ImportJobPanel(props: ImportJobPanelProps) {
 function ImportJobPanelForJob({
   account,
   jobId,
+  commandError,
   status,
   open,
   onClose,
@@ -72,6 +76,19 @@ function ImportJobPanelForJob({
   const [confirmRetry, setConfirmRetry] = useState(false)
   const [rawDrawerOpen, setRawDrawerOpen] = useState(false)
   const job = useImportJobPolling(open ? jobId : undefined, status)
+  const loggedCommandError = commandError?.trim()
+  const commandErrorKey = getExtensionCommandErrorKey(loggedCommandError)
+  const commandNeedsReview = commandErrorKey === 'etsyImportNeedsReview'
+  const importError = job.data?.job.errorMessage?.trim()
+  const importErrorCode = job.data?.job.errorCode
+  const importErrorIsReviewCode =
+    getExtensionCommandErrorKey(importError) === 'etsyImportNeedsReview'
+  const importNeedsReview =
+    importErrorIsReviewCode ||
+    getExtensionCommandErrorKey(importErrorCode) === 'etsyImportNeedsReview'
+  const showCommandNotice =
+    loggedCommandError &&
+    (commandNeedsReview ? !importNeedsReview : loggedCommandError !== importError)
   const rawParams = { page: rawPage, limit: DEFAULT_PAGE_SIZE }
   const rawRecords = useQuery({
     queryKey: integrationKeys.rawRecords(jobId ?? '', rawParams),
@@ -201,7 +218,33 @@ function ImportJobPanelForJob({
   ]
 
   const detailContent = (
-    <>
+    <div className={styles.executionDetail}>
+      {showCommandNotice ? (
+        <Alert
+          className={styles.executionNotice}
+          type={commandNeedsReview ? 'warning' : 'error'}
+          showIcon
+          title={t(`extensionCommandErrors.${commandErrorKey}`)}
+          description={commandErrorKey === 'seeDetails' ? loggedCommandError : undefined}
+        />
+      ) : null}
+      {importNeedsReview || importError ? (
+        <Alert
+          className={styles.executionNotice}
+          type={importNeedsReview ? 'warning' : 'error'}
+          showIcon
+          title={
+            importNeedsReview ? t('extensionCommandErrors.etsyImportNeedsReview') : importError
+          }
+          description={
+            importNeedsReview
+              ? importErrorIsReviewCode
+                ? undefined
+                : importError
+              : importErrorCode
+          }
+        />
+      ) : null}
       {job.isLoading ? <LoadingState variant="card" /> : null}
       {job.error ? (
         <FeedbackAlert
@@ -222,45 +265,45 @@ function ImportJobPanelForJob({
       ) : null}
       {job.data ? (
         <div className={styles.panelContent}>
-          <section>
-            <Typography.Title level={3}>
+          <section className={styles.executionSummary}>
+            <Typography.Title level={5} className={styles.executionSummaryTitle}>
               {t('portal.integrations.panel.summary', { defaultValue: 'Summary' })}
             </Typography.Title>
-            <Descriptions column={2} size="small">
-              <Descriptions.Item
-                label={t('portal.integrations.jobs.status', { defaultValue: 'Status' })}
-              >
-                {t(`portal.integrations.statuses.${job.data.job.status}`, {
-                  defaultValue: humanizeCode(job.data.job.status),
-                })}
-              </Descriptions.Item>
-              <Descriptions.Item
-                label={t('portal.integrations.jobs.source', { defaultValue: 'Source' })}
-              >
-                {importJobSource(job.data.job, t)}
-              </Descriptions.Item>
-              <Descriptions.Item
-                label={t('portal.integrations.panel.imported', { defaultValue: 'Imported' })}
-              >
-                <div>{importJobResults(job.data.job, t)}</div>
-                <div>{importJobIssues(job.data.job, t)}</div>
-              </Descriptions.Item>
-              <Descriptions.Item
-                label={t('portal.integrations.panel.failed', { defaultValue: 'Failed' })}
-              >
-                {job.data.job.failedCount}
-              </Descriptions.Item>
-              <Descriptions.Item
-                label={t('portal.integrations.panel.started', { defaultValue: 'Started' })}
-              >
-                <FormattedDateTime value={job.data.job.startedAt} />
-              </Descriptions.Item>
-              <Descriptions.Item
-                label={t('portal.integrations.panel.finished', { defaultValue: 'Finished' })}
-              >
-                <FormattedDateTime value={job.data.job.finishedAt} />
-              </Descriptions.Item>
-            </Descriptions>
+            <dl className={styles.executionFacts}>
+              <div>
+                <dt>{t('portal.integrations.panel.importStatus')}</dt>
+                <dd>
+                  <StatusTag status={recordTone(job.data.job.status)}>
+                    {t(`portal.integrations.statuses.${job.data.job.status}`, {
+                      defaultValue: humanizeCode(job.data.job.status),
+                    })}
+                  </StatusTag>
+                </dd>
+              </div>
+              <div>
+                <dt>{t('portal.integrations.jobs.source')}</dt>
+                <dd>{importJobSource(job.data.job, t)}</dd>
+              </div>
+              <div>
+                <dt>{t('portal.integrations.panel.started')}</dt>
+                <dd>
+                  <FormattedDateTime value={job.data.job.startedAt} />
+                </dd>
+              </div>
+              <div>
+                <dt>{t('portal.integrations.panel.finished')}</dt>
+                <dd>
+                  <FormattedDateTime value={job.data.job.finishedAt} />
+                </dd>
+              </div>
+              <div className={styles.importJobResult}>
+                <dt>{t('portal.integrations.panel.imported')}</dt>
+                <dd>
+                  <div>{importJobResults(job.data.job, t)}</div>
+                  {importJobIssues(job.data.job, t)}
+                </dd>
+              </div>
+            </dl>
             <div className={styles.progressList}>
               {progressItems.map(({ key, label, phase }) => (
                 <div className={styles.progressRow} key={key}>
@@ -268,12 +311,21 @@ function ImportJobPanelForJob({
                     <Typography.Text strong>{label}</Typography.Text>
                     <Typography.Text type="secondary">
                       {`${phase.completed}/${phase.total}`}
-                      {phase.failed ? ` · ${phase.failed} failed` : ''}
-                      {phase.processing ? ` · ${phase.processing} processing` : ''}
-                      {phase.queued ? ` · ${phase.queued} queued` : ''}
+                      {phase.failed
+                        ? ` · ${t('portal.integrations.panel.phaseFailed', { count: phase.failed })}`
+                        : ''}
+                      {phase.processing
+                        ? ` · ${t('portal.integrations.panel.phaseProcessing', { count: phase.processing })}`
+                        : ''}
+                      {phase.queued
+                        ? ` · ${t('portal.integrations.panel.phaseQueued', { count: phase.queued })}`
+                        : ''}
                     </Typography.Text>
                   </div>
                   <Progress
+                    size="small"
+                    showInfo={false}
+                    aria-label={label}
                     percent={phase.percentage}
                     status={
                       phase.failed ? 'exception' : phase.percentage >= 100 ? 'success' : 'active'
@@ -289,13 +341,6 @@ function ImportJobPanelForJob({
                   defaultValue: `${job.data.issues.open} open import issues`,
                   count: job.data.issues.open,
                 })}
-              />
-            ) : null}
-            {job.data.job.errorMessage ? (
-              <FeedbackAlert
-                type="error"
-                title={job.data.job.errorMessage}
-                description={job.data.job.errorCode ?? undefined}
               />
             ) : null}
           </section>
@@ -342,7 +387,7 @@ function ImportJobPanelForJob({
           ) : null}
         </div>
       ) : null}
-    </>
+    </div>
   )
 
   const retryAction = canRetry ? (
@@ -357,7 +402,7 @@ function ImportJobPanelForJob({
         <DetailDrawer
           destroyOnClose
           open={open}
-          width="min(1500px, 94vw)"
+          width="min(960px, 94vw)"
           title={`${t('portal.integrations.panel.title', { defaultValue: 'Import job' })} ${jobId ?? ''}`}
           onClose={onClose}
           footer={retryAction ?? null}
@@ -368,18 +413,25 @@ function ImportJobPanelForJob({
             aria-label={t('portal.integrations.panel.detailRegion', {
               defaultValue: 'Import job details',
             })}
-            style={{ display: 'grid', gap: 16 }}
+            className={styles.executionDetail}
           >
             {detailContent}
-            <Button block onClick={() => setRawDrawerOpen(true)}>
-              {t('portal.integrations.panel.viewRawRecords', { defaultValue: 'View raw records' })}
-            </Button>
+            <div className={styles.importJobActions}>
+              <Button onClick={() => setRawDrawerOpen(true)}>
+                {t('portal.integrations.panel.viewRawRecords', {
+                  defaultValue: 'View raw records',
+                })}
+              </Button>
+            </div>
           </aside>
           <DetailDrawer
             destroyOnClose
             open={rawDrawerOpen}
             title={t('portal.integrations.panel.rawRecords', { defaultValue: 'Raw records' })}
             width="min(1560px, 95vw)"
+            wrapClassName={styles.rawRecordsModalWrap}
+            style={{ paddingBottom: 0 }}
+            styles={{ body: { minHeight: 0, overscrollBehaviorY: 'contain' } }}
             onClose={() => setRawDrawerOpen(false)}
             footer={null}
             allowModeToggle

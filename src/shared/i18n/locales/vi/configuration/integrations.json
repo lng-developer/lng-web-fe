@@ -221,6 +221,7 @@
         "detailRegion": "Chi tiết công việc import",
         "selectJob": "Chọn một import để xem tiến trình và các vấn đề.",
         "summary": "Tóm tắt",
+        "importStatus": "Trạng thái nhập",
         "imported": "Đã nhập",
         "failed": "Thất bại",
         "started": "Bắt đầu",
@@ -244,6 +245,9 @@
         "parseProgress": "Tiến độ đọc dữ liệu",
         "importProgress": "Tiến độ nhập dữ liệu",
         "postImportProgress": "Tiến độ xử lý sau nhập",
+        "phaseFailed": "{{count}} lỗi",
+        "phaseProcessing": "{{count}} đang xử lý",
+        "phaseQueued": "{{count}} đang chờ",
         "openIssues": "Vấn đề chưa giải quyết"
       },
       "issues": {
@@ -316,7 +320,52 @@
         "permissionHint": "Bạn không có quyền xem dữ liệu đối soát."
       },
       "financeImports": {
-        "filters": "Bộ lọc tệp nhập"
+        "filters": "Bộ lọc tệp nhập",
+        "details": {
+          "relatedReports": "Báo cáo được nhập cho shop trong thời gian tác vụ chạy",
+          "chooseReport": "Chọn báo cáo",
+          "loadFailed": "Không thể tải chi tiết lô nhập tài chính",
+          "noImportedRows": "Lần chạy này không nhập bản ghi nào",
+          "noLinkedReport": "Tác vụ này chưa có báo cáo liên kết",
+          "errorReason": "Lý do lỗi",
+          "rows": "{{processed}} đã xử lý · {{valid}} hợp lệ · {{errors}} lỗi",
+          "recalculation": "Tính lại lợi nhuận: {{status}} ({{done}}/{{total}}; {{failed}} lỗi)",
+          "noRecalculation": "Không cần tính lại lợi nhuận",
+          "reprocess": "Xử lý lại",
+          "posted": "Ngày ghi nhận",
+          "type": "Loại",
+          "status": "Trạng thái",
+          "orderId": "Mã đơn hàng",
+          "netAmount": "Số tiền ròng",
+          "fees": "Phí",
+          "depositDate": "Ngày chuyển tiền",
+          "settlementId": "Mã đối soát",
+          "periodStart": "Bắt đầu kỳ",
+          "periodEnd": "Kết thúc kỳ",
+          "payoutAmount": "Số tiền chuyển",
+          "date": "Ngày",
+          "campaign": "Chiến dịch",
+          "spend": "Chi phí",
+          "transactionFilters": "Bộ lọc chi tiết giao dịch",
+          "postedDateRange": "Khoảng ngày ghi nhận",
+          "transactionType": "Loại giao dịch",
+          "transactionStatus": "Trạng thái giao dịch",
+          "linkStatus": "Trạng thái liên kết",
+          "settlementFilters": "Bộ lọc chi tiết đối soát",
+          "depositDateRange": "Khoảng ngày chuyển tiền",
+          "viewSettlement": "Xem chi tiết đối soát",
+          "linked": "Đã liên kết",
+          "unlinked": "Chưa liên kết",
+          "noFees": "Không có phí đã nhập",
+          "statuses": {
+            "QUEUED": "Đang chờ",
+            "PROCESSING": "Đang xử lý",
+            "COMPLETED": "Hoàn tất",
+            "PARTIAL_FAILED": "Thất bại một phần",
+            "FAILED": "Thất bại",
+            "CANCELLED": "Đã hủy"
+          }
+        }
       },
       "refunds": {
         "unallocatedTitle": "Hoàn tiền chưa phân bổ",

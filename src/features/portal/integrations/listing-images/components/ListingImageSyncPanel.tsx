@@ -15,27 +15,33 @@ export default function ListingImageSyncPanel({
   account,
   agents,
   shopNames,
+  onlineAgentsOnly = false,
 }: {
   account: CurrentAccount
   agents: ExtensionManagementAgent[]
   shopNames: Map<string, string>
+  onlineAgentsOnly?: boolean
 }) {
   const { t } = useTranslation()
   const key = 'listingImageSync.'
   const permission = (shopId: string, mode: 'READ' | 'WRITE') =>
     canUseScopedPermission(account, `CATALOG:${mode}`, { scopeType: 'shop', scopeId: shopId })
-  const visibleAgents = agents.filter(
+  const permittedAgents = agents.filter(
     (agent) => permission(agent.shopId, 'READ') || permission(agent.shopId, 'WRITE'),
   )
+  const visibleAgents = onlineAgentsOnly
+    ? permittedAgents.filter((agent) => agent.status === 'ONLINE')
+    : permittedAgents
   const [agentId, setAgentId] = useState<string>()
   const [page, setPage] = useState(1)
-  const [confirm, setConfirm] = useState(false)
+  const [confirmAgentId, setConfirmAgentId] = useState<string>()
   const selected = visibleAgents.find((agent) => agent.id === agentId) || visibleAgents[0]
-  const state = useListingImageSync(visibleAgents.length > 0, page)
-  if (!visibleAgents.length) return null
+  const state = useListingImageSync(permittedAgents.length > 0, page)
+  if (!permittedAgents.length) return null
   const schedule = state.schedules.data?.items.find((value) => value.agentId === selected?.id)
   const writable = !!selected && permission(selected.shopId, 'WRITE')
   const ready = selected?.status === 'ONLINE' && selected?.listingImageSync === true
+  const canConfirm = ready && writable && confirmAgentId === selected?.id
   const busy = state.save.isPending || state.create.isPending || state.action.isPending
   const error =
     state.save.error ||
@@ -50,41 +56,45 @@ export default function ListingImageSyncPanel({
       <Space orientation="vertical" className="w-full" size="middle">
         <Typography.Paragraph>{t(`${key}description`)}</Typography.Paragraph>
         {error ? <FeedbackAlert type="error" title={error.message} /> : null}
-        <Space wrap>
-          <Select
-            aria-label={t(`${key}agent`)}
-            value={selected?.id}
-            onChange={setAgentId}
-            className="min-w-64"
-            options={visibleAgents.map((agent) => ({
-              value: agent.id,
-              label: `${shopNames.get(agent.shopId) || agent.shopId} / ${agent.label}`,
-            }))}
-          />
-          {writable ? (
-            <>
-              <Switch
-                aria-label={t(`${key}schedule`)}
-                checked={schedule?.enabled ?? false}
-                loading={state.save.isPending}
-                disabled={
-                  busy ||
-                  state.schedules.isLoading ||
-                  (!selected?.listingImageSync && !schedule?.enabled)
-                }
-                onChange={(enabled) => state.save.mutate({ agentId: selected!.id, enabled })}
-              />
-              <Typography.Text>{t(`${key}schedule`)}</Typography.Text>
-              <Button
-                disabled={!ready || busy || state.jobs.isLoading}
-                onClick={() => setConfirm(true)}
-              >
-                {t(`${key}request`)}
-              </Button>
-            </>
-          ) : null}
-        </Space>
-        {!selected?.listingImageSync ? (
+        {selected ? (
+          <Space wrap>
+            <Select
+              aria-label={t(`${key}agent`)}
+              value={selected.id}
+              onChange={setAgentId}
+              className="min-w-64"
+              options={visibleAgents.map((agent) => ({
+                value: agent.id,
+                label: `${shopNames.get(agent.shopId) || agent.shopId} / ${agent.label}`,
+              }))}
+            />
+            {writable ? (
+              <>
+                <Switch
+                  aria-label={t(`${key}schedule`)}
+                  checked={schedule?.enabled ?? false}
+                  loading={state.save.isPending}
+                  disabled={
+                    busy ||
+                    state.schedules.isLoading ||
+                    (!selected.listingImageSync && !schedule?.enabled)
+                  }
+                  onChange={(enabled) => state.save.mutate({ agentId: selected.id, enabled })}
+                />
+                <Typography.Text>{t(`${key}schedule`)}</Typography.Text>
+                <Button
+                  disabled={!ready || busy || state.jobs.isLoading}
+                  onClick={() => setConfirmAgentId(selected.id)}
+                >
+                  {t(`${key}request`)}
+                </Button>
+              </>
+            ) : null}
+          </Space>
+        ) : null}
+        {!selected ? (
+          <FeedbackAlert type="info" title={t('portal.integrations.extension.noAgents')} />
+        ) : !selected.listingImageSync ? (
           <FeedbackAlert type="warning" title={t(`${key}upgrade`)} />
         ) : selected.status !== 'ONLINE' ? (
           <FeedbackAlert type="info" title={t(`${key}offline`)} />
@@ -209,17 +219,17 @@ export default function ListingImageSyncPanel({
       </Space>
       <Modal
         title={t(`${key}request`)}
-        open={confirm}
-        onCancel={() => setConfirm(false)}
+        open={Boolean(confirmAgentId)}
+        onCancel={() => setConfirmAgentId(undefined)}
         okText={t(`${key}start`)}
         cancelText={t('portal.integrations.cancel')}
         confirmLoading={state.create.isPending}
-        okButtonProps={{ disabled: !ready || !writable }}
+        okButtonProps={{ disabled: !canConfirm }}
         onOk={() => {
-          if (selected && ready && writable)
+          if (selected && canConfirm)
             state.create.mutate(
               { agentId: selected.id, shopId: selected.shopId },
-              { onSuccess: () => setConfirm(false) },
+              { onSuccess: () => setConfirmAgentId(undefined) },
             )
         }}
       >

@@ -221,6 +221,7 @@
         "detailRegion": "Import job details",
         "selectJob": "Select an import to inspect its progress and issues.",
         "summary": "Summary",
+        "importStatus": "Import status",
         "imported": "Imported",
         "failed": "Failed",
         "started": "Started",
@@ -244,6 +245,9 @@
         "parseProgress": "Parse progress",
         "importProgress": "Import progress",
         "postImportProgress": "Post-import progress",
+        "phaseFailed": "{{count}} failed",
+        "phaseProcessing": "{{count}} processing",
+        "phaseQueued": "{{count}} queued",
         "openIssues": "Open issues"
       },
       "issues": {
@@ -316,7 +320,52 @@
         "permissionHint": "You do not have permission to view Settlements imports."
       },
       "financeImports": {
-        "filters": "Import filters"
+        "filters": "Import filters",
+        "details": {
+          "relatedReports": "Reports imported for this shop during the task",
+          "chooseReport": "Choose a report",
+          "loadFailed": "Could not load the finance import details",
+          "noImportedRows": "No records were imported in this run",
+          "noLinkedReport": "No report is linked to this task",
+          "errorReason": "Error reason",
+          "rows": "{{processed}} processed · {{valid}} valid · {{errors}} errors",
+          "recalculation": "Profit recalculation: {{status}} ({{done}}/{{total}}; {{failed}} failed)",
+          "noRecalculation": "Profit recalculation: not required",
+          "reprocess": "Reprocess",
+          "posted": "Posted",
+          "type": "Type",
+          "status": "Status",
+          "orderId": "Order ID",
+          "netAmount": "Net amount",
+          "fees": "Fees",
+          "depositDate": "Deposit date",
+          "settlementId": "Settlement ID",
+          "periodStart": "Period start",
+          "periodEnd": "Period end",
+          "payoutAmount": "Payout amount",
+          "date": "Date",
+          "campaign": "Campaign",
+          "spend": "Spend",
+          "transactionFilters": "Transaction detail filters",
+          "postedDateRange": "Posted date range",
+          "transactionType": "Transaction type",
+          "transactionStatus": "Transaction status",
+          "linkStatus": "Link status",
+          "settlementFilters": "Settlement detail filters",
+          "depositDateRange": "Deposit date range",
+          "viewSettlement": "View settlement activity",
+          "linked": "Linked",
+          "unlinked": "Unlinked",
+          "noFees": "No imported fees",
+          "statuses": {
+            "QUEUED": "Queued",
+            "PROCESSING": "Processing",
+            "COMPLETED": "Completed",
+            "PARTIAL_FAILED": "Partially failed",
+            "FAILED": "Failed",
+            "CANCELLED": "Cancelled"
+          }
+        }
       },
       "refunds": {
         "unallocatedTitle": "Unallocated refunds",

@@ -1,0 +1,76 @@
+.detailContent {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.detailSummary {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) repeat(4, minmax(0, 1fr));
+  gap: 8px 16px;
+  margin: 0;
+  padding: 12px 16px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius);
+  background: var(--ant-color-fill-quaternary);
+
+  dt {
+    color: var(--ant-color-text-secondary);
+  }
+
+  dd {
+    margin: 2px 0 0;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+  }
+}
+
+.periodRange {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 6px;
+}
+
+.reconciliationAlert {
+  padding: 10px 12px;
+}
+
+.reconciliationActions,
+.reviewActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.reviewActions {
+  flex: 1 1 22rem;
+  max-width: 440px;
+  min-width: 0;
+
+  textarea {
+    flex: 1 1 180px;
+    min-width: 0;
+  }
+}
+
+.ledgerSection {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+
+.ledgerSection .ledgerTitle {
+  margin: 0;
+}
+
+@media (max-width: 880px) {
+  .detailSummary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .detailPeriod {
+    grid-column: 1 / -1;
+  }
+}

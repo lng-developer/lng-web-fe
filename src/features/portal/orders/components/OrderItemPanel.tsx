@@ -7,7 +7,6 @@ import {
   EllipsisOutlined,
   ExportOutlined,
   HistoryOutlined,
-  LinkOutlined,
   ReloadOutlined,
   RightOutlined,
   SwapOutlined,
@@ -603,42 +602,44 @@ export const OrderItemPanel = memo(function OrderItemPanel({
         </Space>
         {isEtsy ? <EtsyPurchasedDetails item={item} /> : null}
         <div className={styles.inputList}>
-          {(isEtsy ? buyerImageInputs : visibleCustomizationInputs).map((input, index) => (
-            <div key={`${input?.label ?? ''}-${index}`}>
-              <Typography.Text type="secondary">
-                {input?.label || input?.type || '—'}:{' '}
-              </Typography.Text>
-              {input?.assetDownloadUrl ? (
-                <div className={styles.buyerImage}>
-                  <AuthenticatedMediaImage
-                    width={72}
-                    height={72}
-                    downloadUrl={input.assetDownloadUrl}
-                    alt={input.label || t('orders.fields.image')}
-                    fallback="/assets/images/favicon.svg"
-                    style={{ cursor: 'zoom-in' }}
-                    onClick={(event) =>
-                      onOpenImageViewer(event, input.assetDownloadUrl, relatedImages)
-                    }
-                  />
-                  <Button
-                    size="small"
-                    type="link"
-                    icon={<LinkOutlined />}
+          {(isEtsy ? buyerImageInputs : visibleCustomizationInputs).map((input, index) => {
+            const key = `${input?.label ?? ''}-${index}`
+            if (input?.assetDownloadUrl) {
+              const label = input.label || t('orders.fields.image')
+              return (
+                <figure key={key} className={styles.buyerImageField}>
+                  <figcaption>{label}</figcaption>
+                  <button
+                    type="button"
+                    className={styles.buyerImage}
                     onClick={(event) =>
                       onOpenImageViewer(event, input.assetDownloadUrl, relatedImages)
                     }
                   >
-                    {t('orders.fields.image')}
-                  </Button>
-                </div>
-              ) : (
+                    <AuthenticatedMediaImage
+                      width={72}
+                      height={72}
+                      downloadUrl={input.assetDownloadUrl}
+                      alt={label}
+                      fallback="/assets/images/favicon.svg"
+                    />
+                  </button>
+                </figure>
+              )
+            }
+            return (
+              <div key={key} className={styles.customizationValue}>
+                <Typography.Text type="secondary">
+                  {input?.label || input?.type || '—'}:{' '}
+                </Typography.Text>
                 <Typography.Text>{displayValue(input?.value)}</Typography.Text>
-              )}
-            </div>
-          ))}
+              </div>
+            )
+          })}
           {!isEtsy && !customizationInputs.length ? (
-            <Typography.Text type="secondary">—</Typography.Text>
+            <Typography.Text className={styles.customizationValue} type="secondary">
+              —
+            </Typography.Text>
           ) : null}
         </div>
         {!isEtsy && hiddenCustomizationCount > 0 ? (

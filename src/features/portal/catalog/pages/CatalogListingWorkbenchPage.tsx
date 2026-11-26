@@ -2,18 +2,14 @@ import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData } from 'react-router-dom'
 import {
-  AppstoreOutlined,
   CaretDownOutlined,
   CaretRightOutlined,
-  CheckCircleOutlined,
   ClockCircleOutlined,
   DownloadOutlined,
   EditOutlined,
   ExportOutlined,
   FileImageOutlined,
-  FileTextOutlined,
   PlusOutlined,
-  StopOutlined,
 } from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
@@ -28,8 +24,9 @@ import {
   CopyableSku,
   FeedbackAlert,
   FormattedDateTime,
-  MetricCard,
   StatusTag,
+  UiTabLabel,
+  UiTabs,
   useFeedbackToast,
   DetailModal,
 } from '@/shared/ui'
@@ -177,9 +174,43 @@ export function CatalogListingWorkbenchPage(props: {
     [t],
   )
 
-  const metricPercent = (value = 0) => {
-    const total = summary.data?.totalListingCount ?? 0
-    return total ? `${Math.round((value / total) * 1000) / 10}%` : '0%'
+  const activeTab = qcStatus ?? (psdState === 'missing' ? 'PSD_MISSING' : 'ALL')
+  const listingTabs = [
+    {
+      key: 'ALL',
+      label: t('portal.catalog.metrics.allListings'),
+      count: summary.data?.totalListingCount,
+    },
+    {
+      key: 'APPROVED',
+      label: t('portal.catalog.metrics.approved'),
+      count: summary.data?.approvedCount,
+    },
+    { key: 'DRAFT', label: t('portal.catalog.metrics.draft'), count: summary.data?.draftCount },
+    {
+      key: 'PSD_MISSING',
+      label: t('portal.catalog.metrics.psdMissing'),
+      count: summary.data?.noPsdCount,
+    },
+    {
+      key: 'REJECTED',
+      label: t('portal.catalog.metrics.rejected'),
+      count: summary.data?.rejectedCount,
+    },
+  ].map(({ key, label, count }) => ({
+    key,
+    label: (
+      <UiTabLabel count={count} active={activeTab === key}>
+        {label}
+      </UiTabLabel>
+    ),
+  }))
+
+  const handleTabChange = (tab: string) => {
+    setQcStatus(tab === 'ALL' || tab === 'PSD_MISSING' ? undefined : tab)
+    if (tab === 'PSD_MISSING') setPsdState('missing')
+    else if (tab === 'ALL' || activeTab === 'PSD_MISSING') setPsdState(undefined)
+    setPage(1)
   }
 
   const columns: TableColumnsType<Listing> = useMemo(
@@ -397,63 +428,13 @@ export function CatalogListingWorkbenchPage(props: {
         <FeedbackAlert type="error" title={t('portal.catalog.unavailable')} />
       ) : null}
 
-      <div className={styles.metrics}>
-        <MetricCard
-          icon={<AppstoreOutlined />}
-          label={t('portal.catalog.metrics.totalListings')}
-          value={summary.data?.totalListingCount ?? 0}
-          variant="primary"
-          status={<span className={styles.metricPercent}>100%</span>}
-        />
-        <MetricCard
-          icon={<CheckCircleOutlined />}
-          label={t('portal.catalog.metrics.approved')}
-          value={summary.data?.approvedCount ?? 0}
-          variant="success"
-          status={
-            <span className={styles.metricPercentSuccess}>
-              {metricPercent(summary.data?.approvedCount ?? 0)}
-            </span>
-          }
-        />
-        <MetricCard
-          icon={<FileTextOutlined />}
-          label={t('portal.catalog.metrics.draft')}
-          value={summary.data?.draftCount ?? 0}
-          variant="warning"
-          status={
-            <span className={styles.metricPercentWarning}>
-              {metricPercent(summary.data?.draftCount ?? 0)}
-            </span>
-          }
-        />
-        <MetricCard
-          icon={<FileImageOutlined />}
-          label={t('portal.catalog.metrics.psdMissing')}
-          value={summary.data?.noPsdCount ?? 0}
-          variant="danger"
-          onClick={() => {
-            setPsdState('missing')
-            setPage(1)
-          }}
-          status={
-            <span className={styles.metricPercentDanger}>
-              {metricPercent(summary.data?.noPsdCount ?? 0)}
-            </span>
-          }
-        />
-        <MetricCard
-          icon={<StopOutlined />}
-          label={t('portal.catalog.metrics.rejected')}
-          value={summary.data?.rejectedCount ?? 0}
-          variant="danger"
-          status={
-            <span className={styles.metricPercentDanger}>
-              {metricPercent(summary.data?.rejectedCount ?? 0)}
-            </span>
-          }
-        />
-      </div>
+      <UiTabs
+        className={styles.listingTabs}
+        activeKey={activeTab}
+        items={listingTabs}
+        onChange={handleTabChange}
+        tabBarGutter={8}
+      />
 
       <div className={styles.filterRow}>
         <Input.Search
@@ -485,18 +466,6 @@ export function CatalogListingWorkbenchPage(props: {
             }))}
           />
         ) : null}
-        <Select
-          allowClear
-          className={styles.filter}
-          placeholder={t('portal.catalog.allQcStatuses')}
-          value={qcStatus}
-          onChange={resetPage(setQcStatus)}
-          options={[
-            { value: 'DRAFT', label: t('portal.catalog.metrics.draft') },
-            { value: 'APPROVED', label: t('portal.catalog.metrics.approved') },
-            { value: 'REJECTED', label: t('portal.catalog.metrics.rejected') },
-          ]}
-        />
         <Select
           allowClear
           className={styles.filter}

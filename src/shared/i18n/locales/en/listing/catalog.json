@@ -202,6 +202,7 @@
       },
       "metrics": {
         "total": "Total",
+        "allListings": "All",
         "totalListings": "Total listings",
         "noPsd": "No PSD",
         "psdMissing": "PSD missing",

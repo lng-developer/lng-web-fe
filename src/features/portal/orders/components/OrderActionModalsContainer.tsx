@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 
 import { useFeedbackToast } from '@/shared/ui'
 
-import type { OrderWorkbenchRow } from '../api/orderApi'
+import type { OrderWorkbenchSummaryRow } from '../api/orderApi'
 import { useOrderActionsMutation } from '../hooks/useOrderActionsMutation'
 import { useOrderActionStore } from '../hooks/useOrderActionStore'
 import { OrderAddressModal } from './OrderAddressModal'
@@ -42,7 +42,7 @@ function successMessageKey(action: OrderAction) {
 }
 
 type OrderActionModalsContainerProps = {
-  readonly orderItems: OrderWorkbenchRow[]
+  readonly orderItems: OrderWorkbenchSummaryRow[]
 }
 
 export const OrderActionModalsContainer = memo(function OrderActionModalsContainer({

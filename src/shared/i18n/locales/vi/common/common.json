@@ -25,6 +25,10 @@
     "title": "Tiêu đề",
     "required": "Bắt buộc",
     "status": "Trạng thái",
+    "connectionStatus": {
+      "ONLINE": "Trực tuyến",
+      "OFFLINE": "Ngoại tuyến"
+    },
     "description": "Mô tả",
     "actions": "Thao tác",
     "search": "Tìm kiếm",
@@ -59,6 +63,65 @@
     "viewDetails": "Xem chi tiết",
     "delete": "Xóa"
   },
+  "extensionCommandErrors": {
+    "etsyImportNeedsReview": "Cần kiểm tra lần đồng bộ đơn Etsy",
+    "cancelledByOperator": "Đã hủy bởi người vận hành",
+    "authSessionExpired": "Phiên đăng nhập đã hết hạn",
+    "amazonAdsSessionExpired": "Phiên đăng nhập Amazon Ads đã hết hạn",
+    "leaseExpired": "Đã hết thời gian xử lý lệnh của máy",
+    "taskFailed": "Tác vụ tiện ích không thành công",
+    "seeDetails": "Xem chi tiết lỗi",
+    "noDetails": "Chưa có chi tiết lỗi"
+  },
+  "extensionCommand": {
+    "details": "Chi tiết tác vụ",
+    "total": "Tổng số lệnh: {{count}}",
+    "claimedAt": "Đã nhận lệnh",
+    "startedAt": "Bắt đầu",
+    "completedAt": "Hoàn tất",
+    "trackingVerification": "Xác minh mã vận đơn",
+    "otherCarrier": "Hãng vận chuyển khác",
+    "statuses": {
+      "QUEUED": "Đang chờ",
+      "CLAIMED": "Đã nhận lệnh",
+      "RUNNING": "Đang chạy",
+      "WAITING_AMAZON": "Đang chờ Amazon",
+      "SUCCEEDED": "Thành công",
+      "PARTIAL_FAILED": "Thất bại một phần",
+      "FAILED": "Thất bại"
+    },
+    "types": {
+      "IMPORT_NEW_ORDERS": "Đồng bộ đơn hàng",
+      "IMPORT_ADS_SPEND": "Chi phí quảng cáo",
+      "IMPORT_TRANSACTIONS": "Giao dịch",
+      "IMPORT_SETTLEMENTS": "Đối soát",
+      "TEST_CONNECTION": "Kiểm tra kết nối",
+      "SYNC_LISTING_IMAGES": "Đồng bộ ảnh sản phẩm",
+      "UPLOAD_TRACKING": "Gửi mã vận đơn"
+    },
+    "trackingStatuses": {
+      "PENDING": "Đang chờ",
+      "ETSY_ACCEPTED": "Etsy đã tiếp nhận",
+      "VERIFIED": "Đã xác minh",
+      "FAILED": "Thất bại"
+    }
+  },
+  "extensionTracking": {
+    "workflow": {
+      "receive": {
+        "title": "Nhận mã vận đơn từ nhà cung cấp",
+        "description": "Khi nhà cung cấp gửi mã vận đơn ở bước bàn giao, Ecomatrix xác minh lô hàng và đánh dấu đã gửi."
+      },
+      "sync": {
+        "title": "Tự động đồng bộ mã vận đơn",
+        "description": "Tiện ích trên máy của cửa hàng tự lấy mã vận đơn để gửi lên Etsy hoặc xác nhận giao hàng trên Amazon Seller Central."
+      },
+      "verify": {
+        "title": "Theo dõi và đối chiếu vận chuyển",
+        "description": "Theo dõi các lần quét của USPS, FedEx và DHL để kiểm tra tiến độ lô hàng và tỷ lệ giao đúng hạn trên cả hai sàn."
+      }
+    }
+  },
   "language": {
     "label": "Ngôn ngữ",
     "vi": "Tiếng Việt",
@@ -77,7 +140,7 @@
     "fulfillment": "Fulfillment",
     "design": "Design",
     "vendor": "Vendor",
-    "extensions": "Extensions",
+    "extensions": "Tiện ích",
     "orders": "Orders",
     "amazon": "Amazon",
     "etsy": "Etsy",
@@ -129,18 +192,19 @@
     "tokenVendor": "Token Vendor",
     "vendorProducts": "Vendor Products",
     "storeFulfill": "Store Fulfill",
-    "manageClients": "Manage Clients",
-    "configAuto": "Config Auto",
-    "logManager": "Log Manager",
+    "manageClients": "Quản lý máy trạm",
+    "configAuto": "Cấu hình tự động",
+    "logManager": "Nhật ký lệnh",
     "trackingEtsy": "Tracking Etsy",
     "messageEtsy": "Message Etsy",
     "checkTracking": "Check Tracking",
-    "trackingAutomation": "Trung tâm Tracking",
-    "messageAutomation": "Trung tâm Tin nhắn",
-    "imageSync": "Đồng bộ ảnh Listing"
+    "trackingAutomation": "Trung tâm vận đơn",
+    "messageAutomation": "Trung tâm tin nhắn",
+    "imageSync": "Đồng bộ ảnh sản phẩm"
   },
   "shell": {
     "refresh": "Làm mới",
+    "loadingPage": "Đang tải trang",
     "searchPlaceholder": "Tìm điều hướng",
     "noSearchResults": "Không tìm thấy điều hướng phù hợp",
     "quickNav": "Truy cập nhanh",

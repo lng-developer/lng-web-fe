@@ -12,8 +12,8 @@
         "runningCommands": "Đang chạy / Chờ xử lý",
         "succeededCommands": "Hoàn thành",
         "failedCommands": "Cần chú ý",
-        "monitoredShops": "Store kết nối",
-        "onlineSyncBots": "Bot đẩy tracking online",
+        "monitoredShops": "Cửa hàng đang hoạt động",
+        "onlineSyncBots": "Máy đồng bộ vận đơn trực tuyến",
         "onlineAgents": "Extension Online"
       },
       "filters": {
@@ -82,17 +82,17 @@
         }
       },
       "tracking": {
-        "title": "Trung Tâm Quản Lý Tracking & Vận Đơn",
-        "subtitle": "Kiểm tra các đơn đã sẵn sàng dispatch, xem trước file upload tracking và đồng bộ mã vận đơn lên Etsy và Amazon.",
-        "workflowTitle": "Quy Trình Tự Động Hóa Vận Đơn",
-        "shopsTitle": "Danh Sách Shop & Trạng Thái Extension Tracking",
+        "title": "Trung tâm vận đơn",
+        "subtitle": "Kiểm tra các đơn sẵn sàng gửi, xem trước dữ liệu và đồng bộ mã vận đơn lên Etsy và Amazon.",
+        "workflowTitle": "Quy trình đồng bộ vận đơn tự động",
+        "shopsTitle": "Cửa hàng và trạng thái máy đồng bộ",
         "table": {
           "platform": "Sàn",
-          "shop": "Shop",
-          "botAgent": "Extension Bot"
+          "shop": "Cửa hàng",
+          "botAgent": "Máy đồng bộ"
         },
         "actions": {
-          "preview": "Xem danh sách fulfillment"
+          "preview": "Xem trước danh sách vận đơn"
         }
       },
       "messages": {

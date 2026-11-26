@@ -186,6 +186,7 @@
       "status": "Trạng thái",
       "allPeriods": "Tất cả kỳ",
       "noData": "Chưa có dữ liệu settlement.",
+      "detailLoadFailed": "Không thể tải chi tiết kỳ quyết toán.",
       "unavailable": "Amazon chưa cung cấp breakdown chi tiết cho settlement này.",
       "currencyNote": "Tổng tiền được tách riêng theo từng loại tiền.",
       "showing": "Đang hiển thị {{count}} dòng ledger",

@@ -1,15 +1,22 @@
 import { Component, memo, type ReactNode, useEffect, useRef, useState } from 'react'
-import { Skeleton } from 'antd'
+import { useTranslation } from 'react-i18next'
+import { Button, Skeleton } from 'antd'
 
-import { type PopupModalAnchor } from '@/shared/ui'
+import { FeedbackAlert, type PopupModalAnchor } from '@/shared/ui'
 
-import { type OrderWorkbenchRow } from '../api/orderApi'
+import type { OrderWorkbenchSummaryRow } from '../api/orderApi'
 import type { OrderModal } from '../components/orderTypes'
+import {
+  ORDER_WORKBENCH_DETAIL_BATCH_SIZE,
+  useOrderWorkbenchDetailsQuery,
+} from '../hooks/useOrderWorkbenchQuery'
 import { OrderInlinePanel } from './OrderInlinePanel'
 import styles from './OrderWorkbenchPage.module.scss'
 
 type OrderWorkbenchExpandedRowProps = {
-  readonly row: OrderWorkbenchRow
+  readonly row: OrderWorkbenchSummaryRow
+  readonly index?: number
+  readonly detailIds: readonly string[]
   readonly canWrite: boolean
   readonly canOperate: boolean
   readonly requestedModal?: OrderModal
@@ -19,6 +26,7 @@ type OrderWorkbenchExpandedRowProps = {
 
 interface RowErrorBoundaryProps {
   children: ReactNode
+  errorMessage: string
 }
 
 interface RowErrorBoundaryState {
@@ -39,11 +47,8 @@ class OrderRowErrorBoundary extends Component<RowErrorBoundaryProps, RowErrorBou
   override render() {
     if (this.state.hasError) {
       return (
-        <div className={styles.inlinePanel} style={{ padding: '16px' }}>
-          <span style={{ color: '#faad14' }}>
-            Không thể hiển thị chi tiết dòng sản phẩm do dữ liệu không đồng bộ. Vui lòng tải lại
-            trang.
-          </span>
+        <div className={styles.inlinePanel}>
+          <FeedbackAlert type="error" title={this.props.errorMessage} />
         </div>
       )
     }
@@ -53,21 +58,29 @@ class OrderRowErrorBoundary extends Component<RowErrorBoundaryProps, RowErrorBou
 
 const LazyOrderDetail = memo(function LazyOrderDetail({
   row,
+  index,
+  detailIds,
   canWrite,
   canOperate,
   requestedModal,
   requestedPopupAnchor,
   onOrderModalClose,
 }: OrderWorkbenchExpandedRowProps) {
+  const { t } = useTranslation()
   const elementRef = useRef<HTMLDivElement>(null)
-  const [visible, setVisible] = useState(() => typeof IntersectionObserver === 'undefined')
+  const isAboveTheFold = typeof index === 'number' && index < ORDER_WORKBENCH_DETAIL_BATCH_SIZE
+  const [hasEnteredViewport, setHasEnteredViewport] = useState(false)
+  const visible =
+    isAboveTheFold || hasEnteredViewport || typeof IntersectionObserver === 'undefined'
+  const details = useOrderWorkbenchDetailsQuery(detailIds, visible)
+  const detailRow = details.data?.items.find((detail) => detail.order.id === row.order.id)
 
   useEffect(() => {
     if (visible || !elementRef.current) return
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting) return
-        setVisible(true)
+        setHasEnteredViewport(true)
         observer.disconnect()
       },
       { rootMargin: '200px 0px' },
@@ -78,17 +91,29 @@ const LazyOrderDetail = memo(function LazyOrderDetail({
 
   return (
     <div ref={elementRef} className={styles.lazyOrderDetail}>
-      {visible ? (
+      {visible && detailRow ? (
         <OrderInlinePanel
-          row={row}
+          row={detailRow}
           canWrite={canWrite}
           canOperate={canOperate}
           requestedModal={requestedModal}
           requestedPopupAnchor={requestedPopupAnchor}
           onOrderModalClose={onOrderModalClose}
         />
+      ) : visible && (details.isError || details.isSuccess) ? (
+        <div className={styles.inlinePanel}>
+          <FeedbackAlert
+            type="error"
+            title={t('orders.detailError')}
+            action={
+              <Button type="link" onClick={() => void details.refetch()}>
+                {t('orders.actions.retry')}
+              </Button>
+            }
+          />
+        </div>
       ) : (
-        <Skeleton active title={false} paragraph={{ rows: 4 }} />
+        <Skeleton active={visible && details.isFetching} title={false} paragraph={{ rows: 4 }} />
       )}
     </div>
   )
@@ -96,20 +121,25 @@ const LazyOrderDetail = memo(function LazyOrderDetail({
 
 export const OrderWorkbenchExpandedRow = memo(function OrderWorkbenchExpandedRow({
   row,
+  index,
+  detailIds,
   canWrite,
   canOperate,
   requestedModal,
   requestedPopupAnchor,
   onOrderModalClose,
 }: OrderWorkbenchExpandedRowProps) {
+  const { t } = useTranslation()
   if (!row?.order) {
     return null
   }
 
   return (
-    <OrderRowErrorBoundary>
+    <OrderRowErrorBoundary errorMessage={t('orders.detailError')}>
       <LazyOrderDetail
         row={row}
+        index={index}
+        detailIds={detailIds}
         canWrite={canWrite}
         canOperate={canOperate}
         requestedModal={requestedModal}

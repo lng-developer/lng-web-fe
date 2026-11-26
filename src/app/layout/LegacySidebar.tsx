@@ -54,6 +54,7 @@ import { Badge, Image, Layout, Menu, Tooltip } from 'antd'
 import { workspaceRouteLinks } from '@/app/router/workspaceRoutes'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { useSidebarBadges } from './useSidebarBadges'
+import { useRoutePreloadIntent } from './useRoutePreloadIntent'
 
 import {
   canReadHrDashboard,
@@ -886,6 +887,7 @@ export function LegacySidebar({
   bottomMenus: bottomMenuGroups = emptyBottomMenuGroups,
   financeVisible = false,
   account,
+  preloadRoute,
 }: {
   collapsed: boolean
   onCollapsedChange: (value: boolean) => void
@@ -893,10 +895,12 @@ export function LegacySidebar({
   accountLabel?: string
   financeVisible?: boolean
   account?: CurrentAccount
+  preloadRoute?: (path: string) => void
 }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
+  const preloadIntent = useRoutePreloadIntent(preloadRoute)
   const permissions = useMemo(() => getPermissionsSet(account), [account])
   const [activeMenu, setActiveMenu] = useState(
     () =>
@@ -955,7 +959,12 @@ export function LegacySidebar({
     }
     // When entering dashboard, preserve previous openKeys so the most recent menu state is kept
     if (routeState.menuKey !== 'dashboard' && routeState.menuKey !== 'hr-dashboard') {
-      setOpenKeys(routeState.openKeys)
+      setOpenKeys((keys) =>
+        keys.length === routeState.openKeys.length &&
+        keys.every((key, index) => key === routeState.openKeys[index])
+          ? keys
+          : routeState.openKeys,
+      )
     }
   }, [bottomMenuGroups, financeVisible, location.pathname, location.search, permissions])
 
@@ -1119,15 +1128,27 @@ export function LegacySidebar({
     }
   }
 
-  const activeDetailMenu =
-    activeMenu === 'system'
-      ? toLegacyMenuItems(bottomMenuGroups.system ?? [])
-      : activeMode === 'hr'
-        ? toLegacyMenuItems(bottomMenuGroups.hr ?? [])
-        : (getDetailMenu(currentPortalMenu, financeVisible, permissions) ??
-          getDetailMenu(lastPortalMenu, financeVisible, permissions) ??
-          [])
-  const menuItems = toMenuItems(activeDetailMenu, t, badgeCounts)
+  const menuItems = useMemo(() => {
+    const activeDetailMenu =
+      activeMenu === 'system'
+        ? toLegacyMenuItems(bottomMenuGroups.system ?? [])
+        : activeMode === 'hr'
+          ? toLegacyMenuItems(bottomMenuGroups.hr ?? [])
+          : (getDetailMenu(currentPortalMenu, financeVisible, permissions) ??
+            getDetailMenu(lastPortalMenu, financeVisible, permissions) ??
+            [])
+    return toMenuItems(activeDetailMenu, t, badgeCounts)
+  }, [
+    activeMenu,
+    activeMode,
+    badgeCounts,
+    bottomMenuGroups,
+    currentPortalMenu,
+    financeVisible,
+    lastPortalMenu,
+    permissions,
+    t,
+  ])
 
   const selectedPortalKeys = useMemo(() => {
     let bestKey: string | undefined
@@ -1234,6 +1255,7 @@ export function LegacySidebar({
     <aside
       className={`${styles.sidebar} ${collapsed ? styles.collapsed : ''}`}
       aria-label={t('shell.navigation.cores')}
+      {...preloadIntent}
     >
       <div className={styles.identity}>
         <div
@@ -1438,7 +1460,17 @@ export function LegacySidebar({
                   onOpenChange={isHrActive || isSystemActive ? undefined : setOpenKeys}
                   selectedKeys={isHrActive ? selectedHrKeys : selectedPortalKeys}
                   items={isHrActive ? hrMenuItems : isSystemActive ? systemMenuItems : menuItems}
-                  onClick={({ key }) => navigate(String(key))}
+                  onClick={({ key, domEvent }) => {
+                    const target = domEvent.target
+                    // Links handle their own navigation, including modified clicks.
+                    if (
+                      domEvent.defaultPrevented ||
+                      (target instanceof Element && target.closest('a[href]'))
+                    ) {
+                      return
+                    }
+                    void navigate(String(key))
+                  }}
                 />
               </>
             )

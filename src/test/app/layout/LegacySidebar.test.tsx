@@ -1,4 +1,4 @@
-import { MemoryRouter } from 'react-router-dom'
+import { createMemoryRouter, MemoryRouter, Outlet, RouterProvider } from 'react-router-dom'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -46,6 +46,66 @@ describe('LegacySidebar', () => {
 
     expect(screen.getByTitle('12')).toBeVisible()
   })
+
+  it('preloads the hovered or keyboard-focused route without navigating', async () => {
+    const preloadRoute = vi.fn()
+    render(
+      <MemoryRouter initialEntries={['/portal/extensions/logs']}>
+        <AppProviders>
+          <LegacySidebar
+            collapsed={false}
+            onCollapsedChange={() => undefined}
+            preloadRoute={preloadRoute}
+          />
+        </AppProviders>
+      </MemoryRouter>,
+    )
+    const trackingItem = screen.getByRole('menuitem', { name: 'Tracking Center' })
+    fireEvent.mouseOver(trackingItem)
+    await waitFor(() => expect(preloadRoute).toHaveBeenCalledWith('/portal/extensions/tracking'))
+    fireEvent.focus(screen.getByRole('link', { name: 'Image Sync' }))
+    expect(preloadRoute).toHaveBeenCalledWith('/portal/extensions/images')
+    expect(screen.getByRole('menuitem', { name: 'Log Manager' })).toHaveClass(
+      'ant-menu-item-selected',
+    )
+  })
+
+  it.each(['link', 'row'] as const)(
+    'starts one navigation when clicking the menu %s',
+    async (target) => {
+      const loader = vi.fn(async () => null)
+      const router = createMemoryRouter(
+        [
+          {
+            element: (
+              <>
+                <LegacySidebar collapsed={false} onCollapsedChange={() => undefined} />
+                <Outlet />
+              </>
+            ),
+            children: [
+              { path: '/portal/extensions/logs', element: null },
+              { path: '/portal/extensions/tracking', loader, element: <h1>Tracking workspace</h1> },
+            ],
+          },
+        ],
+        { initialEntries: ['/portal/extensions/logs'] },
+      )
+
+      render(
+        <AppProviders>
+          <RouterProvider router={router} />
+        </AppProviders>,
+      )
+      const trigger = screen.getByRole(target === 'link' ? 'link' : 'menuitem', {
+        name: 'Tracking Center',
+      })
+      fireEvent.click(trigger)
+
+      expect(await screen.findByText('Tracking workspace')).toBeInTheDocument()
+      expect(loader).toHaveBeenCalledTimes(1)
+    },
+  )
 
   it('does not expose Mapping or Configuration through catalog read access', async () => {
     const account: CurrentAccount = {

@@ -25,6 +25,10 @@
     "title": "Title",
     "required": "Required",
     "status": "Status",
+    "connectionStatus": {
+      "ONLINE": "Online",
+      "OFFLINE": "Offline"
+    },
     "description": "Description",
     "actions": "Actions",
     "search": "Search",
@@ -58,6 +62,65 @@
     "view": "Details",
     "viewDetails": "View details",
     "delete": "Delete"
+  },
+  "extensionCommandErrors": {
+    "etsyImportNeedsReview": "Etsy order import needs review",
+    "cancelledByOperator": "Cancelled by operator",
+    "authSessionExpired": "Auth session expired",
+    "amazonAdsSessionExpired": "Amazon Ads session expired",
+    "leaseExpired": "Worker's time to process the command expired",
+    "taskFailed": "Extension task failed",
+    "seeDetails": "See error details",
+    "noDetails": "No error details provided"
+  },
+  "extensionCommand": {
+    "details": "Task details",
+    "total": "Total commands: {{count}}",
+    "claimedAt": "Claimed",
+    "startedAt": "Started",
+    "completedAt": "Completed",
+    "trackingVerification": "Tracking verification",
+    "otherCarrier": "Other carrier",
+    "statuses": {
+      "QUEUED": "Queued",
+      "CLAIMED": "Claimed",
+      "RUNNING": "Running",
+      "WAITING_AMAZON": "Waiting for Amazon",
+      "SUCCEEDED": "Succeeded",
+      "PARTIAL_FAILED": "Partially failed",
+      "FAILED": "Failed"
+    },
+    "types": {
+      "IMPORT_NEW_ORDERS": "Sync orders",
+      "IMPORT_ADS_SPEND": "Ad spend",
+      "IMPORT_TRANSACTIONS": "Transactions",
+      "IMPORT_SETTLEMENTS": "Settlements",
+      "TEST_CONNECTION": "Check connection",
+      "SYNC_LISTING_IMAGES": "Sync listing images",
+      "UPLOAD_TRACKING": "Upload tracking"
+    },
+    "trackingStatuses": {
+      "PENDING": "Pending",
+      "ETSY_ACCEPTED": "Accepted by Etsy",
+      "VERIFIED": "Verified",
+      "FAILED": "Failed"
+    }
+  },
+  "extensionTracking": {
+    "workflow": {
+      "receive": {
+        "title": "Receive tracking from the vendor",
+        "description": "When the vendor submits tracking numbers in Vendor Handoff, Ecomatrix verifies the shipments and marks them as shipped."
+      },
+      "sync": {
+        "title": "Sync tracking automatically",
+        "description": "The extension on the store computer picks up tracking numbers and sends them to Etsy or confirms shipments in Amazon Seller Central."
+      },
+      "verify": {
+        "title": "Verify and track shipments",
+        "description": "Follow carrier scans from USPS, FedEx, and DHL to track shipments and monitor on-time delivery across both marketplaces."
+      }
+    }
   },
   "language": {
     "label": "Language",
@@ -141,6 +204,7 @@
   },
   "shell": {
     "refresh": "Refresh",
+    "loadingPage": "Loading page",
     "searchPlaceholder": "Search navigation",
     "noSearchResults": "No navigation items found",
     "quickNav": "Quick navigation",

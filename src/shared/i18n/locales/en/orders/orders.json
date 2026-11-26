@@ -3,6 +3,7 @@
     "title": "Order workbench",
     "description": "See ownership, blockers and fulfillment state without leaving the queue.",
     "error": "Orders are unavailable",
+    "detailError": "Could not load order details",
     "vendorRematch": {
       "requireRework": "Redo design files (Rework)",
       "requireReworkDescription": "Remove the existing scaled files and QC results. After vendor rematch, the order returns to the Designer queue for new files.",
@@ -251,10 +252,6 @@
       "button": "Export CSV",
       "success": "Orders export downloaded",
       "error": "Could not export orders"
-    },
-    "summary": {
-      "orders": "Orders",
-      "items": "Items"
     },
     "addressStatuses": {
       "NOT_CHECKED": "Not checked",

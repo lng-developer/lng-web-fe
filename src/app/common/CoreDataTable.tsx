@@ -305,6 +305,7 @@ export function CoreDataTable<RecordType extends object>({
       setViewportScrollY((current) => (current === nextHeight ? current : nextHeight))
     }
 
+    calculateHeight()
     const frameId = requestAnimationFrame(calculateHeight)
 
     const resizeObserver = new ResizeObserver(calculateHeight)
@@ -364,7 +365,9 @@ export function CoreDataTable<RecordType extends object>({
             dataSource={pagedDataSource}
             scroll={scroll}
             locale={{
-              emptyText: emptyText ?? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />,
+              emptyText: tableProps.loading
+                ? null
+                : (emptyText ?? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />),
             }}
           />
         )}

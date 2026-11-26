@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 import { workspaceRouteLinks } from '@/app/router/workspaceRoutes'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
@@ -32,7 +33,6 @@ export function useSidebarBadges({
     },
   )
 
-  return {
-    [workspaceRouteLinks.orders]: orderSummary.data?.tabCounts?.NEW,
-  }
+  const newOrders = orderSummary.data?.tabCounts?.NEW
+  return useMemo(() => ({ [workspaceRouteLinks.orders]: newOrders }), [newOrders])
 }

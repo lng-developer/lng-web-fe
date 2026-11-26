@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '@/app/providers/AppProviders'
 import {
   getOrderSummary,
-  listOrderWorkbench,
+  listOrderWorkbenchSummary,
   type OrderWorkbenchRow,
 } from '@/features/portal/orders/api/orderApi'
 import { OrderWorkbenchPage } from '@/features/portal/orders/pages/OrderWorkbenchPage'
@@ -28,7 +28,7 @@ vi.mock('@/app/common/CoreDataTable', async () => ({
 vi.mock('@/features/portal/orders/api/orderApi', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/features/portal/orders/api/orderApi')>()),
   getOrderSummary: vi.fn(),
-  listOrderWorkbench: vi.fn(),
+  listOrderWorkbenchSummary: vi.fn(),
 }))
 
 vi.mock('@/features/portal/shops/api/shopApi', async (importOriginal) => ({
@@ -85,7 +85,7 @@ describe('OrderWorkbenchPage', () => {
     vi.clearAllMocks()
     queryClient.clear()
     await i18n.changeLanguage('en')
-    vi.mocked(listOrderWorkbench).mockImplementation(async (params) => ({
+    vi.mocked(listOrderWorkbenchSummary).mockImplementation(async (params) => ({
       items: [],
       pagination: { total: 0, page: params.page, limit: params.limit },
     }))
@@ -119,7 +119,7 @@ describe('OrderWorkbenchPage', () => {
       'true',
     )
     await waitFor(() =>
-      expect(listOrderWorkbench).toHaveBeenCalledWith(
+      expect(listOrderWorkbenchSummary).toHaveBeenCalledWith(
         expect.objectContaining({ tab: 'NEW_ORDER' }),
         expect.any(AbortSignal),
       ),
@@ -130,7 +130,7 @@ describe('OrderWorkbenchPage', () => {
     renderPage('/portal/orders?salesChannelCode=etsy')
 
     await waitFor(() =>
-      expect(listOrderWorkbench).toHaveBeenCalledWith(
+      expect(listOrderWorkbenchSummary).toHaveBeenCalledWith(
         expect.objectContaining({ salesChannelCode: 'ETSY' }),
         expect.any(AbortSignal),
       ),
@@ -141,6 +141,18 @@ describe('OrderWorkbenchPage', () => {
     )
   })
 
+  it('requests 50 orders for the first workbench page', async () => {
+    renderPage('/portal/orders?salesChannelCode=amazon')
+
+    await waitFor(() =>
+      expect(listOrderWorkbenchSummary).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({ page: 1, limit: 50, salesChannelCode: 'AMAZON' }),
+        expect.any(AbortSignal),
+      ),
+    )
+  })
+
   it('activates the selected order queue tab without redundant status badge', async () => {
     renderPage('/portal/orders?tab=NEW_ORDER')
 
@@ -148,8 +160,23 @@ describe('OrderWorkbenchPage', () => {
     expect(screen.queryByRole('status', { name: 'Current queue' })).not.toBeInTheDocument()
   })
 
+  it('keeps refresh available without showing the update time or totals', async () => {
+    vi.mocked(listOrderWorkbenchSummary).mockResolvedValue({
+      items: [workbenchRow],
+      pagination: { total: 1, page: 1, limit: 20 },
+    })
+
+    renderPage()
+
+    await screen.findByText('113-2183249-0763446')
+    expect(screen.getByRole('button', { name: 'Refresh' })).toBeEnabled()
+    expect(screen.queryByText(/^Updated at /)).not.toBeInTheDocument()
+    expect(screen.queryByText('Orders:')).not.toBeInTheDocument()
+    expect(screen.queryByText('Items:')).not.toBeInTheDocument()
+  })
+
   it('renders each order ID as a chip without copy icon', async () => {
-    vi.mocked(listOrderWorkbench).mockResolvedValue({
+    vi.mocked(listOrderWorkbenchSummary).mockResolvedValue({
       items: [workbenchRow],
       pagination: { total: 1, page: 1, limit: 20 },
     })
@@ -162,7 +189,7 @@ describe('OrderWorkbenchPage', () => {
   })
 
   it('shows the marketplace order time separately from the import time', async () => {
-    vi.mocked(listOrderWorkbench).mockResolvedValue({
+    vi.mocked(listOrderWorkbenchSummary).mockResolvedValue({
       items: [workbenchRow],
       pagination: { total: 1, page: 1, limit: 20 },
     })
@@ -187,7 +214,7 @@ describe('OrderWorkbenchPage', () => {
   })
 
   it('shows an open case as an icon without exposing its title in the table', async () => {
-    vi.mocked(listOrderWorkbench).mockResolvedValue({
+    vi.mocked(listOrderWorkbenchSummary).mockResolvedValue({
       items: [
         {
           order: {
@@ -251,7 +278,7 @@ describe('OrderWorkbenchPage', () => {
   })
 
   it('filters out CANCELLED orders when active tab is NO_COST_CENTER', async () => {
-    vi.mocked(listOrderWorkbench).mockResolvedValue({
+    vi.mocked(listOrderWorkbenchSummary).mockResolvedValue({
       items: [
         workbenchRow,
         {
@@ -278,7 +305,7 @@ describe('OrderWorkbenchPage', () => {
   })
 
   it('renders the bottleneck stage and item count for orders with multiple items', async () => {
-    vi.mocked(listOrderWorkbench).mockResolvedValue({
+    vi.mocked(listOrderWorkbenchSummary).mockResolvedValue({
       items: [
         {
           order: {
@@ -313,7 +340,7 @@ describe('OrderWorkbenchPage', () => {
   })
 
   it('preserves macro terminal status for shipped orders even with items', async () => {
-    vi.mocked(listOrderWorkbench).mockResolvedValue({
+    vi.mocked(listOrderWorkbenchSummary).mockResolvedValue({
       items: [
         {
           order: {

@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { beforeEach, expect, it, vi } from 'vitest'
 
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import type { ExtensionManagementAgent } from '@/features/portal/integrations/api/integrationApi'
 import * as api from '@/features/portal/integrations/listing-images/api/listingImageApi'
 import ListingImageSyncPanel from '@/features/portal/integrations/listing-images/components/ListingImageSyncPanel'
 import i18n from '@/shared/i18n/i18n'
@@ -54,7 +55,11 @@ beforeEach(async () => {
   vi.mocked(api.listImageSchedules).mockResolvedValue({ items: [] })
   vi.mocked(api.listImageJobs).mockResolvedValue({ items: [job], total: 1, page: 1, limit: 10 })
 })
-function show(agents = [agent], operator = account) {
+function show(
+  agents: ExtensionManagementAgent[] = [agent],
+  operator = account,
+  onlineAgentsOnly = false,
+) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={client}>
@@ -62,10 +67,31 @@ function show(agents = [agent], operator = account) {
         account={operator}
         agents={agents}
         shopNames={new Map([['shop', 'LLC']])}
+        onlineAgentsOnly={onlineAgentsOnly}
       />
     </QueryClientProvider>,
   )
 }
+it('selects an online worker even when an offline worker appears first', async () => {
+  show(
+    [{ ...agent, id: 'offline-agent', label: 'Disconnected', status: 'OFFLINE' }, agent],
+    account,
+    true,
+  )
+
+  expect(await screen.findByText('LLC / RDC')).toBeVisible()
+  fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Image sync extension' }))
+  expect(screen.queryByText(/Disconnected/)).not.toBeInTheDocument()
+})
+
+it('keeps job history visible when no image sync worker is online', async () => {
+  show([{ ...agent, status: 'OFFLINE' }], account, true)
+
+  expect(await screen.findByText('25 / 3000')).toBeVisible()
+  expect(screen.queryByRole('combobox', { name: 'Image sync extension' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Request image sync now' })).not.toBeInTheDocument()
+})
+
 it('shows parent job progress and pauses the correct job', async () => {
   vi.mocked(api.actOnImageJob).mockResolvedValue({ ...job, status: 'PAUSED' })
   show()

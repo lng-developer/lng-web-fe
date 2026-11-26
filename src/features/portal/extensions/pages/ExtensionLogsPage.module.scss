@@ -41,6 +41,17 @@
   font-size: 12px;
 }
 
+.errorResult {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  gap: 6px;
+}
+
+.errorResultIcon {
+  flex: none;
+}
+
 .timeCell {
   display: flex;
   flex-direction: column;

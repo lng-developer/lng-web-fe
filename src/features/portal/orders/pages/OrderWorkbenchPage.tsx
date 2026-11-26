@@ -13,7 +13,7 @@ import {
   SwapOutlined,
   TruckOutlined,
 } from '@ant-design/icons'
-import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Space, Tooltip } from 'antd'
 import dayjs from 'dayjs'
@@ -41,11 +41,15 @@ import {
   useFeedbackToast,
 } from '@/shared/ui'
 
-import { downloadOrdersCsv, type OrderWorkbenchRow } from '../api/orderApi'
+import { downloadOrdersCsv, type OrderWorkbenchSummaryRow } from '../api/orderApi'
+import { orderKeys } from '../api/orderKeys'
 import { OrderActionModalsContainer } from '../components/OrderActionModalsContainer'
 import { type OrderModal, useOrderActionStore } from '../hooks/useOrderActionStore'
 import { useOrderSummaryQuery } from '../hooks/useOrderSummaryQuery'
-import { useOrderWorkbenchQuery } from '../hooks/useOrderWorkbenchQuery'
+import {
+  ORDER_WORKBENCH_DETAIL_BATCH_SIZE,
+  useOrderWorkbenchQuery,
+} from '../hooks/useOrderWorkbenchQuery'
 import {
   formatMinorMoney,
   formatOrderStatusLabel,
@@ -77,9 +81,19 @@ const SALES_CHANNEL_BY_QUERY = {
   shopify: 'SHOPIFY',
 } as const
 
+const MACRO_TERMINAL_OR_HOLD = new Set([
+  'SHIPPED',
+  'DELIVERED',
+  'CANCELLED',
+  'REFUNDED',
+  'FAILED',
+  'ON_HOLD',
+])
+
 export const OrderWorkbenchPage = () => {
   const { t, i18n } = useTranslation()
   const toast = useFeedbackToast()
+  const queryClient = useQueryClient()
   const account = useRouteLoaderData('workspace') as CurrentAccount | undefined
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
@@ -98,7 +112,7 @@ export const OrderWorkbenchPage = () => {
   const [stage, setStage] = useState<string | undefined>(searchParams.get('stage') || undefined)
   const [dates, setDates] = useState<DateRangeValue>(getDefaultDateRange)
   const canWriteOrder = useCallback(
-    (row: OrderWorkbenchRow) =>
+    (row: OrderWorkbenchSummaryRow) =>
       canUseScopedPermission(account, 'ORDERS:WRITE', {
         scopeType: 'shop',
         scopeId: row.order?.shopId ?? row.order?.shop?.id,
@@ -134,6 +148,10 @@ export const OrderWorkbenchPage = () => {
   const orders = useOrderWorkbenchQuery(
     recordId ? { page: 1, limit: 1, tab: 'ALL', recordId } : params,
   )
+  const refreshOrders = () => {
+    void orders.refetch()
+    void queryClient.invalidateQueries({ queryKey: orderKeys.workbenchDetailLists })
+  }
   const summary = useOrderSummaryQuery(summaryParams, {
     placeholderData: keepPreviousData,
   })
@@ -231,7 +249,7 @@ export const OrderWorkbenchPage = () => {
   const tabItems = useMemo(
     () =>
       TABS.map((key) => {
-        let count = summary.data?.tabCounts[key] ?? 0
+        let count = summary.data?.tabCounts?.[key]
         if (key === 'NO_COST_CENTER' && tab === 'NO_COST_CENTER' && orderItems.length === 0) {
           count = 0
         }
@@ -250,6 +268,20 @@ export const OrderWorkbenchPage = () => {
   const expandedRowKeys = useMemo(
     () => orderItems.map((row) => row.order?.id).filter(Boolean) as string[],
     [orderItems],
+  )
+  const detailBatches = useMemo(
+    () =>
+      Array.from(
+        { length: Math.ceil(expandedRowKeys.length / ORDER_WORKBENCH_DETAIL_BATCH_SIZE) },
+        (_, batch) =>
+          expandedRowKeys
+            .slice(
+              batch * ORDER_WORKBENCH_DETAIL_BATCH_SIZE,
+              (batch + 1) * ORDER_WORKBENCH_DETAIL_BATCH_SIZE,
+            )
+            .sort(),
+      ),
+    [expandedRowKeys],
   )
   const hasActiveFilters = Boolean(shopId || vendorId || stage || dates.dateFrom || dates.dateTo)
 
@@ -302,31 +334,12 @@ export const OrderWorkbenchPage = () => {
       tab === 'NO_COST_CENTER' && orderItems.length < (orders.data?.items?.length ?? 0)
         ? orderItems.length
         : rawTotal
-    const rawTotalItems = orders.data?.pagination?.totalItems ?? orders.data?.totalItems ?? total
-    const totalItems =
-      tab === 'NO_COST_CENTER' && orderItems.length < (orders.data?.items?.length ?? 0)
-        ? orderItems.reduce(
-            (sum, r) => sum + (r.items?.reduce((s, it) => s + (it.item.quantity || 1), 0) ?? 1),
-            0,
-          )
-        : rawTotalItems
     return {
       current: page,
       pageSize,
       total,
-      totalItems,
     }
-  }, [
-    orders.data?.items,
-    orders.data?.pagination,
-    orders.data?.totalItems,
-    orderItems,
-    page,
-    pageSize,
-    tab,
-  ])
-  const totalOrders = pagination.total
-  const totalItems = pagination.totalItems ?? totalOrders
+  }, [orders.data?.items, orders.data?.pagination, orderItems, page, pageSize, tab])
   const handlePageChange = useCallback(
     (nextPage: number, nextPageSize: number) => {
       setPage(nextPageSize === pageSize ? nextPage : 1)
@@ -335,17 +348,21 @@ export const OrderWorkbenchPage = () => {
     [pageSize],
   )
   const renderExpandedRow = useCallback(
-    (row: OrderWorkbenchRow) => {
+    (row: OrderWorkbenchSummaryRow, index: number) => {
       const canWrite = canWriteOrder(row)
       return (
         <OrderWorkbenchExpandedRow
           row={row}
+          index={index}
+          detailIds={
+            detailBatches[Math.floor(index / ORDER_WORKBENCH_DETAIL_BATCH_SIZE)] ?? [row.order.id]
+          }
           canWrite={canWrite}
           canOperate={canWrite && row.order?.status !== 'CANCELLED'}
         />
       )
     },
-    [canWriteOrder],
+    [canWriteOrder, detailBatches],
   )
 
   const renderOrderDate = useCallback(
@@ -353,7 +370,7 @@ export const OrderWorkbenchPage = () => {
     [],
   )
 
-  const columns = useMemo<TableColumnsType<OrderWorkbenchRow>>(
+  const columns = useMemo<TableColumnsType<OrderWorkbenchSummaryRow>>(
     () => [
       {
         title: t('orders.columns.order'),
@@ -370,14 +387,7 @@ export const OrderWorkbenchPage = () => {
         title: t('orders.columns.status'),
         width: 160,
         render: (_, row) => {
-          const isMacroTerminalOrHold = [
-            'SHIPPED',
-            'DELIVERED',
-            'CANCELLED',
-            'REFUNDED',
-            'FAILED',
-            'ON_HOLD',
-          ].includes(row.order?.status ?? '')
+          const isMacroTerminalOrHold = MACRO_TERMINAL_OR_HOLD.has(row.order?.status ?? '')
 
           const bottleneck =
             !isMacroTerminalOrHold && row.items?.length
@@ -617,23 +627,7 @@ export const OrderWorkbenchPage = () => {
           </div>
         </div>
 
-        <div className={styles.statsBadge}>
-          <span className={styles.statsLabel}>
-            {t('orders.summary.orders', { defaultValue: 'Đơn' })}:
-          </span>
-          <strong className={styles.statsValue}>{totalOrders.toLocaleString()}</strong>
-          <span className={styles.statsDivider}>•</span>
-          <span className={styles.statsLabel}>
-            {t('orders.summary.items', { defaultValue: 'Items' })}:
-          </span>
-          <strong className={styles.statsValuePrimary}>{totalItems.toLocaleString()}</strong>
-        </div>
-
-        <DataFreshness
-          timestamp={orders.dataUpdatedAt}
-          onRefresh={() => void orders.refetch()}
-          loading={orders.isFetching}
-        />
+        <DataFreshness onRefresh={refreshOrders} loading={orders.isFetching} />
 
         <Button
           icon={<DownloadOutlined />}
