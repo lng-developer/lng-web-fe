@@ -18,35 +18,37 @@ interface StoreMessageStatus {
   shopId: string
   shopName: string
   platform: string
-  agentOnline: boolean
   agentName: string
   directUrl?: string
 }
 
 export function ExtensionMessagesPage() {
   const { t } = useTranslation()
-  const { shops, managementAgents } = useExtensionHub()
+  const { shops, onlineManagementAgents } = useExtensionHub()
 
   const [platformFilter, setPlatformFilter] = useState<'ALL' | 'AMAZON' | 'ETSY'>('ALL')
 
   const messageRows: StoreMessageStatus[] = useMemo(() => {
-    return shops.map((shop) => {
-      const agent = managementAgents.find((a) => a.shopId === shop.id)
-      const platform = (shop.salesChannelCode || agent?.provider || 'AMAZON').toUpperCase()
+    return shops.flatMap((shop) => {
+      const agent = onlineManagementAgents.find((a) => a.shopId === shop.id)
+      if (!agent) return []
+
+      const platform = (shop.salesChannelCode || agent.provider || 'AMAZON').toUpperCase()
       const directUrl =
         platform === 'ETSY'
           ? 'https://www.etsy.com/your/shops/me/messages'
           : 'https://sellercentral.amazon.com/messaging/reviews'
-      return {
-        shopId: shop.id,
-        shopName: shop.name,
-        platform,
-        agentOnline: agent?.status === 'ONLINE',
-        agentName: agent?.label || agent?.clientId || 'No Bot Connected',
-        directUrl,
-      }
+      return [
+        {
+          shopId: shop.id,
+          shopName: shop.name,
+          platform,
+          agentName: agent.label || agent.clientId,
+          directUrl,
+        },
+      ]
     })
-  }, [shops, managementAgents])
+  }, [shops, onlineManagementAgents])
 
   const filteredRows = useMemo(() => {
     if (platformFilter === 'ALL') return messageRows
@@ -71,9 +73,7 @@ export function ExtensionMessagesPage() {
       key: 'agent',
       render: (_, row) => (
         <Space>
-          <Tag color={row.agentOnline ? 'success' : 'default'}>
-            {row.agentOnline ? 'Online' : 'Offline'}
-          </Tag>
+          <Tag color="success">ONLINE</Tag>
           <span>{row.agentName}</span>
         </Space>
       ),
@@ -129,7 +129,7 @@ export function ExtensionMessagesPage() {
         <MetricCard
           icon={<CheckCircleOutlined />}
           label={t('portal.extensions.metrics.onlineAgents', { defaultValue: 'Online Agents' })}
-          value={messageRows.filter((r) => r.agentOnline).length}
+          value={messageRows.length}
           variant="success"
         />
       </div>

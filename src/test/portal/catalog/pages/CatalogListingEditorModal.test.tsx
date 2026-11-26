@@ -66,7 +66,10 @@ describe('CatalogListingEditorModal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalled())
-    expect(onSubmit.mock.calls[0][0]).toMatchObject({ title: 'Updated shirt', designType: 'CUSTOM_IMAGE' })
+    expect(onSubmit.mock.calls[0][0]).toMatchObject({
+      title: 'Updated shirt',
+      designType: 'CUSTOM_IMAGE',
+    })
     expect(onSubmit.mock.calls[0][0]).toHaveProperty(
       'previewImageUrl',
       'https://cdn.lng.co/previews/shirt.png',
@@ -80,20 +83,32 @@ describe('CatalogListingEditorModal', () => {
     const onSubmit = vi.fn()
     render(
       <AppProviders>
-        <CatalogListingEditorModal open listing={{ ...listing, designType: designType ? null : 'CUSTOM_IMAGE' }}
-          shops={[]} salesChannels={salesChannels} saving={false} onClose={vi.fn()} onSubmit={onSubmit} />
+        <CatalogListingEditorModal
+          open
+          listing={{ ...listing, designType: designType ? null : 'CUSTOM_IMAGE' }}
+          shops={[]}
+          salesChannels={salesChannels}
+          saving={false}
+          onClose={vi.fn()}
+          onSubmit={onSubmit}
+        />
       </AppProviders>,
     )
     if (designType) {
       fireEvent.mouseDown(screen.getByLabelText('Design type'))
       fireEvent.click(await screen.findByText('Custom image'))
     } else {
-      const clear = screen.getByLabelText('Design type').closest('.ant-select')?.querySelector('.ant-select-clear')
+      const clear = screen
+        .getByLabelText('Design type')
+        .closest('.ant-select')
+        ?.querySelector('.ant-select-clear')
       expect(clear).toBeTruthy()
       fireEvent.mouseDown(clear!)
     }
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
-    await waitFor(() => expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ designType })))
+    await waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ designType })),
+    )
   })
 
   it('shows only the marketplace identity field required by the selected channel', () => {

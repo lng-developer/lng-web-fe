@@ -1,0 +1,46 @@
+{
+  "portal": {
+    "shops": {
+      "title": "Không gian cửa hàng",
+      "description": "Quản lý danh mục cửa hàng và trạng thái vận hành.",
+      "filters": "Bộ lọc cửa hàng",
+      "search": "Tìm cửa hàng",
+      "allStatuses": "Tất cả trạng thái",
+      "name": "Tên",
+      "id": "Mã cửa hàng",
+      "currency": "Tiền tệ",
+      "status": "Trạng thái",
+      "updatedAt": "Cập nhật",
+      "actions": "Thao tác",
+      "createAction": "Tạo cửa hàng",
+      "editAction": "Sửa {{name}}",
+      "createTitle": "Tạo cửa hàng",
+      "editTitle": "Sửa cửa hàng",
+      "inspectTitle": "Chi tiết cửa hàng",
+      "sectionInfo": "Thông tin cửa hàng",
+      "sectionStatus": "Trạng thái & quyền truy cập",
+      "create": "Tạo",
+      "saveStatus": "Lưu trạng thái",
+      "cancel": "Hủy",
+      "discard": "Bỏ thay đổi",
+      "unsavedDescription": "Bỏ các thay đổi chưa lưu?",
+      "required": "Trường này là bắt buộc",
+      "unavailable": "Không thể tải cửa hàng",
+      "retry": "Thử lại",
+      "noFilteredResults": "Không có cửa hàng phù hợp với bộ lọc",
+      "clearFilters": "Xóa bộ lọc",
+      "noAuthorizedShops": "Chưa có cửa hàng nào được cấp cho quyền truy cập của bạn",
+      "metrics": {
+        "total": "Tổng cửa hàng",
+        "active": "Cửa hàng hoạt động",
+        "inactive": "Cửa hàng không hoạt động",
+        "channel": "Kênh bán hàng"
+      },
+      "statuses": {
+        "ACTIVE": "Hoạt động",
+        "INACTIVE": "Không hoạt động",
+        "SUSPENDED": "Tạm ngưng"
+      }
+    }
+  }
+}

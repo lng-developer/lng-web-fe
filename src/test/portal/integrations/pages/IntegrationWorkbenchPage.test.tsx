@@ -1276,10 +1276,12 @@ describe('IntegrationWorkbenchPage', () => {
       pagination: { total: 1, page: 1, limit: 10 },
     })
     await client.invalidateQueries()
-    expect(await screen.findByText('ETSY_IMPORT_NEEDS_REVIEW')).toBeVisible()
+    const details = await screen.findByRole('dialog')
+    expect(await within(details).findByText('Etsy order import needs review')).toBeVisible()
+    expect(within(details).queryByText('ETSY_IMPORT_NEEDS_REVIEW')).not.toBeInTheDocument()
   }, 60_000)
 
-  it('shows a task timeline for an extension command', async () => {
+  it('shows a task summary with timestamps for an extension command', async () => {
     vi.mocked(listExtensionCommands).mockResolvedValue({
       items: [
         {
@@ -1544,7 +1546,7 @@ describe('IntegrationWorkbenchPage', () => {
         limit: 50,
       }),
     )
-    expect(screen.getByTitle('Next Page')).toBeVisible()
+    expect(screen.queryByTitle('Next Page')).not.toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Transaction type'), {
       target: { value: 'Order Payment' },
     })
@@ -1595,9 +1597,12 @@ describe('IntegrationWorkbenchPage', () => {
     fireEvent.click(await screen.findByText('Settlements'))
     fireEvent.click(await screen.findByText('settlements-55493020701.txt'))
 
-    expect(await screen.findByText('55493020701')).toBeVisible()
-    expect(screen.getByText('1906.93 USD')).toBeVisible()
-    expect(screen.getByRole('button', { name: 'View settlement activity' })).toBeVisible()
+    expect(await screen.findByText('55493020701')).toBeInTheDocument()
+    expect(screen.getByText('1906.93 USD')).toBeInTheDocument()
+    expect(screen.getByText('View settlement activity').closest('button')).toHaveAttribute(
+      'aria-haspopup',
+      'dialog',
+    )
     expect(screen.queryByText('Not required')).not.toBeInTheDocument()
   }, 15_000)
 

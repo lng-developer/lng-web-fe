@@ -11,7 +11,7 @@ import {
   SyncOutlined,
 } from '@ant-design/icons'
 import type { TableColumnsType } from 'antd'
-import { Button, Input, Popconfirm, Segmented, Select, Space, Table, Tag, Tooltip } from 'antd'
+import { Button, Input, Popconfirm, Segmented, Space, Table, Tag, Tooltip } from 'antd'
 
 import { MetricCard, PageHeader, SectionCard } from '@/shared/ui'
 import type { ExtensionManagementAgent } from '../api/extensionApi'
@@ -25,6 +25,7 @@ export function ExtensionClientsPage() {
   const {
     canWrite,
     managementAgents,
+    onlineManagementAgents,
     extensionManagementAgents,
     shopNames,
     shopPlatforms,
@@ -39,21 +40,17 @@ export function ExtensionClientsPage() {
   } = useExtensionHub()
 
   const [platformFilter, setPlatformFilter] = useState<'ALL' | 'AMAZON' | 'ETSY'>('ALL')
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ONLINE' | 'OFFLINE'>('ALL')
   const [searchQuery, setSearchQuery] = useState('')
   const [tokenModalOpen, setTokenModalOpen] = useState(false)
 
   const filteredAgents = useMemo(() => {
-    return managementAgents.filter((agent) => {
+    return onlineManagementAgents.filter((agent) => {
       const shopPlatform = (
         agent.provider ||
         shopPlatforms.get(agent.shopId) ||
         'AMAZON'
       ).toUpperCase()
       if (platformFilter !== 'ALL' && shopPlatform !== platformFilter) {
-        return false
-      }
-      if (statusFilter !== 'ALL' && agent.status !== statusFilter) {
         return false
       }
       if (searchQuery.trim()) {
@@ -65,7 +62,7 @@ export function ExtensionClientsPage() {
       }
       return true
     })
-  }, [managementAgents, platformFilter, statusFilter, searchQuery, shopPlatforms, shopNames])
+  }, [onlineManagementAgents, platformFilter, searchQuery, shopPlatforms, shopNames])
 
   const amazonAgentsCount = useMemo(() => {
     return managementAgents.filter((agent) => {
@@ -266,30 +263,15 @@ export function ExtensionClientsPage() {
       </div>
 
       <div className={styles.filtersBar}>
-        <div className={styles.filterGroup}>
-          <Segmented
-            value={platformFilter}
-            onChange={(val) => setPlatformFilter(val as 'ALL' | 'AMAZON' | 'ETSY')}
-            options={[
-              { value: 'ALL', label: t('common.all', { defaultValue: 'All Platforms' }) },
-              { value: 'AMAZON', label: 'Amazon' },
-              { value: 'ETSY', label: 'Etsy' },
-            ]}
-          />
-          <Select
-            value={statusFilter}
-            onChange={setStatusFilter}
-            style={{ width: 140 }}
-            options={[
-              {
-                value: 'ALL',
-                label: t('portal.extensions.filters.allStatus', { defaultValue: 'All Status' }),
-              },
-              { value: 'ONLINE', label: 'Online' },
-              { value: 'OFFLINE', label: 'Offline' },
-            ]}
-          />
-        </div>
+        <Segmented
+          value={platformFilter}
+          onChange={(val) => setPlatformFilter(val as 'ALL' | 'AMAZON' | 'ETSY')}
+          options={[
+            { value: 'ALL', label: t('common.all', { defaultValue: 'All Platforms' }) },
+            { value: 'AMAZON', label: 'Amazon' },
+            { value: 'ETSY', label: 'Etsy' },
+          ]}
+        />
 
         <Space>
           <Input

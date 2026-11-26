@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 
 import { listOrderWorkbench, type OrderWorkbenchParams } from '../api/orderApi'
 import { orderKeys } from '../api/orderKeys'
@@ -7,6 +7,7 @@ export function useOrderWorkbenchQuery(params: OrderWorkbenchParams) {
   return useQuery({
     queryKey: orderKeys.workbench(params),
     queryFn: ({ signal }) => listOrderWorkbench(params, signal),
+    placeholderData: keepPreviousData,
     retry: false,
     staleTime: 20_000,
     refetchOnWindowFocus: false,

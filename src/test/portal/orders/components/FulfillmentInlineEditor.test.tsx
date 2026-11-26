@@ -30,6 +30,51 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
+it('offers Apply only for a fulfillment selection different from the saved mapping', async () => {
+  await i18n.changeLanguage('en')
+  vi.mocked(mappingApi.getMappingVendorProductOptions).mockResolvedValueOnce({
+    dimensions: { hasSize: true, hasColor: false },
+    options: { sizes: ['8x12', '12x18'], colors: [] },
+    candidates: [],
+    allCandidates: [
+      { id: 'saved', size: '8x12', color: null, baseCostAmount: 1825, currency: 'USD' },
+      { id: 'other', size: '12x18', color: null, baseCostAmount: 2400, currency: 'USD' },
+    ],
+  })
+  render(
+    <AppProviders>
+      <QueryClientProvider client={new QueryClient()}>
+        <FulfillmentInlineEditor
+          canWrite
+          item={
+            {
+              item: { id: 'item' },
+              mapping: {
+                vendorProduct: { id: 'product', name: 'Printed Metal Sign' },
+                vendor: { id: 'vendor', name: 'LNG Group' },
+                vendorCostCenter: { id: 'saved', code: '8x12', size: '8x12', color: null },
+              },
+            } as OrderWorkbenchItem
+          }
+        />
+      </QueryClientProvider>
+    </AppProviders>,
+  )
+
+  const apply = { name: i18n.t('orders.actions.apply') }
+  expect(await screen.findByText('$18.25')).toBeVisible()
+  expect(screen.queryByRole('button', apply)).not.toBeInTheDocument()
+
+  const size = screen.getByRole('combobox', { name: i18n.t('orders.fields.size') })
+  fireEvent.mouseDown(size)
+  fireEvent.click(await screen.findByTitle('12x18'))
+  expect(await screen.findByRole('button', apply)).toBeEnabled()
+
+  fireEvent.mouseDown(size)
+  fireEvent.click(await screen.findByTitle('8x12'))
+  expect(screen.queryByRole('button', apply)).not.toBeInTheDocument()
+})
+
 it('allows a keychain size to be selected without requiring a color', async () => {
   await i18n.changeLanguage('en')
   vi.mocked(mappingApi.getMappingVendorProductOptions).mockResolvedValueOnce({

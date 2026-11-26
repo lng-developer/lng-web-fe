@@ -19,7 +19,12 @@ export function ExtensionImagesPage() {
         })}
       />
 
-      <ListingImageSyncPanel account={account} agents={managementAgents} shopNames={shopNames} />
+      <ListingImageSyncPanel
+        account={account}
+        agents={managementAgents}
+        shopNames={shopNames}
+        onlineAgentsOnly
+      />
     </div>
   )
 }

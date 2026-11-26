@@ -54,10 +54,8 @@ export function useCatalogListingsQuery({
       search: params.search,
       shopId,
       salesChannelCode,
-      qcStatus,
-      psdState,
     }),
-    [params.search, shopId, salesChannelCode, qcStatus, psdState],
+    [params.search, shopId, salesChannelCode],
   )
 
   const options = useQuery({

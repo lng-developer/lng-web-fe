@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Outlet, useLoaderData, useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, useLoaderData, useLocation, useNavigate, useNavigation } from 'react-router-dom'
 import { MenuOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useIsFetching, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Drawer, Grid, Layout, Select, Space, Tooltip, Typography } from 'antd'
@@ -39,11 +39,42 @@ import { getSidebarRouteState } from './sidebarRouteState'
 
 const { Content, Header } = Layout
 
-export function AppShell() {
-  const socketReady = useUnreadSocketSync()
+function WorkspaceRefreshButton() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const isFetching = useIsFetching()
+  const label = t('shell.refresh')
+
+  return (
+    <Tooltip title={label}>
+      <Button
+        type="text"
+        aria-label={label}
+        className={styles.headerIconButton}
+        icon={<ReloadOutlined spin={isFetching > 0} />}
+        onClick={() => void queryClient.invalidateQueries()}
+      />
+    </Tooltip>
+  )
+}
+
+function WorkspaceNavigationProgress() {
+  const { t } = useTranslation()
+  const navigation = useNavigation()
+  const location = useLocation()
+
+  if (navigation.state !== 'loading' || navigation.location.pathname === location.pathname) {
+    return null
+  }
+
+  return (
+    <div role="progressbar" aria-label={t('shell.loadingPage')} className={styles.routeProgress} />
+  )
+}
+
+export function AppShell({ preloadRoute }: { preloadRoute?: (path: string) => void }) {
+  const socketReady = useUnreadSocketSync()
+  const { t } = useTranslation()
   const screens = Grid.useBreakpoint()
   const [collapsed, setCollapsed] = useState(false)
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false)
@@ -123,8 +154,6 @@ export function AppShell() {
     [account, navigate],
   )
 
-  const refreshWorkspace = useCallback(() => void queryClient.invalidateQueries(), [queryClient])
-
   const handleOpenMobileNavigation = useCallback(() => setMobileNavigationOpen(true), [])
   const handleCloseMobileNavigation = useCallback(() => setMobileNavigationOpen(false), [])
 
@@ -141,6 +170,7 @@ export function AppShell() {
           accountLabel={account.account.email}
           financeVisible={hasFinanceAccess(account)}
           account={account}
+          preloadRoute={preloadRoute}
         />
       )}
       {activeCore && isCompact && (
@@ -167,6 +197,7 @@ export function AppShell() {
             embedded
             navigationSearch=""
             onNavigate={handleCloseMobileNavigation}
+            preloadRoute={preloadRoute}
           />
         </Drawer>
       )}
@@ -202,21 +233,14 @@ export function AppShell() {
             <NavigationSearch account={account} className={styles.navSearch} />
           </div>
           <Space size={14} className={styles.headerActions}>
-            <Tooltip title={t('shell.refresh')}>
-              <Button
-                type="text"
-                aria-label={t('shell.refresh')}
-                className={styles.headerIconButton}
-                icon={<ReloadOutlined spin={isFetching > 0} />}
-                onClick={refreshWorkspace}
-              />
-            </Tooltip>
+            <WorkspaceRefreshButton />
             <ChatShell account={account} />
             <NotificationCenter />
             <ThemeSwitch />
             <LanguageSwitch />
             <AccountMenu account={account} />
           </Space>
+          <WorkspaceNavigationProgress />
         </Header>
 
         <Content

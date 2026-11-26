@@ -307,6 +307,30 @@
   box-shadow: 0 4px 12px -2px rgb(15 23 42 / 6%);
 }
 
+.routeProgress {
+  position: absolute;
+  inset: auto 0 -1px;
+  height: 2px;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--ant-color-primary-bg);
+
+  &::before {
+    display: block;
+    width: 30%;
+    height: 100%;
+    background: var(--ant-color-primary);
+    animation: route-progress 850ms ease-in-out infinite alternate;
+    content: '';
+  }
+}
+
+@keyframes route-progress {
+  to {
+    transform: translateX(233%);
+  }
+}
+
 .headerLeft {
   display: flex;
   align-items: center;
@@ -583,6 +607,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .routeProgress::before {
+    animation: none;
+  }
+
   .skipLink,
   .sidebar,
   .railButton,

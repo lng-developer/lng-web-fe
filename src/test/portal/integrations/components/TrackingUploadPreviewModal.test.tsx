@@ -92,6 +92,43 @@ describe('TrackingUploadPreviewModal', () => {
     expect(screen.getByText(/Missing Data/i)).toBeVisible()
   })
 
+  it('keeps preview available when the online worker list becomes empty', async () => {
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <TrackingUploadPreviewModal
+          shopId="shop-1"
+          agentId="disconnected-agent"
+          onlineAgents={[]}
+          onClose={vi.fn()}
+        />
+      </QueryClientProvider>,
+    )
+
+    expect(await screen.findByText('114-1234567-1234567')).toBeVisible()
+    expect(screen.getByText('No connected Extension Worker')).toBeVisible()
+    expect(screen.queryByRole('button', { name: /submit.*to amazon/i })).not.toBeInTheDocument()
+  })
+
+  it('keeps tracking submission unavailable to a read-only operator', async () => {
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <TrackingUploadPreviewModal
+          shopId="shop-1"
+          agentId="agent-1"
+          canSubmit={false}
+          onClose={vi.fn()}
+        />
+      </QueryClientProvider>,
+    )
+
+    expect(await screen.findByText('114-1234567-1234567')).toBeVisible()
+    expect(screen.queryByRole('button', { name: /submit.*to amazon/i })).not.toBeInTheDocument()
+  })
+
   it('renders all UI labels in Vietnamese when language is switched to vi', async () => {
     await i18n.changeLanguage('vi')
 
@@ -114,7 +151,8 @@ describe('TrackingUploadPreviewModal', () => {
     expect(screen.getAllByText('Trạng thái')[0]).toBeVisible()
     expect(screen.getAllByText(/Thiếu thông tin/i)[0]).toBeVisible()
     expect(screen.getAllByText(/Sẵn sàng gửi/i)[0]).toBeVisible()
-    expect(screen.getByText(/Xem trước dữ liệu tải lên tracking Amazon/i)).toBeVisible()
+    expect(screen.getByText('Xem trước dữ liệu gửi mã vận đơn lên Amazon')).toBeVisible()
+    expect(screen.getByText('Chưa có máy đồng bộ kết nối')).toBeVisible()
   })
 
   it('submits ready tracking rows when agentId is provided', async () => {

@@ -20,6 +20,7 @@ import {
   updateShippingAddress,
   updateShippingService,
   validateShippingAddress,
+  type OrderWorkbenchResult,
 } from '../api/orderApi'
 import { orderKeys } from '../api/orderKeys'
 import type { OrderAction } from '../components/orderTypes'
@@ -84,23 +85,28 @@ export function useOrderActionsMutation({
         return
       }
 
-      // Targeted cache update for inline CS note: update active workbench cache directly
-      // with 0ms delay without triggering a full page refetch.
+      // Update the cached workbench rows containing this order after saving the note.
       if (action.kind === 'note') {
-        queryClient.setQueriesData<{
-          items?: Array<{ items: Array<{ id: string; csNote?: string | null }> }>
-        }>({ queryKey: [...orderKeys.all, 'workbench'] }, (old) => {
-          if (!old?.items) return old
-          return {
-            ...old,
-            items: old.items.map((row) => ({
-              ...row,
-              items: row.items.map((item) =>
-                item.id === action.itemId ? { ...item, csNote: action.note } : item,
-              ),
-            })),
-          }
-        })
+        queryClient.setQueriesData<OrderWorkbenchResult>(
+          { queryKey: [...orderKeys.all, 'workbench'] },
+          (old) => {
+            if (!old?.items.some((row) => row.order.id === orderId)) return old
+            return {
+              ...old,
+              items: old.items.map((row) => {
+                if (row.order.id !== orderId) return row
+                return {
+                  ...row,
+                  items: row.items.map((item) =>
+                    item.item.id === action.itemId
+                      ? { ...item, item: { ...item.item, csNote: action.note } }
+                      : item,
+                  ),
+                }
+              }),
+            }
+          },
+        )
         await queryClient.invalidateQueries({
           queryKey: orderKeys.timeline(orderId, action.itemId),
         })

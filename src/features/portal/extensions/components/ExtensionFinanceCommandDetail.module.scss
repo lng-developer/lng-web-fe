@@ -1,0 +1,23 @@
+.summary {
+  display: grid;
+  gap: 12px;
+  overflow-wrap: anywhere;
+}
+
+.dates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+  margin: 0;
+  padding: 12px;
+  border-radius: var(--ant-border-radius);
+  background: var(--ant-color-fill-quaternary);
+
+  dt {
+    color: var(--ant-color-text-secondary);
+  }
+
+  dd {
+    margin: 2px 0 0;
+  }
+}

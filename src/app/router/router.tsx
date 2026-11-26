@@ -11,6 +11,7 @@ import { LegacyMappingRedirect } from '@/features/portal/mapping/pages/LegacyMap
 import { PermissionBoundary } from '@/shared/auth/PermissionBoundary'
 
 import { NotFoundPage } from './NotFoundPage'
+import { createRouteModulePreloader } from './routeModulePreloading'
 import { RouteErrorPage } from './RouteErrorPage'
 import { WorkspaceIndexRedirect } from './WorkspaceIndexRedirect'
 
@@ -80,7 +81,7 @@ export const appRoutes: RouteObject[] = [
   },
   {
     id: 'workspace',
-    element: <AppShell />,
+    element: <AppShell preloadRoute={(path) => void preloadRoute(path)} />,
     loader: requireWorkspace,
     shouldRevalidate: () => false,
     errorElement: <RouteErrorPage />,
@@ -882,4 +883,5 @@ export const appRoutes: RouteObject[] = [
   },
 ]
 
+const preloadRoute = createRouteModulePreloader(appRoutes)
 export const router = createBrowserRouter(appRoutes)

@@ -19,7 +19,7 @@ export function ExtensionSchedulesPage() {
     account,
     canWrite,
     canWriteFinance,
-    managementAgents,
+    onlineManagementAgents,
     extensionManagementAgents,
     extensionOrderSchedules,
     extensionTrackingSchedules,
@@ -41,7 +41,7 @@ export function ExtensionSchedulesPage() {
   const [searchQuery, setSearchQuery] = useState('')
 
   const filteredAgents = useMemo(() => {
-    return managementAgents.filter((agent) => {
+    return onlineManagementAgents.filter((agent) => {
       const shopPlatform = (
         agent.provider ||
         shopPlatforms.get(agent.shopId) ||
@@ -58,7 +58,7 @@ export function ExtensionSchedulesPage() {
       }
       return true
     })
-  }, [managementAgents, platformFilter, searchQuery, shopPlatforms, shopNames])
+  }, [onlineManagementAgents, platformFilter, searchQuery, shopPlatforms, shopNames])
 
   const orderSchedulesCount = useMemo(() => schedules.filter((s) => s.enabled).length, [schedules])
   const financeSchedulesCount = useMemo(

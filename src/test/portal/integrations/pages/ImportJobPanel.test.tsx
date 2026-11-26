@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { App } from 'antd'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -105,6 +105,7 @@ const account = (
 function renderPanel(
   client = new QueryClient({ defaultOptions: { queries: { retry: false } } }),
   currentAccount = account(),
+  commandError?: string,
 ) {
   const renderView = (jobId: string) => (
     <QueryClientProvider client={client}>
@@ -113,6 +114,7 @@ function renderPanel(
           account={currentAccount}
           jobId={jobId}
           status="FAILED"
+          commandError={commandError}
           open
           onClose={vi.fn()}
         />
@@ -178,6 +180,35 @@ describe('ImportJobPanel', () => {
     vi.useRealTimers()
   })
 
+  it.each(['command', 'import', 'both'])(
+    'shows one Etsy review warning without the raw code when it comes from %s',
+    async (source) => {
+      const code = 'ETSY_IMPORT_NEEDS_REVIEW'
+      vi.mocked(getImportJobProgress).mockResolvedValue({
+        ...progress,
+        job: {
+          ...job,
+          status: 'COMPLETED',
+          errorCode: source !== 'command' ? code : null,
+          errorMessage: null,
+          salesChannelCode: 'ETSY',
+          importOrigin: 'EXTENSION',
+        },
+        issues: { total: 0, open: 0, resolved: 0, ignored: 0 },
+        isTerminal: true,
+      })
+      renderPanel(undefined, undefined, source !== 'import' ? code : undefined)
+
+      const warning = await screen.findByRole('alert')
+      expect(warning).toHaveClass('ant-alert-warning')
+      expect(within(warning).getByText('Etsy order import needs review')).toBeVisible()
+      expect(screen.queryByText(code)).not.toBeInTheDocument()
+      const status = (await screen.findByText('Import status', { selector: 'dt' })).parentElement!
+      expect(within(status).getByText('Completed')).toBeVisible()
+      expect(screen.getAllByRole('alert')).toHaveLength(1)
+    },
+  )
+
   it('shows job summary before raw-record diagnostics', async () => {
     renderPanel()
 
@@ -205,7 +236,7 @@ describe('ImportJobPanel', () => {
     expect(screen.queryByRole('button', { name: 'Retry import' })).not.toBeInTheDocument()
   })
 
-  it('opens raw records in a wide drawer from the compact panel', async () => {
+  it('keeps scrolling contained in the raw records dialog body', async () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     render(
       <QueryClientProvider client={client}>
@@ -225,7 +256,11 @@ describe('ImportJobPanel', () => {
     expect(await screen.findByText('Summary')).toBeVisible()
     expect(screen.queryByText('Raw records')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'View raw records' }))
-    expect(await screen.findByText('Raw records')).toBeVisible()
+    const rawTitle = await screen.findByText('Raw records')
+    expect(rawTitle).toBeVisible()
+    const body = rawTitle.closest('[role="dialog"]')?.querySelector<HTMLElement>('.ant-modal-body')
+    expect(body?.style.overflowY).toBe('auto')
+    expect(body?.style.overscrollBehaviorY).toBe('contain')
   })
 
   it('confirms retry and invalidates only the affected integration queries', async () => {

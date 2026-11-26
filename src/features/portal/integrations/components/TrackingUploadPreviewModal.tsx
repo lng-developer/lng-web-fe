@@ -25,6 +25,7 @@ import {
   listExtensionManagementAgents,
   previewAmazonTrackingSubmission,
   type AmazonTrackingPreviewRow,
+  type ExtensionManagementAgent,
 } from '@/features/portal/integrations/api/integrationApi'
 
 function canSelectRowForUpload(row: AmazonTrackingPreviewRow) {
@@ -38,11 +39,15 @@ function canSelectRowForUpload(row: AmazonTrackingPreviewRow) {
 export function TrackingUploadPreviewModal({
   shopId,
   agentId,
+  onlineAgents,
+  canSubmit = true,
   mode = 'AMAZON',
   onClose,
 }: {
   readonly shopId: string
   readonly agentId?: string
+  readonly onlineAgents?: readonly ExtensionManagementAgent[]
+  readonly canSubmit?: boolean
   readonly mode?: 'AMAZON' | 'ETSY'
   readonly onClose: () => void
 }) {
@@ -64,20 +69,26 @@ export function TrackingUploadPreviewModal({
   const agentsQuery = useQuery({
     queryKey: ['extension-management-agents'],
     queryFn: listExtensionManagementAgents,
+    enabled: onlineAgents === undefined,
     staleTime: 30_000,
   })
 
   const availableAgents = useMemo(() => {
-    return (agentsQuery.data?.items ?? []).filter((a) => a.shopId === shopId)
-  }, [agentsQuery.data?.items, shopId])
+    return (onlineAgents ?? agentsQuery.data?.items ?? []).filter((a) => a.shopId === shopId)
+  }, [agentsQuery.data?.items, onlineAgents, shopId])
 
   const effectiveAgentId = useMemo(() => {
-    if (selectedAgentIdOverride) return selectedAgentIdOverride
-    if (agentId) return agentId
+    const preferredAgentId = selectedAgentIdOverride ?? agentId
+    if (
+      preferredAgentId &&
+      (!onlineAgents || availableAgents.some((a) => a.id === preferredAgentId))
+    ) {
+      return preferredAgentId
+    }
     const online = availableAgents.find((a) => a.status === 'ONLINE')
     if (online) return online.id
     return availableAgents[0]?.id
-  }, [selectedAgentIdOverride, agentId, availableAgents])
+  }, [selectedAgentIdOverride, agentId, availableAgents, onlineAgents])
 
   const allItems = useMemo(() => previewQuery.data?.items ?? [], [previewQuery.data?.items])
   const summary = previewQuery.data?.summary
@@ -380,7 +391,7 @@ export function TrackingUploadPreviewModal({
       footer={
         <Space>
           <Button onClick={onClose}>{t('common.cancel', { defaultValue: 'Cancel' })}</Button>
-          {effectiveAgentId ? (
+          {canSubmit && effectiveAgentId ? (
             <Button
               type="primary"
               loading={submitMutation.isPending}
@@ -453,12 +464,13 @@ export function TrackingUploadPreviewModal({
             })}
           </Typography.Text>
           <Select
+            aria-label={t('portal.shipments.trackingPreview.workerExtension')}
             value={effectiveAgentId}
             onChange={setSelectedAgentIdOverride}
             style={{ minWidth: 260 }}
             options={availableAgents.map((a) => ({
               value: a.id,
-              label: `${a.label || a.clientId} (${a.status})`,
+              label: `${a.label || a.clientId} (${t(`common.connectionStatus.${a.status}`)})`,
             }))}
           />
         </div>
@@ -542,7 +554,7 @@ export function TrackingUploadPreviewModal({
         pagination={false}
         rowKey="key"
         rowSelection={
-          effectiveAgentId
+          canSubmit && effectiveAgentId
             ? {
                 selectedRowKeys,
                 onChange: (keys) => setSelectedKeysOverride(keys as string[]),

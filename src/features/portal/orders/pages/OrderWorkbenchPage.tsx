@@ -77,6 +77,15 @@ const SALES_CHANNEL_BY_QUERY = {
   shopify: 'SHOPIFY',
 } as const
 
+const MACRO_TERMINAL_OR_HOLD = new Set([
+  'SHIPPED',
+  'DELIVERED',
+  'CANCELLED',
+  'REFUNDED',
+  'FAILED',
+  'ON_HOLD',
+])
+
 export const OrderWorkbenchPage = () => {
   const { t, i18n } = useTranslation()
   const toast = useFeedbackToast()
@@ -134,6 +143,9 @@ export const OrderWorkbenchPage = () => {
   const orders = useOrderWorkbenchQuery(
     recordId ? { page: 1, limit: 1, tab: 'ALL', recordId } : params,
   )
+  const refreshOrders = () => {
+    void orders.refetch()
+  }
   const summary = useOrderSummaryQuery(summaryParams, {
     placeholderData: keepPreviousData,
   })
@@ -231,7 +243,7 @@ export const OrderWorkbenchPage = () => {
   const tabItems = useMemo(
     () =>
       TABS.map((key) => {
-        let count = summary.data?.tabCounts[key] ?? 0
+        let count = summary.data?.tabCounts?.[key]
         if (key === 'NO_COST_CENTER' && tab === 'NO_COST_CENTER' && orderItems.length === 0) {
           count = 0
         }
@@ -302,31 +314,12 @@ export const OrderWorkbenchPage = () => {
       tab === 'NO_COST_CENTER' && orderItems.length < (orders.data?.items?.length ?? 0)
         ? orderItems.length
         : rawTotal
-    const rawTotalItems = orders.data?.pagination?.totalItems ?? orders.data?.totalItems ?? total
-    const totalItems =
-      tab === 'NO_COST_CENTER' && orderItems.length < (orders.data?.items?.length ?? 0)
-        ? orderItems.reduce(
-            (sum, r) => sum + (r.items?.reduce((s, it) => s + (it.item.quantity || 1), 0) ?? 1),
-            0,
-          )
-        : rawTotalItems
     return {
       current: page,
       pageSize,
       total,
-      totalItems,
     }
-  }, [
-    orders.data?.items,
-    orders.data?.pagination,
-    orders.data?.totalItems,
-    orderItems,
-    page,
-    pageSize,
-    tab,
-  ])
-  const totalOrders = pagination.total
-  const totalItems = pagination.totalItems ?? totalOrders
+  }, [orders.data?.items, orders.data?.pagination, orderItems, page, pageSize, tab])
   const handlePageChange = useCallback(
     (nextPage: number, nextPageSize: number) => {
       setPage(nextPageSize === pageSize ? nextPage : 1)
@@ -370,14 +363,7 @@ export const OrderWorkbenchPage = () => {
         title: t('orders.columns.status'),
         width: 160,
         render: (_, row) => {
-          const isMacroTerminalOrHold = [
-            'SHIPPED',
-            'DELIVERED',
-            'CANCELLED',
-            'REFUNDED',
-            'FAILED',
-            'ON_HOLD',
-          ].includes(row.order?.status ?? '')
+          const isMacroTerminalOrHold = MACRO_TERMINAL_OR_HOLD.has(row.order?.status ?? '')
 
           const bottleneck =
             !isMacroTerminalOrHold && row.items?.length
@@ -617,23 +603,7 @@ export const OrderWorkbenchPage = () => {
           </div>
         </div>
 
-        <div className={styles.statsBadge}>
-          <span className={styles.statsLabel}>
-            {t('orders.summary.orders', { defaultValue: 'Đơn' })}:
-          </span>
-          <strong className={styles.statsValue}>{totalOrders.toLocaleString()}</strong>
-          <span className={styles.statsDivider}>•</span>
-          <span className={styles.statsLabel}>
-            {t('orders.summary.items', { defaultValue: 'Items' })}:
-          </span>
-          <strong className={styles.statsValuePrimary}>{totalItems.toLocaleString()}</strong>
-        </div>
-
-        <DataFreshness
-          timestamp={orders.dataUpdatedAt}
-          onRefresh={() => void orders.refetch()}
-          loading={orders.isFetching}
-        />
+        <DataFreshness onRefresh={refreshOrders} loading={orders.isFetching} />
 
         <Button
           icon={<DownloadOutlined />}

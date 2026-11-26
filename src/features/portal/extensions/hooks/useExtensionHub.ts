@@ -12,12 +12,14 @@ import {
   revokeExtensionToken,
 } from '@/features/auth/extension-tokens/api/extensionTokensApi'
 import {
+  canReadListingImages,
   canWriteFinanceForShop,
   canWriteOrdersForShop,
   canWriteOrdersSomewhere,
 } from '@/features/portal/integrations/auth/integrationAccess'
 import { shouldPollExtensionCommands } from '@/features/portal/integrations/hooks/extensionCommandPolling'
 import { shopKeys } from '@/features/portal/shops/api/shopKeys'
+import { canUseScopedPermission, hasScopedPermission } from '@/shared/auth/permissions'
 import { useFeedbackToast } from '@/shared/ui'
 import {
   createExtensionCommand,
@@ -62,7 +64,11 @@ export function useExtensionHub() {
 
   const canWrite = canWriteOrdersSomewhere(account)
   const canWriteFinance = account?.permissions?.includes('FINANCE:WRITE') ?? false
-  const canUseExtension = canWrite || canWriteFinance
+  const hasShopPermission = (permission: string) =>
+    canUseScopedPermission(account, permission) || hasScopedPermission(account, permission, 'shop')
+  const canReadOrders = ['ORDERS:READ', 'ORDERS:WRITE'].some(hasShopPermission)
+  const canReadFinance = ['FINANCE:READ', 'FINANCE:WRITE'].some(hasShopPermission)
+  const canReadCommands = canReadOrders || canReadFinance
 
   const { data: shopsData, isLoading: isShopsLoading } = useQuery({
     queryKey: shopKeys.list({ page: 1, limit: 100, status: 'ACTIVE' }),
@@ -99,7 +105,7 @@ export function useExtensionHub() {
   const extensionAgents = useQuery({
     queryKey: extensionKeys.agents(),
     queryFn: listExtensionAgents,
-    enabled: canUseExtension,
+    enabled: canReadCommands,
     retry: false,
     refetchInterval: 30_000,
   })
@@ -107,7 +113,7 @@ export function useExtensionHub() {
   const extensionManagementAgents = useQuery({
     queryKey: extensionKeys.managementAgents(),
     queryFn: listExtensionManagementAgents,
-    enabled: canUseExtension,
+    enabled: canReadCommands || canReadListingImages(account),
     retry: false,
     refetchInterval: 30_000,
   })
@@ -115,7 +121,7 @@ export function useExtensionHub() {
   const extensionCommands = useQuery({
     queryKey: extensionKeys.commands(),
     queryFn: () => listExtensionCommands({ page: 1, limit: 100 }),
-    enabled: canUseExtension,
+    enabled: canReadCommands,
     retry: false,
     refetchInterval: (query) =>
       shouldPollExtensionCommands(query.state.data?.items) ? 10_000 : false,
@@ -124,21 +130,21 @@ export function useExtensionHub() {
   const extensionOrderSchedules = useQuery({
     queryKey: extensionKeys.orderSchedules(),
     queryFn: listExtensionOrderSchedules,
-    enabled: canWrite,
+    enabled: canReadOrders,
     retry: false,
   })
 
   const extensionTrackingSchedules = useQuery({
     queryKey: extensionKeys.trackingSchedules(),
     queryFn: listExtensionTrackingSchedules,
-    enabled: canWrite,
+    enabled: canReadOrders,
     retry: false,
   })
 
   const extensionFinanceSchedules = useQuery({
     queryKey: extensionKeys.financeSchedules(),
     queryFn: listExtensionFinanceSchedules,
-    enabled: canUseExtension,
+    enabled: canReadFinance,
     retry: false,
   })
 
@@ -357,8 +363,8 @@ export function useExtensionHub() {
     [extensionCommands.data?.items],
   )
 
-  const onlineAgentsCount = useMemo(
-    () => managementAgents.filter((agent) => agent.status === 'ONLINE').length,
+  const onlineManagementAgents = useMemo(
+    () => managementAgents.filter((agent) => agent.status === 'ONLINE'),
     [managementAgents],
   )
   const activeSchedulesCount = useMemo(
@@ -377,7 +383,6 @@ export function useExtensionHub() {
     account,
     canWrite,
     canWriteFinance,
-    canUseExtension,
     shops,
     isShopsLoading,
     shopNames,
@@ -404,11 +409,12 @@ export function useExtensionHub() {
     extensionTrackingSchedules,
     extensionFinanceSchedules,
     managementAgents,
+    onlineManagementAgents,
     schedules,
     trackingSchedules,
     financeSchedules,
     commands,
-    onlineAgentsCount,
+    onlineAgentsCount: onlineManagementAgents.length,
     activeSchedulesCount,
     failedCommandsCount,
   }

@@ -11,6 +11,7 @@ import type { TableColumnsType } from 'antd'
 import { Button, Segmented, Space, Table, Tag } from 'antd'
 
 import { MetricCard, PageHeader, SectionCard } from '@/shared/ui'
+import { canWriteOrdersForShop } from '@/features/portal/integrations/auth/integrationAccess'
 import { TrackingUploadPreviewModal } from '@/features/portal/integrations/components/TrackingUploadPreviewModal'
 import { ExtensionPlatformBadge } from '../components/ExtensionPlatformBadge'
 import { useExtensionHub } from '../hooks/useExtensionHub'
@@ -20,14 +21,13 @@ interface ShopTrackingStatus {
   shopId: string
   shopName: string
   platform: string
-  agentOnline: boolean
   agentName: string
-  agentId?: string
+  agentId: string
 }
 
 export function ExtensionTrackingPage() {
   const { t } = useTranslation()
-  const { shops, managementAgents } = useExtensionHub()
+  const { account, shops, onlineManagementAgents } = useExtensionHub()
 
   const [platformFilter, setPlatformFilter] = useState<'ALL' | 'AMAZON' | 'ETSY'>('ALL')
   const [previewShopId, setPreviewShopId] = useState<string>()
@@ -35,21 +35,22 @@ export function ExtensionTrackingPage() {
   const [previewMode, setPreviewMode] = useState<'AMAZON' | 'ETSY'>('AMAZON')
 
   const trackingRows: ShopTrackingStatus[] = useMemo(() => {
-    return shops.map((shop) => {
-      const agent =
-        managementAgents.find((a) => a.shopId === shop.id && a.status === 'ONLINE') ||
-        managementAgents.find((a) => a.shopId === shop.id)
-      const platform = (shop.salesChannelCode || agent?.provider || 'AMAZON').toUpperCase()
-      return {
-        shopId: shop.id,
-        shopName: shop.name,
-        platform,
-        agentOnline: agent?.status === 'ONLINE',
-        agentName: agent?.label || agent?.clientId || 'No Bot Connected',
-        agentId: agent?.id,
-      }
+    return shops.flatMap((shop) => {
+      const agent = onlineManagementAgents.find((a) => a.shopId === shop.id)
+      if (!agent) return []
+
+      const platform = (shop.salesChannelCode || agent.provider || 'AMAZON').toUpperCase()
+      return [
+        {
+          shopId: shop.id,
+          shopName: shop.name,
+          platform,
+          agentName: agent.label || agent.clientId,
+          agentId: agent.id,
+        },
+      ]
     })
-  }, [shops, managementAgents])
+  }, [shops, onlineManagementAgents])
 
   const filteredRows = useMemo(() => {
     if (platformFilter === 'ALL') return trackingRows
@@ -74,9 +75,7 @@ export function ExtensionTrackingPage() {
       key: 'agent',
       render: (_, row) => (
         <Space>
-          <Tag color={row.agentOnline ? 'success' : 'default'}>
-            {row.agentOnline ? 'Online' : 'Offline'}
-          </Tag>
+          <Tag color="success">{t('common.connectionStatus.ONLINE')}</Tag>
           <span>{row.agentName}</span>
         </Space>
       ),
@@ -129,7 +128,7 @@ export function ExtensionTrackingPage() {
           label={t('portal.extensions.metrics.onlineSyncBots', {
             defaultValue: 'Online Dispatch Bots',
           })}
-          value={trackingRows.filter((r) => r.agentOnline).length}
+          value={trackingRows.length}
           variant="success"
         />
       </div>
@@ -142,29 +141,26 @@ export function ExtensionTrackingPage() {
         <div className={styles.instructionSteps}>
           <div className={styles.stepBox}>
             <div className={styles.stepTitle}>
-              <CarOutlined /> 1. Vendor Tracking Received
+              <CarOutlined /> 1. {t('extensionTracking.workflow.receive.title')}
             </div>
             <div className={styles.stepDesc}>
-              When vendors submit tracking numbers in Vendor Handoff, shipments are verified and
-              marked as SHIPPED in Ecomatrix System.
+              {t('extensionTracking.workflow.receive.description')}
             </div>
           </div>
           <div className={styles.stepBox}>
             <div className={styles.stepTitle}>
-              <SyncOutlined /> 2. Extension Auto-Sync
+              <SyncOutlined /> 2. {t('extensionTracking.workflow.sync.title')}
             </div>
             <div className={styles.stepDesc}>
-              The Ecomatrix Extension worker on your store PC picks up tracking numbers and
-              dispatches orders on Etsy or confirms shipments on Amazon Seller Central.
+              {t('extensionTracking.workflow.sync.description')}
             </div>
           </div>
           <div className={styles.stepBox}>
             <div className={styles.stepTitle}>
-              <GlobalOutlined /> 3. Verification & Carrier Check
+              <GlobalOutlined /> 3. {t('extensionTracking.workflow.verify.title')}
             </div>
             <div className={styles.stepDesc}>
-              Track carrier scans (USPS, FedEx, DHL) and ensure on-time delivery metrics are
-              preserved across both marketplaces.
+              {t('extensionTracking.workflow.verify.description')}
             </div>
           </div>
         </div>
@@ -191,6 +187,7 @@ export function ExtensionTrackingPage() {
           rowKey="shopId"
           columns={columns}
           dataSource={filteredRows}
+          locale={{ emptyText: t('common.noMatchingResults') }}
           pagination={false}
           size="middle"
         />
@@ -200,6 +197,8 @@ export function ExtensionTrackingPage() {
         <TrackingUploadPreviewModal
           shopId={previewShopId}
           agentId={previewAgentId}
+          onlineAgents={onlineManagementAgents}
+          canSubmit={canWriteOrdersForShop(account, previewShopId)}
           mode={previewMode}
           onClose={() => {
             setPreviewShopId(undefined)

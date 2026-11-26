@@ -553,7 +553,7 @@ describe('OrderInlinePanel', () => {
     expect(within(dialog).getByText('J2502-DM-2')).toBeInTheDocument()
   })
 
-  it('renders buyer-uploaded customization images in the expanded item', () => {
+  it('pairs each buyer-uploaded photo with its caption and opens it from its thumbnail', async () => {
     const source: OrderWorkbenchRow = {
       ...row,
       items: [
@@ -565,8 +565,13 @@ describe('OrderInlinePanel', () => {
             inputs: [
               {
                 type: 'IMAGE',
-                label: 'Buyer photo',
-                assetDownloadUrl: '/api/media/assets/buyer-photo/download',
+                label: 'Upload Image Man',
+                assetDownloadUrl: 'https://example.com/buyer-photo.jpg',
+              },
+              {
+                type: 'IMAGE',
+                label: 'Upload Image Women',
+                assetDownloadUrl: 'https://example.com/second-buyer-photo.jpg',
               },
             ],
           },
@@ -576,7 +581,24 @@ describe('OrderInlinePanel', () => {
 
     renderPanel(true, undefined, source)
 
-    expect(screen.getByAltText('Buyer photo')).toBeInTheDocument()
+    const photos = screen.getAllByRole('figure')
+    expect(photos).toHaveLength(2)
+    const thumbnail = within(photos[0]).getByRole('img', { name: 'Upload Image Man' })
+    expect(
+      within(photos[0]).getByText('Upload Image Man', { selector: 'figcaption' }),
+    ).toBeVisible()
+    expect(
+      within(photos[1]).getByText('Upload Image Women', { selector: 'figcaption' }),
+    ).toBeVisible()
+    expect(within(photos[1]).getByRole('button', { name: 'Upload Image Women' })).toBeVisible()
+    expect(screen.queryByRole('button', { name: /orders\.fields\.image$/ })).not.toBeInTheDocument()
+    expect(within(photos[0]).getByRole('button', { name: 'Upload Image Man' })).toContainElement(
+      thumbnail,
+    )
+
+    fireEvent.click(thumbnail)
+
+    await waitFor(() => expect(screen.getByRole('dialog')).toBeVisible())
   })
 
   it('collapses long customization lists until expanded', () => {
