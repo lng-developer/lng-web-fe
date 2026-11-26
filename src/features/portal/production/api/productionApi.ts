@@ -65,7 +65,7 @@ export type ProductionTask = {
   salesChannelCode?: string | null
   marketplaceCode?: string | null
   designType?: 'NORMAL' | 'CUSTOM_IMAGE' | null
-  designTypeSource?: 'AUTO' | 'MANUAL' | null
+  designTypeSource?: 'AUTO' | 'MANUAL' | 'LISTING' | null
   id: string
   status: ProductionStatus
   productionStatus?: ProductionStatus
