@@ -1,20 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
 import type { TableColumnsType } from 'antd'
-import {
-  Alert,
-  Button,
-  Input,
-  InputNumber,
-  Modal,
-  Progress,
-  Select,
-  Space,
-  Table,
-  Typography,
-} from 'antd'
+import { Alert, Button, InputNumber, Modal, Select, Space, Table, Typography } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
@@ -33,49 +21,25 @@ import { formatFinanceMoney } from '@/features/portal/finance/components/finance
 import type { Shop } from '@/features/portal/shops/api/shopApi'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
-  CopyableOrderId,
-  DetailDrawer,
   DateRangePicker,
   type DateRangeValue,
   FilterBar,
   FormattedDateTime,
   getDefaultDateRange,
-  humanizeCode,
   SectionCard,
   StatusTag,
   TableTextCell,
 } from '@/shared/ui'
 
-import { canWriteFinanceForShop } from '../auth/integrationAccess'
-import { useFinanceImportPolling } from '../hooks/useFinanceImportPolling'
 import {
   ADS_IMPORT_STATUSES,
   type FinanceImportSourceType,
   useFinanceImportBatches,
-  useImportedFinanceData,
-  useReprocessFinanceImportMutation,
 } from '../hooks/useFinanceImports'
 import styles from '../pages/IntegrationWorkbenchPage.module.scss'
+import { FinanceImportBatchDetail, FinanceImportStatus } from './FinanceImportBatchDetail'
 
 const PAGE_SIZE = DEFAULT_PAGE_SIZE
-
-type FeeSummary = {
-  totalAmount?: unknown
-  items?: Array<{ type?: unknown; amount?: unknown }>
-}
-
-function formatAmount(value: unknown, currency = 'USD') {
-  const number = Number(value)
-  return Number.isFinite(number) ? `${(number / 100).toFixed(2)} ${currency}` : '-'
-}
-
-function statusTone(status: string) {
-  if (status === 'COMPLETED') return 'operational'
-  if (status === 'FAILED') return 'critical'
-  if (status === 'PARTIAL_FAILED') return 'warning'
-  if (status === 'CANCELLED') return 'cancelled'
-  return 'pending'
-}
 
 export interface FinanceImportSectionProps {
   readonly account: CurrentAccount
@@ -101,7 +65,6 @@ export function FinanceImportSection({
   isActiveTab,
 }: FinanceImportSectionProps) {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const [page, setPage] = useState(1)
   const [shopId, setShopId] = useState<string>()
   const [status, setStatus] = useState<string>()
@@ -140,14 +103,6 @@ export function FinanceImportSection({
     },
   })
   const canWriteRefunds = account.permissions.includes('FINANCE:WRITE')
-  const [detailPage, setDetailPage] = useState(1)
-  const [detailDates, setDetailDates] = useState<{ dateFrom?: string; dateTo?: string }>({})
-  const [transactionType, setTransactionType] = useState('')
-  const [transactionStatus, setTransactionStatus] = useState('')
-  const [externalOrderId, setExternalOrderId] = useState('')
-  const [linkStatus, setLinkStatus] = useState<string>()
-  const [settlementId, setSettlementId] = useState('')
-
   const imports = useFinanceImportBatches({
     sourceType,
     page,
@@ -158,43 +113,7 @@ export function FinanceImportSection({
     dateTo: dates.dateTo,
     enabled: isActiveTab && canRead,
   })
-  const selectedBatchQuery = useFinanceImportPolling(selectedBatch?.id, selectedBatch)
-  const currentBatch = selectedBatchQuery.data ?? selectedBatch
-  const importedData = useImportedFinanceData(
-    sourceType,
-    currentBatch?.id,
-    {
-      page: detailPage,
-      limit: PAGE_SIZE,
-      dateFrom: detailDates.dateFrom,
-      dateTo: detailDates.dateTo,
-      ...(sourceType === 'TRANSACTIONS'
-        ? {
-            transactionType: transactionType || undefined,
-            transactionStatus: transactionStatus || undefined,
-            externalOrderId: externalOrderId || undefined,
-            linkStatus,
-          }
-        : sourceType === 'SETTLEMENTS'
-          ? { settlementId: settlementId || undefined }
-          : {}),
-    },
-    Boolean(canRead),
-  )
-  const reprocess = useReprocessFinanceImportMutation(() => setSelectedBatch(undefined))
-
   const resetPage = () => setPage(1)
-  const resetDetailPage = () => setDetailPage(1)
-  const selectBatch = (batch: ImportBatch) => {
-    setSelectedBatch(batch)
-    setDetailPage(1)
-    setDetailDates({})
-    setTransactionType('')
-    setTransactionStatus('')
-    setExternalOrderId('')
-    setLinkStatus(undefined)
-    setSettlementId('')
-  }
 
   const columns: TableColumnsType<ImportBatch> = useMemo(
     () => [
@@ -216,13 +135,7 @@ export function FinanceImportSection({
         title: t('portal.integrations.ads.status', { defaultValue: 'Status' }),
         dataIndex: 'status',
         width: 120,
-        render: (itemStatus: string) => (
-          <StatusTag status={statusTone(itemStatus)}>
-            {t(`portal.integrations.ads.statuses.${itemStatus}`, {
-              defaultValue: humanizeCode(itemStatus),
-            })}
-          </StatusTag>
-        ),
+        render: (itemStatus: string) => <FinanceImportStatus status={itemStatus} />,
       },
       {
         title: t('portal.integrations.ads.rows', { defaultValue: 'Rows' }),
@@ -257,89 +170,6 @@ export function FinanceImportSection({
     ],
     [shopNames, sourceType, t],
   )
-
-  const detailColumns = useMemo(() => {
-    const amount = formatAmount
-    const date = (value: unknown) => <FormattedDateTime value={value ? String(value) : null} />
-    if (sourceType === 'TRANSACTIONS') {
-      return [
-        { title: 'Posted', dataIndex: 'postedAt', width: 150, render: date },
-        { title: 'Type', dataIndex: 'transactionType', width: 130 },
-        { title: 'Status', dataIndex: 'transactionStatus', width: 120 },
-        {
-          title: 'Order ID',
-          dataIndex: 'externalOrderId',
-          width: 180,
-          render: (id: string | null) => <CopyableOrderId value={id} fallback="—" />,
-        },
-        {
-          title: 'Net amount',
-          width: 130,
-          align: 'right' as const,
-          render: (_: unknown, row: Record<string, unknown>) =>
-            amount(row.amount, String(row.currency || 'USD')),
-        },
-        {
-          title: 'Fees',
-          width: 130,
-          align: 'right' as const,
-          render: (_: unknown, row: Record<string, unknown>) =>
-            amount(
-              (row.feeSummary as FeeSummary | undefined)?.totalAmount,
-              String(row.currency || 'USD'),
-            ),
-        },
-      ]
-    }
-    if (sourceType === 'SETTLEMENTS') {
-      return [
-        { title: 'Deposit date', dataIndex: 'depositAt', width: 150, render: date },
-        {
-          title: 'Settlement ID',
-          dataIndex: 'settlementId',
-          width: 260,
-          render: (id: string | null, row: Record<string, unknown>) => (
-            <Space size={4}>
-              <TableTextCell value={id} fallback="—" maxWidth={120} />
-              <Button
-                type="link"
-                size="small"
-                disabled={!row.id}
-                onClick={() => navigate(`/portal/finance/settlements?settlementId=${row.id}`)}
-              >
-                View settlement activity
-              </Button>
-            </Space>
-          ),
-        },
-        { title: 'Period start', dataIndex: 'periodStartAt', width: 150, render: date },
-        { title: 'Period end', dataIndex: 'periodEndAt', width: 150, render: date },
-        {
-          title: 'Payout amount',
-          width: 130,
-          align: 'right' as const,
-          render: (_: unknown, row: Record<string, unknown>) =>
-            amount(row.netSettlementAmount || row.totalAmount, String(row.currency || 'USD')),
-        },
-      ]
-    }
-    return [
-      { title: 'Date', dataIndex: 'reportDate', width: 150, render: date },
-      {
-        title: 'Campaign',
-        dataIndex: 'campaignName',
-        width: 220,
-        render: (name: string | null) => <TableTextCell value={name} maxWidth={200} />,
-      },
-      {
-        title: 'Spend',
-        width: 130,
-        align: 'right' as const,
-        render: (_: unknown, row: Record<string, unknown>) =>
-          amount(row.spendAmount, String(row.currency || 'USD')),
-      },
-    ]
-  }, [navigate, sourceType])
 
   return (
     <SectionCard title={title}>
@@ -408,177 +238,21 @@ export function FinanceImportSection({
               />
             </FilterBar>
           }
-          onRow={(batch) => ({ onClick: () => selectBatch(batch) })}
+          onRow={(batch) => ({ onClick: () => setSelectedBatch(batch) })}
         />
       ) : (
         <Alert type="info" showIcon message={permissionHint} />
       )}
-      <DetailDrawer
-        open={Boolean(selectedBatch)}
-        title={currentBatch?.originalFilename || title}
-        width="min(1450px, 94vw)"
-        onClose={() => setSelectedBatch(undefined)}
-        footer={null}
-        destroyOnClose
-        allowModeToggle
-        allowMaximize
-      >
-        {currentBatch ? (
-          <Space direction="vertical" size={8} style={{ width: '100%', marginBottom: 16 }}>
-            <Typography.Text type="secondary">
-              {`${currentBatch.processedRows} processed · ${currentBatch.validRows} valid · ${currentBatch.errorCount} errors`}
-            </Typography.Text>
-            <Space wrap>
-              <StatusTag status={statusTone(currentBatch.status)}>
-                {t(`portal.integrations.ads.statuses.${currentBatch.status}`, {
-                  defaultValue: humanizeCode(currentBatch.status),
-                })}
-              </StatusTag>
-              {sourceType === 'TRANSACTIONS' ? (
-                <Typography.Text>
-                  {currentBatch.recalculationTotal > 0
-                    ? `Profit recalculation: ${humanizeCode(currentBatch.recalculationStatus)} (${currentBatch.recalculationCompleted}/${currentBatch.recalculationTotal}; ${currentBatch.recalculationFailed} failed)`
-                    : 'Profit recalculation: not required'}
-                </Typography.Text>
-              ) : null}
-            </Space>
-            {currentBatch.recalculationTotal > 0 ? (
-              <Progress
-                percent={Math.round(
-                  ((currentBatch.recalculationCompleted + currentBatch.recalculationFailed) /
-                    currentBatch.recalculationTotal) *
-                    100,
-                )}
-                status={currentBatch.recalculationFailed > 0 ? 'exception' : undefined}
-              />
-            ) : null}
-            {canWriteFinanceForShop(account, currentBatch.shopId ?? null) &&
-            (['FAILED', 'PARTIAL_FAILED'].includes(currentBatch.status) ||
-              currentBatch.recalculationStatus === 'PARTIAL_FAILED') ? (
-              <Button
-                loading={reprocess.isPending}
-                onClick={() => reprocess.mutate(currentBatch.id)}
-              >
-                Reprocess
-              </Button>
-            ) : null}
-          </Space>
-        ) : null}
-        {sourceType === 'TRANSACTIONS' ? (
-          <FilterBar label="Transaction detail filters" contentClassName={styles.filters}>
-            <DateRangePicker
-              aria-label="Posted date range"
-              value={detailDates}
-              onChange={(nextDates) => {
-                setDetailDates(nextDates)
-                resetDetailPage()
-              }}
-            />
-            <Input
-              className={styles.filterControl}
-              aria-label="Transaction type"
-              placeholder="Transaction type"
-              value={transactionType}
-              onChange={(event) => {
-                setTransactionType(event.target.value)
-                resetDetailPage()
-              }}
-            />
-            <Input
-              className={styles.filterControl}
-              aria-label="Transaction status"
-              placeholder="Transaction status"
-              value={transactionStatus}
-              onChange={(event) => {
-                setTransactionStatus(event.target.value)
-                resetDetailPage()
-              }}
-            />
-            <Input
-              className={styles.filterControl}
-              aria-label="Order ID"
-              placeholder="Order ID"
-              value={externalOrderId}
-              onChange={(event) => {
-                setExternalOrderId(event.target.value)
-                resetDetailPage()
-              }}
-            />
-            <Select
-              allowClear
-              aria-label="Link status"
-              className={styles.filterControl}
-              options={[
-                { label: 'Linked', value: 'LINKED' },
-                { label: 'Unlinked', value: 'UNLINKED' },
-              ]}
-              placeholder="Link status"
-              value={linkStatus}
-              onChange={(nextLinkStatus) => {
-                setLinkStatus(nextLinkStatus)
-                resetDetailPage()
-              }}
-            />
-          </FilterBar>
-        ) : null}
-        {sourceType === 'SETTLEMENTS' ? (
-          <FilterBar label="Settlement detail filters" contentClassName={styles.filters}>
-            <DateRangePicker
-              aria-label="Deposit date range"
-              value={detailDates}
-              onChange={(nextDates) => {
-                setDetailDates(nextDates)
-                resetDetailPage()
-              }}
-            />
-            <Input
-              className={styles.filterControl}
-              aria-label="Settlement ID"
-              placeholder="Settlement ID"
-              value={settlementId}
-              onChange={(event) => {
-                setSettlementId(event.target.value)
-                resetDetailPage()
-              }}
-            />
-          </FilterBar>
-        ) : null}
-        <Table
-          rowKey="id"
-          size="small"
-          loading={importedData.isLoading}
-          dataSource={importedData.data?.items ?? []}
-          columns={detailColumns}
-          expandable={
-            sourceType === 'TRANSACTIONS'
-              ? {
-                  expandedRowRender: (row: Record<string, unknown>) => {
-                    const fees = (row.feeSummary as FeeSummary | undefined)?.items ?? []
-                    return fees.length ? (
-                      <Space size="middle" wrap>
-                        {fees.map((fee) => (
-                          <Typography.Text key={String(fee.type)}>
-                            {String(fee.type || 'Fee').replaceAll('_', ' ')}:{' '}
-                            {formatAmount(fee.amount, String(row.currency || 'USD'))}
-                          </Typography.Text>
-                        ))}
-                      </Space>
-                    ) : (
-                      <Typography.Text type="secondary">No imported fees</Typography.Text>
-                    )
-                  },
-                }
-              : undefined
-          }
-          pagination={{
-            current: detailPage,
-            pageSize: PAGE_SIZE,
-            total: importedData.data?.pagination.total,
-            onChange: setDetailPage,
-          }}
-          scroll={{ x: 800 }}
+      {selectedBatch ? (
+        <FinanceImportBatchDetail
+          account={account}
+          batchId={selectedBatch.id}
+          initialBatch={selectedBatch}
+          sourceType={sourceType}
+          title={title}
+          onClose={() => setSelectedBatch(undefined)}
         />
-      </DetailDrawer>
+      ) : null}
       {sourceType === 'TRANSACTIONS' && canRead ? (
         <section style={{ marginTop: 16 }}>
           <Typography.Title level={5}>

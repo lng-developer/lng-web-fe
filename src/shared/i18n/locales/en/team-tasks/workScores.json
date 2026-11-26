@@ -1,0 +1,151 @@
+{
+  "portal": {
+    "workScores": {
+      "title": "Work scores",
+      "description": "Review Design and Scale output points with an auditable adjustment history.",
+      "refresh": "Refresh",
+      "unavailable": "Work scores are unavailable",
+      "filters": {
+        "label": "Score filters",
+        "allTaskTypes": "All Task Types",
+        "allDifficulties": "All Difficulties"
+      },
+      "search": "Search SKU, order, or task",
+      "allSources": "All sources",
+      "detail": "Work score detail",
+      "history": "Adjustment history",
+      "updated": "Work score updated",
+      "actionFailed": "Work score update failed",
+      "topWorkers": "Top contributors",
+      "topDesigners": "Top Designers",
+      "topScalers": "Top Scalers",
+      "searchDesign": "Search SKU, task, or designer...",
+      "searchScale": "Search order, SKU, or scaler...",
+      "allTaskTypes": "All task types",
+      "noAssetPreview": "No asset preview available for this task",
+      "evalHeading": "Evaluate and adjust work score",
+      "reasonPlaceholder": "Enter audit reason for score adjustment...",
+      "voidReasonPlaceholder": "Reason for voiding this work score...",
+      "noAdjustments": "No manual score overrides or voids recorded.",
+      "ruleSetup": {
+        "title": "Score setup",
+        "taskType": "Task type",
+        "scaleDifficulty": "Scale difficulty",
+        "saveRule": "Save rule"
+      },
+      "units": {
+        "points": "{{count}} pts",
+        "basePoints": " / {{count}}pt",
+        "files": "{{count}} files"
+      },
+      "rules": {
+        "title": "Score setup",
+        "rulesList": "Configured rules",
+        "addRule": "Add scoring rule",
+        "editRule": "Edit scoring rule",
+        "cancelEdit": "Cancel",
+        "sourceType": "Source type",
+        "taskType": "Task type",
+        "priority": "Priority",
+        "allPriorities": "All priorities",
+        "scaleDifficulty": "Scale difficulty",
+        "allDifficulties": "All difficulties",
+        "points": "Points",
+        "status": "Status",
+        "save": "Save rule",
+        "update": "Update rule"
+      },
+      "metrics": {
+        "totalFiles": "Files",
+        "totalPoints": "Points",
+        "designFiles": "Design files",
+        "scaleFiles": "Scale files",
+        "designTotalPoints": "Design points",
+        "scaleTotalPoints": "Scale points",
+        "psdFiles": "PSD files",
+        "ideaFiles": "Idea / PNG files",
+        "normalFiles": "Normal files",
+        "hardFiles": "Hard / Special files"
+      },
+      "sources": {
+        "DESIGN_SUBMISSION": "Design",
+        "PRODUCTION_SCALE": "Scale"
+      },
+      "statuses": {
+        "ACTIVE": "Active",
+        "INACTIVE": "Inactive",
+        "VOIDED": "Voided",
+        "ALL": "All statuses"
+      },
+      "taskTypes": {
+        "PSD_TEMPLATE": "PSD template",
+        "MOCKUP": "Mockup",
+        "PNG_ASSET": "PNG asset",
+        "IDEA": "Idea",
+        "CLONE": "Clone"
+      },
+      "priorities": {
+        "LOW": "Low",
+        "NORMAL": "Normal",
+        "HIGH": "High",
+        "URGENT": "Urgent"
+      },
+      "scaleDifficulties": {
+        "NORMAL": "Normal",
+        "HARD": "Hard",
+        "SPECIAL": "Special"
+      },
+      "levelNames": {
+        "BASIC": "Basic",
+        "STANDARD": "Standard",
+        "HARD": "Hard",
+        "BONUS": "Bonus"
+      },
+      "levels": {
+        "BASIC": "Basic ({{points}}pt)",
+        "STANDARD": "Standard ({{points}}pt)",
+        "HARD": "Hard ({{points}}pt)",
+        "BONUS": "Bonus ({{points}}pt)"
+      },
+      "columns": {
+        "asset": "Asset",
+        "source": "Source",
+        "context": "File / context",
+        "worker": "Worker",
+        "points": "Final / base",
+        "level": "Level",
+        "status": "Status",
+        "scoredAt": "Scored at",
+        "action": "Actions",
+        "designer": "Designer",
+        "scaler": "Scaler"
+      },
+      "fields": {
+        "taskType": "Task Type",
+        "points": "Points",
+        "level": "Score level",
+        "reason": "Reason",
+        "context": "Source context",
+        "skuOrder": "SKU / order",
+        "taskSlot": "Task / slot"
+      },
+      "actions": {
+        "view": "View",
+        "download": "Download",
+        "override": "Override score",
+        "void": "Void score",
+        "confirm": "Confirm",
+        "confirmVoid": "Confirm void",
+        "saveOverride": "Save score override"
+      },
+      "adjustments": {
+        "pointsChange": "{{oldPoints}} -> {{newPoints}} pts",
+        "types": {
+          "OVERRIDE": "Override",
+          "VOID": "Void",
+          "SYSTEM_VOID": "System void"
+        }
+      }
+    }
+  }
+}

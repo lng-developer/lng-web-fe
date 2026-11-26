@@ -3,7 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
-import { listListings, requestListingPsd } from '@/features/portal/catalog/api/catalogApi'
+import {
+  getListingSummary,
+  listListings,
+  requestListingPsd,
+} from '@/features/portal/catalog/api/catalogApi'
 import { CatalogListingWorkbenchPage } from '@/features/portal/catalog/pages/CatalogListingWorkbenchPage'
 import i18n from '@/shared/i18n/i18n'
 import { queryClient } from '@/shared/query/queryClient'
@@ -97,6 +101,44 @@ describe('CatalogListingWorkbenchPage', () => {
     vi.clearAllMocks()
     queryClient.clear()
     i18n.changeLanguage('en')
+  })
+
+  it('uses the compact count tabs to switch between missing PSD, QC status and all listings', async () => {
+    render(
+      <AppProviders>
+        <CatalogListingWorkbenchPage account={account} fixedSalesChannelCode="AMAZON" />
+      </AppProviders>,
+    )
+
+    const all = await screen.findByRole('tab', { name: /^All\s*1$/i })
+    expect(all).toHaveAttribute('aria-selected', 'true')
+    const missing = screen.getByRole('tab', { name: /PSD missing\s*1/i })
+    fireEvent.click(missing)
+    expect(missing).toHaveAttribute('aria-selected', 'true')
+    await waitFor(() =>
+      expect(listListings).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          page: 1,
+          psdState: 'missing',
+          qcStatus: undefined,
+        }),
+      ),
+    )
+
+    fireEvent.click(screen.getByRole('tab', { name: /Draft\s*1/i }))
+    await waitFor(() =>
+      expect(listListings).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          page: 1,
+          psdState: undefined,
+          qcStatus: 'DRAFT',
+        }),
+      ),
+    )
+    expect(getListingSummary).toHaveBeenCalledTimes(1)
+
+    fireEvent.click(all)
+    await waitFor(() => expect(all).toHaveAttribute('aria-selected', 'true'))
   })
   it.each([
     ['ETSY', 'ETSY_US', 'US'],

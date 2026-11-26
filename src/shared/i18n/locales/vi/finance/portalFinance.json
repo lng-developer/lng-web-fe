@@ -1,0 +1,7 @@
+{
+  "portal": {
+    "finance": {
+      "loadFailed": "Không thể tải dữ liệu tài chính"
+    }
+  }
+}

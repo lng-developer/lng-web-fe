@@ -37,31 +37,8 @@
   padding-inline: 0;
 }
 
-.detailHeader {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.detailAmount {
-  margin: 0;
-  font-variant-numeric: tabular-nums;
-}
-
-.movementGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-
 @media (max-width: 720px) {
-  .metricRow,
-  .movementGrid {
+  .metricRow {
     grid-template-columns: 1fr;
-  }
-
-  .detailHeader {
-    flex-direction: column;
   }
 }

@@ -97,5 +97,8 @@ it('shows requested count and import job in task details', () => {
     'href',
     '?selectedJobId=job-123',
   )
-  expect(screen.getByText('ETSY_IMPORT_NEEDS_REVIEW')).toBeInTheDocument()
+  expect(screen.getByRole('alert')).toHaveTextContent(
+    'extensionCommandErrors.etsyImportNeedsReview',
+  )
+  expect(screen.queryByText('ETSY_IMPORT_NEEDS_REVIEW')).not.toBeInTheDocument()
 })

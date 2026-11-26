@@ -8,36 +8,18 @@
   outline: 0;
 }
 
-.metrics {
+.listingTabs {
   flex: 0 0 auto;
-  display: grid;
-  grid-template-columns: repeat(5, minmax(180px, 1fr));
-  gap: 8px;
+  min-width: 0;
 }
 
-.metricPercent,
-.metricPercentSuccess,
-.metricPercentWarning,
-.metricPercentDanger {
-  font-size: 12px;
-  font-weight: 700;
-  white-space: nowrap;
+.listingTabs :global(.ant-tabs-nav) {
+  margin-bottom: 0;
 }
 
-.metricPercent {
-  color: var(--ant-color-text-secondary);
-}
-
-.metricPercentSuccess {
-  color: var(--ant-color-success);
-}
-
-.metricPercentWarning {
-  color: var(--ant-color-warning);
-}
-
-.metricPercentDanger {
-  color: var(--ant-color-error);
+.listingTabs :global(.ant-tabs-tab) {
+  min-width: auto;
+  font-weight: 600;
 }
 
 .filterRow {
@@ -215,10 +197,4 @@
 
 .dotMissing {
   background: var(--ant-color-error);
-}
-
-@media (max-width: 1100px) {
-  .metrics {
-    grid-template-columns: repeat(2, minmax(160px, 1fr));
-  }
 }

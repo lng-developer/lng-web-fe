@@ -1,98 +1,133 @@
-import { Alert, Space, Typography } from 'antd'
+import { Alert, Typography } from 'antd'
 import { useTranslation } from 'react-i18next'
 
-import { DetailDrawer, FormattedDateTime, humanizeCode, StatusTag } from '@/shared/ui'
+import { DetailDrawer, FormattedDateTime, StatusTag } from '@/shared/ui'
 
 import type { ExtensionCommand } from '../api/integrationApi'
 import styles from '../pages/IntegrationWorkbenchPage.module.scss'
+import { getExtensionCommandErrorKey } from './extensionHelpers'
 
 export interface ExtensionCommandDrawerProps {
   readonly command?: ExtensionCommand
+  readonly showImportJobLink?: boolean
   readonly onClose: () => void
 }
 
-export function ExtensionCommandDrawer({ command, onClose }: ExtensionCommandDrawerProps) {
+export function ExtensionCommandDrawer({
+  command,
+  showImportJobLink = true,
+  onClose,
+}: ExtensionCommandDrawerProps) {
   const { t } = useTranslation()
+  const errorMessage = command?.errorMessage?.trim()
+  const errorKey = getExtensionCommandErrorKey(errorMessage)
+
   return (
     <DetailDrawer
-      title="Task details"
+      title={t('extensionCommand.details')}
       open={Boolean(command)}
       onClose={onClose}
       footer={null}
-      width="min(1200px, 90vw)"
+      width="min(960px, 94vw)"
       allowModeToggle
       allowMaximize
     >
       {command ? (
-        <div className={styles.commandTimeline}>
-          <Space>
-            <StatusTag
-              status={
-                command.status === 'SUCCEEDED'
-                  ? 'operational'
-                  : command.status === 'FAILED'
-                    ? 'critical'
-                    : command.status === 'PARTIAL_FAILED'
-                      ? 'warning'
-                      : 'pending'
-              }
-            >
-              {humanizeCode(command.status)}
-            </StatusTag>
-            <Typography.Text>{command.type}</Typography.Text>
-          </Space>
-          {command.provider === 'ETSY' ? (
-            <Space>
-              <Typography.Text>
-                {t('portal.integrations.extension.manualRequests.maxOrders')}
-              </Typography.Text>
-              <Typography.Text>{command.maxOrders}</Typography.Text>
-            </Space>
+        <div className={styles.executionDetail}>
+          {errorMessage ? (
+            <Alert
+              className={styles.executionNotice}
+              type={errorKey === 'etsyImportNeedsReview' ? 'warning' : 'error'}
+              showIcon
+              title={t(`extensionCommandErrors.${errorKey}`)}
+              description={errorKey === 'seeDetails' ? errorMessage : undefined}
+            />
           ) : null}
-          {command.importJobId ? (
-            <Space>
-              <Typography.Text>{t('portal.integrations.panel.title')}</Typography.Text>
-              <Typography.Link href={`?selectedJobId=${encodeURIComponent(command.importJobId)}`}>
-                {command.importJobId}
-              </Typography.Link>
-            </Space>
-          ) : null}
-          {command.result ? (
-            <Space>
-              <Typography.Text>
-                {t('portal.integrations.panel.imported')}: {command.result.importedCount}
-              </Typography.Text>
-              <Typography.Text>
-                {t('portal.integrations.panel.failed')}: {command.result.failedCount}
-              </Typography.Text>
-            </Space>
-          ) : null}
-          {[
-            ['Created', command.createdAt],
-            ['Claimed', command.claimedAt],
-            ['Started', command.startedAt],
-            [
-              command.status === 'FAILED' || command.status === 'PARTIAL_FAILED'
-                ? 'Failed'
-                : command.status === 'SUCCEEDED'
-                  ? 'Completed'
-                  : 'Last update',
-              command.completedAt,
-            ],
-          ]
-            .filter(([, value]) => value)
-            .map(([label, value]) => (
-              <div className={styles.commandTimelineRow} key={String(label)}>
-                <Typography.Text strong>{label}</Typography.Text>
-                <FormattedDateTime value={String(value)} />
+          <section className={styles.executionSummary}>
+            <Typography.Title level={5} className={styles.executionSummaryTitle}>
+              {t('portal.integrations.panel.summary')}
+            </Typography.Title>
+            <dl className={styles.executionFacts}>
+              <div>
+                <dt>{t('common.status')}</dt>
+                <dd>
+                  <StatusTag
+                    status={
+                      command.status === 'SUCCEEDED'
+                        ? 'operational'
+                        : command.status === 'FAILED'
+                          ? 'critical'
+                          : command.status === 'PARTIAL_FAILED'
+                            ? 'warning'
+                            : 'pending'
+                    }
+                  >
+                    {t(`extensionCommand.statuses.${command.status}`, {
+                      defaultValue: command.status,
+                    })}
+                  </StatusTag>
+                </dd>
               </div>
-            ))}
-          {command.errorMessage ? (
-            <Alert type="error" showIcon title={command.errorMessage} />
-          ) : null}
+              <div>
+                <dt>{t('portal.integrations.extension.command')}</dt>
+                <dd>
+                  {t(`extensionCommand.types.${command.type}`, {
+                    defaultValue: t('common.unknown'),
+                  })}
+                </dd>
+              </div>
+              {command.provider === 'ETSY' && command.maxOrders != null ? (
+                <div>
+                  <dt>{t('portal.integrations.extension.manualRequests.maxOrders')}</dt>
+                  <dd>{command.maxOrders}</dd>
+                </div>
+              ) : null}
+              {showImportJobLink && command.importJobId ? (
+                <div>
+                  <dt>{t('portal.integrations.panel.title')}</dt>
+                  <dd>
+                    <Typography.Link
+                      href={`?selectedJobId=${encodeURIComponent(command.importJobId)}`}
+                    >
+                      {command.importJobId}
+                    </Typography.Link>
+                  </dd>
+                </div>
+              ) : null}
+              {command.result ? (
+                <>
+                  <div>
+                    <dt>{t('portal.integrations.panel.imported')}</dt>
+                    <dd>{command.result.importedCount}</dd>
+                  </div>
+                  <div>
+                    <dt>{t('portal.integrations.panel.failed')}</dt>
+                    <dd>{command.result.failedCount}</dd>
+                  </div>
+                </>
+              ) : null}
+              {(
+                [
+                  ['common.created', command.createdAt],
+                  ['extensionCommand.claimedAt', command.claimedAt],
+                  ['extensionCommand.startedAt', command.startedAt],
+                  ['portal.integrations.panel.finished', command.completedAt],
+                ] as const
+              ).map(([label, value]) =>
+                value ? (
+                  <div key={label}>
+                    <dt>{t(label)}</dt>
+                    <dd>
+                      <FormattedDateTime value={value} />
+                    </dd>
+                  </div>
+                ) : null,
+              )}
+            </dl>
+          </section>
           {command.trackingResults?.length ? (
             <div>
-              <Typography.Text strong>Tracking verification</Typography.Text>
+              <Typography.Text strong>{t('extensionCommand.trackingVerification')}</Typography.Text>
               {command.trackingResults.map((result) => (
                 <div
                   className={styles.commandTimelineRow}
@@ -100,7 +135,7 @@ export function ExtensionCommandDrawer({ command, onClose }: ExtensionCommandDra
                 >
                   <Typography.Text>{result.orderId}</Typography.Text>
                   <Typography.Text>
-                    {result.carrier || 'Other'} · {result.trackingNumber}
+                    {result.carrier || t('extensionCommand.otherCarrier')} · {result.trackingNumber}
                   </Typography.Text>
                   <StatusTag
                     status={
@@ -111,10 +146,16 @@ export function ExtensionCommandDrawer({ command, onClose }: ExtensionCommandDra
                           : 'warning'
                     }
                   >
-                    {humanizeCode(result.etsyStatus)}
+                    {t(`extensionCommand.trackingStatuses.${result.etsyStatus}`, {
+                      defaultValue: result.etsyStatus,
+                    })}
                   </StatusTag>
                   {result.errorMessage ? (
-                    <Typography.Text type="warning">{result.errorMessage}</Typography.Text>
+                    <Typography.Text type="warning" title={result.errorMessage}>
+                      {t(
+                        `extensionCommandErrors.${getExtensionCommandErrorKey(result.errorMessage)}`,
+                      )}
+                    </Typography.Text>
                   ) : null}
                 </div>
               ))}

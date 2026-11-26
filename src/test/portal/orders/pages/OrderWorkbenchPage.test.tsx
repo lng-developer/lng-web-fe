@@ -141,11 +141,38 @@ describe('OrderWorkbenchPage', () => {
     )
   })
 
+  it('requests 50 orders for the first workbench page', async () => {
+    renderPage('/portal/orders?salesChannelCode=amazon')
+
+    await waitFor(() =>
+      expect(listOrderWorkbench).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({ page: 1, limit: 50, salesChannelCode: 'AMAZON' }),
+        expect.any(AbortSignal),
+      ),
+    )
+  })
+
   it('activates the selected order queue tab without redundant status badge', async () => {
     renderPage('/portal/orders?tab=NEW_ORDER')
 
     expect(await screen.findByRole('tab', { selected: true })).toHaveTextContent('New')
     expect(screen.queryByRole('status', { name: 'Current queue' })).not.toBeInTheDocument()
+  })
+
+  it('keeps refresh available without showing the update time or totals', async () => {
+    vi.mocked(listOrderWorkbench).mockResolvedValue({
+      items: [workbenchRow],
+      pagination: { total: 1, page: 1, limit: 20 },
+    })
+
+    renderPage()
+
+    await screen.findByText('113-2183249-0763446')
+    expect(screen.getByRole('button', { name: 'Refresh' })).toBeEnabled()
+    expect(screen.queryByText(/^Updated at /)).not.toBeInTheDocument()
+    expect(screen.queryByText('Orders:')).not.toBeInTheDocument()
+    expect(screen.queryByText('Items:')).not.toBeInTheDocument()
   })
 
   it('renders each order ID as a chip without copy icon', async () => {

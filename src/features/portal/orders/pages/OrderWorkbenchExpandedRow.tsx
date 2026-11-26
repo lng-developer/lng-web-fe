@@ -1,7 +1,8 @@
 import { Component, memo, type ReactNode, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Skeleton } from 'antd'
 
-import { type PopupModalAnchor } from '@/shared/ui'
+import { FeedbackAlert, type PopupModalAnchor } from '@/shared/ui'
 
 import { type OrderWorkbenchRow } from '../api/orderApi'
 import type { OrderModal } from '../components/orderTypes'
@@ -19,6 +20,7 @@ type OrderWorkbenchExpandedRowProps = {
 
 interface RowErrorBoundaryProps {
   children: ReactNode
+  errorMessage: string
 }
 
 interface RowErrorBoundaryState {
@@ -39,11 +41,8 @@ class OrderRowErrorBoundary extends Component<RowErrorBoundaryProps, RowErrorBou
   override render() {
     if (this.state.hasError) {
       return (
-        <div className={styles.inlinePanel} style={{ padding: '16px' }}>
-          <span style={{ color: '#faad14' }}>
-            Không thể hiển thị chi tiết dòng sản phẩm do dữ liệu không đồng bộ. Vui lòng tải lại
-            trang.
-          </span>
+        <div className={styles.inlinePanel}>
+          <FeedbackAlert type="error" title={this.props.errorMessage} />
         </div>
       )
     }
@@ -88,7 +87,7 @@ const LazyOrderDetail = memo(function LazyOrderDetail({
           onOrderModalClose={onOrderModalClose}
         />
       ) : (
-        <Skeleton active title={false} paragraph={{ rows: 4 }} />
+        <Skeleton title={false} paragraph={{ rows: 4 }} />
       )}
     </div>
   )
@@ -102,12 +101,13 @@ export const OrderWorkbenchExpandedRow = memo(function OrderWorkbenchExpandedRow
   requestedPopupAnchor,
   onOrderModalClose,
 }: OrderWorkbenchExpandedRowProps) {
+  const { t } = useTranslation()
   if (!row?.order) {
     return null
   }
 
   return (
-    <OrderRowErrorBoundary>
+    <OrderRowErrorBoundary errorMessage={t('orders.detailError')}>
       <LazyOrderDetail
         row={row}
         canWrite={canWrite}

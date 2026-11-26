@@ -94,12 +94,9 @@ export function FulfillmentInlineEditor({
     ? (candidates.find((candidate) => candidate.id === costCenterId) ??
       (candidates.length === 1 ? candidates[0] : undefined))
     : undefined
-  const hasProductSelected = Boolean(productId)
-  const canApply =
-    hasProductSelected &&
-    Boolean(selectedCandidate) &&
-    !productOptions.isFetching &&
-    !productOptions.isError
+  const hasFulfillmentChange =
+    productId !== item.mapping?.vendorProduct?.id ||
+    selectedCandidate?.id !== item.mapping?.vendorCostCenter?.id
 
   const save = useMutation({
     mutationFn: (candidate: MappingCostCenterOption) =>
@@ -334,7 +331,7 @@ export function FulfillmentInlineEditor({
       {error ? (
         <Typography.Text type="danger">{normalizeApiError(error).message}</Typography.Text>
       ) : null}
-      {canApply && selectedCandidate ? (
+      {selectedCandidate && !productOptions.isFetching && !productOptions.isError ? (
         <Flex align="center" justify="space-between" gap={8}>
           <Typography.Text type="secondary">
             {t('orders.fields.baseCost')}:{' '}
@@ -345,14 +342,16 @@ export function FulfillmentInlineEditor({
               )}
             </Typography.Text>
           </Typography.Text>
-          <Button
-            type="primary"
-            size="small"
-            loading={save.isPending}
-            onClick={() => save.mutate(selectedCandidate)}
-          >
-            {t('orders.actions.apply')}
-          </Button>
+          {hasFulfillmentChange ? (
+            <Button
+              type="primary"
+              size="small"
+              loading={save.isPending}
+              onClick={() => save.mutate(selectedCandidate)}
+            >
+              {t('orders.actions.apply')}
+            </Button>
+          ) : null}
         </Flex>
       ) : null}
     </Flex>

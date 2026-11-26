@@ -1,5 +1,5 @@
-import { createMemoryRouter, RouterProvider } from 'react-router-dom'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { createMemoryRouter, Link, RouterProvider } from 'react-router-dom'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppShell } from '@/app/layout/AppShell'
@@ -130,6 +130,54 @@ describe('AppShell', () => {
     expect(screen.getByRole('button', { name: 'Refresh' })).toBeVisible()
     expect(await screen.findAllByRole('button', { name: 'Chat' })).not.toHaveLength(0)
     expect(screen.getByRole('button', { name: 'Open navigation' })).toBeVisible()
+  })
+
+  it('shows navigation progress while the next workspace is loading', async () => {
+    let resolveNextPage = () => {}
+    const nextPage = new Promise<null>((resolve) => {
+      resolveNextPage = () => resolve(null)
+    })
+    const router = createMemoryRouter(
+      [
+        {
+          path: '/',
+          loader: () => ({
+            account: { id: 'account-1', email: 'admin@lng.co', mustChangePassword: false },
+            roles: [],
+            permissions: [],
+            scopes: [],
+            profileSetupRequired: false,
+          }),
+          HydrateFallback: () => null,
+          element: <AppShell />,
+          children: [
+            {
+              path: 'portal/extensions/logs',
+              element: <Link to="/portal/extensions/tracking">Open Tracking</Link>,
+            },
+            {
+              path: 'portal/extensions/tracking',
+              loader: () => nextPage,
+              element: <h1>Tracking workspace</h1>,
+            },
+          ],
+        },
+      ],
+      { initialEntries: ['/portal/extensions/logs'] },
+    )
+    render(
+      <AppProviders>
+        <RouterProvider router={router} />
+      </AppProviders>,
+    )
+    fireEvent.click(await screen.findByRole('link', { name: 'Open Tracking' }))
+
+    expect(await screen.findByRole('progressbar', { name: 'Loading page' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open Tracking' })).toBeInTheDocument()
+    resolveNextPage()
+
+    expect(await screen.findByText('Tracking workspace')).toBeInTheDocument()
+    expect(screen.queryByRole('progressbar', { name: 'Loading page' })).not.toBeInTheDocument()
   })
 
   it('offers non-blocking Teams setup for an eligible account', async () => {
@@ -312,7 +360,7 @@ describe('AppShell', () => {
     )
 
     expect(await screen.findByRole('heading', { name: 'Orders test page' })).toBeVisible()
-    expect(document.title).toBe('(1) Orders | Ecomatrix')
+    await waitFor(() => expect(document.title).toBe('(1) Orders | Ecomatrix'))
   })
 
   it('allows the Catalog workspace to use the page vertical scrollbar', async () => {
@@ -373,7 +421,7 @@ describe('AppShell', () => {
 
     expect(await screen.findByRole('heading', { name: 'Full chat page' })).toBeVisible()
     expect(screen.queryByRole('region', { name: 'designer@lng.co' })).not.toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: 'Chat' })).toHaveLength(2)
+    expect(within(screen.getByRole('banner')).getByRole('button', { name: 'Chat' })).toBeVisible()
   })
 
   it('updates document title correctly for /portal/monitoring', async () => {

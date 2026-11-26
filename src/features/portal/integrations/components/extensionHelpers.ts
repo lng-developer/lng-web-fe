@@ -35,6 +35,24 @@ export const EXTENSION_ENVIRONMENT_TONES: Record<string, 'processing' | 'ready' 
 
 export const RECENT_RECONNECT_MS = 5 * 60 * 1000
 
+const commandErrorLabels = new Map([
+  ['etsy_import_needs_review', 'etsyImportNeedsReview'],
+  ['cancelled by operator', 'cancelledByOperator'],
+  ['canceled by operator', 'cancelledByOperator'],
+  ['auth session expired', 'authSessionExpired'],
+  ['amazon ads session expired', 'amazonAdsSessionExpired'],
+  ['extension lease expired', 'leaseExpired'],
+  ['extension task failed', 'taskFailed'],
+])
+
+export function getExtensionCommandErrorKey(message?: string | null) {
+  const normalized = message
+    ?.trim()
+    .toLowerCase()
+    .replace(/[.!]+$/, '')
+  return normalized ? (commandErrorLabels.get(normalized) ?? 'seeDetails') : 'noDetails'
+}
+
 export function nextPollLabel(lastSeenAt: string, now: number) {
   const remaining = Math.max(0, 60_000 - (now - Date.parse(lastSeenAt)))
   if (!remaining) return 'Polling…'

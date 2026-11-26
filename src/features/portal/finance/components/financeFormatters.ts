@@ -9,3 +9,9 @@ export const formatFinanceMoney = (amount: number | null | undefined, currency =
     .trim()
   return `${symbol}${value}`
 }
+
+export function settlementBankReceiptStatus(t: (key: string) => string, status?: string) {
+  if (status === 'RECONCILED') return t('finance.settlements.bankReceiptConfirmed')
+  if (status === 'NEEDS_REVIEW') return t('finance.settlements.bankReceiptNeedsReview')
+  return t('finance.settlements.bankReceiptPending')
+}

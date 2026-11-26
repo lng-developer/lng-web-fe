@@ -32,6 +32,7 @@ import { useThemePreference } from '@/shared/theme/themeContext'
 
 import { type NavigationGroup, type NavigationItem } from './appNavigation'
 import styles from './AppShell.module.scss'
+import { useRoutePreloadIntent } from './useRoutePreloadIntent'
 
 export function AppSidebar({
   accountLabel,
@@ -42,6 +43,7 @@ export function AppSidebar({
   embedded = false,
   navigationSearch,
   onNavigate,
+  preloadRoute,
 }: {
   accountLabel?: string
   coreLabel: string
@@ -52,9 +54,11 @@ export function AppSidebar({
   embedded?: boolean
   navigationSearch: string
   onNavigate?: () => void
+  preloadRoute?: (path: string) => void
 }) {
   const { t } = useTranslation()
   const { resolved } = useThemePreference()
+  const preloadIntent = useRoutePreloadIntent(preloadRoute)
   const selectedGroupKey = useMemo(
     () =>
       groups.find(
@@ -100,7 +104,7 @@ export function AppSidebar({
                   key: item.key,
                   icon: iconFor(item),
                   label: (
-                    <Link to={item.path} prefetch="intent" onClick={onNavigate}>
+                    <Link to={item.path} onClick={onNavigate}>
                       {t(item.labelKey)}
                     </Link>
                   ),
@@ -117,7 +121,7 @@ export function AppSidebar({
               key: item.key,
               icon: iconFor(item),
               label: (
-                <Link to={item.path} prefetch="intent" onClick={onNavigate}>
+                <Link to={item.path} onClick={onNavigate}>
                   {t(item.labelKey)}
                 </Link>
               ),
@@ -132,6 +136,7 @@ export function AppSidebar({
     <nav
       aria-label={t('shell.navigation.primary')}
       className={embedded ? styles.mobileNavigation : styles.navigation}
+      {...preloadIntent}
     >
       <Menu
         key={selectedGroupKey ?? 'no-selected-group'}
