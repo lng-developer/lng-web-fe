@@ -12,12 +12,14 @@ import {
   Select,
   Space,
   Table,
+  Tabs,
   Tag,
   Tooltip,
   Typography,
 } from 'antd'
 import { CopyOutlined, CheckOutlined, FileTextOutlined } from '@ant-design/icons'
 
+import { TrackingBatchHistory } from './TrackingBatchHistory'
 import { shipmentKeys } from '@/features/portal/shipments/api/shipmentKeys'
 import {
   createAmazonTrackingSubmission,
@@ -56,6 +58,7 @@ export function TrackingUploadPreviewModal({
   const [selectedKeysOverride, setSelectedKeysOverride] = useState<string[]>()
   const [selectedAgentIdOverride, setSelectedAgentIdOverride] = useState<string>()
   const [filterMode, setFilterMode] = useState<'PENDING' | 'CONFIRMED' | 'ALL'>('PENDING')
+  const [view, setView] = useState('orders')
   const [hasCopiedTsv, setHasCopiedTsv] = useState(false)
 
   const previewQuery = useQuery({
@@ -168,6 +171,7 @@ export function TrackingUploadPreviewModal({
       )
       queryClient.invalidateQueries({ queryKey: shipmentKeys.all })
       queryClient.invalidateQueries({ queryKey: ['amazon-tracking-preview'] })
+      queryClient.invalidateQueries({ queryKey: ['amazon-tracking-batches'] })
       queryClient.invalidateQueries({ queryKey: ['extension-commands'] })
       onClose()
     },
@@ -391,7 +395,7 @@ export function TrackingUploadPreviewModal({
       footer={
         <Space>
           <Button onClick={onClose}>{t('common.cancel', { defaultValue: 'Cancel' })}</Button>
-          {canSubmit && effectiveAgentId ? (
+          {canSubmit && effectiveAgentId && view === 'orders' ? (
             <Button
               type="primary"
               loading={submitMutation.isPending}
@@ -429,209 +433,232 @@ export function TrackingUploadPreviewModal({
       width="min(1250px, 94vw)"
       onCancel={onClose}
     >
-      <Typography.Paragraph type="secondary">
-        {t(
-          isEtsy
-            ? 'portal.shipments.trackingPreview.etsyDescription'
-            : 'portal.shipments.trackingPreview.description',
-          {
-            defaultValue: isEtsy
-              ? 'Select the pending orders to send as one tracking command to the Etsy Extension Worker.'
-              : 'Preview the actual data fields that will be included in the TSV feed file and uploaded to Amazon Seller Central via the Extension Worker.',
-          },
-        )}
-      </Typography.Paragraph>
-      <Alert
-        showIcon
-        type="info"
-        title={t(
-          isEtsy
-            ? 'portal.shipments.trackingPreview.etsyFeedSyncNote'
-            : 'portal.shipments.trackingPreview.feedSyncNote',
-          {
-            defaultValue: isEtsy
-              ? 'Selected orders will be included in one Etsy tracking command for the connected Extension Worker.'
-              : 'Displayed data fields (order-id, ship-date, carrier-code, carrier-name, ship-method, tracking-number) are 100% synchronized with the Amazon TSV feed.',
-          },
-        )}
-      />
-
-      {availableAgents.length > 1 ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
-          <Typography.Text strong>
-            {t('portal.shipments.trackingPreview.workerExtension', {
-              defaultValue: 'Worker Extension:',
-            })}
-          </Typography.Text>
-          <Select
-            aria-label={t('portal.shipments.trackingPreview.workerExtension')}
-            value={effectiveAgentId}
-            onChange={setSelectedAgentIdOverride}
-            style={{ minWidth: 260 }}
-            options={availableAgents.map((a) => ({
-              value: a.id,
-              label: `${a.label || a.clientId} (${t(`common.connectionStatus.${a.status}`)})`,
-            }))}
-          />
-        </div>
-      ) : null}
-
-      {!effectiveAgentId && !agentsQuery.isLoading ? (
-        <Alert
-          showIcon
-          type="warning"
-          title={t('portal.shipments.trackingPreview.noAgentWarning', {
-            defaultValue: 'No connected Extension Worker',
-          })}
-          description={t('portal.shipments.trackingPreview.noAgentDesc', {
-            defaultValue:
-              'No Worker Extension is currently connected for this store (or it is offline). You can only preview the list; an online Worker Extension is required to submit tracking to the marketplace.',
-          })}
-          style={{ marginTop: 12 }}
-        />
-      ) : null}
-
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginTop: 16,
-          flexWrap: 'wrap',
-          gap: 8,
-        }}
-      >
-        <Segmented
-          value={filterMode}
-          onChange={(val) => setFilterMode(val as 'PENDING' | 'CONFIRMED' | 'ALL')}
-          options={[
-            {
-              label: t('portal.shipments.trackingPreview.filterPending', {
-                count: summary?.readyOrders ?? pendingCount,
-                defaultValue: `Pending (${summary?.readyOrders ?? pendingCount})`,
-              }),
-              value: 'PENDING',
-            },
-            {
-              label: t('portal.shipments.trackingPreview.filterConfirmed', {
-                count: summary?.confirmedOrders ?? confirmedCount,
-                defaultValue: `Confirmed (${summary?.confirmedOrders ?? confirmedCount})`,
-              }),
-              value: 'CONFIRMED',
-            },
-            {
-              label: t('portal.shipments.trackingPreview.filterAll', {
-                count: totalCount,
-                defaultValue: `All (${totalCount})`,
-              }),
-              value: 'ALL',
-            },
-          ]}
-        />
-        <Typography.Text type="secondary">
-          {isEtsy
-            ? t('portal.shipments.trackingPreview.selectedOrdersForEtsy', {
-                count: readyOrderCount,
-                defaultValue: `${readyOrderCount} order(s) selected for Etsy`,
-              })
-            : readyItemCount > readyOrderCount
-              ? t('portal.shipments.trackingPreview.selectedOrdersWithItems', {
-                  orderCount: readyOrderCount,
-                  itemCount: readyItemCount,
-                  defaultValue: `${readyOrderCount} orders (${readyItemCount} items) selected to submit to Amazon`,
-                })
-              : t('portal.shipments.trackingPreview.selectedOrders', {
-                  count: readyOrderCount,
-                  defaultValue: `${readyOrderCount} order(s) selected to submit to Amazon`,
-                })}
-        </Typography.Text>
-      </div>
-
-      <Table<AmazonTrackingPreviewRow>
-        columns={columns}
-        dataSource={displayedRows}
-        loading={previewQuery.isLoading}
-        pagination={false}
-        rowKey="key"
-        rowSelection={
-          canSubmit && effectiveAgentId
-            ? {
-                selectedRowKeys,
-                onChange: (keys) => setSelectedKeysOverride(keys as string[]),
-                getCheckboxProps: (record) => ({
-                  disabled: !canSelectRowForUpload(record),
-                }),
-              }
-            : undefined
-        }
-        scroll={{ x: 1050 }}
-        style={{ marginTop: 12 }}
-      />
-
       {!isEtsy ? (
-        <Collapse
-          ghost
-          style={{ marginTop: 16, border: '1px solid #d9d9d9', borderRadius: 8 }}
+        <Tabs
+          activeKey={view}
+          onChange={setView}
           items={[
-            {
-              key: 'tsv-feed',
-              label: (
-                <Space>
-                  <FileTextOutlined />
-                  <Typography.Text strong>
-                    {t('portal.shipments.trackingPreview.tsvFeedPreviewTitle', {
-                      count: previewQuery.data?.rowCount || 0,
-                      defaultValue: `Amazon Feed Preview (TSV Preview - ${previewQuery.data?.rowCount || 0} rows)`,
-                    })}
-                  </Typography.Text>
-                </Space>
-              ),
-              extra: previewQuery.data?.tsv ? (
-                <Button
-                  size="small"
-                  icon={hasCopiedTsv ? <CheckOutlined /> : <CopyOutlined />}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    copyTsv()
-                  }}
-                >
-                  {hasCopiedTsv
-                    ? t('portal.shipments.trackingPreview.copiedTsv', { defaultValue: 'Copied' })
-                    : t('portal.shipments.trackingPreview.copyTsv', { defaultValue: 'Copy TSV' })}
-                </Button>
-              ) : null,
-              children: (
-                <div>
-                  <Typography.Paragraph type="secondary" style={{ fontSize: 12, marginBottom: 8 }}>
-                    {t('portal.shipments.trackingPreview.tsvDescription', {
-                      defaultValue:
-                        'The TSV file strictly follows the 19 columns of the Amazon Shipping Confirmation Template. The Extension Worker will upload this file to Amazon Seller Central.',
-                    })}
-                  </Typography.Paragraph>
-                  <div
-                    style={{
-                      backgroundColor: '#1e1e1e',
-                      color: '#d4d4d4',
-                      padding: 12,
-                      borderRadius: 6,
-                      fontSize: 12,
-                      fontFamily: 'Consolas, Monaco, "Courier New", monospace',
-                      overflowX: 'auto',
-                      whiteSpace: 'pre',
-                      maxHeight: 240,
-                    }}
-                  >
-                    {previewQuery.data?.tsv ||
-                      t('portal.shipments.trackingPreview.tsvEmpty', {
-                        defaultValue: 'No feed rows ready to submit.',
-                      })}
-                  </div>
-                </div>
-              ),
-            },
+            { key: 'orders', label: t('trackingBatches.currentOrders') },
+            { key: 'batches', label: t('trackingBatches.title') },
           ]}
         />
       ) : null}
+      {view === 'batches' && !isEtsy ? (
+        <TrackingBatchHistory key={shopId} shopId={shopId} />
+      ) : (
+        <>
+          <Typography.Paragraph type="secondary">
+            {t(
+              isEtsy
+                ? 'portal.shipments.trackingPreview.etsyDescription'
+                : 'portal.shipments.trackingPreview.description',
+              {
+                defaultValue: isEtsy
+                  ? 'Select the pending orders to send as one tracking command to the Etsy Extension Worker.'
+                  : 'Preview the actual data fields that will be included in the TSV feed file and uploaded to Amazon Seller Central via the Extension Worker.',
+              },
+            )}
+          </Typography.Paragraph>
+          <Alert
+            showIcon
+            type="info"
+            title={t(
+              isEtsy
+                ? 'portal.shipments.trackingPreview.etsyFeedSyncNote'
+                : 'portal.shipments.trackingPreview.feedSyncNote',
+              {
+                defaultValue: isEtsy
+                  ? 'Selected orders will be included in one Etsy tracking command for the connected Extension Worker.'
+                  : 'Displayed data fields (order-id, ship-date, carrier-code, carrier-name, ship-method, tracking-number) are 100% synchronized with the Amazon TSV feed.',
+              },
+            )}
+          />
+
+          {availableAgents.length > 1 ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
+              <Typography.Text strong>
+                {t('portal.shipments.trackingPreview.workerExtension', {
+                  defaultValue: 'Worker Extension:',
+                })}
+              </Typography.Text>
+              <Select
+                aria-label={t('portal.shipments.trackingPreview.workerExtension')}
+                value={effectiveAgentId}
+                onChange={setSelectedAgentIdOverride}
+                style={{ minWidth: 260 }}
+                options={availableAgents.map((a) => ({
+                  value: a.id,
+                  label: `${a.label || a.clientId} (${t(`common.connectionStatus.${a.status}`)})`,
+                }))}
+              />
+            </div>
+          ) : null}
+
+          {!effectiveAgentId && !agentsQuery.isLoading ? (
+            <Alert
+              showIcon
+              type="warning"
+              title={t('portal.shipments.trackingPreview.noAgentWarning', {
+                defaultValue: 'No connected Extension Worker',
+              })}
+              description={t('portal.shipments.trackingPreview.noAgentDesc', {
+                defaultValue:
+                  'No Worker Extension is currently connected for this store (or it is offline). You can only preview the list; an online Worker Extension is required to submit tracking to the marketplace.',
+              })}
+              style={{ marginTop: 12 }}
+            />
+          ) : null}
+
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginTop: 16,
+              flexWrap: 'wrap',
+              gap: 8,
+            }}
+          >
+            <Segmented
+              value={filterMode}
+              onChange={(val) => setFilterMode(val as 'PENDING' | 'CONFIRMED' | 'ALL')}
+              options={[
+                {
+                  label: t('portal.shipments.trackingPreview.filterPending', {
+                    count: summary?.readyOrders ?? pendingCount,
+                    defaultValue: `Pending (${summary?.readyOrders ?? pendingCount})`,
+                  }),
+                  value: 'PENDING',
+                },
+                {
+                  label: t('portal.shipments.trackingPreview.filterConfirmed', {
+                    count: summary?.confirmedOrders ?? confirmedCount,
+                    defaultValue: `Confirmed (${summary?.confirmedOrders ?? confirmedCount})`,
+                  }),
+                  value: 'CONFIRMED',
+                },
+                {
+                  label: t('portal.shipments.trackingPreview.filterAll', {
+                    count: totalCount,
+                    defaultValue: `All (${totalCount})`,
+                  }),
+                  value: 'ALL',
+                },
+              ]}
+            />
+            <Typography.Text type="secondary">
+              {isEtsy
+                ? t('portal.shipments.trackingPreview.selectedOrdersForEtsy', {
+                    count: readyOrderCount,
+                    defaultValue: `${readyOrderCount} order(s) selected for Etsy`,
+                  })
+                : readyItemCount > readyOrderCount
+                  ? t('portal.shipments.trackingPreview.selectedOrdersWithItems', {
+                      orderCount: readyOrderCount,
+                      itemCount: readyItemCount,
+                      defaultValue: `${readyOrderCount} orders (${readyItemCount} items) selected to submit to Amazon`,
+                    })
+                  : t('portal.shipments.trackingPreview.selectedOrders', {
+                      count: readyOrderCount,
+                      defaultValue: `${readyOrderCount} order(s) selected to submit to Amazon`,
+                    })}
+            </Typography.Text>
+          </div>
+
+          <Table<AmazonTrackingPreviewRow>
+            columns={columns}
+            dataSource={displayedRows}
+            loading={previewQuery.isLoading}
+            pagination={false}
+            rowKey="key"
+            rowSelection={
+              canSubmit && effectiveAgentId
+                ? {
+                    selectedRowKeys,
+                    onChange: (keys) => setSelectedKeysOverride(keys as string[]),
+                    getCheckboxProps: (record) => ({
+                      disabled: !canSelectRowForUpload(record),
+                    }),
+                  }
+                : undefined
+            }
+            scroll={{ x: 1050 }}
+            style={{ marginTop: 12 }}
+          />
+
+          {!isEtsy ? (
+            <Collapse
+              ghost
+              style={{ marginTop: 16, border: '1px solid #d9d9d9', borderRadius: 8 }}
+              items={[
+                {
+                  key: 'tsv-feed',
+                  label: (
+                    <Space>
+                      <FileTextOutlined />
+                      <Typography.Text strong>
+                        {t('portal.shipments.trackingPreview.tsvFeedPreviewTitle', {
+                          count: previewQuery.data?.rowCount || 0,
+                          defaultValue: `Amazon Feed Preview (TSV Preview - ${previewQuery.data?.rowCount || 0} rows)`,
+                        })}
+                      </Typography.Text>
+                    </Space>
+                  ),
+                  extra: previewQuery.data?.tsv ? (
+                    <Button
+                      size="small"
+                      icon={hasCopiedTsv ? <CheckOutlined /> : <CopyOutlined />}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        copyTsv()
+                      }}
+                    >
+                      {hasCopiedTsv
+                        ? t('portal.shipments.trackingPreview.copiedTsv', {
+                            defaultValue: 'Copied',
+                          })
+                        : t('portal.shipments.trackingPreview.copyTsv', {
+                            defaultValue: 'Copy TSV',
+                          })}
+                    </Button>
+                  ) : null,
+                  children: (
+                    <div>
+                      <Typography.Paragraph
+                        type="secondary"
+                        style={{ fontSize: 12, marginBottom: 8 }}
+                      >
+                        {t('portal.shipments.trackingPreview.tsvDescription', {
+                          defaultValue:
+                            'The TSV file strictly follows the 19 columns of the Amazon Shipping Confirmation Template. The Extension Worker will upload this file to Amazon Seller Central.',
+                        })}
+                      </Typography.Paragraph>
+                      <div
+                        style={{
+                          backgroundColor: '#1e1e1e',
+                          color: '#d4d4d4',
+                          padding: 12,
+                          borderRadius: 6,
+                          fontSize: 12,
+                          fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+                          overflowX: 'auto',
+                          whiteSpace: 'pre',
+                          maxHeight: 240,
+                        }}
+                      >
+                        {previewQuery.data?.tsv ||
+                          t('portal.shipments.trackingPreview.tsvEmpty', {
+                            defaultValue: 'No feed rows ready to submit.',
+                          })}
+                      </div>
+                    </div>
+                  ),
+                },
+              ]}
+            />
+          ) : null}
+        </>
+      )}
     </Modal>
   )
 }

@@ -230,7 +230,6 @@ describe('ExtensionClientsPage', () => {
 
   it.each([
     ['Config Auto', ExtensionSchedulesPage],
-    ['Tracking Center', ExtensionTrackingPage],
     ['Message Center', ExtensionMessagesPage],
   ] as const)('shows only shops with online workers in %s', async (_, Page) => {
     render(
@@ -277,7 +276,9 @@ describe('ExtensionClientsPage', () => {
     expect(screen.getByText('3. Theo dõi và đối chiếu vận chuyển')).toBeVisible()
     expect(screen.getByText(/Tiện ích trên máy của cửa hàng tự lấy mã vận đơn/)).toBeVisible()
     expect(await screen.findAllByText('Trực tuyến')).toHaveLength(2)
-    expect(screen.getAllByText('Xem trước danh sách vận đơn')).toHaveLength(2)
+    expect(screen.getAllByText('Xem trước danh sách vận đơn')).toHaveLength(3)
+    expect(screen.getByText('Disconnected Shop')).toBeVisible()
+    expect(screen.getByText('Ngoại tuyến')).toBeVisible()
     expect(
       screen.queryByText(/Vendor Tracking Received|Extension Auto-Sync/),
     ).not.toBeInTheDocument()

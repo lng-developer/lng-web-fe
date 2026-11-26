@@ -584,7 +584,26 @@ export async function previewAmazonTrackingSubmission(payload: {
 }
 
 export async function listAmazonTrackingSubmissions(params: PageParams & { shopId?: string } = {}) {
-  return unwrap<Paginated<AmazonTrackingSubmission>>(
+  return unwrap<{ items: AmazonTrackingSubmission[]; total: number; page: number; limit: number }>(
     await apiClient.get('/api/integration/amazon-tracking-submissions', { params }),
+  )
+}
+
+export interface AmazonTrackingSubmissionDetail extends AmazonTrackingSubmission {
+  tsv: string
+  rows: Array<{
+    shipmentId: string
+    orderId: string | null
+    externalOrderId: string
+    shipDate: string
+    carrierCode: string
+    carrierName: string | null
+    trackingNumber: string
+    shipMethod: string
+  }>
+}
+export async function getAmazonTrackingSubmission(id: string, signal?: AbortSignal) {
+  return unwrap<AmazonTrackingSubmissionDetail>(
+    await apiClient.get('/api/integration/amazon-tracking-submissions/' + id, { signal }),
   )
 }

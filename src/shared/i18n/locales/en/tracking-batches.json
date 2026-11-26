@@ -1,0 +1,30 @@
+{
+  "trackingBatches": {
+    "title": "Upload batches",
+    "currentOrders": "Orders / New upload",
+    "batch": "Batch / File",
+    "createdAt": "Created at",
+    "status": "Status",
+    "rows": "Rows",
+    "result": "Amazon result",
+    "awaitingResult": "Awaiting result",
+    "resultCounts": "{{success}} accepted · {{failed}} failed",
+    "description": "Expand a batch to review the orders sent in that upload.",
+    "snapshotNote": "These are the original rows sent in this batch. The batch result does not establish the outcome of each individual order.",
+    "empty": "No upload batches recorded for this shop. Manually confirmed orders remain in the orders tab.",
+    "search": "Search order or tracking in this batch",
+    "diagnostics": "Batch diagnostics",
+    "listError": "Unable to load upload batches",
+    "detailError": "Unable to load orders in this batch",
+    "retry": "Retry",
+    "refresh": "Refresh",
+    "statuses": {
+      "PENDING": "Queued",
+      "SUBMITTED": "Uploaded",
+      "WAITING_AMAZON": "Amazon processing",
+      "SUCCEEDED": "Completed",
+      "FAILED": "Failed"
+    },
+    "noResult": "No Amazon result available"
+  }
+}

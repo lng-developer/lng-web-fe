@@ -22,7 +22,7 @@ interface ShopTrackingStatus {
   shopName: string
   platform: string
   agentName: string
-  agentId: string
+  agentId?: string
 }
 
 export function ExtensionTrackingPage() {
@@ -37,16 +37,15 @@ export function ExtensionTrackingPage() {
   const trackingRows: ShopTrackingStatus[] = useMemo(() => {
     return shops.flatMap((shop) => {
       const agent = onlineManagementAgents.find((a) => a.shopId === shop.id)
-      if (!agent) return []
 
-      const platform = (shop.salesChannelCode || agent.provider || 'AMAZON').toUpperCase()
+      const platform = (shop.salesChannelCode || agent?.provider || 'AMAZON').toUpperCase()
       return [
         {
           shopId: shop.id,
           shopName: shop.name,
           platform,
-          agentName: agent.label || agent.clientId,
-          agentId: agent.id,
+          agentName: agent?.label || agent?.clientId || '',
+          agentId: agent?.id,
         },
       ]
     })
@@ -75,7 +74,9 @@ export function ExtensionTrackingPage() {
       key: 'agent',
       render: (_, row) => (
         <Space>
-          <Tag color="success">{t('common.connectionStatus.ONLINE')}</Tag>
+          <Tag color={row.agentId ? 'success' : 'default'}>
+            {t(row.agentId ? 'common.connectionStatus.ONLINE' : 'common.connectionStatus.OFFLINE')}
+          </Tag>
           <span>{row.agentName}</span>
         </Space>
       ),
@@ -128,7 +129,7 @@ export function ExtensionTrackingPage() {
           label={t('portal.extensions.metrics.onlineSyncBots', {
             defaultValue: 'Online Dispatch Bots',
           })}
-          value={trackingRows.length}
+          value={trackingRows.filter((row) => row.agentId).length}
           variant="success"
         />
       </div>
