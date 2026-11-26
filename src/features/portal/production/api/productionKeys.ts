@@ -9,7 +9,7 @@ export const productionKeys = {
     [...productionKeys.all, 'summary', params] as const,
   queueSummaries: () => [...productionKeys.all, 'queue-summary'] as const,
   queueSummary: (params: Omit<ProductionParams, 'page' | 'limit'>) =>
-    [...productionKeys.all, 'queue-summary', params] as const,
+    [...productionKeys.all, 'queue-summary', 'unassigned-actionable', params] as const,
   detail: (id: string) => [...productionKeys.all, 'detail', id] as const,
   scaleAssignees: () => [...productionKeys.all, 'scale-assignees'] as const,
 }

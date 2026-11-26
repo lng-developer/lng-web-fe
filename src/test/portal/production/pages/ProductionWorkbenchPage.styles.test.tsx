@@ -126,7 +126,7 @@ describe('ProductionWorkbenchPage detail layout', () => {
       /<DateRangePicker[\s\S]*className=\{styles\.dateRange\}[\s\S]*value=\{dates\}[\s\S]*onChange=\{onDatesChange\}/,
     )
     expect(page).toMatch(
-      /const \[createdDates, setCreatedDates\] = useState<DateRangeValue>\(getDefaultDateRange\)/,
+      /const \[createdDates, setCreatedDates\] = useState<DateRangeValue>\(\{\}\)/,
     )
     expect(page).toMatch(/\.\.\.createdDates/)
     expect(page).toMatch(/onDatesChange=\{handleCreatedDatesChange\}/)

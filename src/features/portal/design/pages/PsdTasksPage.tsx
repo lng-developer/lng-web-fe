@@ -7,12 +7,7 @@ import type { UploadFile } from 'antd'
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
-import {
-  type DateRangeValue,
-  getDefaultDateRange,
-  useDebouncedValue,
-  useFeedbackToast,
-} from '@/shared/ui'
+import { type DateRangeValue, useDebouncedValue, useFeedbackToast } from '@/shared/ui'
 import { listShops } from '@/features/portal/shops/api/shopApi'
 import { shopKeys } from '@/features/portal/shops/api/shopKeys'
 
@@ -72,7 +67,7 @@ export function PsdTasksPage() {
   const debouncedEtsyListingId = useDebouncedValue(etsyListingId, 300)
   const [activeTabKey, setActiveTabKey] = useState<string>('all')
   const [selectedSellerId, setSelectedSellerId] = useState<string>()
-  const [dateRange, setDateRange] = useState<DateRangeValue>(getDefaultDateRange)
+  const [dateRange, setDateRange] = useState<DateRangeValue>({})
 
   const [prevChannel, setPrevChannel] = useState(salesChannelCode)
   if (prevChannel !== salesChannelCode) {
@@ -105,9 +100,11 @@ export function PsdTasksPage() {
     () => ({
       page,
       limit: pageSize,
+      sortBy: 'urgency' as const,
       search: debouncedSearch || undefined,
       etsyListingId: debouncedEtsyListingId.trim() || undefined,
       taskType: 'PSD_TEMPLATE' as const,
+      unassigned: activeTabKey === 'Unassigned' ? true : undefined,
       salesChannelCode,
       status: activeTabConfig.status,
       sellerId: selectedSellerId || undefined,
@@ -118,6 +115,7 @@ export function PsdTasksPage() {
     [
       page,
       pageSize,
+      activeTabKey,
       debouncedSearch,
       debouncedEtsyListingId,
       salesChannelCode,
@@ -335,6 +333,7 @@ export function PsdTasksPage() {
     const total = summaryQuery.data?.total ?? 0
     return {
       all: total,
+      Unassigned: summaryQuery.data?.unassigned ?? 0,
       New: byStatus.NEW ?? 0,
       Requested: byStatus.REQUESTED ?? 0,
       Assigned: byStatus.ASSIGNED ?? 0,

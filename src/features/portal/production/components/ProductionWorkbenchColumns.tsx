@@ -1,3 +1,4 @@
+import dayjs from 'dayjs'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TableColumnsType } from 'antd'
@@ -15,6 +16,7 @@ import type { ProductionTask } from '../api/productionApi'
 export type ProductionTab =
   | 'all'
   | 'scale'
+  | 'unassigned'
   | 'need_scale'
   | 'qc_rejected'
   | 'unclassified'
@@ -69,6 +71,24 @@ export function useProductionTableColumns({
                 <Tag color="blue" style={{ marginInlineEnd: 0, fontWeight: 500 }}>
                   {siblingCount} items
                 </Tag>
+              ) : null}
+            </Space>
+          )
+        },
+      },
+      {
+        title: t('taskQueue.shipBy'),
+        width: 170,
+        render: (_, row) => {
+          const active = !['SENT_TO_VENDOR', 'CANCELLED'].includes(row.status)
+          const overdue = active && row.shipByDate && dayjs(row.shipByDate).isBefore(dayjs())
+          const age = Math.max(0, dayjs().diff(dayjs(row.orderDate || row.createdAt), 'day'))
+          return (
+            <Space orientation="vertical" size={2}>
+              <FormattedDateTime value={row.shipByDate} />
+              {overdue ? <Tag color="red">{t('taskQueue.overdue')}</Tag> : null}
+              {active && (row.orderDate || row.createdAt) ? (
+                <span>{t('taskQueue.age', { days: age })}</span>
               ) : null}
             </Space>
           )
@@ -225,18 +245,6 @@ export function useProductionTableColumns({
               ))}
             </Space>
           )
-        },
-      },
-      {
-        title: t('portal.production.columns.updated'),
-        width: 148,
-        render: (_, row) => {
-          const allTasks = (row as unknown as { orderTasks?: ProductionTask[] }).orderTasks || [row]
-          const latestUpdated = allTasks.reduce(
-            (max, item) => (new Date(item.updatedAt) > new Date(max) ? item.updatedAt : max),
-            row.updatedAt,
-          )
-          return <FormattedDateTime value={latestUpdated} />
         },
       },
     ],
