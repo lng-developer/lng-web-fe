@@ -23,8 +23,12 @@
       "SUBMITTED": "Uploaded",
       "WAITING_AMAZON": "Amazon processing",
       "SUCCEEDED": "Completed",
-      "FAILED": "Failed"
+      "FAILED": "Failed",
+      "DRAFT": "Ready for manual upload"
     },
-    "noResult": "No Amazon result available"
+    "noResult": "No Amazon result available",
+    "draftNote": "Download this draft and upload it manually in Amazon Seller Central. Downloading does not submit the batch or change confirmation status.",
+    "downloadTsv": "Download TSV (.txt)",
+    "notUploaded": "Not uploaded to Amazon"
   }
 }
