@@ -1,14 +1,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, render, renderHook, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import {
-  listOrderWorkbenchDetails,
-  type OrderWorkbenchRow,
-} from '@/features/portal/orders/api/orderApi'
+import type { OrderWorkbenchRow } from '@/features/portal/orders/api/orderApi'
+import { useOrderWorkbenchQuery } from '@/features/portal/orders/hooks/useOrderWorkbenchQuery'
 import { OrderWorkbenchExpandedRow } from '@/features/portal/orders/pages/OrderWorkbenchExpandedRow'
+import { apiClient } from '@/shared/api'
 
-vi.mock('@/features/portal/orders/api/orderApi', () => ({ listOrderWorkbenchDetails: vi.fn() }))
+vi.mock('@/shared/api', () => ({ apiClient: { get: vi.fn() } }))
 vi.mock('@/features/portal/orders/pages/OrderInlinePanel', () => ({
   OrderInlinePanel: ({ row }: { row: OrderWorkbenchRow }) => <div>{row.order.id} details</div>,
 }))
@@ -35,35 +34,6 @@ function makeRow(id: string): OrderWorkbenchRow {
   }
 }
 
-function renderRows() {
-  const queryClient = new QueryClient()
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <OrderWorkbenchExpandedRow
-        row={makeRow('a')}
-        index={0}
-        detailIds={['a', 'b']}
-        canWrite={false}
-        canOperate={false}
-      />
-      <OrderWorkbenchExpandedRow
-        row={makeRow('b')}
-        index={1}
-        detailIds={['a', 'b']}
-        canWrite={false}
-        canOperate={false}
-      />
-      <OrderWorkbenchExpandedRow
-        row={makeRow('c')}
-        index={5}
-        detailIds={['c']}
-        canWrite={false}
-        canOperate={false}
-      />
-    </QueryClientProvider>,
-  )
-}
-
 describe('OrderWorkbenchExpandedRow', () => {
   afterEach(() => {
     cleanup()
@@ -71,7 +41,7 @@ describe('OrderWorkbenchExpandedRow', () => {
     vi.resetAllMocks()
   })
 
-  it('shares the first batch and requests the next only when it approaches the viewport', async () => {
+  it('renders supplied details near the viewport without another API request', async () => {
     const observers: IntersectionObserverCallback[] = []
     vi.stubGlobal(
       'IntersectionObserver',
@@ -83,40 +53,33 @@ describe('OrderWorkbenchExpandedRow', () => {
         disconnect() {}
       },
     )
-    vi.mocked(listOrderWorkbenchDetails).mockImplementation(async (ids) => ({
-      items: ids.map(makeRow),
-    }))
-
-    renderRows()
-
-    expect(await screen.findByText('a details')).toBeVisible()
-    expect(screen.getByText('b details')).toBeVisible()
-    expect(listOrderWorkbenchDetails).toHaveBeenCalledTimes(1)
-    expect(listOrderWorkbenchDetails).toHaveBeenCalledWith(['a', 'b'], expect.any(AbortSignal))
-    expect(screen.queryByText('c details')).toBeNull()
-
-    const observer = observers[0]
+    render(<OrderWorkbenchExpandedRow row={makeRow('a')} canWrite={false} canOperate={false} />)
+    expect(screen.queryByText('a details')).toBeNull()
     act(() =>
-      observer([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver),
+      observers[0](
+        [{ isIntersecting: true } as IntersectionObserverEntry],
+        {} as IntersectionObserver,
+      ),
     )
-
-    expect(await screen.findByText('c details')).toBeVisible()
-    expect(listOrderWorkbenchDetails).toHaveBeenCalledTimes(2)
-    expect(listOrderWorkbenchDetails).toHaveBeenLastCalledWith(['c'], expect.any(AbortSignal))
+    expect(await screen.findByText('a details')).toBeVisible()
+    expect(apiClient.get).not.toHaveBeenCalled()
   })
 
-  it('can retry a failed batch without reloading the page', async () => {
-    vi.mocked(listOrderWorkbenchDetails)
-      .mockRejectedValueOnce(new Error('Unavailable'))
-      .mockImplementation(async (ids) => ({ items: ids.map(makeRow) }))
-
-    renderRows()
-
-    await waitFor(() =>
-      expect(screen.getAllByRole('button', { name: /retry|thử lại/i }).length).toBeGreaterThan(0),
-    )
-    fireEvent.click(screen.getAllByRole('button', { name: /retry|thử lại/i })[0])
-    expect(await screen.findByText('a details')).toBeVisible()
-    expect(screen.getByText('b details')).toBeVisible()
+  it('loads full rows through the existing workbench endpoint with no summary parameter', async () => {
+    const data = { items: [makeRow('a')], pagination: { page: 1, limit: 50, total: 1 } }
+    vi.mocked(apiClient.get).mockResolvedValue({ data })
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const { result } = renderHook(() => useOrderWorkbenchQuery({ page: 1, limit: 50 }), {
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      ),
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(result.current.data).toEqual(data)
+    expect(apiClient.get).toHaveBeenCalledExactlyOnceWith('/api/orders/workbench', {
+      params: { page: 1, limit: 50 },
+      signal: expect.any(AbortSignal),
+    })
+    client.clear()
   })
 })

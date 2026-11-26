@@ -85,13 +85,14 @@ export function useOrderActionsMutation({
         return
       }
 
-      // Update the cached detail batches containing this order after saving the note.
+      // Update the cached workbench rows containing this order after saving the note.
       if (action.kind === 'note') {
-        queryClient.setQueriesData<Pick<OrderWorkbenchResult, 'items'>>(
-          { queryKey: orderKeys.workbenchDetailLists },
+        queryClient.setQueriesData<OrderWorkbenchResult>(
+          { queryKey: [...orderKeys.all, 'workbench'] },
           (old) => {
             if (!old?.items.some((row) => row.order.id === orderId)) return old
             return {
+              ...old,
               items: old.items.map((row) => {
                 if (row.order.id !== orderId) return row
                 return {

@@ -218,16 +218,6 @@ export type OrderWorkbenchResult = {
   pagination: { total: number; page: number; limit: number; totalItems?: number }
   totalItems?: number
 }
-export type OrderWorkbenchSummaryItem = {
-  item: Pick<OrderWorkbenchItem['item'], 'id' | 'sku' | 'quantity' | 'status'>
-  workflow: Pick<OrderWorkflow, 'stage'>
-}
-export type OrderWorkbenchSummaryRow = Omit<OrderWorkbenchRow, 'items'> & {
-  items: OrderWorkbenchSummaryItem[]
-}
-type OrderWorkbenchSummaryResult = Omit<OrderWorkbenchResult, 'items'> & {
-  items: OrderWorkbenchSummaryRow[]
-}
 export type OrderSummary = { tabCounts: Record<string, number> }
 export type OrderRecheckJob = {
   id: string
@@ -243,7 +233,6 @@ export type OrderRecheckJob = {
 
 const compact = compactParams
 const unwrap = unwrapResponse
-const ORDER_WORKBENCH_ENDPOINT = '/api/orders/workbench'
 
 export type AddressValidationDetails = {
   provider: string | null
@@ -263,28 +252,7 @@ export async function getOrderAddressValidation(orderId: string, signal?: AbortS
 
 export async function listOrderWorkbench(params: OrderWorkbenchParams, signal?: AbortSignal) {
   return unwrap<OrderWorkbenchResult>(
-    await apiClient.get(ORDER_WORKBENCH_ENDPOINT, { params: compact(params), signal }),
-  )
-}
-
-export async function listOrderWorkbenchSummary(
-  params: OrderWorkbenchParams,
-  signal?: AbortSignal,
-) {
-  return unwrap<OrderWorkbenchSummaryResult>(
-    await apiClient.get(ORDER_WORKBENCH_ENDPOINT, {
-      params: compact({ ...params, view: 'summary' }),
-      signal,
-    }),
-  )
-}
-
-export async function listOrderWorkbenchDetails(orderIds: readonly string[], signal?: AbortSignal) {
-  return unwrap<Pick<OrderWorkbenchResult, 'items'>>(
-    await apiClient.get(`${ORDER_WORKBENCH_ENDPOINT}/details`, {
-      params: { orderIds: orderIds.join(',') },
-      signal,
-    }),
+    await apiClient.get('/api/orders/workbench', { params: compact(params), signal }),
   )
 }
 

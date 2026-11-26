@@ -13,7 +13,7 @@ import {
   SwapOutlined,
   TruckOutlined,
 } from '@ant-design/icons'
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
 import { Button, Space, Tooltip } from 'antd'
 import dayjs from 'dayjs'
@@ -41,15 +41,11 @@ import {
   useFeedbackToast,
 } from '@/shared/ui'
 
-import { downloadOrdersCsv, type OrderWorkbenchSummaryRow } from '../api/orderApi'
-import { orderKeys } from '../api/orderKeys'
+import { downloadOrdersCsv, type OrderWorkbenchRow } from '../api/orderApi'
 import { OrderActionModalsContainer } from '../components/OrderActionModalsContainer'
 import { type OrderModal, useOrderActionStore } from '../hooks/useOrderActionStore'
 import { useOrderSummaryQuery } from '../hooks/useOrderSummaryQuery'
-import {
-  ORDER_WORKBENCH_DETAIL_BATCH_SIZE,
-  useOrderWorkbenchQuery,
-} from '../hooks/useOrderWorkbenchQuery'
+import { useOrderWorkbenchQuery } from '../hooks/useOrderWorkbenchQuery'
 import {
   formatMinorMoney,
   formatOrderStatusLabel,
@@ -93,7 +89,6 @@ const MACRO_TERMINAL_OR_HOLD = new Set([
 export const OrderWorkbenchPage = () => {
   const { t, i18n } = useTranslation()
   const toast = useFeedbackToast()
-  const queryClient = useQueryClient()
   const account = useRouteLoaderData('workspace') as CurrentAccount | undefined
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
@@ -112,7 +107,7 @@ export const OrderWorkbenchPage = () => {
   const [stage, setStage] = useState<string | undefined>(searchParams.get('stage') || undefined)
   const [dates, setDates] = useState<DateRangeValue>(getDefaultDateRange)
   const canWriteOrder = useCallback(
-    (row: OrderWorkbenchSummaryRow) =>
+    (row: OrderWorkbenchRow) =>
       canUseScopedPermission(account, 'ORDERS:WRITE', {
         scopeType: 'shop',
         scopeId: row.order?.shopId ?? row.order?.shop?.id,
@@ -150,7 +145,6 @@ export const OrderWorkbenchPage = () => {
   )
   const refreshOrders = () => {
     void orders.refetch()
-    void queryClient.invalidateQueries({ queryKey: orderKeys.workbenchDetailLists })
   }
   const summary = useOrderSummaryQuery(summaryParams, {
     placeholderData: keepPreviousData,
@@ -269,20 +263,6 @@ export const OrderWorkbenchPage = () => {
     () => orderItems.map((row) => row.order?.id).filter(Boolean) as string[],
     [orderItems],
   )
-  const detailBatches = useMemo(
-    () =>
-      Array.from(
-        { length: Math.ceil(expandedRowKeys.length / ORDER_WORKBENCH_DETAIL_BATCH_SIZE) },
-        (_, batch) =>
-          expandedRowKeys
-            .slice(
-              batch * ORDER_WORKBENCH_DETAIL_BATCH_SIZE,
-              (batch + 1) * ORDER_WORKBENCH_DETAIL_BATCH_SIZE,
-            )
-            .sort(),
-      ),
-    [expandedRowKeys],
-  )
   const hasActiveFilters = Boolean(shopId || vendorId || stage || dates.dateFrom || dates.dateTo)
 
   const stageOptions = useMemo(
@@ -348,21 +328,17 @@ export const OrderWorkbenchPage = () => {
     [pageSize],
   )
   const renderExpandedRow = useCallback(
-    (row: OrderWorkbenchSummaryRow, index: number) => {
+    (row: OrderWorkbenchRow) => {
       const canWrite = canWriteOrder(row)
       return (
         <OrderWorkbenchExpandedRow
           row={row}
-          index={index}
-          detailIds={
-            detailBatches[Math.floor(index / ORDER_WORKBENCH_DETAIL_BATCH_SIZE)] ?? [row.order.id]
-          }
           canWrite={canWrite}
           canOperate={canWrite && row.order?.status !== 'CANCELLED'}
         />
       )
     },
-    [canWriteOrder, detailBatches],
+    [canWriteOrder],
   )
 
   const renderOrderDate = useCallback(
@@ -370,7 +346,7 @@ export const OrderWorkbenchPage = () => {
     [],
   )
 
-  const columns = useMemo<TableColumnsType<OrderWorkbenchSummaryRow>>(
+  const columns = useMemo<TableColumnsType<OrderWorkbenchRow>>(
     () => [
       {
         title: t('orders.columns.order'),
