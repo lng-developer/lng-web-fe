@@ -18,6 +18,7 @@ export interface QueueSummaryData {
   cancelled?: number
   scaleQueue?: number
   qcQueue?: number
+  unassigned?: number
   unclassified?: number
 }
 
@@ -163,6 +164,7 @@ export function useProductionQueueSummary({
       ready: queueCountsData?.ready ?? displaySummary?.ready ?? 0,
       sent: queueCountsData?.sent ?? displaySummary?.sent ?? 0,
       cancelled: queueCountsData?.cancelled ?? displaySummary?.cancelled ?? 0,
+      unassigned: queueCountsData?.unassigned ?? 0,
       unclassified: queueCountsData?.unclassified ?? displaySummary?.unclassified ?? 0,
     }
   }, [displaySummary, queueCountsData, searchOrderSummary])
@@ -356,8 +358,24 @@ export function useProductionQueueSummary({
     ],
   )
 
-  const activeTabItems =
+  const baseTabItems =
     viewMode === 'scale' ? scaleTabItems : viewMode === 'qc' ? qcTabItems : generalTabItems
+
+  const activeTabItems =
+    viewMode === 'qc'
+      ? baseTabItems
+      : [
+          ...baseTabItems.slice(0, 2),
+          {
+            value: 'unassigned' as const,
+            label: (
+              <UiTabLabel count={queueCountsData?.unassigned} active={tab === 'unassigned'}>
+                {t('taskQueue.unassigned')}
+              </UiTabLabel>
+            ),
+          },
+          ...baseTabItems.slice(2),
+        ]
 
   return {
     queueSummary,

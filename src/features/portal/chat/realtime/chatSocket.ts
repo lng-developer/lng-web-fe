@@ -60,3 +60,7 @@ export function resetSharedChatSocket(): void {
     sharedSocket = null
   }
 }
+
+export function isSharedChatSocketConnected(): boolean {
+  return Boolean(sharedSocket?.connected)
+}

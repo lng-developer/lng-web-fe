@@ -12,6 +12,7 @@ import { useImportantNotificationWatcher } from '@/features/notifications/hooks/
 import { getChatUnreadCount } from '@/features/portal/chat/api/chatApi'
 import { chatKeys } from '@/features/portal/chat/api/chatKeys'
 import { ChatShell } from '@/features/portal/chat/components/ChatShell'
+import { useUnreadSocketSync } from '@/features/portal/chat/realtime/useUnreadSocketSync'
 import { useDocumentTitleBadge } from '@/shared/hooks/useDocumentTitleBadge'
 import { LanguageSwitch } from '@/shared/i18n/LanguageSwitch'
 import { useTitleFlashStore } from '@/shared/notification'
@@ -39,6 +40,7 @@ import { getSidebarRouteState } from './sidebarRouteState'
 const { Content, Header } = Layout
 
 export function AppShell() {
+  const socketReady = useUnreadSocketSync()
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const isFetching = useIsFetching()
@@ -94,12 +96,12 @@ export function AppShell() {
   const { data: chatUnreadData } = useQuery({
     queryKey: chatKeys.unread,
     queryFn: getChatUnreadCount,
-    refetchInterval: 60_000,
+    refetchInterval: socketReady ? false : 60_000,
   })
   const { data: notiUnreadData } = useQuery({
     queryKey: ['notifications', 'unread-count'],
     queryFn: getUnreadCount,
-    refetchInterval: 60_000,
+    refetchInterval: socketReady ? false : 60_000,
   })
   const totalUnread = (chatUnreadData?.unreadCount ?? 0) + (notiUnreadData?.unreadCount ?? 0)
   const flashMessage = useTitleFlashStore((s) => s.flashMessage)

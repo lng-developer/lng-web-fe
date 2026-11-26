@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '@/app/providers/AppProviders'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
+  assignProductionTask,
+  bulkAssignProductionTasks,
   bulkAssignCsTasks,
   listCsAssignees,
   listScaleAssignees,
@@ -25,6 +27,8 @@ vi.mock('react-router-dom', async (importOriginal) => ({
 vi.mock('@/features/portal/production/api/productionApi', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/features/portal/production/api/productionApi')>()),
   bulkAssignCsTasks: vi.fn(),
+  assignProductionTask: vi.fn(),
+  bulkAssignProductionTasks: vi.fn(),
   listCsAssignees: vi.fn(),
   listProductionTasks: vi.fn(),
   listScaleAssignees: vi.fn(),
@@ -201,6 +205,54 @@ describe('ProductionWorkbenchPage', () => {
     },
   )
 
+  it('refreshes a cached queue summary that predates the Unassigned count', async () => {
+    queryClient.setQueryData(
+      [
+        'production',
+        'queue-summary',
+        {
+          search: undefined,
+          salesChannelCode: undefined,
+          scaleDifficultyLevel: undefined,
+          designType: undefined,
+        },
+      ],
+      { total: 401 },
+    )
+    vi.mocked(summarizeProductionQueueCounts).mockResolvedValue({ total: 401, unassigned: 17 })
+    renderPage('/portal/production/scale')
+    await waitFor(() => expect(summarizeProductionQueueCounts).toHaveBeenCalled())
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /Unassigned/ })).toHaveTextContent('17'),
+    )
+  })
+
+  it('uses one tab row with Unassigned and preserves the other queue counts', async () => {
+    renderPage('/portal/production/scale')
+    await waitFor(() =>
+      expect(listProductionTasks).toHaveBeenCalledWith(
+        expect.objectContaining({ sort: 'urgency' }),
+      ),
+    )
+    expect(screen.queryByRole('radio', { name: 'My tasks' })).not.toBeInTheDocument()
+    expect(screen.queryByText('All tasks')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Unassigned/ }))
+    await waitFor(() =>
+      expect(listProductionTasks).toHaveBeenLastCalledWith(
+        expect.objectContaining({ unassigned: true, status: 'NEED_SCALE,QC_REJECTED', page: 1 }),
+      ),
+    )
+    expect(summarizeProductionQueueCounts).not.toHaveBeenCalledWith(
+      expect.objectContaining({ unassigned: true }),
+    )
+    fireEvent.click(screen.getByRole('button', { name: /Need scale/ }))
+    await waitFor(() =>
+      expect(listProductionTasks).toHaveBeenLastCalledWith(
+        expect.objectContaining({ unassigned: undefined, status: 'NEED_SCALE' }),
+      ),
+    )
+  })
+
   it('stretches every table layer across the available width', async () => {
     renderPage()
 
@@ -234,8 +286,7 @@ describe('ProductionWorkbenchPage', () => {
     expect(listProductionTasks).toHaveBeenCalledTimes(1)
     expect(summarizeProductionQueueCounts).toHaveBeenCalledWith(
       expect.objectContaining({
-        dateFrom: expect.any(String),
-        dateTo: expect.any(String),
+        search: undefined,
       }),
     )
   })
@@ -245,6 +296,55 @@ describe('ProductionWorkbenchPage', () => {
 
     await waitFor(() => expect(listScaleAssignees).toHaveBeenCalledWith({ limit: 100 }))
   })
+
+  it.each([1, 2])(
+    'assigns %i selected Scale tasks to a Designer without changing CS assignment',
+    async (count) => {
+      const tasks = Array.from({ length: count }, (_, index) => ({
+        ...blockedTask,
+        id: `production-task-${index + 1}`,
+        status: 'NEED_SCALE' as const,
+        blockers: [],
+        orderItem: { externalOrderId: `113-2183249-076344${index}` },
+      }))
+      vi.mocked(listProductionTasks).mockResolvedValue({
+        items: tasks,
+        total: count,
+        page: 1,
+        limit: 10,
+      })
+      vi.mocked(listScaleAssignees).mockResolvedValue({
+        items: [{ id: 'designer-1', fullName: 'Design Employee', employeeCode: 'D01' }],
+      })
+      vi.mocked(assignProductionTask).mockResolvedValue({
+        ...blockedTask,
+        assignedDesignUserId: 'designer-1',
+      })
+      vi.mocked(bulkAssignProductionTasks).mockResolvedValue({ assigned: tasks, failed: [] })
+      renderPage('/portal/production/scale', scaleManagerAccount)
+      const picker = await screen.findByRole('combobox', { name: 'Select Scale assignee' })
+      const assignButton = screen.getByRole('button', { name: 'Assign 0 tasks' })
+      expect(assignButton).toBeDisabled()
+      fireEvent.mouseDown(picker)
+      fireEvent.click(await screen.findByText('Design Employee · D01'))
+      await screen.findByText('113-2183249-0763440')
+      fireEvent.click(screen.getAllByRole('checkbox')[0])
+      fireEvent.click(screen.getByRole('button', { name: `Assign ${count} tasks` }))
+      if (count === 1) {
+        await waitFor(() =>
+          expect(assignProductionTask).toHaveBeenCalledWith('production-task-1', 'designer-1'),
+        )
+      } else {
+        await waitFor(() =>
+          expect(bulkAssignProductionTasks).toHaveBeenCalledWith(
+            tasks.map((task) => task.id),
+            'designer-1',
+          ),
+        )
+      }
+      expect(bulkAssignCsTasks).not.toHaveBeenCalled()
+    },
+  )
 
   it('allows a team Scale assigner to select tasks from any shop', async () => {
     vi.mocked(listProductionTasks).mockResolvedValue({
@@ -532,30 +632,20 @@ describe('ProductionWorkbenchPage', () => {
     )
   })
 
-  it('renders CS filter options and filters unassigned CS tasks in scale view', async () => {
-    renderPage('/portal/production/scale', scaleLeaderAccount)
-
-    await waitFor(() =>
-      expect(listProductionTasks).toHaveBeenCalledWith(expect.objectContaining({ view: 'SCALE' })),
-    )
-
-    const csFilterSelect = await screen.findByRole('combobox', { name: 'Filter by CS' })
-    expect(csFilterSelect).toBeInTheDocument()
-
-    fireEvent.mouseDown(csFilterSelect)
-    const unassignedOption = await screen.findByText('⚠️ Unassigned CS')
-    expect(unassignedOption).toBeInTheDocument()
-
-    fireEvent.click(unassignedOption)
-
-    await waitFor(() =>
-      expect(listProductionTasks).toHaveBeenCalledWith(
-        expect.objectContaining({
-          view: 'SCALE',
-          csUnassigned: true,
-          csAssigneeId: undefined,
-        }),
-      ),
-    )
+  it('keeps Designer assignment without CS toolbar controls', async () => {
+    renderPage('/portal/production/scale', scaleManagerAccount)
+    expect(
+      await screen.findByRole('combobox', { name: 'Select Scale assignee' }),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('combobox', { name: 'Filter by CS' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('combobox', { name: 'Select CS assignee' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('columnheader', { name: /CS/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('columnheader', { name: 'Required slots' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('columnheader', { name: 'Blockers' })).not.toBeInTheDocument()
+    expect(listCsAssignees).not.toHaveBeenCalled()
+    await waitFor(() => expect(listProductionTasks).toHaveBeenCalled())
+    const query = vi.mocked(listProductionTasks).mock.calls.at(-1)?.[0]
+    expect(query).not.toHaveProperty('csUnassigned')
+    expect(query).not.toHaveProperty('csAssigneeId')
   })
 })

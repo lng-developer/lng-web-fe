@@ -21,6 +21,7 @@ const listing: Listing = {
   asin: 'B0G4CYCDTJ',
   etsyListingId: null,
   title: 'Shirt',
+  designType: 'CUSTOM_IMAGE',
   productImageUrl: 'https://m.media-amazon.com/images/S/product.png',
   previewImageUrl: 'https://cdn.lng.co/previews/shirt.png',
   baseCostAmount: 0,
@@ -60,11 +61,15 @@ describe('CatalogListingEditorModal', () => {
     expect(screen.getByLabelText('Preview image URL')).toHaveValue(
       'https://cdn.lng.co/previews/shirt.png',
     )
+    expect(screen.getByText('Custom image')).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Updated shirt' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalled())
-    expect(onSubmit.mock.calls[0][0]).toMatchObject({ title: 'Updated shirt' })
+    expect(onSubmit.mock.calls[0][0]).toMatchObject({
+      title: 'Updated shirt',
+      designType: 'CUSTOM_IMAGE',
+    })
     expect(onSubmit.mock.calls[0][0]).toHaveProperty(
       'previewImageUrl',
       'https://cdn.lng.co/previews/shirt.png',
@@ -72,6 +77,38 @@ describe('CatalogListingEditorModal', () => {
     expect(onSubmit.mock.calls[0][0]).toHaveProperty('asin', 'B0G4CYCDTJ')
     expect(onSubmit.mock.calls[0][0]).not.toHaveProperty('shopId')
     expect(onSubmit.mock.calls[0][0]).not.toHaveProperty('sku')
+  })
+
+  it.each(['CUSTOM_IMAGE', null] as const)('saves a changed design type %s', async (designType) => {
+    const onSubmit = vi.fn()
+    render(
+      <AppProviders>
+        <CatalogListingEditorModal
+          open
+          listing={{ ...listing, designType: designType ? null : 'CUSTOM_IMAGE' }}
+          shops={[]}
+          salesChannels={salesChannels}
+          saving={false}
+          onClose={vi.fn()}
+          onSubmit={onSubmit}
+        />
+      </AppProviders>,
+    )
+    if (designType) {
+      fireEvent.mouseDown(screen.getByLabelText('Design type'))
+      fireEvent.click(await screen.findByText('Custom image'))
+    } else {
+      const clear = screen
+        .getByLabelText('Design type')
+        .closest('.ant-select')
+        ?.querySelector('.ant-select-clear')
+      expect(clear).toBeTruthy()
+      fireEvent.mouseDown(clear!)
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+    await waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ designType })),
+    )
   })
 
   it('shows only the marketplace identity field required by the selected channel', () => {

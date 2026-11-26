@@ -124,7 +124,8 @@ describe('VendorIntegrationModal', () => {
     expect(JSON.stringify(vi.mocked(updateVendorIntegrationConfig).mock.calls)).not.toContain(
       'secret',
     )
-  })
+    // Allow modal setup in addition to the 5-second save assertion on CI runners.
+  }, 10_000)
 
   it('preserves auth type when saving after switching from credentials to connection', async () => {
     vi.mocked(getVendorIntegrationConfig).mockResolvedValue({

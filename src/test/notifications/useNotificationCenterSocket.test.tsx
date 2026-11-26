@@ -4,7 +4,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useImportantNotificationWatcher } from '@/features/notifications/hooks/useImportantNotificationWatcher'
 import { useNotificationCenter } from '@/features/notifications/useNotificationCenter'
-import { getSharedChatSocket } from '@/features/portal/chat/realtime/chatSocket'
+import {
+  getSharedChatSocket,
+  isSharedChatSocketConnected,
+} from '@/features/portal/chat/realtime/chatSocket'
+import { useUnreadSocketSync } from '@/features/portal/chat/realtime/useUnreadSocketSync'
+import { getUnreadCount } from '@/features/notifications/api/notificationApi'
 import { useNotificationAlerts } from '@/shared/notification'
 
 vi.mock('@/features/notifications/api/notificationApi', () => ({
@@ -32,12 +37,14 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('@/features/portal/chat/realtime/chatSocket', () => ({
   getSharedChatSocket: vi.fn(),
+  isSharedChatSocketConnected: vi.fn(),
 }))
 
 type MockListener = (...args: unknown[]) => void
 
 describe('Notification realtime socket integration', () => {
   let mockSocket: {
+    connected: boolean
     on: ReturnType<typeof vi.fn>
     off: ReturnType<typeof vi.fn>
     listeners: Record<string, MockListener[]>
@@ -48,6 +55,7 @@ describe('Notification realtime socket integration', () => {
     vi.clearAllMocks()
     const listeners: Record<string, MockListener[]> = {}
     mockSocket = {
+      connected: true,
       listeners,
       on: vi.fn((event: string, callback: MockListener) => {
         if (!listeners[event]) listeners[event] = []
@@ -62,13 +70,90 @@ describe('Notification realtime socket integration', () => {
     vi.mocked(getSharedChatSocket).mockReturnValue(
       mockSocket as unknown as ReturnType<typeof getSharedChatSocket>,
     )
+    vi.mocked(isSharedChatSocketConnected).mockImplementation(() => mockSocket.connected)
     alertMock = vi.fn()
     vi.mocked(useNotificationAlerts).mockReturnValue({
       alertImportantNotification: alertMock,
     } as unknown as ReturnType<typeof useNotificationAlerts>)
   })
 
-  afterEach(cleanup)
+  afterEach(() => {
+    cleanup()
+    vi.useRealTimers()
+  })
+
+  it('stops unread polling while connected, resumes offline and refreshes on reconnect', async () => {
+    vi.useFakeTimers()
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const { result, unmount } = renderHook(
+      () => {
+        const ready = useUnreadSocketSync()
+        useNotificationCenter(false, 8)
+        useImportantNotificationWatcher()
+        return ready
+      },
+      {
+        wrapper: ({ children }) => (
+          <QueryClientProvider client={client}>{children}</QueryClientProvider>
+        ),
+      },
+    )
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1)
+    })
+    expect(result.current).toBe(true)
+    vi.mocked(getUnreadCount).mockClear()
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(120_000)
+    })
+    expect(getUnreadCount).not.toHaveBeenCalled()
+
+    act(() => {
+      mockSocket.connected = false
+      mockSocket.listeners.disconnect.forEach((handler) => handler())
+    })
+    expect(result.current).toBe(false)
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(60_000)
+    })
+    expect(getUnreadCount).toHaveBeenCalled()
+    vi.mocked(getUnreadCount).mockClear()
+    await act(async () => {
+      mockSocket.connected = true
+      mockSocket.listeners.connect.forEach((handler) => handler())
+      await vi.advanceTimersByTimeAsync(1)
+    })
+    expect(result.current).toBe(true)
+    expect(getUnreadCount).toHaveBeenCalledTimes(1)
+    vi.mocked(getUnreadCount).mockClear()
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(120_000)
+    })
+    expect(getUnreadCount).not.toHaveBeenCalled()
+    unmount()
+    expect(Object.values(mockSocket.listeners).every((listeners) => listeners.length === 0)).toBe(
+      true,
+    )
+    client.clear()
+  })
+
+  it.each([
+    ['message.created', ['chat', 'unread']],
+    ['message.read', ['chat', 'unread']],
+    ['notification.created', ['notifications']],
+  ])('refreshes unread state on %s without cancelling an in-flight fetch', (event, queryKey) => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const invalidateSpy = vi.spyOn(client, 'invalidateQueries')
+    renderHook(() => useUnreadSocketSync(), {
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      ),
+    })
+    act(() => {
+      mockSocket.listeners[event].forEach((handler) => handler())
+    })
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey }, { cancelRefetch: false })
+  })
 
   it('invalidates queries on notification.created event in useNotificationCenter', async () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -95,7 +180,10 @@ describe('Notification realtime socket integration', () => {
       })
     })
 
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['notifications'] })
+    expect(invalidateSpy).toHaveBeenCalledWith(
+      { queryKey: ['notifications'] },
+      { cancelRefetch: false },
+    )
   })
 
   it('alerts important notification instantly on notification.created in useImportantNotificationWatcher', async () => {

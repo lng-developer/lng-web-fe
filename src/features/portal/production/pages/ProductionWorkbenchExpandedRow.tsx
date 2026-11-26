@@ -252,6 +252,14 @@ export function ProductionWorkbenchExpandedRow({
         check.scaleStatus === 'NEED_SCALE' ||
         Boolean(check.outputAssetDownloadUrl)),
   )
+  const unavailableSlotKeys = checks
+    .filter(
+      (check) =>
+        check.sourceType === 'PSD_TEMPLATE' ||
+        outputChecks.includes(check) ||
+        Boolean(check.outputAssetId),
+    )
+    .map((check) => check.slotKey)
   const canSubmitQc = outputChecks.length > 0 && outputChecks.every((check) => decisions[check.id])
   const canSubmitScale =
     outputChecks.length > 0 && outputChecks.every((check) => check.outputAssetDownloadUrl)
@@ -483,19 +491,14 @@ export function ProductionWorkbenchExpandedRow({
               onOpenManualSlotUpload ? (
                 <Button
                   size="small"
-                  onClick={() =>
-                    onOpenManualSlotUpload(
-                      task.id,
-                      checks.map((c) => c.slotKey),
-                    )
-                  }
+                  onClick={() => onOpenManualSlotUpload(task.id, unavailableSlotKeys)}
                 >
                   {t('portal.production.addManualSlot')}
                 </Button>
               ) : (
                 <ManualSlotUploadAction
                   taskId={task.id}
-                  existingSlotKeys={checks.map((check) => check.slotKey)}
+                  existingSlotKeys={unavailableSlotKeys}
                   onUploaded={onManualSlotUploaded}
                 />
               )

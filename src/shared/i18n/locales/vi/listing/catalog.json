@@ -270,7 +270,9 @@
         "baseCost": "Chi phí gốc (đơn vị nhỏ)",
         "currency": "Tiền tệ",
         "costCenterStatus": "Trạng thái cost center",
-        "recordStatus": "Trạng thái bản ghi"
+        "recordStatus": "Trạng thái bản ghi",
+        "designType": "Loại thiết kế",
+        "designTypeHelp": "Áp dụng cho task sản xuất mới. Để trống để tự nhận diện từ tùy chỉnh của khách. Task đã tạo giữ nguyên loại thiết kế."
       },
       "detail": {
         "selectListing": "Chọn một listing để xem chi tiết",
@@ -371,7 +373,12 @@
       "rejectReason": "Lý do từ chối",
       "reasonRequired": "Bắt buộc nhập lý do",
       "openAmazonProduct": "Xem trên Amazon",
-      "openEtsyListing": "Xem trên Etsy"
+      "openEtsyListing": "Xem trên Etsy",
+      "designTypes": {
+        "AUTO": "Tự nhận diện",
+        "NORMAL": "Thông thường",
+        "CUSTOM_IMAGE": "Ảnh tùy chỉnh"
+      }
     }
   }
 }

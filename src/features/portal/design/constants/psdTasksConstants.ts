@@ -1,5 +1,11 @@
 export const STATUS_TABS = [
   { key: 'all', titleKey: 'portal.design.tabs.all', defaultTitle: 'All', status: undefined },
+  {
+    key: 'Unassigned',
+    titleKey: 'taskQueue.unassigned',
+    defaultTitle: 'Unassigned',
+    status: undefined,
+  },
   { key: 'New', titleKey: 'portal.design.tabs.new', defaultTitle: 'New', status: 'NEW' },
   {
     key: 'Requested',

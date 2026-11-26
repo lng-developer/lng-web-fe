@@ -65,7 +65,7 @@ export type ProductionTask = {
   salesChannelCode?: string | null
   marketplaceCode?: string | null
   designType?: 'NORMAL' | 'CUSTOM_IMAGE' | null
-  designTypeSource?: 'AUTO' | 'MANUAL' | null
+  designTypeSource?: 'AUTO' | 'MANUAL' | 'LISTING' | null
   id: string
   status: ProductionStatus
   productionStatus?: ProductionStatus
@@ -81,6 +81,8 @@ export type ProductionTask = {
   mainListingImageUrl?: string | null
   amazonCustomizationPreviewUrl?: string | null
   productImageUrl?: string | null
+  orderDate?: string | null
+  shipByDate?: string | null
   readyAt: string | null
   updatedAt: string
   orderItem?: {
@@ -134,6 +136,8 @@ export type ProductionTask = {
 export type ProductionList = { items: ProductionTask[]; total: number; page: number; limit: number }
 export type ProductionSummary = Record<string, number>
 export type ProductionParams = {
+  sort?: 'urgency'
+
   designType?: 'NORMAL' | 'CUSTOM_IMAGE' | 'UNCLASSIFIED'
   unassigned?: boolean
   csUnassigned?: boolean

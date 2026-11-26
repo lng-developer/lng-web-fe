@@ -36,5 +36,10 @@ export default [
       react: { version: 'detect' },
     },
   },
+  {
+    files: ['.github/scripts/*.cjs'],
+    languageOptions: { sourceType: 'commonjs', globals: globals.node },
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
+  },
   prettier,
 ]

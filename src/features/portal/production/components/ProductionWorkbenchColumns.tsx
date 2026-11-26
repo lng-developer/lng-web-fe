@@ -1,3 +1,4 @@
+import dayjs from 'dayjs'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TableColumnsType } from 'antd'
@@ -15,6 +16,7 @@ import type { ProductionTask } from '../api/productionApi'
 export type ProductionTab =
   | 'all'
   | 'scale'
+  | 'unassigned'
   | 'need_scale'
   | 'qc_rejected'
   | 'unclassified'
@@ -39,8 +41,6 @@ export interface UseProductionTableColumnsOptions {
   tab: ProductionTab
   viewMode: ViewMode
   allowed: Set<string>
-  isScaleTab?: boolean
-  csAssignees?: Array<{ id: string; fullName?: string | null; employeeCode?: string | null }>
   claimTask: {
     isPending: boolean
     variables?: unknown
@@ -52,8 +52,6 @@ export function useProductionTableColumns({
   tab,
   viewMode,
   allowed,
-  isScaleTab,
-  csAssignees,
   claimTask,
 }: UseProductionTableColumnsOptions): TableColumnsType<ProductionTask> {
   const { t } = useTranslation()
@@ -73,6 +71,24 @@ export function useProductionTableColumns({
                 <Tag color="blue" style={{ marginInlineEnd: 0, fontWeight: 500 }}>
                   {siblingCount} items
                 </Tag>
+              ) : null}
+            </Space>
+          )
+        },
+      },
+      {
+        title: t('taskQueue.shipBy'),
+        width: 170,
+        render: (_, row) => {
+          const active = !['SENT_TO_VENDOR', 'CANCELLED'].includes(row.status)
+          const overdue = active && row.shipByDate && dayjs(row.shipByDate).isBefore(dayjs())
+          const age = Math.max(0, dayjs().diff(dayjs(row.orderDate || row.createdAt), 'day'))
+          return (
+            <Space orientation="vertical" size={2}>
+              <FormattedDateTime value={row.shipByDate} />
+              {overdue ? <Tag color="red">{t('taskQueue.overdue')}</Tag> : null}
+              {active && (row.orderDate || row.createdAt) ? (
+                <span>{t('taskQueue.age', { days: age })}</span>
               ) : null}
             </Space>
           )
@@ -129,32 +145,6 @@ export function useProductionTableColumns({
               ))}
             </Space>
           )
-        },
-      },
-      {
-        title: t('portal.production.requiredSlots'),
-        width: 118,
-        render: (_, row) => {
-          const allTasks = (row as unknown as { orderTasks?: ProductionTask[] }).orderTasks || [row]
-          const checks = allTasks.flatMap(
-            (item) => item.qcPreviewFileChecks || item.fileChecks || [],
-          )
-          return (
-            checks
-              .filter((check) => check.required && check.sourceType !== 'PSD_TEMPLATE')
-              .map((check) => check.slotLabel || check.slotKey)
-              .filter((v, i, arr) => arr.indexOf(v) === i)
-              .join(', ') || '-'
-          )
-        },
-      },
-      {
-        title: t('portal.production.blockers'),
-        width: 180,
-        render: (_, row) => {
-          const allTasks = (row as unknown as { orderTasks?: ProductionTask[] }).orderTasks || [row]
-          const allBlockers = Array.from(new Set(allTasks.flatMap((item) => item.blockers || [])))
-          return allBlockers.join(', ') || (row.blockers || []).join(', ') || '-'
         },
       },
       {
@@ -234,38 +224,6 @@ export function useProductionTableColumns({
           return t('portal.production.unassigned')
         },
       },
-      ...(viewMode === 'scale' || isScaleTab
-        ? [
-            {
-              title: t('portal.production.columns.csAssignee', { defaultValue: 'CS Phụ trách' }),
-              width: 140,
-              render: (_: unknown, row: ProductionTask) => {
-                const allTasks = (row as unknown as { orderTasks?: ProductionTask[] })
-                  .orderTasks || [row]
-                const csAssignee = allTasks.map((t) => t.csAssignee).find(Boolean)
-                const csId = allTasks.find((t) => t.csAssigneeId)?.csAssigneeId
-                const matchedCs = csAssignees?.find((item) => item.id === csId)
-                const name =
-                  csAssignee?.fullName ||
-                  matchedCs?.fullName ||
-                  csAssignee?.employeeCode ||
-                  matchedCs?.employeeCode
-
-                if (name) {
-                  return <Tag color="cyan">{name}</Tag>
-                }
-                if (csId) {
-                  return <Tag color="cyan">{csId}</Tag>
-                }
-                return (
-                  <Tag color="orange">
-                    {t('portal.production.csUnassigned', { defaultValue: 'Chưa phân công' })}
-                  </Tag>
-                )
-              },
-            },
-          ]
-        : []),
       {
         title: t('portal.production.columns.status'),
         width: 126,
@@ -289,19 +247,7 @@ export function useProductionTableColumns({
           )
         },
       },
-      {
-        title: t('portal.production.columns.updated'),
-        width: 148,
-        render: (_, row) => {
-          const allTasks = (row as unknown as { orderTasks?: ProductionTask[] }).orderTasks || [row]
-          const latestUpdated = allTasks.reduce(
-            (max, item) => (new Date(item.updatedAt) > new Date(max) ? item.updatedAt : max),
-            row.updatedAt,
-          )
-          return <FormattedDateTime value={latestUpdated} />
-        },
-      },
     ],
-    [allowed, claimTask, csAssignees, isScaleTab, t, tab, viewMode],
+    [allowed, claimTask, t, tab, viewMode],
   )
 }
