@@ -1,0 +1,30 @@
+{
+  "trackingBatches": {
+    "title": "Các đợt upload",
+    "currentOrders": "Đơn hàng / Upload mới",
+    "batch": "Batch / Tệp",
+    "createdAt": "Thời gian tạo",
+    "status": "Trạng thái",
+    "rows": "Số dòng",
+    "result": "Kết quả Amazon",
+    "awaitingResult": "Đang chờ kết quả",
+    "resultCounts": "{{success}} chấp nhận · {{failed}} lỗi",
+    "description": "Mở rộng một batch để kiểm tra các đơn đã gửi trong đợt upload đó.",
+    "snapshotNote": "Đây là dữ liệu gốc đã gửi trong batch. Kết quả toàn batch không xác định kết quả của từng đơn riêng lẻ.",
+    "empty": "Shop chưa có batch upload được lưu. Các đơn xác nhận thủ công vẫn nằm trong tab đơn hàng.",
+    "search": "Tìm mã đơn hoặc tracking trong batch",
+    "diagnostics": "Thông tin lỗi batch",
+    "listError": "Không tải được danh sách batch",
+    "detailError": "Không tải được đơn hàng trong batch",
+    "retry": "Thử lại",
+    "refresh": "Làm mới",
+    "statuses": {
+      "PENDING": "Chờ xử lý",
+      "SUBMITTED": "Đã upload",
+      "WAITING_AMAZON": "Amazon đang xử lý",
+      "SUCCEEDED": "Hoàn tất",
+      "FAILED": "Lỗi"
+    },
+    "noResult": "Chưa có kết quả từ Amazon"
+  }
+}
