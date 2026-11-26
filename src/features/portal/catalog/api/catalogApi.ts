@@ -33,6 +33,7 @@ export type Listing = {
   title: string
   productImageUrl?: string | null
   previewImageUrl?: string | null
+  designType?: 'NORMAL' | 'CUSTOM_IMAGE' | null
   defaultPsdTemplateAssetId?: string | null
   variantCount?: number
   psdReadyCount?: number
@@ -173,6 +174,7 @@ export type CreateListingInput = {
   asin?: string | null
   etsyListingId?: string | null
   previewImageUrl?: string | null
+  designType?: 'NORMAL' | 'CUSTOM_IMAGE' | null
   defaultPsdTemplateAssetId?: string | null
   baseCostAmount?: number
   currency?: string

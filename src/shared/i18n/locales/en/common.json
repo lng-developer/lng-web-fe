@@ -3101,7 +3101,9 @@
         "baseCost": "Base cost (minor units)",
         "currency": "Currency",
         "costCenterStatus": "Cost center status",
-        "recordStatus": "Record status"
+        "recordStatus": "Record status",
+        "designType": "Design type",
+        "designTypeHelp": "Applies to new production tasks. Leave empty to detect from buyer customization. Existing tasks keep their classification."
       },
       "detail": {
         "selectListing": "Select a listing to view details",
@@ -3202,7 +3204,12 @@
       "rejectReason": "Rejection reason",
       "reasonRequired": "Reason is required",
       "openAmazonProduct": "View on Amazon",
-      "openEtsyListing": "View on Etsy"
+      "openEtsyListing": "View on Etsy",
+      "designTypes": {
+        "AUTO": "Auto detect",
+        "NORMAL": "Normal",
+        "CUSTOM_IMAGE": "Custom image"
+      }
     },
     "monitoring": {
       "title": "System Monitoring & Observability",
