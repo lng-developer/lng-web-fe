@@ -338,6 +338,11 @@
       "QC_PENDING": "Chờ QC",
       "PENDING": "Chờ xử lý"
     },
-    "itemBreakdownTitle": "Chi tiết theo item ({{count}} items):"
+    "itemBreakdownTitle": "Chi tiết theo item ({{count}} items):",
+    "quantityEdit": {
+      "title": "Sửa số lượng",
+      "description": "Chỉ thay đổi số lượng đơn hàng và sản xuất nội bộ. Số tiền khách đã trả không đổi; không cập nhật Amazon. Không thể sửa sau khi gửi nhà cung cấp hoặc khi sản phẩm đã đóng.",
+      "saved": "Đã cập nhật số lượng"
+    }
   }
 }

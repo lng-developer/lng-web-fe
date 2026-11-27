@@ -338,6 +338,11 @@
       "QC_PENDING": "QC pending",
       "PENDING": "Pending"
     },
-    "itemBreakdownTitle": "Item status breakdown ({{count}} items):"
+    "itemBreakdownTitle": "Item status breakdown ({{count}} items):",
+    "quantityEdit": {
+      "title": "Edit quantity",
+      "description": "Changes the internal order and production quantity only. Customer payment stays unchanged; Amazon is not updated. Editing is blocked after vendor submission or when the item is closed.",
+      "saved": "Quantity updated"
+    }
   }
 }

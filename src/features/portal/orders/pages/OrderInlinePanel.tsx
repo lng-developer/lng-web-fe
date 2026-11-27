@@ -51,6 +51,8 @@ function successMessageKey(action: OrderAction) {
       return 'orders.messages.addressValidated'
     case 'override-address':
       return 'orders.messages.addressOverridden'
+    case 'quantity':
+      return 'orders.quantityEdit.saved'
     case 'note':
       return 'orders.messages.noteSaved'
     case 'recheck-production':
@@ -156,8 +158,13 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
       : undefined
 
   const openConfirmation = useCallback(
-    (target: EventTarget | null, kind: OrderItemConfirmation['kind'], item: OrderWorkbenchItem) => {
-      setConfirmation({ kind, item })
+    (
+      target: EventTarget | null,
+      kind: OrderItemConfirmation['kind'],
+      item: OrderWorkbenchItem,
+      quantity?: number,
+    ) => {
+      setConfirmation({ kind, item, quantity })
       const rect = target instanceof Element ? target.getBoundingClientRect() : undefined
       setConfirmationAnchor(
         rect

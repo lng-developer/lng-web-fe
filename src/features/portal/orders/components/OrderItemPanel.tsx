@@ -11,7 +11,16 @@ import {
   RightOutlined,
   SwapOutlined,
 } from '@ant-design/icons'
-import { Button, Descriptions, Dropdown, type MenuProps, Space, Tooltip, Typography } from 'antd'
+import {
+  Button,
+  Descriptions,
+  Dropdown,
+  InputNumber,
+  type MenuProps,
+  Space,
+  Tooltip,
+  Typography,
+} from 'antd'
 
 import { AuthenticatedMediaImage, downloadMediaAsset, downloadMediaAssets } from '@/shared/media'
 import {
@@ -49,6 +58,7 @@ type OrderItemPanelProps = {
     target: EventTarget | null,
     kind: OrderItemConfirmation['kind'],
     item: OrderWorkbenchItem,
+    quantity?: number,
   ) => void
   readonly onHistory: (event: MouseEvent<HTMLElement>, itemId: string) => void
   readonly onOpenImageViewer: (
@@ -70,6 +80,16 @@ export const OrderItemPanel = memo(function OrderItemPanel({
   onOpenImageViewer,
 }: OrderItemPanelProps) {
   const { t } = useTranslation()
+  const [quantityDraft, setQuantityDraft] = useState<number | null>()
+  const quantityLocked = [
+    'READY_TO_SEND_VENDOR',
+    'SENT_TO_VENDOR',
+    'TRACKING_PENDING',
+    'SHIPPED',
+    'CANCELLED',
+    'REFUNDED',
+    'FAILED',
+  ].includes(item.item?.status ?? '')
   const customizationInputs = useMemo(
     () => item.customization?.inputs ?? [],
     [item.customization?.inputs],
@@ -661,7 +681,40 @@ export const OrderItemPanel = memo(function OrderItemPanel({
           column={1}
           colon={false}
           items={[
-            { key: 'qty', label: t('orders.fields.quantity'), children: item.item?.quantity ?? 1 },
+            {
+              key: 'qty',
+              label: t('orders.fields.quantity'),
+              children:
+                canOperate && !quantityLocked ? (
+                  <InputNumber
+                    aria-label={t('orders.fields.quantity')}
+                    size="small"
+                    min={1}
+                    max={9999}
+                    precision={0}
+                    style={{ width: 80 }}
+                    disabled={pending}
+                    value={quantityDraft === undefined ? item.item.quantity : quantityDraft}
+                    onChange={setQuantityDraft}
+                    onPressEnter={(event) => event.currentTarget.blur()}
+                    onBlur={(event) => {
+                      const quantity = quantityDraft
+                      setQuantityDraft(undefined)
+                      if (
+                        !pending &&
+                        quantity != null &&
+                        Number.isSafeInteger(quantity) &&
+                        quantity >= 1 &&
+                        quantity <= 9999 &&
+                        quantity !== item.item.quantity
+                      )
+                        onConfirm(event.currentTarget, 'quantity', item, quantity)
+                    }}
+                  />
+                ) : (
+                  (item.item?.quantity ?? 1)
+                ),
+            },
             {
               key: 'base',
               label: t('orders.fields.totalCost'),

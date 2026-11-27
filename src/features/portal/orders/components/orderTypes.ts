@@ -15,6 +15,7 @@ export type OrderAction =
   | { kind: 'customer'; buyer: OrderBuyer }
   | { kind: 'validate-address' }
   | { kind: 'override-address'; reason?: string }
+  | { kind: 'quantity'; itemId: string; quantity: number; expectedQuantity: number; reason: string }
   | { kind: 'note'; itemId: string; note: string }
   | { kind: 'recheck-mapping'; itemId: string }
   | { kind: 'recheck-production'; itemId: string }
@@ -34,8 +35,9 @@ export type OrderAction =
   | { kind: 'case-comment'; orderCase: OrderCase; body: string }
 
 export type OrderItemConfirmation = {
-  kind: 'cancel' | 'replacement' | 'vendor-rematch-recovery'
+  kind: 'cancel' | 'replacement' | 'vendor-rematch-recovery' | 'quantity'
   item: OrderWorkbenchItem
+  quantity?: number
 }
 
 export function displayValue(input?: string | number | null) {

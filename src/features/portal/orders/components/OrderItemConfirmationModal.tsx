@@ -52,15 +52,34 @@ function OrderItemConfirmationModalInner({
 }: OrderItemConfirmationModalInnerProps) {
   const { t } = useTranslation()
   const [reason, setReason] = useState('')
-  const [quantity, setQuantity] = useState(confirmation.item.item?.quantity || 1)
+  const [quantity, setQuantity] = useState(
+    confirmation.quantity ?? confirmation.item.item?.quantity ?? 1,
+  )
   const [requireRework, setRequireRework] = useState(false)
 
+  const isQuantity = confirmation.kind === 'quantity'
+  const quantityInvalid =
+    !Number.isSafeInteger(quantity) ||
+    quantity < 1 ||
+    quantity > 9999 ||
+    quantity === confirmation.item.item?.quantity
+  const quantitySaveDisabled =
+    isQuantity && (quantityInvalid || !reason.trim() || reason.trim().length > 1000)
   const isCancel = confirmation.kind === 'cancel'
   const isVendorRematch = confirmation.kind === 'vendor-rematch-recovery'
 
   const handleOk = () => {
+    if (quantitySaveDisabled || pending) return
     const itemId = confirmation.item.item?.id ?? ''
-    if (isCancel || isVendorRematch) {
+    if (isQuantity) {
+      onConfirm({
+        kind: 'quantity',
+        itemId,
+        quantity,
+        expectedQuantity: confirmation.item.item.quantity,
+        reason: reason.trim(),
+      })
+    } else if (isCancel || isVendorRematch) {
       onConfirm({
         kind: isVendorRematch ? 'vendor-rematch-recovery' : 'cancel',
         itemId,
@@ -82,16 +101,24 @@ function OrderItemConfirmationModalInner({
       anchor={anchor}
       open={Boolean(confirmation)}
       title={
-        isVendorRematch
-          ? 'Reset vendor matching'
-          : t(isCancel ? 'orders.actions.cancelItem' : 'orders.actions.createReplacement')
+        isQuantity
+          ? t('orders.quantityEdit.title')
+          : isVendorRematch
+            ? 'Reset vendor matching'
+            : t(isCancel ? 'orders.actions.cancelItem' : 'orders.actions.createReplacement')
       }
-      okButtonProps={{ disabled: (isCancel || isVendorRematch) && !reason.trim() }}
+      okButtonProps={{
+        disabled:
+          pending || quantitySaveDisabled || ((isCancel || isVendorRematch) && !reason.trim()),
+      }}
       confirmLoading={pending}
       onCancel={onClose}
       onOk={handleOk}
     >
       <div className={styles.modalForm}>
+        {isQuantity ? (
+          <Typography.Paragraph>{t('orders.quantityEdit.description')}</Typography.Paragraph>
+        ) : null}
         <Descriptions
           size="small"
           column={1}
@@ -110,7 +137,12 @@ function OrderItemConfirmationModalInner({
         />
         <label>
           <Typography.Text>{t('orders.fields.reason')}</Typography.Text>
-          <Input.TextArea value={reason} onChange={(event) => setReason(event.target.value)} />
+          <Input.TextArea
+            aria-label={t('orders.fields.reason')}
+            maxLength={isQuantity ? 1000 : undefined}
+            value={reason}
+            onChange={(event) => setReason(event.target.value)}
+          />
         </label>
         {isVendorRematch ? (
           <>
@@ -124,14 +156,16 @@ function OrderItemConfirmationModalInner({
             </Typography.Text>
           </>
         ) : null}
-        {confirmation.kind === 'replacement' ? (
+        {confirmation.kind === 'replacement' || isQuantity ? (
           <label>
             <Typography.Text>{t('orders.fields.quantity')}</Typography.Text>
             <InputNumber
+              aria-label={t('orders.fields.quantity')}
               min={1}
-              max={confirmation.item.item?.quantity || 1}
+              precision={0}
+              max={isQuantity ? 9999 : confirmation.item.item?.quantity || 1}
               value={quantity}
-              onChange={(next) => setQuantity(next ?? 1)}
+              onChange={(next) => setQuantity(next ?? (isQuantity ? 0 : 1))}
             />
           </label>
         ) : null}

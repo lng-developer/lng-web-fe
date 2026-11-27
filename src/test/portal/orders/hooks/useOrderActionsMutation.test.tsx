@@ -31,3 +31,31 @@ it('updates a saved CS note in full workbench data without losing pagination or 
   unmount()
   client.clear()
 })
+it('updates quantity with a stale-value guard and refreshes item history and workbench', async () => {
+  vi.mocked(apiClient.patch).mockResolvedValue({ data: { quantity: 2 } })
+  const client = new QueryClient()
+  const invalidate = vi.spyOn(client, 'invalidateQueries')
+  const { result, unmount } = renderHook(() => useOrderActionsMutation({ orderId: 'order' }), {
+    wrapper: ({ children }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    ),
+  })
+  await act(() =>
+    result.current.mutateAsync({
+      kind: 'quantity',
+      itemId: 'item',
+      quantity: 2,
+      expectedQuantity: 1,
+      reason: 'Pack of two',
+    }),
+  )
+  expect(apiClient.patch).toHaveBeenCalledWith('/api/orders/items/item/quantity', {
+    quantity: 2,
+    expectedQuantity: 1,
+    reason: 'Pack of two',
+  })
+  expect(invalidate).toHaveBeenCalledWith({ queryKey: orderKeys.timeline('order', 'item') })
+  expect(invalidate).toHaveBeenCalledWith({ queryKey: [...orderKeys.all, 'workbench'] })
+  unmount()
+  client.clear()
+})
