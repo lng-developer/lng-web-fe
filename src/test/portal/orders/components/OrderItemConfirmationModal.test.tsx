@@ -25,6 +25,30 @@ vi.mock('@/shared/ui', () => ({
 }))
 afterEach(cleanup)
 
+it('prefills the inline quantity while keeping the original concurrency value', () => {
+  const onConfirm = vi.fn()
+  render(
+    <OrderItemConfirmationModal
+      confirmation={{
+        kind: 'quantity',
+        quantity: 2,
+        item: { item: { id: 'item', quantity: 1 } } as OrderWorkbenchItem,
+      }}
+      pending={false}
+      onClose={vi.fn()}
+      onConfirm={onConfirm}
+    />,
+  )
+  expect(screen.getByRole('spinbutton')).toHaveValue('2')
+  fireEvent.change(screen.getByRole('textbox', { name: 'orders.fields.reason' }), {
+    target: { value: 'Pack 2' },
+  })
+  fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+  expect(onConfirm).toHaveBeenCalledWith(
+    expect.objectContaining({ quantity: 2, expectedQuantity: 1 }),
+  )
+})
+
 it('requires a changed quantity and reason, then submits the original quantity for concurrency protection', () => {
   const onConfirm = vi.fn()
   render(

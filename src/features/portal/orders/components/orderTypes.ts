@@ -37,6 +37,7 @@ export type OrderAction =
 export type OrderItemConfirmation = {
   kind: 'cancel' | 'replacement' | 'vendor-rematch-recovery' | 'quantity'
   item: OrderWorkbenchItem
+  quantity?: number
 }
 
 export function displayValue(input?: string | number | null) {

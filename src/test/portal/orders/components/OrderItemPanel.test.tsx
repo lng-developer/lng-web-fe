@@ -302,13 +302,17 @@ it.each([
         />
       </AppProviders>,
     )
-    const button = screen.queryByRole('button', { name: 'Edit quantity' })
+    const input = screen.queryByRole('spinbutton', { name: 'Quantity' })
     if (editable) {
-      expect(button).toBeInTheDocument()
-      fireEvent.click(button!)
-      expect(onConfirm).toHaveBeenCalledWith(expect.anything(), 'quantity', item)
+      expect(input).toHaveValue('1')
+      fireEvent.change(input!, { target: { value: '2' } })
+      expect(onConfirm).not.toHaveBeenCalled()
+      fireEvent.blur(input!)
+      expect(onConfirm).toHaveBeenCalledWith(expect.anything(), 'quantity', item, 2)
+      expect(input).toHaveValue('1')
     } else {
-      expect(button).not.toBeInTheDocument()
+      expect(input).not.toBeInTheDocument()
     }
+    expect(screen.queryByRole('button', { name: 'Edit quantity' })).not.toBeInTheDocument()
   },
 )
