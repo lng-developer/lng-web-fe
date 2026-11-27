@@ -1,10 +1,11 @@
 import { MemoryRouter } from 'react-router-dom'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
+  type Shipment,
   getShipment,
   listShipments,
   summarizeShipments,
@@ -109,6 +110,83 @@ describe('ShipmentWorkbenchPage', () => {
     })
   })
 
+  const currentShipment: Shipment = {
+    id: 'current',
+    orderId: 'order-one',
+    orderItemId: 'item-one',
+    shopId: 'shop-one',
+    vendorSubmissionId: 'submission-current',
+    externalOrderId: '114-4533300-1174625',
+    vendorExternalOrderId: 'vendor-current',
+    provider: 'MANGOTEE',
+    status: 'TRACKING_PENDING',
+    trackingNumber: null,
+    carrier: null,
+    trackingUrl: null,
+    shippedAt: null,
+    deliveredAt: null,
+    note: null,
+    createdAt: '2026-11-27T06:32:00Z',
+    updatedAt: '2026-11-27T06:32:00Z',
+  }
+  const cancelledShipment: Shipment = {
+    ...currentShipment,
+    id: 'cancelled',
+    provider: 'LNG_GROUP',
+    status: 'CANCELLED',
+    vendorExternalOrderId: 'vendor-old',
+    createdAt: '2026-11-27T02:48:00Z',
+    updatedAt: '2026-11-27T07:00:00Z',
+  }
+
+  function loadRows(items: Shipment[]) {
+    vi.mocked(listShipments).mockResolvedValue({
+      items,
+      pagination: { total: items.length, page: 1, limit: 50 },
+    })
+  }
+
+  it('keeps a replaced cancellation in history without inflating items or changing the current provider', async () => {
+    loadRows([cancelledShipment, currentShipment])
+    vi.mocked(getShipment).mockResolvedValue(cancelledShipment)
+    renderPage()
+    const order = await screen.findByText(currentShipment.externalOrderId!)
+    const row = within(order.closest('tr')!)
+    expect(row.getByText('MANGOTEE')).toBeVisible()
+    expect(row.queryByText('LNG_GROUP')).not.toBeInTheDocument()
+    expect(row.queryByText('Cancelled')).not.toBeInTheDocument()
+    expect(row.queryByText('2 items')).not.toBeInTheDocument()
+    fireEvent.click(row.getByRole('button', { name: 'History (1)' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'LNG_GROUP · Cancelled' }))
+    await waitFor(() => expect(getShipment).toHaveBeenCalledWith('cancelled'))
+  }, 30000)
+
+  it('keeps cancelled-only items visible and counts distinct items', async () => {
+    loadRows([currentShipment, { ...cancelledShipment, orderItemId: 'item-two' }])
+    renderPage()
+    const order = await screen.findByText(currentShipment.externalOrderId!)
+    const row = within(order.closest('tr')!)
+    expect(row.getByText('2 items')).toBeVisible()
+    expect(row.getByText('Cancelled')).toBeVisible()
+    expect(row.queryByRole('button', { name: /History/ })).not.toBeInTheDocument()
+  })
+
+  it('does not hide an order that has only cancelled shipments', async () => {
+    loadRows([cancelledShipment])
+    renderPage()
+    const order = await screen.findByText(currentShipment.externalOrderId!)
+    expect(within(order.closest('tr')!).getByText('Cancelled')).toBeVisible()
+  })
+
+  it('does not bundle different internal orders with the same external identifier', async () => {
+    loadRows([
+      currentShipment,
+      { ...cancelledShipment, orderId: 'other-order', shopId: 'other-shop' },
+    ])
+    renderPage()
+    expect(await screen.findAllByText(currentShipment.externalOrderId!)).toHaveLength(2)
+  })
+
   it('keeps short shipment columns compact within a stable table width', async () => {
     renderPage()
 
@@ -138,7 +216,7 @@ describe('ShipmentWorkbenchPage', () => {
   it('loads the selected server page from the shared pagination', async () => {
     renderPage()
 
-    fireEvent.click(await screen.findByTitle('2'))
+    fireEvent.click(within(await screen.findByTitle('2')).getByText('2'))
 
     await waitFor(() =>
       expect(listShipments).toHaveBeenCalledWith(expect.objectContaining({ limit: 50, page: 2 })),

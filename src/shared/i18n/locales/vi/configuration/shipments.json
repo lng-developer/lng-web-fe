@@ -58,6 +58,8 @@
         "dispatchFailed": "Điều phối lỗi ở: {{providers}}",
         "progressHint": "Số submission đã phát hiện hiện tại, không phải tổng lượt gọi API. Lỗi có thể đồng thời nằm trong nhóm chờ hoặc hẹn retry. Không gồm kiểm tra thủ công."
       },
+      "cancelledHistory": "Lịch sử shipment đã hủy",
+      "historyCount": "Lịch sử ({{count}})",
       "webhookHistory": "Lịch sử webhook nhà cung cấp",
       "trackingPreview": {
         "title": "Xem trước dữ liệu gửi mã vận đơn lên Amazon",
