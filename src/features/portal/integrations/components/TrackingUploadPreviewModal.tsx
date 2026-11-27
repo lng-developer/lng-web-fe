@@ -7,7 +7,6 @@ import {
   Button,
   Collapse,
   message,
-  Modal,
   Segmented,
   Select,
   Space,
@@ -18,6 +17,7 @@ import {
   Typography,
 } from 'antd'
 import { CopyOutlined, CheckOutlined, FileTextOutlined } from '@ant-design/icons'
+import { PopupModal } from '@/shared/ui'
 
 import { TrackingBatchHistory } from './TrackingBatchHistory'
 import { shipmentKeys } from '@/features/portal/shipments/api/shipmentKeys'
@@ -391,7 +391,15 @@ export function TrackingUploadPreviewModal({
   ]
 
   return (
-    <Modal
+    <PopupModal
+      centered
+      styles={{
+        wrapper: { padding: 24 },
+        container: { display: 'flex', flexDirection: 'column', maxHeight: 'calc(100dvh - 48px)' },
+        header: { flexShrink: 0 },
+        body: { minHeight: 0, maxHeight: 'none', overflowY: 'auto' },
+        footer: { flexShrink: 0 },
+      }}
       footer={
         <Space>
           <Button onClick={onClose}>{t('common.cancel', { defaultValue: 'Cancel' })}</Button>
@@ -659,6 +667,6 @@ export function TrackingUploadPreviewModal({
           ) : null}
         </>
       )}
-    </Modal>
+    </PopupModal>
   )
 }

@@ -90,6 +90,19 @@ describe('TrackingUploadPreviewModal', () => {
     expect(screen.getByText('9400111899223856928499')).toBeVisible()
     expect(screen.getByText('2026-09-29')).toBeVisible()
     expect(screen.getByText(/Missing Data/i)).toBeVisible()
+    const dialog = screen.getByRole('dialog')
+    expect(dialog.closest('.ant-modal-wrap')).toHaveClass('ant-modal-centered')
+    expect(dialog.querySelector('[data-popup-phase]')).toBeInTheDocument()
+    expect(dialog.querySelector('.ant-modal-container')).toHaveStyle({
+      display: 'flex',
+      flexDirection: 'column',
+      maxHeight: 'calc(100dvh - 48px)',
+    })
+    expect(dialog.querySelector('.ant-modal-body')).toHaveStyle({
+      minHeight: '0',
+      overflowY: 'auto',
+    })
+    expect(dialog.querySelector('.ant-modal-footer')).toHaveStyle({ flexShrink: '0' })
   })
 
   it('keeps preview available when the online worker list becomes empty', async () => {
