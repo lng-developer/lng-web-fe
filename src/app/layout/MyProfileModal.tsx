@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Alert, Button, Descriptions, Skeleton, Space, Tag, Typography } from 'antd'
 
 import { loadEmployeeAvatar, loadMyEmployeeProfile } from '@/features/hr/api/hrApi'
+import { hrKeys } from '@/features/hr/api/hrKeys'
 import { DetailModal, EmployeeAvatar } from '@/shared/ui'
 
 import styles from './MyProfileModal.module.scss'
@@ -12,8 +13,9 @@ const emptyValue = '\u2014'
 export function MyProfileModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useTranslation()
   const profile = useQuery({
-    queryKey: ['hr', 'employee-profiles', 'me'],
+    queryKey: hrKeys.myProfile(),
     queryFn: loadMyEmployeeProfile,
+    staleTime: 5 * 60 * 1000,
     enabled: open,
   })
   const avatar = useQuery({

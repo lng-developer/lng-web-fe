@@ -210,6 +210,9 @@ export function ChatShell({ account }: ChatShellProps) {
   const unreadQuery = useQuery({
     queryKey: chatKeys.unread,
     queryFn: getChatUnreadCount,
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
+    refetchIntervalInBackground: false,
     refetchInterval: socketReady ? false : 30_000,
   })
   const chatParticipants = useQuery({

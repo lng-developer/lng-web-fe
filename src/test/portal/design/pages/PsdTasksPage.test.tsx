@@ -28,7 +28,8 @@ vi.mock('@/shared/media', async (importOriginal) => ({
 let mockSearchParams = new URLSearchParams('')
 let mockPermissions = ['DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW']
 let mockScaleFileSummary:
-  { totalFileCount: number; scaledFileCount: number; pendingFileCount: number } | undefined
+  | { totalFileCount: number; scaledFileCount: number; pendingFileCount: number }
+  | undefined
 let mockSalesChannelCode = 'AMAZON'
 let mockTaskTotal = 1
 let mockTaskStatus = 'REQUESTED'
@@ -105,6 +106,9 @@ vi.mock('@/features/portal/design/api/designApi', async (importOriginal) => {
       byStatus: { REQUESTED: 1 },
       byTaskType: { PSD_TEMPLATE: 1 },
     }),
+    getDesignTask: vi
+      .fn()
+      .mockResolvedValue({ history: [{ action: 'Created', at: '2026-09-18T10:00:00.000Z' }] }),
     listDesignAssignees: vi
       .fn()
       .mockResolvedValue([{ id: 'new-designer', fullName: 'New Designer' }]),
@@ -122,6 +126,25 @@ vi.mock('@/features/portal/design/api/designApi', async (importOriginal) => {
 })
 
 describe('PsdTasksPage', () => {
+  it('renders tasks while auxiliary requests are pending and loads history only on demand', async () => {
+    const api = await import('@/features/portal/design/api/designApi')
+    vi.mocked(api.getDesignSummary).mockImplementationOnce(() => new Promise(() => {}))
+    vi.mocked(api.listDesignAssignees).mockImplementationOnce(() => new Promise(() => {}))
+    render(
+      <AppProviders>
+        <PsdTasksPage />
+      </AppProviders>,
+    )
+    await screen.findByText('B001TESTASIN')
+    expect(api.listDesignAssignees).not.toHaveBeenCalled()
+    expect(api.getDesignTask).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Task history' }))
+    await waitFor(() => expect(api.getDesignTask).toHaveBeenCalledWith('psd-1'))
+    await screen.findByText('Created')
+    vi.mocked(api.listDesignAssignees)
+      .mockReset()
+      .mockResolvedValue([{ id: 'new-designer', fullName: 'New Designer' }])
+  })
   it.each(['AMAZON', 'ETSY'])(
     'sorts %s total scale files on the server and restores urgency when cleared',
     async (channel) => {
@@ -416,6 +439,7 @@ describe('PsdTasksPage', () => {
     )
     expect(getDesignSummary).toHaveBeenCalledWith(
       expect.objectContaining({ salesChannelCode: 'AMAZON' }),
+      expect.any(AbortSignal),
     )
   })
 

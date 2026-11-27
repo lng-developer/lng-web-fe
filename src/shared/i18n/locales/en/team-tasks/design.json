@@ -1,6 +1,9 @@
 {
   "portal": {
     "design": {
+      "taskHistory": "Task history",
+      "noHistory": "No history recorded",
+      "retryHistory": "Retry loading history",
       "title": "Design operations",
       "tabs": {
         "all": "All",

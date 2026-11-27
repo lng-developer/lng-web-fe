@@ -16,6 +16,7 @@ export interface PsdTasksActionModalsProps {
   selectedDesignerId?: string
   onSelectDesignerId: (id?: string) => void
   assignees: DesignAssignee[]
+  isLoadingAssignees?: boolean
   isAssigning: boolean
   isReassign: boolean
   canConfirmAssignment: boolean
@@ -69,6 +70,7 @@ export const PsdTasksActionModals: FC<PsdTasksActionModalsProps> = ({
   selectedDesignerId,
   onSelectDesignerId,
   assignees,
+  isLoadingAssignees,
   isAssigning,
   isReassign,
   canConfirmAssignment,
@@ -128,6 +130,7 @@ export const PsdTasksActionModals: FC<PsdTasksActionModalsProps> = ({
             placeholder={t('portal.design.selectDesigner')}
             value={selectedDesignerId}
             onChange={(val) => onSelectDesignerId(val)}
+            loading={isLoadingAssignees}
             options={assignees.map((a) => ({
               label: a.fullName || a.name || a.id,
               value: a.id,

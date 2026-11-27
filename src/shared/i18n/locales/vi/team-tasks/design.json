@@ -1,6 +1,9 @@
 {
   "portal": {
     "design": {
+      "taskHistory": "Lịch sử task",
+      "noHistory": "Chưa có lịch sử",
+      "retryHistory": "Tải lại lịch sử",
       "tabs": {
         "all": "Tất cả",
         "new": "Mới",
