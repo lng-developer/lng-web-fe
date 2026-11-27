@@ -23,8 +23,12 @@
       "SUBMITTED": "Đã upload",
       "WAITING_AMAZON": "Amazon đang xử lý",
       "SUCCEEDED": "Hoàn tất",
-      "FAILED": "Lỗi"
+      "FAILED": "Lỗi",
+      "DRAFT": "Sẵn sàng upload thủ công"
     },
-    "noResult": "Chưa có kết quả từ Amazon"
+    "noResult": "Chưa có kết quả từ Amazon",
+    "draftNote": "Tải batch nháp này và upload thủ công trên Amazon Seller Central. Tải tệp không gửi batch hoặc thay đổi trạng thái xác nhận.",
+    "downloadTsv": "Tải TSV (.txt)",
+    "notUploaded": "Chưa upload lên Amazon"
   }
 }

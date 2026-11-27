@@ -23,6 +23,22 @@ function BatchOrders({ id }: { readonly id: string }) {
     refetchInterval: (query) =>
       activeStatuses.has(query.state.data?.status ?? '') ? 15_000 : false,
   })
+  const downloadDraft = () => {
+    if (!detail.data?.tsv || detail.data.status !== 'DRAFT') return
+    const url = URL.createObjectURL(
+      new Blob([detail.data.tsv], { type: 'text/tab-separated-values;charset=utf-8' }),
+    )
+    const anchor = document.createElement('a')
+    try {
+      anchor.href = url
+      anchor.download = detail.data.filename
+      document.body.append(anchor)
+      anchor.click()
+    } finally {
+      anchor.remove()
+      URL.revokeObjectURL(url)
+    }
+  }
   const rows = useMemo(() => {
     const value = search.trim().toLowerCase()
     return (detail.data?.rows ?? [])
@@ -34,7 +50,21 @@ function BatchOrders({ id }: { readonly id: string }) {
     {
       title: t('portal.shipments.trackingPreview.orderId'),
       dataIndex: 'externalOrderId',
-      render: (value: string) => <Typography.Text copyable>{value}</Typography.Text>,
+      render: (value: string, row) => (
+        <Space vertical size={0}>
+          <Typography.Text copyable>{value}</Typography.Text>
+          {row.externalItemId ? (
+            <Typography.Text type="secondary">
+              {t('portal.shipments.trackingPreview.itemPrefix', { id: row.externalItemId })}
+            </Typography.Text>
+          ) : null}
+          {row.quantity ? (
+            <Typography.Text type="secondary">
+              {t('portal.shipments.trackingPreview.itemCount', { count: Number(row.quantity) })}
+            </Typography.Text>
+          ) : null}
+        </Space>
+      ),
     },
     { title: t('portal.shipments.trackingPreview.shipDate'), dataIndex: 'shipDate', width: 120 },
     {
@@ -59,7 +89,18 @@ function BatchOrders({ id }: { readonly id: string }) {
     )
   return (
     <Space vertical size="small" style={{ width: '100%' }}>
-      <Typography.Text type="secondary">{t('trackingBatches.snapshotNote')}</Typography.Text>
+      <Typography.Text type="secondary">
+        {t(
+          detail.data?.status === 'DRAFT'
+            ? 'trackingBatches.draftNote'
+            : 'trackingBatches.snapshotNote',
+        )}
+      </Typography.Text>
+      {detail.data?.status === 'DRAFT' ? (
+        <Button onClick={downloadDraft} disabled={!detail.data.tsv}>
+          {t('trackingBatches.downloadTsv')}
+        </Button>
+      ) : null}
       {detail.data?.errorMessage ? (
         <FeedbackAlert type="error" title={detail.data.errorMessage} />
       ) : null}
@@ -128,7 +169,15 @@ export function TrackingBatchHistory({ shopId }: { readonly shopId: string }) {
       width: 160,
       render: (value: string) => (
         <Tag
-          color={value === 'SUCCEEDED' ? 'success' : value === 'FAILED' ? 'error' : 'processing'}
+          color={
+            value === 'DRAFT'
+              ? 'default'
+              : value === 'SUCCEEDED'
+                ? 'success'
+                : value === 'FAILED'
+                  ? 'error'
+                  : 'processing'
+          }
         >
           {t(`trackingBatches.statuses.${value}`)}
         </Tag>
@@ -140,14 +189,18 @@ export function TrackingBatchHistory({ shopId }: { readonly shopId: string }) {
       key: 'result',
       width: 180,
       render: (_, batch) =>
-        activeStatuses.has(batch.status)
-          ? t('trackingBatches.awaitingResult')
-          : batch.status === 'FAILED' && !batch.result?.importedCount && !batch.result?.failedCount
-            ? t('trackingBatches.noResult')
-            : t('trackingBatches.resultCounts', {
-                success: batch.result?.importedCount ?? 0,
-                failed: batch.result?.failedCount ?? 0,
-              }),
+        batch.status === 'DRAFT'
+          ? t('trackingBatches.notUploaded')
+          : activeStatuses.has(batch.status)
+            ? t('trackingBatches.awaitingResult')
+            : batch.status === 'FAILED' &&
+                !batch.result?.importedCount &&
+                !batch.result?.failedCount
+              ? t('trackingBatches.noResult')
+              : t('trackingBatches.resultCounts', {
+                  success: batch.result?.importedCount ?? 0,
+                  failed: batch.result?.failedCount ?? 0,
+                }),
     },
   ]
   return (

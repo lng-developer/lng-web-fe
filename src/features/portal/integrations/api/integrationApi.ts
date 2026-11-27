@@ -512,13 +512,13 @@ export interface AmazonTrackingSubmissionInput {
 export interface AmazonTrackingSubmission {
   id: string
   shopId: string
-  agentId: string
-  commandId?: string
+  agentId: string | null
+  commandId?: string | null
   shipmentIds: string[]
   filename: string
   rowCount: number
   checksum: string
-  status: 'PENDING' | 'SUBMITTED' | 'WAITING_AMAZON' | 'SUCCEEDED' | 'FAILED'
+  status: 'DRAFT' | 'PENDING' | 'SUBMITTED' | 'WAITING_AMAZON' | 'SUCCEEDED' | 'FAILED'
   amazonBatchId?: string
   result?: {
     importedCount: number
@@ -595,6 +595,8 @@ export interface AmazonTrackingSubmissionDetail extends AmazonTrackingSubmission
     shipmentId: string
     orderId: string | null
     externalOrderId: string
+    externalItemId?: string | null
+    quantity?: string | null
     shipDate: string
     carrierCode: string
     carrierName: string | null
