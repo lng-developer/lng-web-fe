@@ -33,6 +33,11 @@ export const ASIN_TYPE_OPTIONS = [
 
 export type DesignTaskPriority = 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT'
 export type DesignTask = {
+  scaleFileSummary?: {
+    totalFileCount: number
+    scaledFileCount: number
+    pendingFileCount: number
+  }
   id: string
   taskType: string
   status: string
@@ -203,7 +208,8 @@ export function formatTaskSeller(task: DesignTask): string {
 }
 export type DesignListParams = {
   assignedDesignerId?: string
-  sortBy?: 'urgency'
+  sortBy?: 'urgency' | 'totalFileCount'
+  sortOrder?: 'asc' | 'desc'
 
   page: number
   limit: number
