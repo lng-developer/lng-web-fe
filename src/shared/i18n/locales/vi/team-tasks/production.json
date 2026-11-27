@@ -1,6 +1,8 @@
 {
   "portal": {
     "production": {
+      "showDetails": "Hiện chi tiết task",
+      "refreshing": "Đang cập nhật task…",
       "title": "Vận hành sản xuất",
       "taskClaimed": "Đã nhận việc thành công",
       "claimTask": "Nhận việc (Claim)",
