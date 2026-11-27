@@ -1,11 +1,17 @@
-import type { DesignListParams, DesignScoreListParams, PsdFileListParams } from './designApi'
+import type {
+  DesignAsinSummaryParams,
+  DesignListParams,
+  DesignScoreListParams,
+  PsdFileListParams,
+} from './designApi'
 
 export const designKeys = {
   all: ['portal', 'design'] as const,
   lists: () => [...designKeys.all, 'list'] as const,
   list: (params: DesignListParams) => [...designKeys.all, 'list', params] as const,
   asinSummaries: () => [...designKeys.all, 'asin-summary'] as const,
-  asinSummary: (params: DesignListParams) => [...designKeys.all, 'asin-summary', params] as const,
+  asinSummary: (params: DesignAsinSummaryParams) =>
+    [...designKeys.all, 'asin-summary', params] as const,
   detail: (id: string) => [...designKeys.all, 'detail', id] as const,
   assignees: () => [...designKeys.all, 'assignees'] as const,
   tasks: () => [...designKeys.all, 'list'] as const,

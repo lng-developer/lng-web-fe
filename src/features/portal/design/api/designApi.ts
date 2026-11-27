@@ -287,7 +287,14 @@ export type DesignAsinSummary = {
   scaledFileCount: number
   pendingFileCount: number
 }
-export const listDesignAsinSummary = async (params: DesignListParams, signal?: AbortSignal) =>
+export type DesignAsinSummaryParams = Omit<DesignListParams, 'sortBy'> & {
+  sortBy?: keyof DesignAsinSummary
+  sortOrder?: 'asc' | 'desc'
+}
+export const listDesignAsinSummary = async (
+  params: DesignAsinSummaryParams,
+  signal?: AbortSignal,
+) =>
   unwrap<{
     items: DesignAsinSummary[]
     pagination: { total: number; page: number; limit: number }

@@ -1,9 +1,19 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('@/app/common/CoreDataTable', async () => ({
-  CoreDataTable: (await import('@/test/mocks/CoreDataTable')).CoreDataTable,
-}))
+let useRealTable = false
+vi.mock('@/app/common/CoreDataTable', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/app/common/CoreDataTable')>()
+  const mock = await import('@/test/mocks/CoreDataTable')
+  return {
+    CoreDataTable: (props: Parameters<typeof actual.CoreDataTable>[0]) =>
+      useRealTable ? (
+        <actual.CoreDataTable {...props} />
+      ) : (
+        <mock.CoreDataTable {...(props as Parameters<typeof mock.CoreDataTable>[0])} />
+      ),
+  }
+})
 
 import { AppProviders } from '@/app/providers/AppProviders'
 import { PsdTasksPage } from '@/features/portal/design/pages/PsdTasksPage'
@@ -93,7 +103,7 @@ vi.mock('@/features/portal/design/api/designApi', async (importOriginal) => {
           pendingFileCount: 5,
         },
       ],
-      pagination: { total: 30, page: 1, limit: 10 },
+      pagination: { total: 130, page: 1, limit: 10 },
     }),
     getDesignSummary: vi.fn().mockResolvedValue({
       total: 1,
@@ -119,6 +129,54 @@ vi.mock('@/features/portal/design/api/designApi', async (importOriginal) => {
 })
 
 describe('PsdTasksPage', () => {
+  it('sorts ASIN groups on the server in both directions and resets pagination', async () => {
+    useRealTable = true
+    const { listDesignAsinSummary } = await import('@/features/portal/design/api/designApi')
+    render(
+      <AppProviders>
+        <PsdTasksPage />
+      </AppProviders>,
+    )
+    fireEvent.click(screen.getByRole('tab', { name: /Unassigned/ }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Group by ASIN' }))
+    await screen.findByRole('button', { name: 'B00GROUP123' })
+    expect(listDesignAsinSummary).toHaveBeenLastCalledWith(
+      expect.objectContaining({ sortBy: 'asin', sortOrder: 'asc' }),
+      expect.anything(),
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Last page' }))
+    await waitFor(() =>
+      expect(listDesignAsinSummary).toHaveBeenLastCalledWith(
+        expect.objectContaining({ page: 3 }),
+        expect.anything(),
+      ),
+    )
+    fireEvent.click(screen.getByRole('columnheader', { name: /Total scale files/ }))
+    await waitFor(() =>
+      expect(listDesignAsinSummary).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          page: 1,
+          sortBy: 'totalFileCount',
+          sortOrder: 'desc',
+          unassigned: true,
+        }),
+        expect.anything(),
+      ),
+    )
+    fireEvent.click(screen.getByRole('columnheader', { name: /Total scale files/ }))
+    await waitFor(() =>
+      expect(listDesignAsinSummary).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          page: 1,
+          sortBy: 'totalFileCount',
+          sortOrder: 'asc',
+          unassigned: true,
+        }),
+        expect.anything(),
+      ),
+    )
+  }, 15000)
+
   it('groups filtered tasks by ASIN, pages on server and drills into exact ASIN', async () => {
     const { listDesignTasks, listDesignAsinSummary, getDesignSummary } =
       await import('@/features/portal/design/api/designApi')
@@ -188,6 +246,7 @@ describe('PsdTasksPage', () => {
     expect(screen.queryByRole('button', { name: /check-circle/i })).not.toBeInTheDocument()
   })
   beforeEach(() => {
+    useRealTable = false
     vi.clearAllMocks()
     queryClient.clear()
     mockSearchParams = new URLSearchParams('')

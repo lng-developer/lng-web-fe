@@ -16,6 +16,7 @@ import {
   assignDesignTask,
   deleteDesignTask,
   type DesignTaskPriority,
+  type DesignAsinSummary,
   getDesignSummary,
   listDesignAssignees,
   listDesignAsinSummary,
@@ -61,6 +62,7 @@ export function PsdTasksPage() {
     rawSalesChannel === 'amazon' ? 'AMAZON' : rawSalesChannel === 'etsy' ? 'ETSY' : undefined
 
   const [groupByAsin, setGroupByAsin] = useState(false)
+  const [asinSort, setAsinSort] = useState('asin:asc')
   const [selectedAsin, setSelectedAsin] = useState<string>()
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
@@ -140,9 +142,14 @@ export function PsdTasksPage() {
     staleTime: 15_000,
   })
 
+  const [asinSortBy, asinSortOrder] = asinSort.split(':') as [
+    keyof DesignAsinSummary,
+    'asc' | 'desc',
+  ]
+  const asinQueryParams = { ...queryParams, sortBy: asinSortBy, sortOrder: asinSortOrder }
   const asinQuery = useQuery({
-    queryKey: designKeys.asinSummary(queryParams),
-    queryFn: ({ signal }) => listDesignAsinSummary(queryParams, signal),
+    queryKey: designKeys.asinSummary(asinQueryParams),
+    queryFn: ({ signal }) => listDesignAsinSummary(asinQueryParams, signal),
     enabled: groupByAsin && salesChannelCode !== 'ETSY',
     placeholderData: keepPreviousData,
     staleTime: 15_000,
@@ -518,6 +525,24 @@ export function PsdTasksPage() {
           <CoreDataTable
             fillViewport
             rowKey="asin"
+            serverSorting={{
+              enabled: true,
+              value: asinSort,
+              columns: Object.fromEntries(
+                [
+                  'asin',
+                  'taskCount',
+                  'productionTaskCount',
+                  'totalFileCount',
+                  'scaledFileCount',
+                  'pendingFileCount',
+                ].map((key) => [key, { asc: key + ':asc', desc: key + ':desc' }]),
+              ),
+              onChange: (value) => {
+                setAsinSort(value ?? 'asin:asc')
+                setPage(1)
+              },
+            }}
             columns={[
               {
                 title: t('portal.design.asin'),
