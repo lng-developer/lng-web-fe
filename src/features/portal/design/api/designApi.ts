@@ -208,7 +208,8 @@ export function formatTaskSeller(task: DesignTask): string {
 }
 export type DesignListParams = {
   assignedDesignerId?: string
-  sortBy?: 'urgency'
+  sortBy?: 'urgency' | 'totalFileCount'
+  sortOrder?: 'asc' | 'desc'
 
   page: number
   limit: number

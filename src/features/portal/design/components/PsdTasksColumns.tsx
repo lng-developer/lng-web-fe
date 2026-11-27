@@ -176,38 +176,6 @@ export function usePsdTasksColumns({
   return useMemo<TableColumnsType<DesignTask>>(() => {
     const baseColumns: TableColumnsType<DesignTask> = [
       {
-        title: t('portal.design.createdAt', { defaultValue: 'Created At' }),
-        dataIndex: 'createdAt',
-        key: 'createdAt',
-        width: 140,
-        align: 'center',
-        render: (val: string) => {
-          if (!val) return '-'
-          const d = dayjs(val)
-          if (!d.isValid()) return '-'
-          const primary = d.format('MMM D, YYYY')
-          const relative = d
-            .fromNow()
-            .replace(/^about /, '')
-            .replace(/^less than /, '')
-          return (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <span style={{ fontWeight: 500, whiteSpace: 'nowrap' }}>{primary}</span>
-              <span style={{ fontSize: 12, whiteSpace: 'nowrap', color: DATA_COLORS.title }}>
-                ({relative})
-              </span>
-            </div>
-          )
-        },
-      },
-      {
         title: t('portal.design.productImage', { defaultValue: 'Product Image' }),
         key: 'image',
         width: 120,

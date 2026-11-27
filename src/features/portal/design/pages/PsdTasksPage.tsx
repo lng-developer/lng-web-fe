@@ -59,6 +59,7 @@ export function PsdTasksPage() {
   const salesChannelCode: 'AMAZON' | 'ETSY' | undefined =
     rawSalesChannel === 'amazon' ? 'AMAZON' : rawSalesChannel === 'etsy' ? 'ETSY' : undefined
 
+  const [scaleSort, setScaleSort] = useState<string>()
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [search, setSearch] = useState('')
@@ -72,6 +73,7 @@ export function PsdTasksPage() {
   const [prevChannel, setPrevChannel] = useState(salesChannelCode)
   if (prevChannel !== salesChannelCode) {
     setPrevChannel(salesChannelCode)
+    setScaleSort(undefined)
     setPage(1)
   }
 
@@ -100,7 +102,12 @@ export function PsdTasksPage() {
     () => ({
       page,
       limit: pageSize,
-      sortBy: 'urgency' as const,
+      sortBy: scaleSort ? ('totalFileCount' as const) : ('urgency' as const),
+      sortOrder: scaleSort
+        ? scaleSort === 'asc'
+          ? ('asc' as const)
+          : ('desc' as const)
+        : undefined,
       search: debouncedSearch || undefined,
       etsyListingId: debouncedEtsyListingId.trim() || undefined,
       taskType: 'PSD_TEMPLATE' as const,
@@ -115,6 +122,7 @@ export function PsdTasksPage() {
     [
       page,
       pageSize,
+      scaleSort,
       activeTabKey,
       debouncedSearch,
       debouncedEtsyListingId,
@@ -459,6 +467,15 @@ export function PsdTasksPage() {
           fillViewport
           rowKey="id"
           columns={columns}
+          serverSorting={{
+            enabled: salesChannelCode !== 'ETSY',
+            value: scaleSort,
+            columns: { scaleFileSummary: { asc: 'asc', desc: 'desc' } },
+            onChange: (value) => {
+              setScaleSort(value)
+              setPage(1)
+            },
+          }}
           dataSource={displayedTasks}
           loading={tasksQuery.isLoading}
           pagination={{
@@ -471,7 +488,7 @@ export function PsdTasksPage() {
               setPageSize(ps)
             },
           }}
-          scroll={{ x: 1520 }}
+          scroll={{ x: 1380 }}
         />
       </div>
 

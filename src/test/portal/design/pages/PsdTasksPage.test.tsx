@@ -29,6 +29,7 @@ let mockSearchParams = new URLSearchParams('')
 let mockPermissions = ['DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW']
 let mockScaleFileSummary:
   { totalFileCount: number; scaledFileCount: number; pendingFileCount: number } | undefined
+let mockTaskTotal = 1
 let mockTaskStatus = 'REQUESTED'
 let mockAssignedDesignerId: string | null = null
 const currentAccountId = '6a339b5a033e2ff7753522c3'
@@ -93,7 +94,7 @@ vi.mock('@/features/portal/design/api/designApi', async (importOriginal) => {
               : null,
         },
       ],
-      pagination: { total: 1, page: 1, limit: 10 },
+      pagination: { total: mockTaskTotal, page: 1, limit: 10 },
     })),
     getDesignSummary: vi.fn().mockResolvedValue({
       total: 1,
@@ -119,6 +120,44 @@ vi.mock('@/features/portal/design/api/designApi', async (importOriginal) => {
 })
 
 describe('PsdTasksPage', () => {
+  it('sorts total scale files on the server and restores urgency when cleared', async () => {
+    useRealTable = true
+    mockTaskTotal = 130
+    mockSearchParams = new URLSearchParams('salesChannelCode=amazon')
+    const { listDesignTasks } = await import('@/features/portal/design/api/designApi')
+    render(
+      <AppProviders>
+        <PsdTasksPage />
+      </AppProviders>,
+    )
+    await screen.findByText('B001TESTASIN')
+    expect(screen.queryByRole('columnheader', { name: /Created at/i })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('tab', { name: /Unassigned/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Last page' }))
+    await waitFor(() =>
+      expect(listDesignTasks).toHaveBeenLastCalledWith(
+        expect.objectContaining({ page: 3 }),
+        expect.anything(),
+      ),
+    )
+    for (const sortOrder of ['desc', 'asc', undefined]) {
+      fireEvent.click(screen.getByRole('columnheader', { name: /Total scale files/ }))
+      await waitFor(() =>
+        expect(listDesignTasks).toHaveBeenLastCalledWith(
+          expect.objectContaining({
+            page: 1,
+            sortBy: sortOrder ? 'totalFileCount' : 'urgency',
+            sortOrder,
+            unassigned: true,
+            salesChannelCode: 'AMAZON',
+            taskType: 'PSD_TEMPLATE',
+          }),
+          expect.anything(),
+        ),
+      )
+    }
+  }, 15000)
+
   it('shows ASIN scale totals in task rows with a breakdown on hover', async () => {
     useRealTable = true
     render(
@@ -177,6 +216,7 @@ describe('PsdTasksPage', () => {
   })
   beforeEach(() => {
     useRealTable = false
+    mockTaskTotal = 1
     mockScaleFileSummary = { totalFileCount: 14, scaledFileCount: 9, pendingFileCount: 5 }
     vi.clearAllMocks()
     queryClient.clear()
