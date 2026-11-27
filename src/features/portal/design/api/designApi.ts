@@ -33,6 +33,11 @@ export const ASIN_TYPE_OPTIONS = [
 
 export type DesignTaskPriority = 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT'
 export type DesignTask = {
+  scaleFileSummary?: {
+    totalFileCount: number
+    scaledFileCount: number
+    pendingFileCount: number
+  }
   id: string
   taskType: string
   status: string
@@ -279,26 +284,6 @@ export const listDesignTasks = async (params: DesignListParams, signal?: AbortSi
   unwrap<{ items: DesignTask[]; pagination: { total: number; page: number; limit: number } }>(
     await apiClient.get('/api/design/tasks', { params: compact(params), signal }),
   )
-export type DesignAsinSummary = {
-  asin: string
-  taskCount: number
-  productionTaskCount: number
-  totalFileCount: number
-  scaledFileCount: number
-  pendingFileCount: number
-}
-export type DesignAsinSummaryParams = Omit<DesignListParams, 'sortBy'> & {
-  sortBy?: keyof DesignAsinSummary
-  sortOrder?: 'asc' | 'desc'
-}
-export const listDesignAsinSummary = async (
-  params: DesignAsinSummaryParams,
-  signal?: AbortSignal,
-) =>
-  unwrap<{
-    items: DesignAsinSummary[]
-    pagination: { total: number; page: number; limit: number }
-  }>(await apiClient.get('/api/design/tasks/asin-summary', { params: compact(params), signal }))
 export const exportDesignTasksCsv = (params: DesignListParams) =>
   apiClient.get('/api/design/tasks/export.csv', {
     params: compact({ ...params, page: 1, limit: 5000 }),

@@ -242,19 +242,10 @@
       "searchAmazonPlaceholder": "Tìm kiếm ASIN, SKU...",
       "searchEtsyPlaceholder": "Tìm kiếm Listing ID, SKU...",
       "sku": "SKU",
-      "asinSummary": {
-        "tasks": "Tác vụ",
-        "group": "Nhóm theo ASIN",
-        "scope": "ASIN Amazon · File scale sản xuất",
-        "explanation": "Đếm các vị trí file hiện tại từ tác vụ sản xuất đang hoạt động được liên kết. Không tính PSD nguồn và phiên bản cũ; không nhân số lượng đơn hàng. Tác vụ chưa có vị trí file chưa được tính file.",
-        "selected": "ASIN: {{asin}}",
-        "taskCount": "Tác vụ PSD",
-        "productionTaskCount": "Tác vụ sản xuất",
-        "totalFileCount": "Tổng file scale",
-        "scaledFileCount": "File đã scale",
-        "pendingFileCount": "File chờ scale",
-        "empty": "Không có ASIN Amazon phù hợp bộ lọc",
-        "loadFailed": "Không thể tải tổng hợp ASIN. Vui lòng làm mới."
+      "scaleFileSummary": {
+        "total": "Tổng file scale",
+        "scaled": "Đã scale: {{count}} file",
+        "pending": "Chờ scale: {{count}} file"
       }
     }
   }

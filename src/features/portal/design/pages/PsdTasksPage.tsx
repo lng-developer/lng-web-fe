@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Segmented, Tag, Tooltip, Typography, type UploadFile } from 'antd'
+import type { UploadFile } from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
@@ -16,10 +16,8 @@ import {
   assignDesignTask,
   deleteDesignTask,
   type DesignTaskPriority,
-  type DesignAsinSummary,
   getDesignSummary,
   listDesignAssignees,
-  listDesignAsinSummary,
   listDesignTasks,
   rejectDesignTask,
   reopenDesignTask,
@@ -61,9 +59,6 @@ export function PsdTasksPage() {
   const salesChannelCode: 'AMAZON' | 'ETSY' | undefined =
     rawSalesChannel === 'amazon' ? 'AMAZON' : rawSalesChannel === 'etsy' ? 'ETSY' : undefined
 
-  const [groupByAsin, setGroupByAsin] = useState(false)
-  const [asinSort, setAsinSort] = useState('asin:asc')
-  const [selectedAsin, setSelectedAsin] = useState<string>()
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [search, setSearch] = useState('')
@@ -77,8 +72,6 @@ export function PsdTasksPage() {
   const [prevChannel, setPrevChannel] = useState(salesChannelCode)
   if (prevChannel !== salesChannelCode) {
     setPrevChannel(salesChannelCode)
-    setGroupByAsin(false)
-    setSelectedAsin(undefined)
     setPage(1)
   }
 
@@ -108,7 +101,6 @@ export function PsdTasksPage() {
       page,
       limit: pageSize,
       sortBy: 'urgency' as const,
-      asin: selectedAsin,
       search: debouncedSearch || undefined,
       etsyListingId: debouncedEtsyListingId.trim() || undefined,
       taskType: 'PSD_TEMPLATE' as const,
@@ -123,7 +115,6 @@ export function PsdTasksPage() {
     [
       page,
       pageSize,
-      selectedAsin,
       activeTabKey,
       debouncedSearch,
       debouncedEtsyListingId,
@@ -137,20 +128,6 @@ export function PsdTasksPage() {
   const tasksQuery = useQuery({
     queryKey: designKeys.list(queryParams),
     queryFn: ({ signal }) => listDesignTasks(queryParams, signal),
-    enabled: !groupByAsin,
-    placeholderData: keepPreviousData,
-    staleTime: 15_000,
-  })
-
-  const [asinSortBy, asinSortOrder] = asinSort.split(':') as [
-    keyof DesignAsinSummary,
-    'asc' | 'desc',
-  ]
-  const asinQueryParams = { ...queryParams, sortBy: asinSortBy, sortOrder: asinSortOrder }
-  const asinQuery = useQuery({
-    queryKey: designKeys.asinSummary(asinQueryParams),
-    queryFn: ({ signal }) => listDesignAsinSummary(asinQueryParams, signal),
-    enabled: groupByAsin && salesChannelCode !== 'ETSY',
     placeholderData: keepPreviousData,
     staleTime: 15_000,
   })
@@ -166,7 +143,6 @@ export function PsdTasksPage() {
   const summaryParams = useMemo(
     () => ({
       taskType: 'PSD_TEMPLATE' as const,
-      asin: selectedAsin,
       salesChannelCode,
       search: debouncedSearch || undefined,
       etsyListingId: debouncedEtsyListingId.trim() || undefined,
@@ -175,14 +151,7 @@ export function PsdTasksPage() {
       dateFrom: dateRange.dateFrom,
       dateTo: dateRange.dateTo,
     }),
-    [
-      salesChannelCode,
-      debouncedSearch,
-      debouncedEtsyListingId,
-      selectedSellerId,
-      dateRange,
-      selectedAsin,
-    ],
+    [salesChannelCode, debouncedSearch, debouncedEtsyListingId, selectedSellerId, dateRange],
   )
 
   const summaryQuery = useQuery({
@@ -201,7 +170,6 @@ export function PsdTasksPage() {
   const invalidate = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: designKeys.lists() })
     void queryClient.invalidateQueries({ queryKey: designKeys.summaries() })
-    void queryClient.invalidateQueries({ queryKey: designKeys.asinSummaries() })
   }, [queryClient])
 
   const assignMutation = useMutation({
@@ -483,138 +451,28 @@ export function PsdTasksPage() {
           setPage(1)
         }}
         onRefresh={invalidate}
-        isRefreshing={groupByAsin ? asinQuery.isFetching : tasksQuery.isFetching}
+        isRefreshing={tasksQuery.isFetching}
       />
 
-      {salesChannelCode !== 'ETSY' && (
-        <div className={styles.topRow}>
-          <Segmented
-            value={groupByAsin}
-            options={[
-              { label: t('portal.design.asinSummary.tasks'), value: false },
-              { label: t('portal.design.asinSummary.group'), value: true },
-            ]}
-            onChange={(value) => {
-              setGroupByAsin(value)
-              setSelectedAsin(undefined)
-              setPage(1)
-            }}
-          />
-          {groupByAsin && (
-            <Tooltip title={t('portal.design.asinSummary.explanation')}>
-              <Typography.Text type="secondary">
-                {t('portal.design.asinSummary.scope')}
-              </Typography.Text>
-            </Tooltip>
-          )}
-          {selectedAsin && (
-            <Tag
-              closable
-              onClose={() => {
-                setSelectedAsin(undefined)
-                setPage(1)
-              }}
-            >
-              {t('portal.design.asinSummary.selected', { asin: selectedAsin })}
-            </Tag>
-          )}
-        </div>
-      )}
       <div className={styles.tableArea}>
-        {groupByAsin ? (
-          <CoreDataTable
-            fillViewport
-            rowKey="asin"
-            serverSorting={{
-              enabled: true,
-              value: asinSort,
-              columns: Object.fromEntries(
-                [
-                  'asin',
-                  'taskCount',
-                  'productionTaskCount',
-                  'totalFileCount',
-                  'scaledFileCount',
-                  'pendingFileCount',
-                ].map((key) => [key, { asc: key + ':asc', desc: key + ':desc' }]),
-              ),
-              onChange: (value) => {
-                setAsinSort(value ?? 'asin:asc')
-                setPage(1)
-              },
-            }}
-            columns={[
-              {
-                title: t('portal.design.asin'),
-                dataIndex: 'asin',
-                render: (asin: string) => (
-                  <Button
-                    type="link"
-                    size="small"
-                    onClick={() => {
-                      setSelectedAsin(asin)
-                      setGroupByAsin(false)
-                      setPage(1)
-                    }}
-                  >
-                    {asin}
-                  </Button>
-                ),
-              },
-              ...(
-                [
-                  'taskCount',
-                  'productionTaskCount',
-                  'totalFileCount',
-                  'scaledFileCount',
-                  'pendingFileCount',
-                ] as const
-              ).map((key) => ({
-                title: t('portal.design.asinSummary.' + key),
-                dataIndex: key,
-                align: 'right' as const,
-              })),
-            ]}
-            dataSource={asinQuery.data?.items ?? []}
-            loading={asinQuery.isFetching}
-            error={
-              asinQuery.isError ? (
-                <Alert type="error" showIcon title={t('portal.design.asinSummary.loadFailed')} />
-              ) : undefined
-            }
-            emptyText={t('portal.design.asinSummary.empty')}
-            pagination={{
-              current: page,
-              pageSize,
-              total: asinQuery.data?.pagination.total ?? 0,
-              showSizeChanger: true,
-              onChange: (p, ps) => {
-                setPage(p)
-                setPageSize(ps)
-              },
-            }}
-            scroll={{ x: 800 }}
-          />
-        ) : (
-          <CoreDataTable
-            fillViewport
-            rowKey="id"
-            columns={columns}
-            dataSource={displayedTasks}
-            loading={tasksQuery.isLoading}
-            pagination={{
-              current: page,
-              pageSize,
-              total: paginationTotal,
-              showSizeChanger: true,
-              onChange: (p, ps) => {
-                setPage(p)
-                setPageSize(ps)
-              },
-            }}
-            scroll={{ x: 1380 }}
-          />
-        )}
+        <CoreDataTable
+          fillViewport
+          rowKey="id"
+          columns={columns}
+          dataSource={displayedTasks}
+          loading={tasksQuery.isLoading}
+          pagination={{
+            current: page,
+            pageSize,
+            total: paginationTotal,
+            showSizeChanger: true,
+            onChange: (p, ps) => {
+              setPage(p)
+              setPageSize(ps)
+            },
+          }}
+          scroll={{ x: 1520 }}
+        />
       </div>
 
       <PsdTasksActionModals

@@ -27,6 +27,8 @@ vi.mock('@/shared/media', async (importOriginal) => ({
 
 let mockSearchParams = new URLSearchParams('')
 let mockPermissions = ['DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW']
+let mockScaleFileSummary:
+  { totalFileCount: number; scaledFileCount: number; pendingFileCount: number } | undefined
 let mockTaskStatus = 'REQUESTED'
 let mockAssignedDesignerId: string | null = null
 const currentAccountId = '6a339b5a033e2ff7753522c3'
@@ -58,6 +60,7 @@ vi.mock('@/features/portal/design/api/designApi', async (importOriginal) => {
       items: [
         {
           id: 'psd-1',
+          scaleFileSummary: mockScaleFileSummary,
           taskType: 'PSD_TEMPLATE',
           status: mockTaskStatus,
           assignedDesignerId:
@@ -92,19 +95,6 @@ vi.mock('@/features/portal/design/api/designApi', async (importOriginal) => {
       ],
       pagination: { total: 1, page: 1, limit: 10 },
     })),
-    listDesignAsinSummary: vi.fn().mockResolvedValue({
-      items: [
-        {
-          asin: 'B00GROUP123',
-          taskCount: 3,
-          productionTaskCount: 7,
-          totalFileCount: 14,
-          scaledFileCount: 9,
-          pendingFileCount: 5,
-        },
-      ],
-      pagination: { total: 130, page: 1, limit: 10 },
-    }),
     getDesignSummary: vi.fn().mockResolvedValue({
       total: 1,
       unassigned: 1,
@@ -129,107 +119,47 @@ vi.mock('@/features/portal/design/api/designApi', async (importOriginal) => {
 })
 
 describe('PsdTasksPage', () => {
-  it('sorts ASIN groups on the server in both directions and resets pagination', async () => {
+  it('shows ASIN scale totals in task rows with a breakdown on hover', async () => {
     useRealTable = true
-    const { listDesignAsinSummary } = await import('@/features/portal/design/api/designApi')
     render(
       <AppProviders>
         <PsdTasksPage />
       </AppProviders>,
     )
-    fireEvent.click(screen.getByRole('tab', { name: /Unassigned/ }))
-    fireEvent.click(screen.getByRole('radio', { name: 'Group by ASIN' }))
-    await screen.findByRole('button', { name: 'B00GROUP123' })
-    expect(listDesignAsinSummary).toHaveBeenLastCalledWith(
-      expect.objectContaining({ sortBy: 'asin', sortOrder: 'asc' }),
-      expect.anything(),
-    )
-    fireEvent.click(screen.getByRole('button', { name: 'Last page' }))
-    await waitFor(() =>
-      expect(listDesignAsinSummary).toHaveBeenLastCalledWith(
-        expect.objectContaining({ page: 3 }),
-        expect.anything(),
-      ),
-    )
-    fireEvent.click(screen.getByRole('columnheader', { name: /Total scale files/ }))
-    await waitFor(() =>
-      expect(listDesignAsinSummary).toHaveBeenLastCalledWith(
-        expect.objectContaining({
-          page: 1,
-          sortBy: 'totalFileCount',
-          sortOrder: 'desc',
-          unassigned: true,
-        }),
-        expect.anything(),
-      ),
-    )
-    fireEvent.click(screen.getByRole('columnheader', { name: /Total scale files/ }))
-    await waitFor(() =>
-      expect(listDesignAsinSummary).toHaveBeenLastCalledWith(
-        expect.objectContaining({
-          page: 1,
-          sortBy: 'totalFileCount',
-          sortOrder: 'asc',
-          unassigned: true,
-        }),
-        expect.anything(),
-      ),
-    )
-  }, 15000)
-
-  it('groups filtered tasks by ASIN, pages on server and drills into exact ASIN', async () => {
-    const { listDesignTasks, listDesignAsinSummary, getDesignSummary } =
-      await import('@/features/portal/design/api/designApi')
+    expect(await screen.findByText('14')).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Total scale files' })).toBeInTheDocument()
+    expect(screen.queryByRole('radio', { name: 'Group by ASIN' })).not.toBeInTheDocument()
+    fireEvent.mouseEnter(screen.getByText('14'))
+    const tooltip = await screen.findByRole('tooltip')
+    expect(within(tooltip).getByText('Scaled files: 9')).toBeInTheDocument()
+    expect(within(tooltip).getByText('Pending files: 5')).toBeInTheDocument()
+  })
+  it('shows a dash instead of zero when scale totals are unavailable', async () => {
+    useRealTable = true
+    mockScaleFileSummary = undefined
     render(
       <AppProviders>
         <PsdTasksPage />
       </AppProviders>,
     )
     await screen.findByText('B001TESTASIN')
-    fireEvent.click(screen.getByRole('tab', { name: /Unassigned/ }))
-    fireEvent.click(screen.getByRole('radio', { name: 'Group by ASIN' }))
-    expect(await screen.findByText('B00GROUP123')).toBeInTheDocument()
-    expect(screen.getByText('14')).toBeInTheDocument()
-    expect(screen.getByText('9')).toBeInTheDocument()
-    expect(screen.getByText('5')).toBeInTheDocument()
-    expect(listDesignAsinSummary).toHaveBeenLastCalledWith(
-      expect.objectContaining({ page: 1, unassigned: true, taskType: 'PSD_TEMPLATE' }),
-      expect.anything(),
-    )
-    fireEvent.click(screen.getByRole('button', { name: 'Page 2' }))
-    await waitFor(() =>
-      expect(listDesignAsinSummary).toHaveBeenLastCalledWith(
-        expect.objectContaining({ page: 2 }),
-        expect.anything(),
-      ),
-    )
-    fireEvent.click(screen.getByRole('button', { name: 'B00GROUP123' }))
-    await waitFor(() =>
-      expect(listDesignTasks).toHaveBeenLastCalledWith(
-        expect.objectContaining({ asin: 'B00GROUP123', page: 1, unassigned: true }),
-        expect.anything(),
-      ),
-    )
-    expect(getDesignSummary).toHaveBeenLastCalledWith(
-      expect.objectContaining({ asin: 'B00GROUP123' }),
-    )
-    fireEvent.click(screen.getByRole('radio', { name: 'Group by ASIN' }))
-    fireEvent.click(screen.getByRole('img', { name: 'reload' }).closest('button')!)
-    await waitFor(() =>
-      expect(listDesignAsinSummary).toHaveBeenLastCalledWith(
-        expect.objectContaining({ asin: undefined, page: 1 }),
-        expect.anything(),
-      ),
-    )
+    const header = screen.getByRole('columnheader', { name: 'Total scale files' })
+    const index = Array.from(header.parentElement!.children).indexOf(header)
+    const row = screen.getByText('B001TESTASIN').closest('tr')!
+    expect(row.children[index]).toHaveTextContent('-')
+    expect(row.children[index]).not.toHaveTextContent('0')
   })
-  it('does not offer ASIN grouping on Etsy', async () => {
+  it('does not show ASIN scale totals on Etsy', () => {
+    useRealTable = true
     mockSearchParams = new URLSearchParams('salesChannelCode=etsy')
     render(
       <AppProviders>
         <PsdTasksPage />
       </AppProviders>,
     )
-    expect(screen.queryByRole('radio', { name: 'Group by ASIN' })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('columnheader', { name: 'Total scale files' }),
+    ).not.toBeInTheDocument()
   })
 
   it('Seller downloads the approved PSD and does not get QC controls', async () => {
@@ -247,6 +177,7 @@ describe('PsdTasksPage', () => {
   })
   beforeEach(() => {
     useRealTable = false
+    mockScaleFileSummary = { totalFileCount: 14, scaledFileCount: 9, pendingFileCount: 5 }
     vi.clearAllMocks()
     queryClient.clear()
     mockSearchParams = new URLSearchParams('')
