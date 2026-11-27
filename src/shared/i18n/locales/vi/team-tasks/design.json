@@ -241,7 +241,12 @@
       "searchAllPlaceholder": "Tìm kiếm ASIN, Etsy Listing ID, SKU...",
       "searchAmazonPlaceholder": "Tìm kiếm ASIN, SKU...",
       "searchEtsyPlaceholder": "Tìm kiếm Listing ID, SKU...",
-      "sku": "SKU"
+      "sku": "SKU",
+      "scaleFileSummary": {
+        "total": "Tổng file scale",
+        "scaled": "Đã scale: {{count}} file",
+        "pending": "Chờ scale: {{count}} file"
+      }
     }
   }
 }
