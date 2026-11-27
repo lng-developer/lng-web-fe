@@ -1,5 +1,5 @@
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
@@ -147,6 +147,58 @@ describe('ProductionWorkbenchPage', () => {
       ],
     })
     vi.mocked(bulkAssignCsTasks).mockResolvedValue({ assigned: [], failed: [] })
+  })
+
+  it('defers offscreen details while keeping order headers available', async () => {
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        observe() {}
+        disconnect() {}
+      },
+    )
+    vi.mocked(listProductionTasks).mockResolvedValue({
+      items: [blockedTask],
+      total: 1,
+      page: 1,
+      limit: 50,
+    })
+    try {
+      renderPage()
+      expect(await screen.findByText('113-2183249-0763446')).toBeVisible()
+      expect(screen.queryByText('Task context')).not.toBeInTheDocument()
+      fireEvent.click(await screen.findByRole('button', { name: 'Show task details' }))
+      expect(await screen.findByText('Task context')).toBeVisible()
+    } finally {
+      cleanup()
+      vi.unstubAllGlobals()
+    }
+  }, 15000)
+
+  it('keeps the table available during a background refresh', async () => {
+    vi.mocked(listProductionTasks).mockResolvedValue({
+      items: [blockedTask],
+      total: 1,
+      page: 1,
+      limit: 50,
+    })
+    const { container } = renderPage()
+    await screen.findByText('113-2183249-0763446')
+    let finish!: (value: Awaited<ReturnType<typeof listProductionTasks>>) => void
+    vi.mocked(listProductionTasks).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve
+        }),
+    )
+    act(() => {
+      void queryClient.invalidateQueries({ queryKey: ['production'] })
+    })
+    expect(await screen.findByText('Updating tasks…')).toBeVisible()
+    expect(container.querySelector('.ant-table-wrapper .ant-spin-spinning')).toBeNull()
+    expect(screen.getByText('113-2183249-0763446')).toBeVisible()
+    await act(async () => finish({ items: [blockedTask], total: 1, page: 1, limit: 50 }))
+    await waitFor(() => expect(screen.queryByText('Updating tasks…')).not.toBeInTheDocument())
   })
 
   it.each([true, false])(

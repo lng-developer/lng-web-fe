@@ -3,11 +3,14 @@ import { useTranslation } from 'react-i18next'
 import { useParams, useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
+import { Spin } from 'antd'
+
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import { canUseScopedPermission, hasScopedPermission } from '@/shared/auth/permissions'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
+  DeferredContent,
   FeedbackAlert,
   type DateRangeValue,
   UiButtonTabs,
@@ -104,7 +107,7 @@ export function ProductionWorkbenchPage({
   const { t } = useTranslation()
   const loadedAccount = useRouteLoaderData('workspace') as CurrentAccount | undefined
   const account = accountProp ?? loadedAccount
-  const allowed = permissions(account)
+  const allowed = useMemo(() => permissions(account), [account])
   const currentAccountId = account?.account.id
   const queryClient = useQueryClient()
   const toast = useFeedbackToast()
@@ -760,6 +763,26 @@ export function ProductionWorkbenchPage({
     },
   })
 
+  const { mutate: mutateNote } = saveNote
+  const { mutate: mutateQc } = action
+  const handleSaveNote = useCallback(
+    (taskId: string, note: string) => mutateNote({ taskId, note }),
+    [mutateNote],
+  )
+  const handleSubmitQc = useCallback(
+    (task: ProductionTask, fileDecisions: FileDecision[]) => mutateQc({ task, fileDecisions }),
+    [mutateQc],
+  )
+  const handleQcSlotPass = useCallback(
+    (fileCheckId: string) => handleSetInspectionDecision(fileCheckId, 'PASSED'),
+    [handleSetInspectionDecision],
+  )
+  const handleOpenManualSlotUpload = useCallback(
+    (taskId: string, existingSlotKeys: string[]) =>
+      setManualSlotUploadTask({ taskId, existingSlotKeys }),
+    [],
+  )
+
   const expandedRowKeys = useMemo(() => rows.map((row) => row.id), [rows])
 
   const renderExpandedRow = useCallback(
@@ -779,18 +802,16 @@ export function ProductionWorkbenchPage({
         }
         claimingTaskId={claimTask.isPending ? (claimTask.variables as string) : undefined}
         uploadingFileCheckIds={uploadingFileCheckIds}
-        onSaveNote={(taskId, note) => saveNote.mutate({ taskId, note })}
-        onSubmitQc={(task, fileDecisions) => action.mutate({ task, fileDecisions })}
-        onSubmitScaleForQc={(taskId) => submitScale.mutate(taskId)}
+        onSaveNote={handleSaveNote}
+        onSubmitQc={handleSubmitQc}
+        onSubmitScaleForQc={submitScale.mutate}
         onUploadScaledOutput={handleUploadScaledOutput}
         onInspectSlot={handleInspectSlot}
-        onPassSlot={(fileCheckId) => handleSetInspectionDecision(fileCheckId, 'PASSED')}
+        onPassSlot={handleQcSlotPass}
         onManualSlotUploaded={refresh}
-        onOpenManualSlotUpload={(taskId, existingSlotKeys) =>
-          setManualSlotUploadTask({ taskId, existingSlotKeys })
-        }
+        onOpenManualSlotUpload={handleOpenManualSlotUpload}
         onDeleteSlot={handleDeleteSlot}
-        onClaimTask={(taskId) => claimTask.mutate(taskId)}
+        onClaimTask={claimTask.mutate}
       />
     ),
     [
@@ -802,7 +823,10 @@ export function ProductionWorkbenchPage({
       decisions,
       handleDeleteSlot,
       handleInspectSlot,
-      handleSetInspectionDecision,
+      handleQcSlotPass,
+      handleSaveNote,
+      handleSubmitQc,
+      handleOpenManualSlotUpload,
       handleUploadScaledOutput,
       refresh,
       saveNote,
@@ -846,6 +870,11 @@ export function ProductionWorkbenchPage({
 
       <div className={styles.workspace}>
         <div className={styles.queueToolbar}>
+          {tasks.isFetching && displayedTasks && !tasks.isPlaceholderData ? (
+            <span role="status" className={styles.refreshStatus}>
+              <Spin size="small" /> {t('portal.production.refreshing')}
+            </span>
+          ) : null}
           <UiButtonTabs
             className={styles.queueTabs}
             value={tab}
@@ -893,7 +922,7 @@ export function ProductionWorkbenchPage({
             rowKey="id"
             columns={columns}
             dataSource={rows}
-            loading={tasks.isFetching}
+            loading={tasks.isFetching && (!displayedTasks || tasks.isPlaceholderData)}
             rowSelection={
               canAssignScale
                 ? {
@@ -921,7 +950,11 @@ export function ProductionWorkbenchPage({
             expandable={{
               expandedRowKeys,
               showExpandColumn: false,
-              expandedRowRender: (row) => renderExpandedRow(row),
+              expandedRowRender: (row) => (
+                <DeferredContent key={row.id} revealLabel={t('portal.production.showDetails')}>
+                  {renderExpandedRow(row)}
+                </DeferredContent>
+              ),
             }}
           />
         </section>
