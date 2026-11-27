@@ -7,6 +7,7 @@ import { Button, Dropdown } from 'antd'
 
 import { type CurrentAccount, logout } from '@/features/auth/api/authApi'
 import { loadEmployeeAvatar, loadMyEmployeeProfile } from '@/features/hr/api/hrApi'
+import { hrKeys } from '@/features/hr/api/hrKeys'
 import { EmployeeAvatar } from '@/shared/ui'
 
 import styles from './AppShell.module.scss'
@@ -22,7 +23,7 @@ export function AccountMenu({ account }: { account: CurrentAccount }) {
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const profile = useQuery({
-    queryKey: ['hr', 'employee-profiles', 'me'],
+    queryKey: hrKeys.myProfile(),
     queryFn: loadMyEmployeeProfile,
     staleTime: 5 * 60 * 1000,
   })

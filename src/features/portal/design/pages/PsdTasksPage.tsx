@@ -17,7 +17,6 @@ import {
   deleteDesignTask,
   type DesignTaskPriority,
   getDesignSummary,
-  listDesignAssignees,
   listDesignTasks,
   rejectDesignTask,
   reopenDesignTask,
@@ -28,6 +27,7 @@ import {
   uploadDesignAsset,
 } from '../api/designApi'
 import { designKeys } from '../api/designKeys'
+import { useDesignAssigneesQuery } from '../hooks/useDesignTasksQuery'
 import { PsdTasksActionModals } from '../components/PsdTasksActionModals'
 import { usePsdTasksColumns } from '../components/PsdTasksColumns'
 import { PsdTasksFilterBar } from '../components/PsdTasksFilterBar'
@@ -111,6 +111,7 @@ export function PsdTasksPage() {
       search: debouncedSearch || undefined,
       etsyListingId: debouncedEtsyListingId.trim() || undefined,
       taskType: 'PSD_TEMPLATE' as const,
+      view: 'table' as const,
       unassigned: activeTabKey === 'Unassigned' ? true : undefined,
       salesChannelCode,
       status: activeTabConfig.status,
@@ -164,16 +165,11 @@ export function PsdTasksPage() {
 
   const summaryQuery = useQuery({
     queryKey: designKeys.summary(summaryParams),
-    queryFn: () => getDesignSummary(summaryParams),
+    queryFn: ({ signal }) => getDesignSummary(summaryParams, signal),
     staleTime: 15_000,
   })
 
-  const assigneesQuery = useQuery({
-    queryKey: designKeys.assignees(),
-    queryFn: listDesignAssignees,
-    staleTime: 60_000,
-    enabled: canWrite,
-  })
+  const assigneesQuery = useDesignAssigneesQuery({ enabled: canWrite && assignModalOpen })
 
   const invalidate = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: designKeys.lists() })
@@ -506,6 +502,7 @@ export function PsdTasksPage() {
         }}
         selectedDesignerId={selectedDesignerId}
         onSelectDesignerId={setSelectedDesignerId}
+        isLoadingAssignees={assigneesQuery.isFetching}
         assignees={assigneesQuery.data || []}
         isAssigning={assignMutation.isPending}
         isReassign={assignmentTask?.status === 'ASSIGNED'}

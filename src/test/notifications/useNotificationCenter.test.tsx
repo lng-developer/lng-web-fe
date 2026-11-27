@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import { useNotificationCenter } from '@/features/notifications/useNotificationCenter'
-import { listNotifications } from '@/features/notifications/api/notificationApi'
+import { listNotifications, getUnreadCount } from '@/features/notifications/api/notificationApi'
 
 vi.mock('@/features/notifications/api/notificationApi', () => ({
   listNotifications: vi.fn().mockResolvedValue({ items: [], pagination: { total: 0 } }),
@@ -11,6 +11,36 @@ vi.mock('@/features/notifications/api/notificationApi', () => ({
   markAllNotificationsRead: vi.fn(),
 }))
 afterEach(cleanup)
+it('shares unread data without starting extra polling timers in inbox components', async () => {
+  vi.mocked(getUnreadCount).mockClear()
+  vi.useFakeTimers()
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const view = renderHook(
+    () => {
+      useNotificationCenter(false, 8)
+      useNotificationCenter(false, 8)
+    },
+    {
+      wrapper: ({ children }) => (
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      ),
+    },
+  )
+  try {
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1)
+    })
+    expect(getUnreadCount).toHaveBeenCalledTimes(1)
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(120_000)
+    })
+    expect(getUnreadCount).toHaveBeenCalledTimes(1)
+  } finally {
+    view.unmount()
+    client.clear()
+    vi.useRealTimers()
+  }
+})
 it('loads subsequent server pages with a bounded page size', async () => {
   vi.mocked(listNotifications).mockImplementation(async (_unread, limit = 8, page = 1) => ({
     items: [],

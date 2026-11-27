@@ -207,6 +207,7 @@ export function formatTaskSeller(task: DesignTask): string {
   return '-'
 }
 export type DesignListParams = {
+  view?: 'table'
   assignedDesignerId?: string
   sortBy?: 'urgency' | 'totalFileCount'
   sortOrder?: 'asc' | 'desc'
@@ -341,9 +342,15 @@ export const rejectDesignTask = async (id: string, rejectReason: string) =>
   unwrap<DesignTask>(await apiClient.patch(`/api/design/tasks/${id}/reject`, { rejectReason }))
 export const reopenDesignTask = async (id: string, reason: string) =>
   unwrap<DesignTask>(await apiClient.patch(`/api/design/tasks/${id}/reopen`, { reason }))
-export const getDesignSummary = async (params: Omit<DesignListParams, 'page' | 'limit'>) =>
+export const getDesignSummary = async (
+  params: Omit<DesignListParams, 'page' | 'limit'>,
+  signal?: AbortSignal,
+) =>
   unwrap<DesignSummary>(
-    await apiClient.get('/api/design/tasks/summary', { params: compact(params) }),
+    await apiClient.get('/api/design/tasks/summary', {
+      params: compact(params),
+      ...(signal ? { signal } : {}),
+    }),
   )
 export const getDesignWorkload = async (params: Omit<DesignListParams, 'page' | 'limit'>) =>
   unwrap<{

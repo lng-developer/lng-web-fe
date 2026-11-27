@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { getSharedChatSocket } from '@/features/portal/chat/realtime/chatSocket'
-import { useChatSocketReady } from '@/features/portal/chat/realtime/useChatSocketReady'
 import {
   getUnreadCount,
   listNotifications,
@@ -14,7 +13,6 @@ const notificationKey = ['notifications'] as const
 
 export function useNotificationCenter(open: boolean, limit: number, unreadOnly = false) {
   const queryClient = useQueryClient()
-  const socketReady = useChatSocketReady()
 
   useEffect(() => {
     const socket = getSharedChatSocket()
@@ -35,7 +33,8 @@ export function useNotificationCenter(open: boolean, limit: number, unreadOnly =
     queryFn: getUnreadCount,
     staleTime: 30_000,
     refetchOnWindowFocus: false,
-    refetchInterval: socketReady ? false : 60_000,
+    // AppShell's important-notification watcher owns the shared unread polling.
+    refetchInterval: false,
   })
 
   const inboxQuery = useInfiniteQuery({
