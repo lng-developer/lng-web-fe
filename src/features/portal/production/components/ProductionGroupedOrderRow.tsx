@@ -1,4 +1,4 @@
-import type { FC } from 'react'
+import { memo, type FC } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Space, Tag, Typography } from 'antd'
 
@@ -33,7 +33,7 @@ export interface ProductionGroupedOrderRowProps {
   onClaimTask: (taskId: string) => void
 }
 
-export const ProductionGroupedOrderRow: FC<ProductionGroupedOrderRowProps> = ({
+const ProductionGroupedOrderRowContent: FC<ProductionGroupedOrderRowProps> = ({
   rowTask,
   tab,
   viewMode,
@@ -154,3 +154,5 @@ export const ProductionGroupedOrderRow: FC<ProductionGroupedOrderRowProps> = ({
     </div>
   )
 }
+
+export const ProductionGroupedOrderRow = memo(ProductionGroupedOrderRowContent)
