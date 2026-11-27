@@ -7,7 +7,7 @@ import { defineConfig } from 'vitest/config'
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url))
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, rootDir, '')
   const apiTarget = env.VITE_API_BASE_URL || 'http://localhost:3000'
 
@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => {
     css: {
       modules: {
         generateScopedName:
-          mode === 'production'
+          command === 'build'
             ? (name, filename) => {
                 const file = path.relative(rootDir, filename).replaceAll('\\', '/')
                 const scope = createHash('sha256').update(file).digest('hex').slice(0, 12)
