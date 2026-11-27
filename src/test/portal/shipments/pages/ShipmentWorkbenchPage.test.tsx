@@ -216,7 +216,7 @@ describe('ShipmentWorkbenchPage', () => {
   it('loads the selected server page from the shared pagination', async () => {
     renderPage()
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Page 2' }))
+    fireEvent.click(within(await screen.findByTitle('2')).getByText('2'))
 
     await waitFor(() =>
       expect(listShipments).toHaveBeenCalledWith(expect.objectContaining({ limit: 50, page: 2 })),
