@@ -1,6 +1,8 @@
 {
   "portal": {
     "production": {
+      "showDetails": "Show task details",
+      "refreshing": "Updating tasks…",
       "title": "Production operations",
       "taskClaimed": "Task claimed successfully",
       "claimTask": "Claim task",

@@ -29,7 +29,7 @@ export function useAuthenticatedMediaUrl(downloadUrl?: string | null): Authentic
     queryKey: ['media-preview', downloadUrl],
     queryFn: ({ signal }) => fetchMediaBlob(downloadUrl!, signal),
     enabled: Boolean(downloadUrl && !directUrl),
-    staleTime: Infinity,
+    staleTime: downloadUrl?.includes('/avatar') ? 60_000 : Infinity,
     gcTime: 2 * 60 * 1000,
     retry: false,
   })

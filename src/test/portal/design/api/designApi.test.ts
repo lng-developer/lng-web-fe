@@ -40,6 +40,15 @@ describe('designApi', () => {
     vi.mocked(apiClient.post).mockResolvedValue({ data: {} })
   })
 
+  it('forwards cancellation to the summary request', async () => {
+    const controller = new AbortController()
+    await getDesignSummary({ taskType: 'PSD_TEMPLATE' }, controller.signal)
+    expect(apiClient.get).toHaveBeenCalledWith('/api/design/tasks/summary', {
+      params: { taskType: 'PSD_TEMPLATE' },
+      signal: controller.signal,
+    })
+  })
+
   it('uses the Design lifecycle contracts', async () => {
     await listDesignTasks({ page: 1, limit: 20, status: 'SUBMITTED' })
     await assignDesignTask('task-1', 'designer-1')

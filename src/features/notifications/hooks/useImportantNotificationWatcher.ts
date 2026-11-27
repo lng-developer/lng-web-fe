@@ -29,6 +29,7 @@ export function useImportantNotificationWatcher() {
     staleTime: 30_000,
     refetchOnWindowFocus: false,
     refetchInterval: socketReady ? false : 60_000,
+    refetchIntervalInBackground: false,
   })
 
   const currentCount = countQuery.data?.unreadCount
