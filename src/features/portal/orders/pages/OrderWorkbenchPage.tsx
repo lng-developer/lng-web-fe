@@ -1,6 +1,6 @@
 import 'dayjs/locale/vi'
 
-import { type MouseEvent, useCallback, useDeferredValue, useMemo, useState } from 'react'
+import { type MouseEvent, useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData, useSearchParams } from 'react-router-dom'
 import {
@@ -55,6 +55,7 @@ import {
 import { OrderWorkbenchExpandedRow } from './OrderWorkbenchExpandedRow'
 import { OrderWorkbenchFilterBar } from './OrderWorkbenchFilterBar'
 import styles from './OrderWorkbenchPage.module.scss'
+import { getShipByRange, type ShipByFilter } from './shipByFilter'
 
 dayjs.extend(relativeTime)
 
@@ -106,6 +107,18 @@ export const OrderWorkbenchPage = () => {
   const [vendorId, setVendorId] = useState<string>()
   const [stage, setStage] = useState<string | undefined>(searchParams.get('stage') || undefined)
   const [dates, setDates] = useState<DateRangeValue>(getDefaultDateRange)
+  const [shipBy, setShipBy] = useState<ShipByFilter>('all')
+  const [shipByNow, setShipByNow] = useState(() => new Date())
+  const { shipByDateFrom, shipByDateTo } = getShipByRange(shipBy, shipByNow)
+  useEffect(() => {
+    if (shipBy === 'all') return
+    const timer = window.setInterval(() => {
+      const now = new Date()
+      if (getShipByRange(shipBy, now).shipByDateFrom !== shipByDateFrom) setPage(1)
+      setShipByNow(now)
+    }, 60_000)
+    return () => window.clearInterval(timer)
+  }, [shipBy, shipByDateFrom])
   const canWriteOrder = useCallback(
     (row: OrderWorkbenchRow) =>
       canUseScopedPermission(account, 'ORDERS:WRITE', {
@@ -125,8 +138,22 @@ export const OrderWorkbenchPage = () => {
       vendorId,
       salesChannelCode,
       ...dates,
+      shipByDateFrom,
+      shipByDateTo,
     }),
-    [dates, page, pageSize, deferredSearch, salesChannelCode, shopId, stage, tab, vendorId],
+    [
+      dates,
+      page,
+      pageSize,
+      deferredSearch,
+      salesChannelCode,
+      shopId,
+      stage,
+      tab,
+      vendorId,
+      shipByDateFrom,
+      shipByDateTo,
+    ],
   )
   const summaryParams = useMemo(
     () => ({
@@ -137,8 +164,10 @@ export const OrderWorkbenchPage = () => {
       vendorId,
       salesChannelCode,
       ...dates,
+      shipByDateFrom,
+      shipByDateTo,
     }),
-    [dates, deferredSearch, salesChannelCode, shopId, vendorId],
+    [dates, deferredSearch, salesChannelCode, shopId, vendorId, shipByDateFrom, shipByDateTo],
   )
   const orders = useOrderWorkbenchQuery(
     recordId ? { page: 1, limit: 1, tab: 'ALL', recordId } : params,
@@ -208,6 +237,12 @@ export const OrderWorkbenchPage = () => {
     setDates(value)
     setPage(1)
   }, [])
+  const onShipByChange = useCallback((value: ShipByFilter) => {
+    setShipBy(value)
+    setShipByNow(new Date())
+    if (value !== 'all') setDates({})
+    setPage(1)
+  }, [])
   const openOrderModal = useCallback(
     (event: MouseEvent<HTMLElement>, orderId: string, modal: OrderModal) => {
       const target = event.currentTarget
@@ -229,6 +264,7 @@ export const OrderWorkbenchPage = () => {
     setVendorId(undefined)
     setStage(undefined)
     setDates(getDefaultDateRange())
+    setShipBy('all')
     setPage(1)
   }, [])
   const orderItems = useMemo(() => {
@@ -263,7 +299,9 @@ export const OrderWorkbenchPage = () => {
     () => orderItems.map((row) => row.order?.id).filter(Boolean) as string[],
     [orderItems],
   )
-  const hasActiveFilters = Boolean(shopId || vendorId || stage || dates.dateFrom || dates.dateTo)
+  const hasActiveFilters = Boolean(
+    shopId || vendorId || stage || dates.dateFrom || dates.dateTo || shipBy !== 'all',
+  )
 
   const stageOptions = useMemo(
     () => [
@@ -619,6 +657,13 @@ export const OrderWorkbenchPage = () => {
         vendorId={vendorId}
         stage={stage}
         dates={dates}
+        shipBy={shipBy}
+        shipByLabel={t('orders.filters.shipBy.label')}
+        shipByOptions={(['all', 'today', 'tomorrow'] as const).map((value) => ({
+          value,
+          label: t(`orders.filters.shipBy.${value}`),
+        }))}
+        onShipByChange={onShipByChange}
         hasActiveFilters={hasActiveFilters}
         shopOptions={shopOptions}
         vendorOptions={vendorOptions}

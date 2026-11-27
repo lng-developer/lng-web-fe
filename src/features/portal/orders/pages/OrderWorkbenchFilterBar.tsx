@@ -1,11 +1,12 @@
 import { type FC, memo } from 'react'
 import { AppstoreOutlined, CloseCircleOutlined, ShopOutlined, TagOutlined } from '@ant-design/icons'
-import { Button, Select } from 'antd'
+import { Button, Radio, Select } from 'antd'
 
 import { DateRangePicker, FilterBar, SearchInput } from '@/shared/ui'
 import type { DateRangeValue } from '@/shared/ui/DateRangePicker'
 
 import styles from './OrderWorkbenchPage.module.scss'
+import type { ShipByFilter } from './shipByFilter'
 
 type SelectOption = {
   readonly value: string
@@ -21,6 +22,10 @@ type OrderWorkbenchFilterBarProps = {
   readonly vendorId?: string
   readonly stage?: string
   readonly dates: DateRangeValue
+  readonly shipBy: ShipByFilter
+  readonly shipByLabel: string
+  readonly shipByOptions: { value: ShipByFilter; label: string }[]
+  readonly onShipByChange: (value: ShipByFilter) => void
   readonly hasActiveFilters: boolean
   readonly shopOptions: SelectOption[]
   readonly vendorOptions: SelectOption[]
@@ -48,6 +53,10 @@ export const OrderWorkbenchFilterBar: FC<OrderWorkbenchFilterBarProps> = memo(
     vendorId,
     stage,
     dates,
+    shipBy,
+    shipByLabel,
+    shipByOptions,
+    onShipByChange,
     hasActiveFilters,
     shopOptions,
     vendorOptions,
@@ -75,6 +84,15 @@ export const OrderWorkbenchFilterBar: FC<OrderWorkbenchFilterBarProps> = memo(
         className={styles.orderFilterBar}
         contentClassName={styles.filters}
       >
+        <div className={styles.shipByFilter}>
+          <span>{shipByLabel}</span>
+          <Radio.Group
+            aria-label={shipByLabel}
+            value={shipBy}
+            options={shipByOptions}
+            onChange={(event) => onShipByChange(event.target.value as ShipByFilter)}
+          />
+        </div>
         <div className={styles.searchSection}>
           <SearchInput
             className={styles.orderSearch}

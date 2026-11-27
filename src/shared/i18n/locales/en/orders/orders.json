@@ -240,6 +240,12 @@
       }
     },
     "filters": {
+      "shipBy": {
+        "label": "Ship by date (Pacific time)",
+        "all": "All dates",
+        "today": "Ship by today",
+        "tomorrow": "Ship by tomorrow"
+      },
       "label": "Order filters",
       "search": "Search order, customer or SKU",
       "shop": "All shops",

@@ -125,6 +125,7 @@
 }
 
 .filters {
+  flex-wrap: wrap;
   width: 100%;
   display: flex !important;
   align-items: center !important;
@@ -135,6 +136,22 @@
   box-shadow: none;
   min-height: auto;
   box-sizing: border-box;
+}
+
+.shipByFilter {
+  flex: 1 1 100%;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  font-size: 13px;
+  color: var(--ant-color-text-secondary);
+
+  :global(.ant-radio-group) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
 }
 
 .orderFilterBar {

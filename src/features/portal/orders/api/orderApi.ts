@@ -16,6 +16,8 @@ export type OrderWorkbenchParams = {
   salesChannelCode?: string
   dateFrom?: string
   dateTo?: string
+  shipByDateFrom?: string
+  shipByDateTo?: string
 }
 export type OrderWorkflow = {
   stage: string

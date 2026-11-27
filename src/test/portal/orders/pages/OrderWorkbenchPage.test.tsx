@@ -1,9 +1,10 @@
 import { MemoryRouter, useLocation } from 'react-router-dom'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
 import {
+  downloadOrdersCsv,
   getOrderSummary,
   listOrderWorkbench,
   type OrderWorkbenchRow,
@@ -28,6 +29,7 @@ vi.mock('@/app/common/CoreDataTable', async () => ({
 vi.mock('@/features/portal/orders/api/orderApi', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/features/portal/orders/api/orderApi')>()),
   getOrderSummary: vi.fn(),
+  downloadOrdersCsv: vi.fn(),
   listOrderWorkbench: vi.fn(),
 }))
 
@@ -80,6 +82,72 @@ function renderPage(initialEntry = '/portal/orders') {
 
 describe('OrderWorkbenchPage', () => {
   afterEach(cleanup)
+
+  it('applies ship-by to results and counts, clears the default purchase-date window, and resets', async () => {
+    renderPage()
+    fireEvent.click(await screen.findByRole('radio', { name: 'Ship by today' }))
+    await waitFor(() => {
+      expect(listOrderWorkbench).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          page: 1,
+          shipByDateFrom: expect.any(String),
+          shipByDateTo: expect.any(String),
+        }),
+        expect.any(AbortSignal),
+      )
+    })
+    const params = vi.mocked(listOrderWorkbench).mock.lastCall![0]
+    expect(params.dateFrom).toBeUndefined()
+    expect(params.dateTo).toBeUndefined()
+    fireEvent.click(screen.getByRole('button', { name: /Export CSV/ }))
+    await waitFor(() => expect(downloadOrdersCsv).toHaveBeenCalledWith(params))
+    await waitFor(() =>
+      expect(getOrderSummary).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          shipByDateFrom: params.shipByDateFrom,
+          shipByDateTo: params.shipByDateTo,
+        }),
+        expect.any(AbortSignal),
+      ),
+    )
+    fireEvent.click(screen.getByRole('radio', { name: 'Ship by tomorrow' }))
+    await waitFor(() =>
+      expect(vi.mocked(listOrderWorkbench).mock.lastCall![0].shipByDateFrom).not.toBe(
+        params.shipByDateFrom,
+      ),
+    )
+    fireEvent.click(screen.getByRole('radio', { name: 'All dates' }))
+    await waitFor(() =>
+      expect(vi.mocked(listOrderWorkbench).mock.lastCall![0].shipByDateFrom).toBeUndefined(),
+    )
+    fireEvent.click(screen.getByRole('radio', { name: 'Ship by today' }))
+    fireEvent.click(screen.getByRole('button', { name: /Clear filters/ }))
+    expect(screen.getByRole('radio', { name: 'All dates' })).toBeChecked()
+    await waitFor(() =>
+      expect(vi.mocked(listOrderWorkbench).mock.lastCall![0].shipByDateFrom).toBeUndefined(),
+    )
+  })
+
+  it('returns to page one when the Pacific ship-by day rolls over', async () => {
+    vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
+    vi.setSystemTime(new Date('2026-11-27T07:59:30Z'))
+    try {
+      renderPage()
+      fireEvent.click(await screen.findByRole('radio', { name: 'Ship by today' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Page 2' }))
+      await waitFor(() => expect(vi.mocked(listOrderWorkbench).mock.lastCall![0].page).toBe(2))
+      act(() => vi.advanceTimersByTime(60_000))
+      await waitFor(() =>
+        expect(listOrderWorkbench).toHaveBeenLastCalledWith(
+          expect.objectContaining({ page: 1, shipByDateFrom: '2026-11-27T08:00:00.000Z' }),
+          expect.any(AbortSignal),
+        ),
+      )
+    } finally {
+      cleanup()
+      vi.useRealTimers()
+    }
+  })
 
   beforeEach(async () => {
     vi.clearAllMocks()

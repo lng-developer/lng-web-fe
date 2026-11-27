@@ -240,6 +240,12 @@
       }
     },
     "filters": {
+      "shipBy": {
+        "label": "Hạn gửi hàng (giờ Pacific)",
+        "all": "Tất cả ngày",
+        "today": "Gửi hàng hôm nay",
+        "tomorrow": "Gửi hàng ngày mai"
+      },
       "label": "Bộ lọc đơn hàng",
       "search": "Tìm đơn, khách hàng hoặc SKU",
       "shop": "Tất cả shop",
