@@ -82,6 +82,19 @@ vi.mock('@/features/portal/design/api/designApi', async (importOriginal) => {
       ],
       pagination: { total: 1, page: 1, limit: 10 },
     })),
+    listDesignAsinSummary: vi.fn().mockResolvedValue({
+      items: [
+        {
+          asin: 'B00GROUP123',
+          taskCount: 3,
+          productionTaskCount: 7,
+          totalFileCount: 14,
+          scaledFileCount: 9,
+          pendingFileCount: 5,
+        },
+      ],
+      pagination: { total: 30, page: 1, limit: 10 },
+    }),
     getDesignSummary: vi.fn().mockResolvedValue({
       total: 1,
       unassigned: 1,
@@ -106,6 +119,61 @@ vi.mock('@/features/portal/design/api/designApi', async (importOriginal) => {
 })
 
 describe('PsdTasksPage', () => {
+  it('groups filtered tasks by ASIN, pages on server and drills into exact ASIN', async () => {
+    const { listDesignTasks, listDesignAsinSummary, getDesignSummary } =
+      await import('@/features/portal/design/api/designApi')
+    render(
+      <AppProviders>
+        <PsdTasksPage />
+      </AppProviders>,
+    )
+    await screen.findByText('B001TESTASIN')
+    fireEvent.click(screen.getByRole('tab', { name: /Unassigned/ }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Group by ASIN' }))
+    expect(await screen.findByText('B00GROUP123')).toBeInTheDocument()
+    expect(screen.getByText('14')).toBeInTheDocument()
+    expect(screen.getByText('9')).toBeInTheDocument()
+    expect(screen.getByText('5')).toBeInTheDocument()
+    expect(listDesignAsinSummary).toHaveBeenLastCalledWith(
+      expect.objectContaining({ page: 1, unassigned: true, taskType: 'PSD_TEMPLATE' }),
+      expect.anything(),
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Page 2' }))
+    await waitFor(() =>
+      expect(listDesignAsinSummary).toHaveBeenLastCalledWith(
+        expect.objectContaining({ page: 2 }),
+        expect.anything(),
+      ),
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'B00GROUP123' }))
+    await waitFor(() =>
+      expect(listDesignTasks).toHaveBeenLastCalledWith(
+        expect.objectContaining({ asin: 'B00GROUP123', page: 1, unassigned: true }),
+        expect.anything(),
+      ),
+    )
+    expect(getDesignSummary).toHaveBeenLastCalledWith(
+      expect.objectContaining({ asin: 'B00GROUP123' }),
+    )
+    fireEvent.click(screen.getByRole('radio', { name: 'Group by ASIN' }))
+    fireEvent.click(screen.getByRole('img', { name: 'reload' }).closest('button')!)
+    await waitFor(() =>
+      expect(listDesignAsinSummary).toHaveBeenLastCalledWith(
+        expect.objectContaining({ asin: undefined, page: 1 }),
+        expect.anything(),
+      ),
+    )
+  })
+  it('does not offer ASIN grouping on Etsy', async () => {
+    mockSearchParams = new URLSearchParams('salesChannelCode=etsy')
+    render(
+      <AppProviders>
+        <PsdTasksPage />
+      </AppProviders>,
+    )
+    expect(screen.queryByRole('radio', { name: 'Group by ASIN' })).not.toBeInTheDocument()
+  })
+
   it('Seller downloads the approved PSD and does not get QC controls', async () => {
     mockTaskStatus = 'APPROVED'
     mockPermissions = ['DESIGN:READ', 'DESIGN:PSD_REQUEST']

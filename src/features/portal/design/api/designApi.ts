@@ -279,6 +279,19 @@ export const listDesignTasks = async (params: DesignListParams, signal?: AbortSi
   unwrap<{ items: DesignTask[]; pagination: { total: number; page: number; limit: number } }>(
     await apiClient.get('/api/design/tasks', { params: compact(params), signal }),
   )
+export type DesignAsinSummary = {
+  asin: string
+  taskCount: number
+  productionTaskCount: number
+  totalFileCount: number
+  scaledFileCount: number
+  pendingFileCount: number
+}
+export const listDesignAsinSummary = async (params: DesignListParams, signal?: AbortSignal) =>
+  unwrap<{
+    items: DesignAsinSummary[]
+    pagination: { total: number; page: number; limit: number }
+  }>(await apiClient.get('/api/design/tasks/asin-summary', { params: compact(params), signal }))
 export const exportDesignTasksCsv = (params: DesignListParams) =>
   apiClient.get('/api/design/tasks/export.csv', {
     params: compact({ ...params, page: 1, limit: 5000 }),

@@ -241,7 +241,21 @@
       "searchAllPlaceholder": "Search ASIN, Etsy Listing ID, SKU...",
       "searchAmazonPlaceholder": "Search ASIN, SKU...",
       "searchEtsyPlaceholder": "Search Listing ID, SKU...",
-      "sku": "SKU"
+      "sku": "SKU",
+      "asinSummary": {
+        "tasks": "Tasks",
+        "group": "Group by ASIN",
+        "scope": "Amazon ASINs · Production scale files",
+        "explanation": "Counts current file slots from linked active production tasks. Excludes source PSDs and past versions; does not multiply by order quantity. Tasks without file slots have no files counted yet.",
+        "selected": "ASIN: {{asin}}",
+        "taskCount": "PSD tasks",
+        "productionTaskCount": "Production tasks",
+        "totalFileCount": "Total scale files",
+        "scaledFileCount": "Scaled files",
+        "pendingFileCount": "Pending files",
+        "empty": "No Amazon ASINs match these filters",
+        "loadFailed": "Could not load ASIN totals. Please refresh."
+      }
     }
   }
 }
