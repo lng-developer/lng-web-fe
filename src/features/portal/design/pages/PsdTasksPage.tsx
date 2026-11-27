@@ -468,7 +468,7 @@ export function PsdTasksPage() {
           rowKey="id"
           columns={columns}
           serverSorting={{
-            enabled: salesChannelCode !== 'ETSY',
+            enabled: true,
             value: scaleSort,
             columns: { scaleFileSummary: { asc: 'asc', desc: 'desc' } },
             onChange: (value) => {

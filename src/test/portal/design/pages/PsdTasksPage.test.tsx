@@ -29,6 +29,7 @@ let mockSearchParams = new URLSearchParams('')
 let mockPermissions = ['DESIGN:WRITE', 'DESIGN:WORK', 'DESIGN:REVIEW']
 let mockScaleFileSummary:
   { totalFileCount: number; scaledFileCount: number; pendingFileCount: number } | undefined
+let mockSalesChannelCode = 'AMAZON'
 let mockTaskTotal = 1
 let mockTaskStatus = 'REQUESTED'
 let mockAssignedDesignerId: string | null = null
@@ -72,8 +73,9 @@ vi.mock('@/features/portal/design/api/designApi', async (importOriginal) => {
           priority: 'HIGH',
           listing: {
             sku: 'SKU-TEST-001',
-            asin: 'B001TESTASIN',
-            salesChannelCode: 'AMAZON',
+            asin: mockSalesChannelCode === 'AMAZON' ? 'B001TESTASIN' : null,
+            etsyListingId: mockSalesChannelCode === 'ETSY' ? '1234567890' : null,
+            salesChannelCode: mockSalesChannelCode,
             seller: { name: 'Nguyen Duc Son', employeeCode: 'J2504' },
           },
           createdAt: '2026-09-18T10:00:00.000Z',
@@ -120,59 +122,69 @@ vi.mock('@/features/portal/design/api/designApi', async (importOriginal) => {
 })
 
 describe('PsdTasksPage', () => {
-  it('sorts total scale files on the server and restores urgency when cleared', async () => {
-    useRealTable = true
-    mockTaskTotal = 130
-    mockSearchParams = new URLSearchParams('salesChannelCode=amazon')
-    const { listDesignTasks } = await import('@/features/portal/design/api/designApi')
-    render(
-      <AppProviders>
-        <PsdTasksPage />
-      </AppProviders>,
-    )
-    await screen.findByText('B001TESTASIN')
-    expect(screen.queryByRole('columnheader', { name: /Created at/i })).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('tab', { name: /Unassigned/ }))
-    fireEvent.click(screen.getByRole('button', { name: 'Last page' }))
-    await waitFor(() =>
-      expect(listDesignTasks).toHaveBeenLastCalledWith(
-        expect.objectContaining({ page: 3 }),
-        expect.anything(),
-      ),
-    )
-    for (const sortOrder of ['desc', 'asc', undefined]) {
-      fireEvent.click(screen.getByRole('columnheader', { name: /Total scale files/ }))
+  it.each(['AMAZON', 'ETSY'])(
+    'sorts %s total scale files on the server and restores urgency when cleared',
+    async (channel) => {
+      useRealTable = true
+      mockTaskTotal = 130
+      mockSalesChannelCode = channel
+      mockSearchParams = new URLSearchParams({ salesChannelCode: channel.toLowerCase() })
+      const { listDesignTasks } = await import('@/features/portal/design/api/designApi')
+      render(
+        <AppProviders>
+          <PsdTasksPage />
+        </AppProviders>,
+      )
+      await screen.findByText(channel === 'AMAZON' ? 'B001TESTASIN' : '1234567890')
+      expect(screen.queryByRole('columnheader', { name: /Created at/i })).not.toBeInTheDocument()
+      fireEvent.click(screen.getByRole('tab', { name: /Unassigned/ }))
+      fireEvent.click(screen.getByRole('button', { name: 'Last page' }))
       await waitFor(() =>
         expect(listDesignTasks).toHaveBeenLastCalledWith(
-          expect.objectContaining({
-            page: 1,
-            sortBy: sortOrder ? 'totalFileCount' : 'urgency',
-            sortOrder,
-            unassigned: true,
-            salesChannelCode: 'AMAZON',
-            taskType: 'PSD_TEMPLATE',
-          }),
+          expect.objectContaining({ page: 3 }),
           expect.anything(),
         ),
       )
-    }
-  }, 15000)
+      for (const sortOrder of ['desc', 'asc', undefined]) {
+        fireEvent.click(screen.getByRole('columnheader', { name: /Total scale files/ }))
+        await waitFor(() =>
+          expect(listDesignTasks).toHaveBeenLastCalledWith(
+            expect.objectContaining({
+              page: 1,
+              sortBy: sortOrder ? 'totalFileCount' : 'urgency',
+              sortOrder,
+              unassigned: true,
+              salesChannelCode: channel,
+              taskType: 'PSD_TEMPLATE',
+            }),
+            expect.anything(),
+          ),
+        )
+      }
+    },
+    15000,
+  )
 
-  it('shows ASIN scale totals in task rows with a breakdown on hover', async () => {
-    useRealTable = true
-    render(
-      <AppProviders>
-        <PsdTasksPage />
-      </AppProviders>,
-    )
-    expect(await screen.findByText('14')).toBeInTheDocument()
-    expect(screen.getByRole('columnheader', { name: 'Total scale files' })).toBeInTheDocument()
-    expect(screen.queryByRole('radio', { name: 'Group by ASIN' })).not.toBeInTheDocument()
-    fireEvent.mouseEnter(screen.getByText('14'))
-    const tooltip = await screen.findByRole('tooltip')
-    expect(within(tooltip).getByText('Scaled files: 9')).toBeInTheDocument()
-    expect(within(tooltip).getByText('Pending files: 5')).toBeInTheDocument()
-  })
+  it.each(['AMAZON', 'ETSY'])(
+    'shows %s scale totals in task rows with a breakdown on hover',
+    async (channel) => {
+      mockSalesChannelCode = channel
+      mockSearchParams = new URLSearchParams({ salesChannelCode: channel.toLowerCase() })
+      useRealTable = true
+      render(
+        <AppProviders>
+          <PsdTasksPage />
+        </AppProviders>,
+      )
+      expect(await screen.findByText('14')).toBeInTheDocument()
+      expect(screen.getByRole('columnheader', { name: 'Total scale files' })).toBeInTheDocument()
+      expect(screen.queryByRole('radio', { name: 'Group by ASIN' })).not.toBeInTheDocument()
+      fireEvent.mouseEnter(screen.getByText('14'))
+      const tooltip = await screen.findByRole('tooltip')
+      expect(within(tooltip).getByText('Scaled files: 9')).toBeInTheDocument()
+      expect(within(tooltip).getByText('Pending files: 5')).toBeInTheDocument()
+    },
+  )
   it('shows a dash instead of zero when scale totals are unavailable', async () => {
     useRealTable = true
     mockScaleFileSummary = undefined
@@ -188,19 +200,6 @@ describe('PsdTasksPage', () => {
     expect(row.children[index]).toHaveTextContent('-')
     expect(row.children[index]).not.toHaveTextContent('0')
   })
-  it('does not show ASIN scale totals on Etsy', () => {
-    useRealTable = true
-    mockSearchParams = new URLSearchParams('salesChannelCode=etsy')
-    render(
-      <AppProviders>
-        <PsdTasksPage />
-      </AppProviders>,
-    )
-    expect(
-      screen.queryByRole('columnheader', { name: 'Total scale files' }),
-    ).not.toBeInTheDocument()
-  })
-
   it('Seller downloads the approved PSD and does not get QC controls', async () => {
     mockTaskStatus = 'APPROVED'
     mockPermissions = ['DESIGN:READ', 'DESIGN:PSD_REQUEST']
@@ -216,6 +215,7 @@ describe('PsdTasksPage', () => {
   })
   beforeEach(() => {
     useRealTable = false
+    mockSalesChannelCode = 'AMAZON'
     mockTaskTotal = 1
     mockScaleFileSummary = { totalFileCount: 14, scaledFileCount: 9, pendingFileCount: 5 }
     vi.clearAllMocks()

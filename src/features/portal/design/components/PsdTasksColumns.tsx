@@ -262,43 +262,39 @@ export function usePsdTasksColumns({
           )
         },
       },
-      ...(salesChannelCode !== 'ETSY'
-        ? ([
-            {
-              title: t('portal.design.scaleFileSummary.total'),
-              key: 'scaleFileSummary',
-              width: 140,
-              align: 'center',
-              render: (_, record) => {
-                const summary = record.scaleFileSummary
-                if (!summary) return '-'
-                return (
-                  <Tooltip
-                    trigger={['hover', 'focus']}
-                    title={
-                      <div>
-                        <div>
-                          {t('portal.design.scaleFileSummary.scaled', {
-                            count: summary.scaledFileCount,
-                          })}
-                        </div>
-                        <div>
-                          {t('portal.design.scaleFileSummary.pending', {
-                            count: summary.pendingFileCount,
-                          })}
-                        </div>
-                      </div>
-                    }
-                  >
-                    <Button type="text" size="small">
-                      {summary.totalFileCount}
-                    </Button>
-                  </Tooltip>
-                )
-              },
-            },
-          ] satisfies TableColumnsType<DesignTask>)
-        : []),
+      {
+        title: t('portal.design.scaleFileSummary.total'),
+        key: 'scaleFileSummary',
+        width: 140,
+        align: 'center',
+        render: (_, record) => {
+          const summary = record.scaleFileSummary
+          if (!summary) return '-'
+          return (
+            <Tooltip
+              trigger={['hover', 'focus']}
+              title={
+                <div>
+                  <div>
+                    {t('portal.design.scaleFileSummary.scaled', {
+                      count: summary.scaledFileCount,
+                    })}
+                  </div>
+                  <div>
+                    {t('portal.design.scaleFileSummary.pending', {
+                      count: summary.pendingFileCount,
+                    })}
+                  </div>
+                </div>
+              }
+            >
+              <Button type="text" size="small">
+                {summary.totalFileCount}
+              </Button>
+            </Tooltip>
+          )
+        },
+      },
       {
         title: t('portal.design.statusTask', { defaultValue: 'Status Task' }),
         key: 'status',
