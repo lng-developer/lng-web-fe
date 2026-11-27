@@ -1,20 +1,12 @@
+import { useUrlFilters } from '@/shared/hooks/useUrlFilters'
+import { OrderCostSummary } from '../components/OrderCostSummary'
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouteLoaderData } from 'react-router-dom'
-import {
-  DollarOutlined,
-  EyeOutlined,
-  FallOutlined,
-  InfoCircleOutlined,
-  PictureOutlined,
-  ReloadOutlined,
-  RiseOutlined,
-  ShoppingCartOutlined,
-  WalletOutlined,
-} from '@ant-design/icons'
+import { EyeOutlined, InfoCircleOutlined, PictureOutlined, ReloadOutlined } from '@ant-design/icons'
 import type { TableColumnsType } from 'antd'
-import { Button, Image, Popover, Select, Space, Tag, Tooltip, Typography } from 'antd'
+import { Alert, Button, Image, Popover, Select, Space, Tag, Tooltip, Typography } from 'antd'
 import dayjs from 'dayjs'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
@@ -26,10 +18,8 @@ import { useFinanceMutations } from '@/features/portal/finance/hooks/useFinanceM
 import {
   CopyableOrderId,
   DateRangePicker,
-  type DateRangeValue,
   FilterBar,
   getDefaultDateRange,
-  MetricCard,
   PageHeader,
   SearchInput,
   SectionCard,
@@ -40,6 +30,7 @@ import {
   getReportFilterOptions,
   listFinanceOrderProfitability,
   type OrderProfitability,
+  type ReportFilters,
 } from '../api/reportApi'
 import { formatReportMoney } from '../components/reportFormatters'
 import styles from './ReportOrderCostPage.module.scss'
@@ -57,17 +48,41 @@ export function ReportOrderCostPage({
     : []
   const canWrite = permissions.includes('FINANCE:WRITE') || permissions.includes('REPORTS:WRITE')
 
-  const [financialStatus, setFinancialStatus] = useState<string>()
-  const [search, setSearch] = useState('')
-  const [salesChannelCode, setSalesChannelCode] = useState<string | undefined>(
-    fixedSalesChannelCode,
+  const [filters, setFilters] = useUrlFilters<ReportFilters>(
+    {
+      ...getDefaultDateRange(7, dayjs(), 'Asia/Ho_Chi_Minh'),
+      salesChannelCode: fixedSalesChannelCode,
+    },
+    [
+      'externalOrderId',
+      'shopId',
+      'salesChannelCode',
+      'marketplaceCode',
+      'currency',
+      'sellerEmployeeCode',
+      'teamId',
+      'departmentId',
+      'financialStatus',
+      'costCoverage',
+      'dateFrom',
+      'dateTo',
+    ],
   )
-  const [shopId, setShopId] = useState<string>()
-  const [sellerEmployeeCode, setSellerEmployeeCode] = useState<string>()
-  const [teamId, setTeamId] = useState<string>()
-  const [departmentId, setDepartmentId] = useState<string>()
-  const [costCoverage, setCostCoverage] = useState<'MISSING' | 'COMPLETE' | undefined>()
-  const [dates, setDates] = useState<DateRangeValue>(getDefaultDateRange)
+  const {
+    financialStatus,
+    salesChannelCode,
+    shopId,
+    sellerEmployeeCode,
+    teamId,
+    departmentId,
+    costCoverage,
+    marketplaceCode,
+    currency,
+  } = filters
+  const search = filters.externalOrderId || ''
+  const dates = { dateFrom: filters.dateFrom, dateTo: filters.dateTo }
+  const setFilter = <K extends keyof ReportFilters>(key: K, value: ReportFilters[K]) =>
+    setFilters((current) => ({ ...current, [key]: value }))
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
 
@@ -75,7 +90,9 @@ export function ReportOrderCostPage({
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
 
   // Selected order & item for detail modals
-  const [selectedOrder, setSelectedOrder] = useState<{ orderId: string } | null>(null)
+  const [selectedOrder, setSelectedOrder] = useState<{ orderId: string; currency?: string } | null>(
+    null,
+  )
   const [selectedItemId, setSelectedItemId] = useState<string>()
 
   const filterOptions = useQuery({
@@ -101,6 +118,8 @@ export function ReportOrderCostPage({
       'reports',
       'order-cost',
       effectiveChannel,
+      marketplaceCode,
+      currency,
       shopId,
       financialStatus,
       search,
@@ -120,6 +139,8 @@ export function ReportOrderCostPage({
         limit: pageSize,
         externalOrderId: search || undefined,
         shopId,
+        marketplaceCode,
+        currency,
         sellerEmployeeCode,
         teamId,
         departmentId,
@@ -131,25 +152,12 @@ export function ReportOrderCostPage({
 
   const rows = query.data?.items || []
   const summaries = query.data?.summaryByCurrency || []
-  const summary = summaries[0]
-  const currency = summary?.currency || 'USD'
-
-  // Global totals from backend summary
-  const totalOrders = summary?.orderCount ?? query.data?.pagination?.total ?? 0
-  const grossSales = summary?.revenueAmount ?? rows.reduce((s, r) => s + r.revenueAmount, 0)
-  const totalCost = summary?.totalCostAmount
-  const netProfit = summary?.profitAmount
-  const marginBps = summary?.marginBps
-  const costedCount = summary?.costedOrderCount ?? 0
-  const missingCostCount = summary?.missingCostOrderCount ?? 0
-  const totalRefunds = rows.reduce((s, r) => s + (r.refundAmount || 0), 0)
-
   // Finance mutations for recalculate
   const { recalculate, recalculateBulk, recalculateItem } = useFinanceMutations()
 
   const handleInspectOrder = useCallback((row: OrderProfitability) => {
     if (row.orderId) {
-      setSelectedOrder({ orderId: row.orderId })
+      setSelectedOrder({ orderId: row.orderId, currency: row.currency || undefined })
     }
   }, [])
 
@@ -178,7 +186,11 @@ export function ReportOrderCostPage({
   )
 
   const handleBulkRecalculate = useCallback(() => {
-    const orderIds = selectedRowKeys.map(String).filter((id) => id && id.length === 24)
+    const orderIds = [
+      ...new Set(
+        selectedRowKeys.map((key) => String(key).split('|')[0]).filter((id) => id.length === 24),
+      ),
+    ]
     if (!orderIds.length) return
     recalculateBulk.mutate(orderIds, {
       onSuccess: () => {
@@ -407,8 +419,22 @@ export function ReportOrderCostPage({
           </Tooltip>
         ),
       },
+      ...(
+        [
+          ['estimatedFulfillmentCostAmount', 'estimatedCost'],
+          ['actualVendorTotalAmount', 'actualVendorCost'],
+          ['costVarianceAmount', 'costVariance'],
+        ] as const
+      ).map(([field, label]) => ({
+        title: t(`finance.metrics.${label}`),
+        dataIndex: field,
+        width: 120,
+        align: 'right' as const,
+        render: (value: number | null | undefined, row: OrderProfitability) =>
+          value == null ? '—' : formatReportMoney(value, row.currency || 'USD'),
+      })),
       {
-        title: 'Total cost',
+        title: t('finance.metrics.effectiveCost'),
         dataIndex: 'totalCostAmount',
         width: 130,
         align: 'right',
@@ -473,7 +499,7 @@ export function ReportOrderCostPage({
         },
       },
       {
-        title: 'Net profit',
+        title: t('finance.metrics.profit'),
         dataIndex: 'profitAmount',
         width: 110,
         align: 'right',
@@ -569,7 +595,7 @@ export function ReportOrderCostPage({
           ) : null,
       },
     ],
-    [handleInspectOrder, shopNameById],
+    [handleInspectOrder, shopNameById, t],
   )
 
   return (
@@ -580,49 +606,16 @@ export function ReportOrderCostPage({
         actions={<StatusTag status="ready">{effectiveChannel || 'ALL CHANNELS'}</StatusTag>}
       />
 
-      <div className={styles.metrics}>
-        <MetricCard
-          icon={<ShoppingCartOutlined />}
-          label="Total orders"
-          value={String(totalOrders)}
-          subtext={`${costedCount} costed · ${missingCostCount} missing`}
-          variant="neutral"
+      {summaries.some((row) => row.missingSnapshotCount) && (
+        <Alert
+          type="warning"
+          showIcon
+          message={t('finance.missingSnapshots', {
+            count: summaries.reduce((total, row) => total + (row.missingSnapshotCount || 0), 0),
+          })}
         />
-        <MetricCard
-          icon={<DollarOutlined />}
-          label="Gross sales"
-          value={formatReportMoney(grossSales, currency)}
-          subtext={`${costedCount} of ${totalOrders} orders costed`}
-          variant="primary"
-        />
-        <MetricCard
-          icon={<WalletOutlined />}
-          label="Total cost"
-          value={totalCost != null ? formatReportMoney(totalCost, currency) : '—'}
-          subtext={
-            missingCostCount > 0 ? `${missingCostCount} orders missing cost` : 'All costs captured'
-          }
-          variant={missingCostCount > 0 ? 'warning' : 'neutral'}
-        />
-        <MetricCard
-          icon={<RiseOutlined />}
-          label="Net profit"
-          value={netProfit != null ? formatReportMoney(netProfit, currency) : '—'}
-          subtext={marginBps != null ? `Net margin: ${(marginBps / 100).toFixed(1)}%` : undefined}
-          variant={(netProfit ?? 0) >= 0 ? 'success' : 'danger'}
-        />
-        <MetricCard
-          icon={<FallOutlined />}
-          label="Refunds"
-          value={formatReportMoney(totalRefunds, currency)}
-          subtext={
-            totalRefunds > 0
-              ? `Net: ${formatReportMoney(grossSales - totalRefunds, currency)}`
-              : 'No refunds recorded'
-          }
-          variant="warning"
-        />
-      </div>
+      )}
+      <OrderCostSummary summaries={summaries} />
 
       <SectionCard
         title="Order profitability"
@@ -636,7 +629,7 @@ export function ReportOrderCostPage({
           <SearchInput
             value={search}
             onSearchChange={(value) => {
-              setSearch(value)
+              setFilter('externalOrderId', value)
               setPage(1)
             }}
             placeholder="Search external order ID"
@@ -647,7 +640,7 @@ export function ReportOrderCostPage({
               placeholder="Sales channel"
               value={salesChannelCode}
               onChange={(value) => {
-                setSalesChannelCode(value)
+                setFilter('salesChannelCode', value)
                 setPage(1)
               }}
               options={(filterOptions.data?.channels || []).map((ch) => ({
@@ -663,7 +656,7 @@ export function ReportOrderCostPage({
             placeholder="Shop"
             value={shopId}
             onChange={(value) => {
-              setShopId(value)
+              setFilter('shopId', value)
               setPage(1)
             }}
             options={(filterOptions.data?.shops || []).map((shop) => ({
@@ -676,7 +669,7 @@ export function ReportOrderCostPage({
             placeholder="Financial status"
             value={financialStatus}
             onChange={(value) => {
-              setFinancialStatus(value)
+              setFilter('financialStatus', value)
               setPage(1)
             }}
             options={['ACTIVE', 'CANCELLED', 'PARTIALLY_REFUNDED', 'REFUNDED'].map((value) => ({
@@ -691,7 +684,7 @@ export function ReportOrderCostPage({
             placeholder="Seller"
             value={sellerEmployeeCode}
             onChange={(value) => {
-              setSellerEmployeeCode(value)
+              setFilter('sellerEmployeeCode', value)
               setPage(1)
             }}
             options={(filterOptions.data?.sellers || []).map((seller) => ({
@@ -706,7 +699,7 @@ export function ReportOrderCostPage({
             placeholder="Team"
             value={teamId}
             onChange={(value) => {
-              setTeamId(value)
+              setFilter('teamId', value)
               setPage(1)
             }}
             options={(filterOptions.data?.teams || []).map((team) => ({
@@ -721,7 +714,7 @@ export function ReportOrderCostPage({
             placeholder="Department"
             value={departmentId}
             onChange={(value) => {
-              setDepartmentId(value)
+              setFilter('departmentId', value)
               setPage(1)
             }}
             options={(filterOptions.data?.departments || []).map((dept) => ({
@@ -734,7 +727,7 @@ export function ReportOrderCostPage({
             placeholder="Cost status"
             value={costCoverage}
             onChange={(value) => {
-              setCostCoverage(value)
+              setFilter('costCoverage', value)
               setPage(1)
             }}
             options={[
@@ -742,10 +735,40 @@ export function ReportOrderCostPage({
               { value: 'MISSING', label: 'Missing cost' },
             ]}
           />
+          <Select
+            allowClear
+            aria-label={t('finance.filters.marketplace')}
+            placeholder={t('finance.filters.marketplace')}
+            value={marketplaceCode}
+            onChange={(value) => {
+              setFilter('marketplaceCode', value)
+              setPage(1)
+            }}
+            options={(filterOptions.data?.marketplaces || []).map((value) => ({
+              value,
+              label: value,
+            }))}
+          />
+          <Select
+            allowClear
+            aria-label={t('finance.filters.currency')}
+            placeholder={t('finance.filters.currency')}
+            value={currency}
+            onChange={(value) => {
+              setFilter('currency', value)
+              setPage(1)
+            }}
+            options={['USD', 'CAD', 'EUR', 'GBP', 'VND'].map((value) => ({ value, label: value }))}
+          />
           <DateRangePicker
+            timeZone="Asia/Ho_Chi_Minh"
             value={dates}
             onChange={(value) => {
-              setDates(value)
+              setFilters((current) => ({
+                ...current,
+                dateFrom: value.dateFrom,
+                dateTo: value.dateTo,
+              }))
               setPage(1)
             }}
           />
@@ -780,7 +803,7 @@ export function ReportOrderCostPage({
         ) : null}
 
         <CoreDataTable
-          rowKey={(row) => row.orderId || `${row.externalOrderId || ''}-${row.currency}`}
+          rowKey={(row) => `${row.orderId || row.externalOrderId || ''}|${row.currency}`}
           columns={columns}
           dataSource={rows}
           loading={query.isLoading}
@@ -823,6 +846,17 @@ export function ReportOrderCostPage({
       </SectionCard>
 
       <FinanceOrderDetailModal
+        filters={{
+          ...dates,
+          marketplaceCode,
+          currency,
+          shopId,
+          sellerEmployeeCode,
+          teamId,
+          departmentId,
+          financialStatus,
+          salesChannelCode: effectiveChannel,
+        }}
         selectedOrder={selectedOrder}
         canWrite={canWrite}
         isRecalculatingOrder={recalculate.isPending}

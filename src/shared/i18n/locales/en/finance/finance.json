@@ -17,9 +17,14 @@
       "revenue": "Gross sales",
       "cost": "Total cost",
       "knownCost": "Known cost",
-      "profit": "Net profit",
+      "profit": "Profit before ads",
       "missing": "Missing cost",
-      "incomplete": "Incomplete"
+      "incomplete": "Incomplete",
+      "costEvidence": "Actual vendor cost where available; estimates otherwise",
+      "effectiveCost": "Effective cost",
+      "estimatedCost": "Estimated cost",
+      "actualVendorCost": "Vendor actual cost",
+      "costVariance": "Cost variance"
     },
     "breakdown": {
       "title": "Cost & deductions",
@@ -40,7 +45,8 @@
       "department": "Department",
       "date": "Order date",
       "cost": "Cost status",
-      "unnamed": "Unnamed"
+      "unnamed": "Unnamed",
+      "currency": "Currency"
     },
     "costStatuses": {
       "PRESENT": "Cost available",
@@ -52,7 +58,7 @@
       "seller": "Seller / team",
       "revenue": "Gross sales",
       "cost": "Total cost",
-      "profit": "Net profit",
+      "profit": "Profit before ads",
       "margin": "Margin",
       "status": "Status"
     },
@@ -86,7 +92,10 @@
       "rateVersion": "Version {{version}}",
       "lastRecalculated": "Last recalculated",
       "sourceReferences": "Source references",
-      "amazonFeeReversal": "Amazon fee reversal"
+      "amazonFeeReversal": "Amazon fee reversal",
+      "allocatedFee": "Allocated fee",
+      "vendorAllocation": "Vendor order {{order}}: {{total}} allocated across {{count}} items",
+      "revenueAdjustment": "Refunds, discounts and cancelled revenue"
     },
     "missingReasons": {
       "FULFILLMENT_PLAN_NOT_FOUND": "Fulfillment plan is missing",
@@ -233,6 +242,15 @@
       "cashFlowDesc": "Monitor overall cash in/out and manage unlinked marketplace charges or adjustments waiting for order reconciliation.",
       "transactionsTitle": "Raw Transaction Audit Ledger",
       "transactionsDesc": "Search and audit raw transactional records streamed directly from marketplace feeds (Orders, Refunds, Service Fees, Shipping Labels)."
-    }
+    },
+    "costComponents": {
+      "VENDOR_BASE": "Vendor base",
+      "VENDOR_SHIPPING": "Vendor shipping",
+      "VENDOR_TAX": "Vendor tax",
+      "VENDOR_OTHER": "Vendor adjustments",
+      "LNG_FULFILLMENT_FEE": "LNG service fee",
+      "ESTIMATE": "Estimated fulfillment cost"
+    },
+    "missingSnapshots": "{{count}} items have no finance snapshot. Totals are incomplete."
   }
 }

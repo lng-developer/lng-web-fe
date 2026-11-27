@@ -34,6 +34,7 @@ type DailySalesRow = {
   date: string
   currency: string | null
   itemCount: number
+  orderIds?: string[]
   orderCount: number
   revenueAmount: number
   totalCostAmount: number | null
@@ -49,6 +50,7 @@ type DailySalesRow = {
 
 type SalesSummary = {
   currency: string
+  orderIds?: string[]
   orderCount: number
   revenueAmount: number
   totalCostAmount: number | null
@@ -64,6 +66,7 @@ type SellerMatrixMetricKey =
   | 'adSpend'
   | 'discount'
   | 'grossProfit'
+  | 'profitAfterAds'
   | 'refund'
   | 'operatingCost'
   | 'netProfit'
@@ -106,6 +109,7 @@ const METRIC_STYLES: Record<
   adSpend: {},
   discount: {},
   grossProfit: { isBold: true },
+  profitAfterAds: { isBold: true },
   refund: {},
   operatingCost: {},
   netProfit: { isBold: true },
@@ -175,6 +179,17 @@ function formatHeaderDate(dateStr: string, locale?: string) {
   return { date: dateStr.slice(5), dayOfWeek: '' }
 }
 
+function hasCompletePeriod(rows: SellerDailyProfit[], dates: string[]) {
+  const sellerDates = new Map<string, Set<string>>()
+  for (const row of rows) {
+    const key = row.sellerEmployeeCode || row.sellerName || 'UNASSIGNED'
+    const days = sellerDates.get(key) || new Set<string>()
+    days.add(row.date)
+    sellerDates.set(key, days)
+  }
+  return [...sellerDates.values()].every((days) => dates.every((date) => days.has(date)))
+}
+
 export function ReportSalesTab({
   data = [],
   isPending,
@@ -205,7 +220,10 @@ export function ReportSalesTab({
         date: row.date,
         currency: row.currency,
         itemCount: (current?.itemCount || 0) + row.itemCount,
-        orderCount: (current?.orderCount || 0) + row.orderCount,
+        orderIds: [...new Set([...(current?.orderIds || []), ...(row.orderIds || [])])],
+        orderCount: row.orderIds
+          ? new Set([...(current?.orderIds || []), ...row.orderIds]).size
+          : (current?.orderCount || 0) + row.orderCount,
         revenueAmount,
         totalCostAmount,
         marketplaceFeeAmount: (current?.marketplaceFeeAmount || 0) + row.marketplaceFeeAmount,
@@ -231,7 +249,10 @@ export function ReportSalesTab({
       const current = rows.get(currency)
       rows.set(currency, {
         currency,
-        orderCount: (current?.orderCount || 0) + row.orderCount,
+        orderIds: [...new Set([...(current?.orderIds || []), ...(row.orderIds || [])])],
+        orderCount: row.orderIds
+          ? new Set([...(current?.orderIds || []), ...row.orderIds]).size
+          : (current?.orderCount || 0) + row.orderCount,
         revenueAmount: (current?.revenueAmount || 0) + row.revenueAmount,
         totalCostAmount:
           current?.totalCostAmount === null || row.totalCostAmount === null
@@ -245,8 +266,17 @@ export function ReportSalesTab({
           (current?.adjustmentsAmount || 0) + row.refundAmount + row.discountAmount,
       })
     })
-    return [...rows.values()].sort((left, right) => left.currency.localeCompare(right.currency))
-  }, [dailyRows])
+    return [...rows.values()]
+      .map((row) =>
+        hasCompletePeriod(
+          data.filter((item) => (item.currency || 'USD') === row.currency),
+          selectedDates,
+        )
+          ? row
+          : { ...row, netProfitAmount: null },
+      )
+      .sort((left, right) => left.currency.localeCompare(right.currency))
+  }, [dailyRows, data, selectedDates])
 
   const displaySummaries = useMemo<SalesSummary[]>(() => {
     if (summaries.length) return summaries
@@ -282,6 +312,15 @@ export function ReportSalesTab({
             : current.partialNetProfitAmount + row.partialNetProfitAmount
         : row.partialNetProfitAmount
       rows.set(sellerKey, {
+        adsCoverage:
+          row.adsCoverage === 'RECORDED' && (!current || current.adsCoverage === 'RECORDED')
+            ? 'RECORDED'
+            : 'MISSING',
+        operatingCostCoverage:
+          row.operatingCostCoverage === 'RECORDED' &&
+          (!current || current.operatingCostCoverage === 'RECORDED')
+            ? 'RECORDED'
+            : 'MISSING',
         sellerEmployeeCode: row.sellerEmployeeCode,
         sellerName: row.sellerName,
         currency,
@@ -309,9 +348,20 @@ export function ReportSalesTab({
     })
     return [...currencyRows.entries()].map(([currency, rows]) => ({
       currency,
-      rows: [...rows.values()],
+      rows: [...rows.values()].map((row) =>
+        hasCompletePeriod(
+          data.filter(
+            (item) =>
+              (item.currency || 'USD') === currency &&
+              item.sellerEmployeeCode === row.sellerEmployeeCode,
+          ),
+          selectedDates,
+        )
+          ? row
+          : { ...row, netProfitAmount: null, netMarginBps: null },
+      ),
     }))
-  }, [data])
+  }, [data, selectedDates])
 
   const hasMultipleSellers = useMemo(
     () => sellerRowsByCurrency.some(({ rows }) => rows.length > 1),
@@ -356,7 +406,7 @@ export function ReportSalesTab({
         tooltip: t('reports.tooltips.adSpend', {
           defaultValue: 'Chi phí quảng cáo (Amazon Ads / PPC)',
         }),
-        value: (row) => row.adSpendAmount || 0,
+        value: (row) => (row.adsCoverage === 'RECORDED' ? (row.adSpendAmount ?? null) : null),
       },
       {
         key: 'discount',
@@ -370,7 +420,7 @@ export function ReportSalesTab({
         tooltip: t('reports.profitability.grossFormula', {
           defaultValue: 'Lợi nhuận gộp = Doanh thu − Giá vốn − Phí sàn − Chi phí Ads − Giảm giá',
         }),
-        value: (row) => row.partialGrossProfitAmount ?? row.grossProfitAmount,
+        value: (row) => row.grossProfitAmount,
       },
       {
         key: 'refund',
@@ -381,12 +431,17 @@ export function ReportSalesTab({
         value: (row) => row.refundAmount,
       },
       {
+        key: 'profitAfterAds',
+        label: t('reports.metrics.profitAfterAds'),
+        value: (row) => row.profitAfterAdsAmount ?? null,
+      },
+      {
         key: 'operatingCost',
         label: t('reports.columns.operatingCost'),
         tooltip: t('reports.tooltips.operatingCost', {
           defaultValue: 'Chi phí vận hành / nhân sự phân bổ',
         }),
-        value: (row) => row.operatingCostAmount,
+        value: (row) => (row.operatingCostCoverage === 'RECORDED' ? row.operatingCostAmount : null),
       },
       {
         key: 'netProfit',
@@ -394,7 +449,7 @@ export function ReportSalesTab({
         tooltip: t('reports.profitability.netFormula', {
           defaultValue: 'Lợi nhuận ròng = Lợi nhuận gộp − Hoàn tiền − Chi phí vận hành',
         }),
-        value: (row) => row.partialNetProfitAmount ?? row.netProfitAmount,
+        value: (row) => row.netProfitAmount,
       },
     ],
     [t],
@@ -462,10 +517,9 @@ export function ReportSalesTab({
                 ]
               }),
             )
-            const totalValue = Object.values(dateValues).reduce<number>(
-              (sum, value) => sum + (value || 0),
-              0,
-            )
+            const totalValue = Object.values(dateValues).some((value) => value === null)
+              ? null
+              : Object.values(dateValues).reduce<number>((sum, value) => sum + (value || 0), 0)
             return {
               key: `${currency}-${sellerKey}-${metric.key}`,
               sellerName,

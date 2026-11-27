@@ -1,3 +1,5 @@
+import dayjs from 'dayjs'
+import { useUrlFilters } from '@/shared/hooks/useUrlFilters'
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteLoaderData, useSearchParams } from 'react-router-dom'
@@ -20,7 +22,7 @@ import {
   StatusTag,
 } from '@/shared/ui'
 
-import type { FinanceSnapshot } from '../api/financeApi'
+import type { FinanceSnapshot, FinanceParams } from '../api/financeApi'
 import { FinanceCurrencySummary } from '../components/FinanceCurrencySummary'
 import { formatFinanceMoney } from '../components/financeFormatters'
 import { FinanceItemSnapshotModal } from '../components/FinanceItemSnapshotModal'
@@ -60,63 +62,110 @@ export const FinanceWorkspacePage = ({
 
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
-  const [search, setSearch] = useState('')
-  const [costStatus, setCostStatus] = useState<string>()
-  const [financialStatus, setFinancialStatus] = useState<string>()
-  const [salesChannelCode, setSalesChannelCode] = useState<string | undefined>(
-    fixedSalesChannelCode || initialSalesChannelCode,
+  const [urlFilters, setUrlFilters] = useUrlFilters<FinanceParams>(
+    {
+      ...getDefaultDateRange(7, dayjs(), 'Asia/Ho_Chi_Minh'),
+      salesChannelCode: fixedSalesChannelCode || initialSalesChannelCode,
+    },
+    [
+      'externalOrderId',
+      'costStatus',
+      'financialStatus',
+      'salesChannelCode',
+      'sellerEmployeeCode',
+      'teamId',
+      'departmentId',
+      'shopId',
+      'marketplaceCode',
+      'currency',
+      'dateFrom',
+      'dateTo',
+    ],
   )
-  const [sellerEmployeeCode, setSellerEmployeeCode] = useState<string>()
-  const [teamId, setTeamId] = useState<string>()
-  const [departmentId, setDepartmentId] = useState<string>()
-  const [dates, setDates] = useState<DateRangeValue>(getDefaultDateRange)
+  const search = urlFilters.externalOrderId || ''
+  const {
+    costStatus,
+    financialStatus,
+    salesChannelCode,
+    sellerEmployeeCode,
+    teamId,
+    departmentId,
+    shopId,
+    marketplaceCode,
+    currency,
+  } = urlFilters
+  const dates = { dateFrom: urlFilters.dateFrom, dateTo: urlFilters.dateTo }
   const [selected, setSelected] = useState<FinanceSnapshot>()
   const [selectedItemId, setSelectedItemId] = useState<string>()
   const activeItemId = selectedItemId || searchParams.get('orderItemId') || undefined
 
-  const handleSearchChange = useCallback((value: string) => {
-    setSearch(value)
-    setPage(1)
-  }, [])
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      setUrlFilters((current) => ({ ...current, externalOrderId: value }))
+      setPage(1)
+    },
+    [setUrlFilters],
+  )
 
-  const handleSalesChannelChange = useCallback((value?: string) => {
-    setSalesChannelCode(value)
-    setPage(1)
-  }, [])
+  const handleSalesChannelChange = useCallback(
+    (value?: string) => {
+      setUrlFilters((current) => ({ ...current, salesChannelCode: value }))
+      setPage(1)
+    },
+    [setUrlFilters],
+  )
 
-  const handleSellerChange = useCallback((value?: string) => {
-    setSellerEmployeeCode(value)
-    setPage(1)
-  }, [])
+  const handleSellerChange = useCallback(
+    (value?: string) => {
+      setUrlFilters((current) => ({ ...current, sellerEmployeeCode: value }))
+      setPage(1)
+    },
+    [setUrlFilters],
+  )
 
-  const handleTeamChange = useCallback((value?: string) => {
-    setTeamId(value)
-    setPage(1)
-  }, [])
+  const handleTeamChange = useCallback(
+    (value?: string) => {
+      setUrlFilters((current) => ({ ...current, teamId: value }))
+      setPage(1)
+    },
+    [setUrlFilters],
+  )
 
-  const handleDepartmentChange = useCallback((value?: string) => {
-    setDepartmentId(value)
-    setPage(1)
-  }, [])
+  const handleDepartmentChange = useCallback(
+    (value?: string) => {
+      setUrlFilters((current) => ({ ...current, departmentId: value }))
+      setPage(1)
+    },
+    [setUrlFilters],
+  )
 
-  const handleDateRangeChange = useCallback((value: DateRangeValue) => {
-    setDates(value)
-    setPage(1)
-  }, [])
+  const handleDateRangeChange = useCallback(
+    (value: DateRangeValue) => {
+      setUrlFilters((current) => ({ ...current, dateFrom: value.dateFrom, dateTo: value.dateTo }))
+      setPage(1)
+    },
+    [setUrlFilters],
+  )
 
-  const handleCostStatusChange = useCallback((value?: string) => {
-    setCostStatus(value)
-    setPage(1)
-  }, [])
+  const handleCostStatusChange = useCallback(
+    (value?: string) => {
+      setUrlFilters((current) => ({ ...current, costStatus: value }))
+      setPage(1)
+    },
+    [setUrlFilters],
+  )
 
-  const handleFinancialStatusChange = useCallback((value?: string) => {
-    setFinancialStatus(value)
-    setPage(1)
-  }, [])
+  const handleFinancialStatusChange = useCallback(
+    (value?: string) => {
+      setUrlFilters((current) => ({ ...current, financialStatus: value }))
+      setPage(1)
+    },
+    [setUrlFilters],
+  )
 
   const effectiveSalesChannelCode = fixedSalesChannelCode || salesChannelCode
 
-  const { snapshots, filterOptions, shopNameById, queryParams } = useFinanceWorkspace({
+  const { snapshots, filterOptions, shops, shopNameById, queryParams } = useFinanceWorkspace({
     globalRead,
     page,
     pageSize,
@@ -127,6 +176,9 @@ export const FinanceWorkspacePage = ({
     sellerEmployeeCode,
     teamId,
     departmentId,
+    shopId,
+    marketplaceCode,
+    currency,
     dates,
   })
 
@@ -143,7 +195,11 @@ export const FinanceWorkspacePage = ({
 
   const handleCloseItemSnapshot = useCallback(() => {
     setSelectedItemId(undefined)
-    setSearchParams({})
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current)
+      next.delete('orderItemId')
+      return next
+    })
   }, [setSearchParams])
 
   const tableError = snapshots.isError ? (
@@ -334,6 +390,13 @@ export const FinanceWorkspacePage = ({
 
   return (
     <section className={styles.page}>
+      {Boolean(snapshots.data?.missingSnapshotCount) && (
+        <Alert
+          type="warning"
+          showIcon
+          message={t('finance.missingSnapshots', { count: snapshots.data?.missingSnapshotCount })}
+        />
+      )}
       <Alert
         type="info"
         showIcon
@@ -458,7 +521,52 @@ export const FinanceWorkspacePage = ({
                 label: value.replaceAll('_', ' '),
               }))}
             />
+            <Select
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              aria-label={t('finance.filters.shop')}
+              placeholder={t('finance.filters.shop')}
+              value={shopId}
+              onChange={(value) => {
+                setUrlFilters((current) => ({ ...current, shopId: value }))
+                setPage(1)
+              }}
+              options={(shops.data?.items || []).map((shop) => ({
+                value: shop.id,
+                label: shop.name,
+              }))}
+            />
+            <Select
+              allowClear
+              aria-label={t('finance.filters.marketplace')}
+              placeholder={t('finance.filters.marketplace')}
+              value={marketplaceCode}
+              onChange={(value) => {
+                setUrlFilters((current) => ({ ...current, marketplaceCode: value }))
+                setPage(1)
+              }}
+              options={(filterOptions.data?.marketplaces || []).map((value) => ({
+                value,
+                label: value,
+              }))}
+            />
+            <Select
+              allowClear
+              aria-label={t('finance.filters.currency')}
+              placeholder={t('finance.filters.currency')}
+              value={currency}
+              onChange={(value) => {
+                setUrlFilters((current) => ({ ...current, currency: value }))
+                setPage(1)
+              }}
+              options={['USD', 'CAD', 'EUR', 'GBP', 'VND'].map((value) => ({
+                value,
+                label: value,
+              }))}
+            />
             <DateRangePicker
+              timeZone="Asia/Ho_Chi_Minh"
               value={dates}
               onChange={handleDateRangeChange}
               aria-label={t('finance.filters.date')}
@@ -492,6 +600,7 @@ export const FinanceWorkspacePage = ({
 
       <FinanceOrderDetailModal
         selectedOrder={selected}
+        filters={queryParams}
         canWrite={canWrite}
         isRecalculatingOrder={recalculate.isPending}
         isRecalculatingItem={recalculateItem.isPending}

@@ -31,7 +31,10 @@ export const ReportTeamTab: React.FC<ReportTeamTabProps> = React.memo(
       [teamsData],
     )
     const spend = useMemo(
-      () => teamsData.reduce((sum, r) => sum + (r.adSpendAmount || 0), 0),
+      () =>
+        teamsData.length && teamsData.every((row) => row.adsCoverage === 'RECORDED')
+          ? teamsData.reduce((sum, r) => sum + (r.adSpendAmount || 0), 0)
+          : null,
       [teamsData],
     )
     const netProfit = useMemo(
@@ -75,7 +78,11 @@ export const ReportTeamTab: React.FC<ReportTeamTabProps> = React.memo(
           width: 120,
           align: 'right',
           sorter: (a, b) => (a.adSpendAmount || 0) - (b.adSpendAmount || 0),
-          render: (_, row) => formatReportMoney(row.adSpendAmount || 0, row.currency || 'USD'),
+          render: (_, row) =>
+            formatReportMoney(
+              row.adsCoverage === 'RECORDED' ? row.adSpendAmount : null,
+              row.currency || 'USD',
+            ),
         },
         {
           title: t('reports.columns.netProfit'),

@@ -55,6 +55,34 @@ function renderPage(initialEntry = '/portal/finance') {
 }
 
 describe('FinanceWorkspacePage', () => {
+  it('requests order grouping and expands scoped item rows', async () => {
+    const data = await listFinanceSnapshots({})
+    const item = data.items[0]
+    vi.mocked(listFinanceSnapshots).mockResolvedValue({
+      ...data,
+      items: [
+        {
+          ...item,
+          id: 'group',
+          rowType: 'ORDER',
+          orderItemId: null,
+          productTitle: null,
+          children: [
+            { ...item, id: 'child-1', productTitle: 'First item' },
+            { ...item, id: 'child-2', orderItemId: 'item-2', productTitle: 'Second item' },
+          ],
+        },
+      ],
+    })
+    renderPage()
+    await waitFor(() =>
+      expect(listFinanceSnapshots).toHaveBeenCalledWith(
+        expect.objectContaining({ groupBy: 'ORDER' }),
+      ),
+    )
+    fireEvent.click(await screen.findByRole('button', { name: /expand row/i }))
+    expect(await screen.findByText('Second item')).toBeInTheDocument()
+  })
   beforeEach(async () => {
     accountState.current = {
       account: { id: 'account-1', email: 'finance@lng.co', mustChangePassword: false },
@@ -368,7 +396,7 @@ describe('FinanceWorkspacePage', () => {
               refundAmount: 0,
               discountAmount: 0,
               baseCostAmount: 4470,
-              additionalFulfillmentCostAmount: 4970,
+              additionalFulfillmentCostAmount: 500,
               knownCostAmount: 4970,
               totalCostAmount: 4970,
               profitAmount: 8565,
@@ -385,11 +413,11 @@ describe('FinanceWorkspacePage', () => {
     expect(await screen.findByText('$5.00')).toBeInTheDocument()
   })
 
-  it('keeps one filter row, omits marketplace, and puts export in the profitability header', async () => {
+  it('keeps one filter row, includes marketplace, and puts export in the profitability header', async () => {
     renderPage()
 
     await screen.findByText('USD')
-    expect(screen.queryByLabelText('Marketplace')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Marketplace')).toBeInTheDocument()
     expect(screen.queryByTestId('finance-secondary-filters')).not.toBeInTheDocument()
     expect(screen.getByText('Export CSV').closest('.ant-card-head')).not.toBeNull()
   })
@@ -403,7 +431,7 @@ describe('FinanceWorkspacePage', () => {
 
     fireEvent.click((await screen.findByText('ORDER-100')).closest('tr')!)
     expect((await screen.findAllByText('Gross sales')).length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Net profit').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Profit before ads').length).toBeGreaterThan(0)
     expect(await screen.findByText('Additional fulfillment cost')).toBeInTheDocument()
     expect(screen.getAllByText('Estimated 15%')).toHaveLength(2)
     expect(screen.getByText('Revenue & deductions')).toBeInTheDocument()

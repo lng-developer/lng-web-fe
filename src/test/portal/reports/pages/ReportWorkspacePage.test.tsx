@@ -181,11 +181,47 @@ describe('ReportWorkspacePage', () => {
 
   afterEach(cleanup)
 
+  it('carries date, seller, shop and currency from the URL into Finance drill-down', async () => {
+    render(
+      <MemoryRouter
+        initialEntries={[
+          '/portal/reports?dateFrom=2026-11-21&dateTo=2026-11-27&shopId=shop-1&sellerEmployeeCode=J2503&currency=USD',
+        ]}
+      >
+        <AppProviders>
+          <ReportWorkspacePage />
+        </AppProviders>
+      </MemoryRouter>,
+    )
+    await waitFor(() =>
+      expect(listFinanceBySeller).toHaveBeenCalledWith(
+        expect.objectContaining({
+          dateFrom: '2026-11-21',
+          dateTo: '2026-11-27',
+          shopId: 'shop-1',
+          sellerEmployeeCode: 'J2503',
+          currency: 'USD',
+        }),
+      ),
+    )
+    const link = screen.getByRole('link', { name: 'Order P&L' })
+    const query = new URL(link.getAttribute('href')!, 'https://example.test').searchParams
+    expect(Object.fromEntries(query)).toMatchObject({
+      dateFrom: '2026-11-21',
+      dateTo: '2026-11-27',
+      shopId: 'shop-1',
+      sellerEmployeeCode: 'J2503',
+      currency: 'USD',
+    })
+  })
+
   it('loads seller profitability immediately with the default seven-day period', async () => {
     render(
-      <AppProviders>
-        <ReportWorkspacePage />
-      </AppProviders>,
+      <MemoryRouter>
+        <AppProviders>
+          <ReportWorkspacePage />
+        </AppProviders>
+      </MemoryRouter>,
     )
 
     await waitFor(() => expect(listFinanceBySeller).toHaveBeenCalledTimes(1))
@@ -242,32 +278,29 @@ describe('ReportWorkspacePage', () => {
   })
 
   it('loads Amazon net P&L with the channel filter locked by its route', async () => {
-    const sellerRows = Array.from(
-      { length: 9 },
-      (_, index): SellerDailyProfit => ({
-        date: '2026-09-01',
-        sellerEmployeeCode: `seller-${index + 1}`,
-        sellerName: index === 0 ? 'Đặng Thành Trung' : `Seller ${index + 1}`,
-        currency: 'USD',
-        itemCount: 2,
-        orderCount: 2,
-        revenueAmount: 10000,
-        baseCostAmount: 4000,
-        totalCostAmount: index === 8 ? null : 4800,
-        additionalFulfillmentCostAmount: 800,
-        marketplaceFeeAmount: 500,
-        refundAmount: 1200,
-        discountAmount: 800,
-        taxAmount: 0,
-        grossProfitAmount: 3500,
-        operatingCostAmount: 500,
-        adSpendAmount: 1000,
-        netProfitAmount: index === 8 ? null : 2000,
-        partialNetProfitAmount: index === 8 ? 1500 : 2000,
-        netMarginBps: index === 8 ? null : 2000,
-        missingCostCount: index === 8 ? 1 : 0,
-      }),
-    )
+    const sellerRows = Array.from({ length: 9 }, (_, index): SellerDailyProfit => ({
+      date: '2026-09-01',
+      sellerEmployeeCode: `seller-${index + 1}`,
+      sellerName: index === 0 ? 'Đặng Thành Trung' : `Seller ${index + 1}`,
+      currency: 'USD',
+      itemCount: 2,
+      orderCount: 2,
+      revenueAmount: 10000,
+      baseCostAmount: 4000,
+      totalCostAmount: index === 8 ? null : 4800,
+      additionalFulfillmentCostAmount: 800,
+      marketplaceFeeAmount: 500,
+      refundAmount: 1200,
+      discountAmount: 800,
+      taxAmount: 0,
+      grossProfitAmount: 3500,
+      operatingCostAmount: 500,
+      adSpendAmount: 1000,
+      netProfitAmount: index === 8 ? null : 2000,
+      partialNetProfitAmount: index === 8 ? 1500 : 2000,
+      netMarginBps: index === 8 ? null : 2000,
+      missingCostCount: index === 8 ? 1 : 0,
+    }))
     vi.mocked(listFinanceSellerDaily).mockResolvedValueOnce(sellerRows)
 
     render(
@@ -300,8 +333,7 @@ describe('ReportWorkspacePage', () => {
     expect(await screen.findByRole('img', { name: 'Profit comparison' })).toBeInTheDocument()
     expect(screen.getAllByText('Đặng Thành Trung')).toHaveLength(2)
     expect(screen.getAllByText('Seller 9').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getByText('$15.00')).toBeInTheDocument()
-    expect(screen.getByText('1 / 2 items with cost')).toBeInTheDocument()
+    expect(screen.queryByText('$15.00')).not.toBeInTheDocument()
     expect(
       await screen.findByRole('heading', { name: 'Daily seller P&L · USD' }),
     ).toBeInTheDocument()
@@ -369,9 +401,11 @@ describe('ReportWorkspacePage', () => {
 
   it('shows finance coverage beside seller profitability without mixing it into profit totals', async () => {
     render(
-      <AppProviders>
-        <ReportWorkspacePage />
-      </AppProviders>,
+      <MemoryRouter>
+        <AppProviders>
+          <ReportWorkspacePage />
+        </AppProviders>
+      </MemoryRouter>,
     )
 
     expect(await screen.findByRole('heading', { name: 'Data coverage' })).toBeInTheDocument()
@@ -399,9 +433,11 @@ describe('ReportWorkspacePage', () => {
     ])
 
     render(
-      <AppProviders>
-        <ReportWorkspacePage />
-      </AppProviders>,
+      <MemoryRouter>
+        <AppProviders>
+          <ReportWorkspacePage />
+        </AppProviders>
+      </MemoryRouter>,
     )
 
     fireEvent.click(screen.getByRole('tab', { name: 'Ads & attribution' }))
@@ -430,9 +466,11 @@ describe('ReportWorkspacePage', () => {
     ])
 
     render(
-      <AppProviders>
-        <ReportWorkspacePage />
-      </AppProviders>,
+      <MemoryRouter>
+        <AppProviders>
+          <ReportWorkspacePage />
+        </AppProviders>
+      </MemoryRouter>,
     )
 
     fireEvent.click(screen.getByRole('tab', { name: 'Ads & attribution' }))
@@ -468,6 +506,7 @@ describe('ReportWorkspacePage', () => {
         grossProfitAmount: 4500,
         operatingCostAmount: 3000,
         adSpendAmount: 800,
+        adsCoverage: 'RECORDED',
         netProfitAmount: 700,
         netMarginBps: 700,
         missingCostCount: 0,
@@ -475,9 +514,11 @@ describe('ReportWorkspacePage', () => {
     ])
 
     render(
-      <AppProviders>
-        <ReportWorkspacePage />
-      </AppProviders>,
+      <MemoryRouter>
+        <AppProviders>
+          <ReportWorkspacePage />
+        </AppProviders>
+      </MemoryRouter>,
     )
 
     expect(
@@ -490,11 +531,11 @@ describe('ReportWorkspacePage', () => {
       screen.getAllByRole('table').some((table) => table.closest('[class*="dailyTable"]')),
     ).toBe(true)
     expect(screen.getByText('Product cost')).toBeInTheDocument()
-    expect(screen.getAllByText('Gross profit').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('Profit before ads').length).toBeGreaterThanOrEqual(1)
     expect(await screen.findByText('Additional fulfillment')).toBeInTheDocument()
     expect(
       screen.getByText(
-        'Gross profit = Revenue − Total cost − Marketplace fee − Ad spend − Discount',
+        'Recognized revenue minus marketplace fees and effective fulfillment cost. Refunds and discounts are already deducted.',
       ),
     ).toBeInTheDocument()
     expect(screen.queryByText('Tax')).not.toBeInTheDocument()
@@ -506,7 +547,9 @@ describe('ReportWorkspacePage', () => {
       2,
     )
     expect(
-      screen.getByText('Net profit = Gross profit − Refund − Operating cost'),
+      screen.getByText(
+        'Profit before ads minus advertising and operating costs. Missing coverage remains unavailable.',
+      ),
     ).toBeInTheDocument()
     expect(screen.getAllByText('Alex')).toHaveLength(1)
     expect(listFinanceSellerDaily).toHaveBeenCalledTimes(1)
@@ -514,9 +557,11 @@ describe('ReportWorkspacePage', () => {
 
   it('places export in the filter bar', async () => {
     render(
-      <AppProviders>
-        <ReportWorkspacePage />
-      </AppProviders>,
+      <MemoryRouter>
+        <AppProviders>
+          <ReportWorkspacePage />
+        </AppProviders>
+      </MemoryRouter>,
     )
 
     const filters = await screen.findByRole('group', { name: 'Report filters' })
@@ -541,9 +586,11 @@ describe('ReportWorkspacePage', () => {
     ])
 
     render(
-      <AppProviders>
-        <ReportWorkspacePage />
-      </AppProviders>,
+      <MemoryRouter>
+        <AppProviders>
+          <ReportWorkspacePage />
+        </AppProviders>
+      </MemoryRouter>,
     )
 
     expect(await screen.findByRole('tab', { name: 'Seller profitability' })).toHaveAttribute(
@@ -557,7 +604,7 @@ describe('ReportWorkspacePage', () => {
     expect((await screen.findAllByText('Alex')).length).toBeGreaterThan(1)
   })
 
-  it('compares the known-cost subtotal when final profit is incomplete', async () => {
+  it('keeps the chart incomplete when only a known-cost subtotal exists', async () => {
     vi.mocked(listFinanceBySeller).mockResolvedValueOnce([
       {
         sellerEmployeeCode: 'seller-1',
@@ -578,14 +625,17 @@ describe('ReportWorkspacePage', () => {
     ])
 
     render(
-      <AppProviders>
-        <ReportWorkspacePage />
-      </AppProviders>,
+      <MemoryRouter>
+        <AppProviders>
+          <ReportWorkspacePage />
+        </AppProviders>
+      </MemoryRouter>,
     )
 
-    expect(await screen.findByText('Partial gross profit')).toBeInTheDocument()
-    expect(screen.getByText('$32.00')).toBeInTheDocument()
-    expect(screen.getByText('2 / 3 items with cost')).toBeInTheDocument()
+    expect((await screen.findAllByText('Alex')).length).toBeGreaterThan(0)
+    const chart = screen.getByRole('img', { name: 'Profit comparison' })
+    expect(within(chart).queryByText('$32.00')).not.toBeInTheDocument()
+    expect(within(chart).queryByText('$0.00')).not.toBeInTheDocument()
   })
 
   it('groups long date ranges into weekly revenue points', () => {
@@ -639,9 +689,11 @@ describe('ReportWorkspacePage', () => {
     ])
 
     render(
-      <AppProviders>
-        <ReportWorkspacePage />
-      </AppProviders>,
+      <MemoryRouter>
+        <AppProviders>
+          <ReportWorkspacePage />
+        </AppProviders>
+      </MemoryRouter>,
     )
     const sellerCard = (await screen.findByRole('heading', { name: 'Seller P&L' })).closest(
       '.ant-card',
@@ -668,6 +720,7 @@ describe('ReportWorkspacePage', () => {
         grossProfitAmount: 6000,
         operatingCostAmount: 3000,
         adSpendAmount: 800,
+        adsCoverage: 'RECORDED',
         netProfitAmount: 2200,
         netMarginBps: 1833,
         missingCostCount: 0,
@@ -675,9 +728,11 @@ describe('ReportWorkspacePage', () => {
     ])
 
     render(
-      <AppProviders>
-        <ReportWorkspacePage />
-      </AppProviders>,
+      <MemoryRouter>
+        <AppProviders>
+          <ReportWorkspacePage />
+        </AppProviders>
+      </MemoryRouter>,
     )
     const sellerCard = (await screen.findByRole('heading', { name: 'Seller P&L' })).closest(
       '.ant-card',
@@ -702,6 +757,7 @@ describe('ReportWorkspacePage', () => {
         grossProfitAmount: 0,
         operatingCostAmount: 0,
         adSpendAmount: 291,
+        adsCoverage: 'RECORDED',
         netProfitAmount: -291,
         netMarginBps: null,
         missingCostCount: 0,
@@ -710,9 +766,11 @@ describe('ReportWorkspacePage', () => {
     ])
 
     render(
-      <AppProviders>
-        <ReportWorkspacePage />
-      </AppProviders>,
+      <MemoryRouter>
+        <AppProviders>
+          <ReportWorkspacePage />
+        </AppProviders>
+      </MemoryRouter>,
     )
     fireEvent.click(screen.getByRole('tab', { name: 'Team comparison' }))
 
@@ -740,9 +798,11 @@ describe('ReportWorkspacePage', () => {
     }
 
     render(
-      <AppProviders>
-        <ReportWorkspacePage />
-      </AppProviders>,
+      <MemoryRouter>
+        <AppProviders>
+          <ReportWorkspacePage />
+        </AppProviders>
+      </MemoryRouter>,
     )
 
     await waitFor(() => expect(listFinanceBySeller).toHaveBeenCalledTimes(1))

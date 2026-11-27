@@ -20,6 +20,9 @@ export interface UseFinanceWorkspaceParams {
   sellerEmployeeCode?: string
   teamId?: string
   departmentId?: string
+  shopId?: string
+  marketplaceCode?: string
+  currency?: string
   dates: DateRangeValue
 }
 
@@ -34,12 +37,16 @@ export const useFinanceWorkspace = ({
   sellerEmployeeCode,
   teamId,
   departmentId,
+  shopId,
+  marketplaceCode,
+  currency,
   dates,
 }: UseFinanceWorkspaceParams) => {
   const debouncedSearch = useDebouncedValue(search, 250)
 
   const queryParams = useMemo(
     () => ({
+      groupBy: 'ORDER' as const,
       page,
       limit: pageSize,
       externalOrderId: debouncedSearch || undefined,
@@ -49,6 +56,9 @@ export const useFinanceWorkspace = ({
       sellerEmployeeCode,
       teamId,
       departmentId,
+      shopId,
+      marketplaceCode,
+      currency,
       dateBasis: 'ORDERED_AT',
       ...dates,
     }),
@@ -62,6 +72,9 @@ export const useFinanceWorkspace = ({
       sellerEmployeeCode,
       teamId,
       departmentId,
+      shopId,
+      marketplaceCode,
+      currency,
       dates,
     ],
   )

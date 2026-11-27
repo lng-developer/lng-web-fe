@@ -4,9 +4,19 @@ import { compactParams, unwrapResponse } from '@/shared/api/helpers'
 const unwrap = unwrapResponse
 
 export type FinanceSnapshot = {
+  rowType?: 'ORDER'
+  children?: FinanceSnapshot[]
+  calculationVersion?: number
+  estimatedFulfillmentCostAmount?: number | null
+  effectiveFulfillmentCostAmount?: number | null
+  recognizedNetRevenueAmount?: number | null
+  profitBeforeAdsAmount?: number | null
+  costSource?: 'ACTUAL' | 'ESTIMATED' | 'MISSING'
+  costVarianceAmount?: number | null
+  costComponents?: Array<{ code: string; amount: number; label?: string | null }>
   id: string
   orderId: string
-  orderItemId: string
+  orderItemId: string | null
   productImageUrl?: string | null
   productTitle?: string | null
   productSku?: string | null
@@ -38,6 +48,13 @@ export type FinanceSnapshot = {
     missingCostReason: string | null
   }
   actualVendorCost?: {
+    allocation?: {
+      vendorOrderId: string
+      currency: string
+      totalAmount: number
+      basis: string
+      orderItemIds: string[]
+    } | null
     baseCostAmount: number | null
     shippingAmount: number | null
     taxAmount: number | null
@@ -82,10 +99,15 @@ export type FinanceSnapshot = {
   }>
 }
 export type OrderFinanceSummary = {
+  missingSnapshotCount?: number
+  recognizedNetRevenueAmount?: number | null
+  revenueAdjustmentAmount?: number | null
+  marketplaceFeeAmount?: number | null
+  summaryByCurrency?: OrderFinanceSummary[]
   orderId: string
   itemCount: number
   currency: string | null
-  customerPaidAmount: number
+  customerPaidAmount: number | null
   baseCostAmount: number | null
   totalCostAmount: number | null
   grossProfitAmount: number | null
@@ -94,6 +116,10 @@ export type OrderFinanceSummary = {
   snapshots: FinanceSnapshot[]
 }
 export type FinanceParams = {
+  currency?: string
+  shopId?: string
+  financialStatus?: string
+  groupBy?: 'ORDER' | 'ITEM'
   page?: number
   limit?: number
   externalOrderId?: string
@@ -119,11 +145,12 @@ export type FinanceSnapshotSummary = {
   additionalFulfillmentCostAmount: number
   knownCostAmount: number
   totalCostAmount: number | null
-  profitAmount: number
+  profitAmount: number | null
   grossMarginBps: number | null
   missingCostCount: number
 }
 export type FinancePage = {
+  missingSnapshotCount?: number
   items: FinanceSnapshot[]
   pagination: { total: number; page: number; limit: number }
   summaryByCurrency: FinanceSnapshotSummary[]
@@ -358,8 +385,13 @@ export async function exportFinanceSnapshotsCsv(query: FinanceParams) {
 export async function listFinanceFilterOptions() {
   return unwrap<FinanceFilterOptions>(await apiClient.get('/api/finance/filter-options'))
 }
-export async function getOrderFinanceSummary(orderId: string) {
-  return unwrap<OrderFinanceSummary>(await apiClient.get(`/api/finance/orders/${orderId}/summary`))
+export async function getOrderFinanceSummary(orderId: string, filters?: FinanceParams) {
+  return unwrap<OrderFinanceSummary>(
+    await apiClient.get(
+      `/api/finance/orders/${orderId}/summary`,
+      filters ? { params: compactParams(filters) } : undefined,
+    ),
+  )
 }
 export type BulkRecalculateResponse = {
   totalRequested: number

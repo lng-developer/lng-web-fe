@@ -3,7 +3,19 @@ import { compactParams, unwrapResponse } from '@/shared/api/helpers'
 
 const unwrap = unwrapResponse
 
+// Existing chart slots retain their keys; their values come only from explicit BE stages.
+function canonicalProfitRow<T extends ProfitStages>(row: T) {
+  return {
+    ...row,
+    grossProfitAmount: row.profitBeforeAdsAmount ?? null,
+    netProfitAmount: row.profitAfterOperatingCostsAmount ?? null,
+    netMarginBps: row.profitAfterOperatingCostsMarginBps ?? null,
+    grossMarginBps: row.profitBeforeAdsMarginBps ?? null,
+  }
+}
+
 export type ReportFilters = {
+  currency?: string
   externalOrderId?: string
   dateBasis?: 'ORDERED_AT' | 'CALCULATED_AT'
   dateFrom?: string
@@ -22,6 +34,9 @@ export type ReportFilters = {
   limit?: number
 }
 export type FinanceCoverage = {
+  missingSnapshotCount?: number
+  migrationPendingCount?: number
+  allocatedFeeCount?: number
   currency: string | null
   itemCount: number
   actualCount: number
@@ -31,7 +46,17 @@ export type FinanceCoverage = {
   latestCalculatedAt: string | null
 }
 
-export type FinanceDaily = {
+type ProfitStages = {
+  profitBeforeAdsMarginBps?: number | null
+  profitAfterOperatingCostsMarginBps?: number | null
+  operatingCostCoverage?: string
+  profitBeforeAdsAmount?: number | null
+  profitAfterAdsAmount?: number | null
+  profitAfterOperatingCostsAmount?: number | null
+  adsCoverage?: string
+}
+
+export type FinanceDaily = ProfitStages & {
   date: string
   salesChannelCode: string | null
   marketplaceCode: string | null
@@ -52,11 +77,11 @@ export type FinanceDaily = {
   grossMarginBps: number | null
   missingCostCount: number
   adSpendAmount?: number
-  netProfitAmount?: number
+  netProfitAmount?: number | null
   netMarginBps?: number | null
 }
 
-export type SellerPerformance = {
+export type SellerPerformance = ProfitStages & {
   sellerEmployeeCode: string | null
   sellerName: string | null
   currency: string | null
@@ -109,6 +134,7 @@ export type ChannelPerformance = {
 
 export type SellerDailyProfit = SellerPerformance & {
   date: string
+  orderIds?: string[]
   orderCount: number
   totalCostAmount: number | null
   additionalFulfillmentCostAmount: number | null
@@ -155,6 +181,10 @@ export type OrderItemThumbnail = {
 }
 
 export type OrderProfitability = {
+  estimatedFulfillmentCostAmount?: number | null
+  actualVendorTotalAmount?: number | null
+  costVarianceAmount?: number | null
+  costSource?: string
   orderId: string | null
   externalOrderId: string | null
   orderedAt: string | null
@@ -197,14 +227,17 @@ export type PaginatedReport<T> = {
 }
 
 export type OrderProfitabilitySummary = {
+  missingSnapshotCount?: number
+  refundAmount?: number
   currency: string | null
+  orderIds?: string[]
   orderCount: number
   costedOrderCount: number
   missingCostOrderCount: number
   revenueAmount: number
   netRevenueAmount?: number
-  totalCostAmount: number
-  profitAmount: number
+  totalCostAmount: number | null
+  profitAmount: number | null
   marginBps: number | null
   profitableOrderCount: number
   lossOrderCount: number
@@ -269,20 +302,45 @@ export const getReportFilterOptions = (options?: SignalOptions) =>
   get<ReportFilterOptions>('/api/reports/filter-options', undefined, extractSignal(options))
 export const exportReportCsv = (filters: ReportFilters) =>
   getBlob('/api/reports/export.csv', filters)
-export const listFinanceDaily = (filters: ReportFilters, signal?: AbortSignal) =>
-  get<FinanceDaily[]>('/api/reports/finance/daily', filters, signal)
+export const listFinanceDaily = (
+  filters: ReportFilters,
+  signal?: AbortSignal,
+): Promise<FinanceDaily[]> =>
+  get<FinanceDaily[]>('/api/reports/finance/daily', filters, signal).then((rows) =>
+    rows.map(canonicalProfitRow),
+  )
 export const listFinanceCoverage = (filters: ReportFilters, signal?: AbortSignal) =>
   get<FinanceCoverage[]>('/api/reports/finance/coverage', filters, signal)
-export const listFinanceDailyProfit = (filters: ReportFilters, signal?: AbortSignal) =>
-  get<FinanceDaily[]>('/api/reports/finance/daily-profit', filters, signal)
+export const listFinanceDailyProfit = (
+  filters: ReportFilters,
+  signal?: AbortSignal,
+): Promise<FinanceDaily[]> =>
+  get<FinanceDaily[]>('/api/reports/finance/daily-profit', filters, signal).then((rows) =>
+    rows.map(canonicalProfitRow),
+  )
 export const listFinanceOrderProfitability = (filters: ReportFilters, signal?: AbortSignal) =>
   get<OrderProfitabilityReport>('/api/reports/finance/orders-profitability', filters, signal)
-export const listFinanceBySeller = (filters: ReportFilters, signal?: AbortSignal) =>
-  get<SellerPerformance[]>('/api/reports/finance/by-seller', filters, signal)
-export const listFinanceSellerDaily = (filters: ReportFilters, signal?: AbortSignal) =>
-  get<SellerDailyProfit[]>('/api/reports/finance/seller-daily', filters, signal)
-export const listFinanceByTeam = (filters: ReportFilters, signal?: AbortSignal) =>
-  get<TeamPerformance[]>('/api/reports/finance/by-team', filters, signal)
+export const listFinanceBySeller = (
+  filters: ReportFilters,
+  signal?: AbortSignal,
+): Promise<SellerPerformance[]> =>
+  get<SellerPerformance[]>('/api/reports/finance/by-seller', filters, signal).then((rows) =>
+    rows.map(canonicalProfitRow),
+  )
+export const listFinanceSellerDaily = (
+  filters: ReportFilters,
+  signal?: AbortSignal,
+): Promise<SellerDailyProfit[]> =>
+  get<SellerDailyProfit[]>('/api/reports/finance/seller-daily', filters, signal).then((rows) =>
+    rows.map(canonicalProfitRow),
+  )
+export const listFinanceByTeam = (
+  filters: ReportFilters,
+  signal?: AbortSignal,
+): Promise<TeamPerformance[]> =>
+  get<TeamPerformance[]>('/api/reports/finance/by-team', filters, signal).then((rows) =>
+    rows.map(canonicalProfitRow),
+  )
 export const getBuyerInsights = (filters: ReportFilters, signal?: AbortSignal) =>
   get<BuyerInsights>('/api/reports/buyers/insights', filters, signal)
 export const listChannelPerformance = (filters: ReportFilters, signal?: AbortSignal) =>
