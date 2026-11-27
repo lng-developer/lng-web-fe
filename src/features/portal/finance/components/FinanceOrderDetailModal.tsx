@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   DollarCircleOutlined,
@@ -9,16 +9,18 @@ import {
   WalletOutlined,
 } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Alert, Button, Image, Space, Spin, Timeline, Typography } from 'antd'
+import { Alert, Button, Image, Select, Space, Spin, Timeline, Typography } from 'antd'
 
 import { DetailDrawer, FormattedDateTime, humanizeCode, MetricCard, StatusTag } from '@/shared/ui'
 
-import { type FinanceSnapshot, getOrderFinanceSummary } from '../api/financeApi'
+import { type FinanceSnapshot, type FinanceParams, getOrderFinanceSummary } from '../api/financeApi'
 import styles from '../pages/FinanceWorkspacePage.module.scss'
 import { formatFinanceMoney } from './financeFormatters'
 
 interface FinanceOrderDetailModalProps {
-  selectedOrder?: (Pick<FinanceSnapshot, 'orderId'> & Partial<FinanceSnapshot>) | null
+  filters?: FinanceParams
+  selectedOrder?:
+    (Pick<FinanceSnapshot, 'orderId'> & Partial<FinanceSnapshot> & { currency?: string }) | null
   canWrite: boolean
   isRecalculatingOrder: boolean
   isRecalculatingItem: boolean
@@ -29,6 +31,7 @@ interface FinanceOrderDetailModalProps {
 }
 
 export const FinanceOrderDetailModal: React.FC<FinanceOrderDetailModalProps> = ({
+  filters,
   selectedOrder,
   canWrite,
   isRecalculatingOrder,
@@ -39,13 +42,25 @@ export const FinanceOrderDetailModal: React.FC<FinanceOrderDetailModalProps> = (
   onRecalculateItem,
 }) => {
   const { t } = useTranslation()
+  const [currencyChoice, setCurrencyChoice] = useState<{ key: string; currency: string }>()
+  const selectionKey = `${selectedOrder?.orderId}|${selectedOrder?.currency || selectedOrder?.revenue?.currency || ''}`
+  const currency =
+    currencyChoice?.key === selectionKey
+      ? currencyChoice.currency
+      : selectedOrder?.currency || selectedOrder?.revenue?.currency
 
   const orderDetail = useQuery({
-    queryKey: ['finance', 'orders', selectedOrder?.orderId, 'summary'],
-    queryFn: () => getOrderFinanceSummary(selectedOrder!.orderId),
+    queryKey: ['finance', 'orders', selectedOrder?.orderId, 'summary', filters],
+    queryFn: () =>
+      filters
+        ? getOrderFinanceSummary(selectedOrder!.orderId, filters)
+        : getOrderFinanceSummary(selectedOrder!.orderId),
     enabled: Boolean(selectedOrder?.orderId),
     retry: false,
   })
+  const groups = orderDetail.data?.summaryByCurrency
+  const summary =
+    groups?.find((group) => group.currency === currency) || groups?.[0] || orderDetail.data
 
   return (
     <DetailDrawer
@@ -60,83 +75,68 @@ export const FinanceOrderDetailModal: React.FC<FinanceOrderDetailModalProps> = (
     >
       {orderDetail.isLoading ? (
         <Spin />
-      ) : orderDetail.data ? (
+      ) : summary ? (
         <Space orientation="vertical" className={styles.detail} size="large">
+          {groups && groups.length > 1 ? (
+            <Select
+              aria-label={t('finance.filters.currency')}
+              value={summary.currency}
+              onChange={(value) => setCurrencyChoice({ key: selectionKey, currency: value })}
+              options={groups.map((group) => ({ value: group.currency, label: group.currency }))}
+            />
+          ) : null}
           <div className={styles.detailSummary}>
             <MetricCard
               icon={<InboxOutlined />}
               label={t('finance.detail.items')}
-              value={String(orderDetail.data.itemCount)}
+              value={String(summary.itemCount)}
               variant="neutral"
             />
             <MetricCard
               icon={<DollarCircleOutlined />}
               label={t('finance.columns.revenue')}
-              value={formatFinanceMoney(
-                orderDetail.data.customerPaidAmount,
-                orderDetail.data.currency || 'USD',
-              )}
+              value={formatFinanceMoney(summary.customerPaidAmount, summary.currency || 'USD')}
               variant="primary"
             />
             <MetricCard
               icon={<DollarCircleOutlined />}
               label="Net revenue"
               value={formatFinanceMoney(
-                orderDetail.data.snapshots.reduce(
-                  (total, snapshot) => total + (snapshot.revenue.netRevenueAmount ?? 0),
-                  0,
-                ),
-                orderDetail.data.currency || 'USD',
+                summary.recognizedNetRevenueAmount,
+                summary.currency || 'USD',
               )}
               variant="neutral"
             />
             <MetricCard
               icon={<WalletOutlined />}
               label={t('finance.columns.cost')}
-              value={formatFinanceMoney(
-                orderDetail.data.totalCostAmount,
-                orderDetail.data.currency || 'USD',
-              )}
+              value={formatFinanceMoney(summary.totalCostAmount, summary.currency || 'USD')}
               variant="warning"
             />
             <MetricCard
               icon={<RiseOutlined />}
               label={t('finance.columns.profit')}
-              value={formatFinanceMoney(
-                orderDetail.data.grossProfitAmount,
-                orderDetail.data.currency || 'USD',
-              )}
+              value={formatFinanceMoney(summary.grossProfitAmount, summary.currency || 'USD')}
               variant="success"
             />
           </div>
 
           {(() => {
-            const orderCurrency = orderDetail.data.currency || 'USD'
-            const totalMarketplaceFee = orderDetail.data.snapshots.reduce(
-              (acc, s) => acc + (s.orderPnl?.marketplaceFeeAmount ?? 0),
-              0,
-            )
-            const totalRefundDiscount = orderDetail.data.snapshots.reduce(
-              (acc, s) => acc + (s.orderPnl?.refundAmount ?? 0) + (s.orderPnl?.discountAmount ?? 0),
-              0,
-            )
-            const totalBaseCost = orderDetail.data.snapshots.reduce(
-              (acc, s) => acc + (s.orderPnl?.baseCostAmount ?? 0),
-              0,
-            )
-            const totalFulfillmentCost = orderDetail.data.snapshots.reduce(
-              (acc, s) => acc + (s.orderPnl?.additionalFulfillmentCostAmount ?? 0),
-              0,
-            )
-            const computedTotalCost =
-              orderDetail.data.totalCostAmount ?? totalBaseCost + totalFulfillmentCost
-            const isProfitable = (orderDetail.data.grossProfitAmount ?? 0) >= 0
-            const grossMarginBps = orderDetail.data.grossMarginBps
+            const orderCurrency = summary.currency || 'USD'
+            const totalMarketplaceFee = summary.marketplaceFeeAmount
+            const totalRefundDiscount = summary.revenueAdjustmentAmount
+            const computedTotalCost = summary.totalCostAmount
+            const isProfitable = (summary.grossProfitAmount ?? 0) >= 0
+            const grossMarginBps = summary.grossMarginBps
             const marginPercent = grossMarginBps != null ? (grossMarginBps / 100).toFixed(1) : null
             const marginVal = grossMarginBps != null ? grossMarginBps / 100 : 0
 
             return (
-              <div className={styles.waterfallCard}>
+              <div
+                className={styles.waterfallCard}
+                role="region"
+                aria-label={t('finance.detail.pnlWaterfall')}
+              >
                 <div className={styles.waterfallHeader}>
                   <Typography.Text strong>{t('finance.detail.pnlWaterfall')}</Typography.Text>
                   {marginPercent != null && (
@@ -159,7 +159,7 @@ export const FinanceOrderDetailModal: React.FC<FinanceOrderDetailModalProps> = (
                       {t('finance.columns.revenue')}
                     </span>
                     <span className={styles.waterfallStepValue}>
-                      {formatFinanceMoney(orderDetail.data.customerPaidAmount, orderCurrency)}
+                      {formatFinanceMoney(summary.customerPaidAmount, orderCurrency)}
                     </span>
                   </div>
                   <div className={`${styles.waterfallStep} ${styles.waterfallOutflow}`}>
@@ -170,7 +170,7 @@ export const FinanceOrderDetailModal: React.FC<FinanceOrderDetailModalProps> = (
                   </div>
                   <div className={`${styles.waterfallStep} ${styles.waterfallOutflow}`}>
                     <span className={styles.waterfallStepTitle}>
-                      {t('finance.detail.refund')} / {t('finance.detail.discount')}
+                      {t('finance.detail.revenueAdjustment')}
                     </span>
                     <span className={styles.waterfallStepValue}>
                       -{formatFinanceMoney(totalRefundDiscount, orderCurrency)}
@@ -189,7 +189,7 @@ export const FinanceOrderDetailModal: React.FC<FinanceOrderDetailModalProps> = (
                   >
                     <span className={styles.waterfallStepTitle}>{t('finance.columns.profit')}</span>
                     <span className={styles.waterfallStepValue}>
-                      {formatFinanceMoney(orderDetail.data.grossProfitAmount, orderCurrency)}
+                      {formatFinanceMoney(summary.grossProfitAmount, orderCurrency)}
                     </span>
                   </div>
                 </div>
@@ -197,7 +197,7 @@ export const FinanceOrderDetailModal: React.FC<FinanceOrderDetailModalProps> = (
             )
           })()}
 
-          {orderDetail.data.snapshots.map((snapshot, index) => (
+          {summary.snapshots.map((snapshot, index) => (
             <section key={snapshot.orderItemId} className={styles.itemBreakdown}>
               <div className={styles.itemHeader}>
                 <Space align="center" size={12}>
@@ -245,14 +245,16 @@ export const FinanceOrderDetailModal: React.FC<FinanceOrderDetailModalProps> = (
                 </Space>
                 <Space wrap>
                   <StatusTag
-                    status={snapshot.financialStatus === 'ACTIVE' ? 'operational' : 'warning'}
+                    status={
+                      snapshot.revenue.financialStatus === 'ACTIVE' ? 'operational' : 'warning'
+                    }
                   >
-                    {snapshot.financialStatus || 'ACTIVE'}
+                    {snapshot.revenue.financialStatus || 'ACTIVE'}
                   </StatusTag>
                   <Button
                     size="small"
                     onClick={() => {
-                      onInspectItem(snapshot.orderItemId)
+                      if (snapshot.orderItemId) onInspectItem(snapshot.orderItemId)
                     }}
                   >
                     {t('finance.actions.inspectItem')}
@@ -262,7 +264,9 @@ export const FinanceOrderDetailModal: React.FC<FinanceOrderDetailModalProps> = (
                       size="small"
                       icon={<ReloadOutlined />}
                       loading={isRecalculatingItem}
-                      onClick={() => onRecalculateItem(snapshot.orderItemId)}
+                      onClick={() =>
+                        snapshot.orderItemId && onRecalculateItem(snapshot.orderItemId)
+                      }
                     >
                       {t('finance.actions.recalculateItem')}
                     </Button>
@@ -290,7 +294,11 @@ export const FinanceOrderDetailModal: React.FC<FinanceOrderDetailModalProps> = (
                             snapshot.orderPnl?.marketplaceFeeAmount,
                             snapshot.revenue.currency,
                           )}
-                          {snapshot.revenue.feeSource ? (
+                          {snapshot.revenue.feeConfidence === 'ALLOCATED' ? (
+                            <StatusTag status="warning">
+                              {t('finance.detail.allocatedFee')}
+                            </StatusTag>
+                          ) : snapshot.revenue.feeSource ? (
                             <StatusTag
                               status={
                                 snapshot.revenue.feeSource === 'ESTIMATED_15_PERCENT'
@@ -317,7 +325,7 @@ export const FinanceOrderDetailModal: React.FC<FinanceOrderDetailModalProps> = (
                       <span>Net revenue</span>
                       <strong>
                         {formatFinanceMoney(
-                          snapshot.revenue.netRevenueAmount ?? 0,
+                          snapshot.recognizedNetRevenueAmount,
                           snapshot.revenue.currency,
                         )}
                       </strong>
@@ -335,7 +343,21 @@ export const FinanceOrderDetailModal: React.FC<FinanceOrderDetailModalProps> = (
                 </section>
                 {snapshot.actualVendorCost?.totalAmount != null ? (
                   <section className={styles.itemGroup}>
-                    <Typography.Text strong>Vendor actual cost</Typography.Text>
+                    <Typography.Text strong>
+                      {t('finance.metrics.actualVendorCost')}
+                    </Typography.Text>
+                    {snapshot.actualVendorCost.allocation ? (
+                      <Typography.Paragraph type="secondary">
+                        {t('finance.detail.vendorAllocation', {
+                          order: snapshot.actualVendorCost.allocation.vendorOrderId,
+                          total: formatFinanceMoney(
+                            snapshot.actualVendorCost.allocation.totalAmount,
+                            snapshot.actualVendorCost.allocation.currency,
+                          ),
+                          count: snapshot.actualVendorCost.allocation.orderItemIds.length,
+                        })}
+                      </Typography.Paragraph>
+                    ) : null}
                     <div className={styles.itemStats}>
                       <div>
                         <span>Vendor base cost</span>
@@ -368,8 +390,7 @@ export const FinanceOrderDetailModal: React.FC<FinanceOrderDetailModalProps> = (
                         <span>Estimate variance</span>
                         <strong>
                           {formatFinanceMoney(
-                            snapshot.actualVendorCost.totalAmount -
-                              (snapshot.cost.totalCostAmount || 0),
+                            snapshot.costVarianceAmount,
                             snapshot.actualVendorCost.currency || snapshot.revenue.currency,
                           )}
                         </strong>
@@ -379,6 +400,20 @@ export const FinanceOrderDetailModal: React.FC<FinanceOrderDetailModalProps> = (
                 ) : null}
                 <section className={styles.itemGroup}>
                   <Typography.Text strong>{t('finance.detail.costProfit')}</Typography.Text>
+                  <div className={styles.itemStats}>
+                    {(snapshot.costComponents || []).map((component) => (
+                      <div key={component.code}>
+                        <span>
+                          {t(`finance.costComponents.${component.code}`, {
+                            defaultValue: component.label || humanizeCode(component.code),
+                          })}
+                        </span>
+                        <strong>
+                          {formatFinanceMoney(component.amount, snapshot.revenue.currency)}
+                        </strong>
+                      </div>
+                    ))}
+                  </div>
                   <div className={styles.itemStats}>
                     <div>
                       <span>{t('finance.detail.baseCost')}</span>

@@ -1,6 +1,7 @@
+import { useUrlFilters } from '@/shared/hooks/useUrlFilters'
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useParams, useRouteLoaderData } from 'react-router-dom'
+import { Link, useParams, useRouteLoaderData } from 'react-router-dom'
 import { DollarOutlined, DownloadOutlined, FundOutlined, RiseOutlined } from '@ant-design/icons'
 import type { TableColumnsType } from 'antd'
 import { Button, Select, Space, Typography } from 'antd'
@@ -44,8 +45,17 @@ type DailyMatrixRow = {
 type SelectFilterKey = Exclude<keyof ReportFilters, 'dateBasis' | 'page' | 'limit'>
 
 const datesInRange = (dateFrom?: string, dateTo?: string) => {
-  const start = dayjs(dateFrom).startOf('day')
-  const end = dayjs(dateTo).startOf('day')
+  if (!dateFrom || !dateTo) return []
+  const start = (
+    dateFrom.length === 10
+      ? dayjs.tz(dateFrom, 'Asia/Ho_Chi_Minh')
+      : dayjs(dateFrom).tz('Asia/Ho_Chi_Minh')
+  ).startOf('day')
+  const end = (
+    dateTo.length === 10
+      ? dayjs.tz(dateTo, 'Asia/Ho_Chi_Minh')
+      : dayjs(dateTo).tz('Asia/Ho_Chi_Minh')
+  ).startOf('day')
   if (!start.isValid() || !end.isValid() || end.isBefore(start)) return []
   const dates: string[] = []
   for (let date = start; !date.isAfter(end, 'day'); date = date.add(1, 'day')) {
@@ -76,10 +86,23 @@ export function ReportWorkspacePage() {
   const isDedicatedReport = Boolean(dedicatedTab)
   const isAdsView = activeTab === 'ads-employee'
   const [profitabilityView, setProfitabilityView] = useState<ProfitabilityView>('summary')
-  const [filters, setFilters] = useState<ReportFilters>(() => ({
-    ...getDefaultDateRange(),
-    dateBasis: 'ORDERED_AT',
-  }))
+  const [filters, setFilters] = useUrlFilters<ReportFilters>(
+    { ...getDefaultDateRange(7, dayjs(), 'Asia/Ho_Chi_Minh'), dateBasis: 'ORDERED_AT' },
+    [
+      'dateFrom',
+      'dateTo',
+      'shopId',
+      'salesChannelCode',
+      'marketplaceCode',
+      'sellerEmployeeCode',
+      'teamId',
+      'departmentId',
+      'financialStatus',
+      'currency',
+      'adStatus',
+      'sellerAttributionSource',
+    ],
+  )
   const effectiveFilters = fixedSalesChannelCode
     ? { ...filters, salesChannelCode: fixedSalesChannelCode }
     : filters
@@ -111,9 +134,12 @@ export function ReportWorkspacePage() {
 
   const filterOptions = options.data
 
-  const handleFilterChange = useCallback((key: keyof ReportFilters, value?: string) => {
-    setFilters((current) => ({ ...current, [key]: value }))
-  }, [])
+  const handleFilterChange = useCallback(
+    (key: keyof ReportFilters, value?: string) => {
+      setFilters((current) => ({ ...current, [key]: value }))
+    },
+    [setFilters],
+  )
 
   const select = useCallback(
     (
@@ -138,9 +164,12 @@ export function ReportWorkspacePage() {
     [filters, handleFilterChange],
   )
 
-  const handleDateRangeChange = useCallback((range: { dateFrom?: string; dateTo?: string }) => {
-    setFilters((current) => ({ ...current, ...range }))
-  }, [])
+  const handleDateRangeChange = useCallback(
+    (range: { dateFrom?: string; dateTo?: string }) => {
+      setFilters((current) => ({ ...current, dateFrom: range.dateFrom, dateTo: range.dateTo }))
+    },
+    [setFilters],
+  )
 
   const handleTabChange = useCallback((key: string) => {
     setSelectedTab(key as TabKey)
@@ -204,14 +233,22 @@ export function ReportWorkspacePage() {
         width: 128,
         align: 'right',
         sorter: (a, b) => a.operatingCostAmount - b.operatingCostAmount,
-        render: (_, row) => formatReportMoney(row.operatingCostAmount, row.currency || 'USD'),
+        render: (_, row) =>
+          formatReportMoney(
+            row.operatingCostCoverage === 'RECORDED' ? row.operatingCostAmount : null,
+            row.currency || 'USD',
+          ),
       },
       {
         title: t('reports.columns.spend'),
         width: 110,
         align: 'right',
         sorter: (a, b) => (a.adSpendAmount || 0) - (b.adSpendAmount || 0),
-        render: (_, row) => formatReportMoney(row.adSpendAmount || 0, row.currency || 'USD'),
+        render: (_, row) =>
+          formatReportMoney(
+            row.adsCoverage === 'RECORDED' ? row.adSpendAmount : null,
+            row.currency || 'USD',
+          ),
       },
       {
         title: t('reports.columns.netProfit'),
@@ -247,6 +284,26 @@ export function ReportWorkspacePage() {
       label={t('reports.filters.label')}
       contentClassName={styles.filters}
     >
+      <Link
+        to={
+          '/portal/finance?' +
+          new URLSearchParams(
+            Object.entries(effectiveFilters)
+              .filter(
+                ([key, value]) =>
+                  value != null && !['adStatus', 'sellerAttributionSource'].includes(key),
+              )
+              .map(([key, value]) => [key, String(value)]),
+          ).toString()
+        }
+      >
+        {t('finance.tabs.overview')}
+      </Link>
+      {select(
+        'currency',
+        t('finance.filters.currency'),
+        ['USD', 'CAD', 'EUR', 'GBP', 'VND'].map((value) => ({ value, label: value })),
+      )}
       {select(
         'shopId',
         t('reports.filters.shop'),
@@ -328,6 +385,7 @@ export function ReportWorkspacePage() {
         : null}
       <div className={styles.dateFilter}>
         <DateRangePicker
+          timeZone="Asia/Ho_Chi_Minh"
           value={{ dateFrom: filters.dateFrom, dateTo: filters.dateTo }}
           aria-label={t('reports.filters.date')}
           placeholder={[t('reports.filters.from'), t('reports.filters.to')]}
@@ -460,6 +518,7 @@ export function ReportWorkspacePage() {
       { key: 'refundAmount', label: t('reports.columns.refund') },
       { key: 'discountAmount', label: t('reports.columns.discount') },
       { key: 'grossProfitAmount', label: t('reports.metrics.grossProfit') },
+      { key: 'profitAfterAdsAmount', label: t('reports.metrics.profitAfterAds') },
       { key: 'operatingCostAmount', label: t('reports.columns.operatingCost') },
       { key: 'netProfitAmount', label: t('reports.columns.netProfit') },
     ]
@@ -483,6 +542,9 @@ export function ReportWorkspacePage() {
             const values = Object.fromEntries(
               dates.map((date) => {
                 const row = sellerRows.find((item) => item.date === date)
+                if (key === 'adSpendAmount' && row?.adsCoverage !== 'RECORDED') return [date, null]
+                if (key === 'operatingCostAmount' && row?.operatingCostCoverage !== 'RECORDED')
+                  return [date, null]
                 const value = row?.[key]
                 if (key === 'orderCount') return [date, Number(value || 0)]
                 return [date, value === null || value === undefined ? null : Number(value)]
@@ -498,9 +560,10 @@ export function ReportWorkspacePage() {
               metricKey: key,
               sellerGroup,
               isFirstSellerRow: metricIndex === 0,
-              total: knownValues.length
-                ? knownValues.reduce((total, value) => total + value, 0)
-                : null,
+              total:
+                knownValues.length === dates.length && knownValues.length > 0
+                  ? knownValues.reduce((total, value) => total + value, 0)
+                  : null,
               values,
             }
           }),
@@ -641,6 +704,19 @@ export function ReportWorkspacePage() {
     </div>
   )
 
+  const teamTab = (
+    <>
+      {filterBar}
+      {[...new Set((teams.data || []).map((row) => row.currency || 'USD'))].map((currency) => (
+        <ReportTeamTab
+          key={currency}
+          teamsData={(teams.data || []).filter((row) => (row.currency || 'USD') === currency)}
+          isTeamsPending={teams.isPending}
+        />
+      ))}
+    </>
+  )
+
   const reportContent =
     activeTab === 'order-cost' ? (
       <ReportOrderCostPage fixedSalesChannelCode={fixedSalesChannelCode} />
@@ -671,11 +747,7 @@ export function ReportWorkspacePage() {
         filterBar={filterBar}
       />
     ) : (
-      <ReportTeamTab
-        teamsData={teams.data}
-        isTeamsPending={teams.isPending}
-        filterBar={filterBar}
-      />
+      teamTab
     )
 
   return (
@@ -714,13 +786,7 @@ export function ReportWorkspacePage() {
             {
               key: 'operations',
               label: <UiTabLabel>{t('reports.tabs.teams')}</UiTabLabel>,
-              children: (
-                <ReportTeamTab
-                  teamsData={teams.data}
-                  isTeamsPending={teams.isPending}
-                  filterBar={filterBar}
-                />
-              ),
+              children: teamTab,
             },
           ]}
         />

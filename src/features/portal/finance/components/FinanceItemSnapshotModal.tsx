@@ -136,9 +136,9 @@ export const FinanceItemSnapshotModal: React.FC<FinanceItemSnapshotModalProps> =
           />
           <section>
             <Typography.Title level={5}>{t('finance.detail.costLines')}</Typography.Title>
-            {itemDetail.data.cost.costLines.map((line) => (
+            {(itemDetail.data.costComponents || []).map((line) => (
               <Typography.Paragraph key={line.code}>
-                {line.label || line.code}:{' '}
+                {t(`finance.costComponents.${line.code}`, { defaultValue: line.code })}:{' '}
                 {formatFinanceMoney(line.amount, itemDetail.data!.revenue.currency)}
               </Typography.Paragraph>
             ))}

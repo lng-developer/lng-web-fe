@@ -51,11 +51,12 @@
     },
     "metrics": {
       "revenue": "Revenue",
-      "grossProfit": "Gross profit",
-      "netProfit": "Net profit",
+      "grossProfit": "Profit before ads",
+      "netProfit": "Profit after ads and operating costs",
       "missingCost": "Missing cost",
       "sellers": "Sellers",
-      "adjustments": "Adjustments"
+      "adjustments": "Adjustments",
+      "profitAfterAds": "Profit after ads"
     },
     "coverage": {
       "title": "Data coverage",
@@ -66,7 +67,10 @@
       "basis": {
         "ORDERED_AT": "Order date basis",
         "CALCULATED_AT": "Recalculated date basis"
-      }
+      },
+      "migrationPending": "Awaiting recalculation",
+      "allocatedFees": "Allocated fees",
+      "missingSnapshot": "Missing snapshots"
     },
     "buyers": {
       "title": "Buyer signals",
@@ -107,8 +111,8 @@
       "showChart": "Show comparison chart",
       "hideChart": "Hide comparison chart",
       "explanation": "How profit is calculated",
-      "grossFormula": "Gross profit = Revenue − Total cost − Marketplace fee − Ad spend − Discount",
-      "netFormula": "Net profit = Gross profit − Refund − Operating cost",
+      "grossFormula": "Recognized revenue minus marketplace fees and effective fulfillment cost. Refunds and discounts are already deducted.",
+      "netFormula": "Profit before ads minus advertising and operating costs. Missing coverage remains unavailable.",
       "tooltips": {
         "orders": "Total orders",
         "revenue": "Revenue = Item price + Shipping paid by customer",
@@ -184,7 +188,7 @@
       "metric": "Metric",
       "type": "Type",
       "total": "Total",
-      "netProfit": "Net profit",
+      "netProfit": "Profit after ads and operating costs",
       "margin": "Margin",
       "channel": "Channel / marketplace",
       "date": "Date",

@@ -1,11 +1,18 @@
-const moneyFormatter = new Intl.NumberFormat(undefined, {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
+const formatters = new Map<string, Intl.NumberFormat>()
 
-export const formatReportMoney = (amount: number, _currency: string): string => {
-  void _currency
-  return `$${moneyFormatter.format(amount / 100)}`
+export const formatReportMoney = (amount: number | null | undefined, currency: string): string => {
+  if (amount == null) return '—'
+  let formatter = formatters.get(currency)
+  if (!formatter) {
+    formatter = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+    formatters.set(currency, formatter)
+  }
+  return formatter.format(amount / 100)
 }
 
 export const formatReportPercent = (bps: number | null): string =>

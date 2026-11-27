@@ -51,11 +51,12 @@
     },
     "metrics": {
       "revenue": "Doanh thu",
-      "grossProfit": "Lợi nhuận gộp",
-      "netProfit": "Lợi nhuận ròng",
+      "grossProfit": "Lợi nhuận trước ads",
+      "netProfit": "Lợi nhuận sau ads và vận hành",
       "missingCost": "Thiếu giá vốn",
       "sellers": "Seller",
-      "adjustments": "Điều chỉnh"
+      "adjustments": "Điều chỉnh",
+      "profitAfterAds": "Lợi nhuận sau ads"
     },
     "coverage": {
       "title": "Độ phủ dữ liệu",
@@ -66,7 +67,10 @@
       "basis": {
         "ORDERED_AT": "Theo ngày đặt hàng",
         "CALCULATED_AT": "Theo ngày tính lại"
-      }
+      },
+      "migrationPending": "Chờ tính lại",
+      "allocatedFees": "Phí phân bổ",
+      "missingSnapshot": "Chưa có snapshot"
     },
     "buyers": {
       "title": "Tín hiệu khách hàng",
@@ -107,8 +111,8 @@
       "showChart": "Hiện biểu đồ so sánh",
       "hideChart": "Ẩn biểu đồ so sánh",
       "explanation": "Cách tính lợi nhuận",
-      "grossFormula": "Lợi nhuận gộp = Doanh thu − Giá vốn (Cost) − Phí sàn (Fee) − Chi phí Ads − Giảm giá",
-      "netFormula": "Lợi nhuận ròng = Lợi nhuận gộp − Hoàn tiền (Refund) − Chi phí vận hành",
+      "grossFormula": "Doanh thu ghi nhận trừ phí sàn và chi phí thực hiện đơn. Đã trừ hoàn tiền và giảm giá.",
+      "netFormula": "Lợi nhuận trước ads trừ quảng cáo và vận hành. Thiếu dữ liệu sẽ chưa có kết quả.",
       "tooltips": {
         "orders": "Tổng số đơn hàng",
         "revenue": "Doanh thu = Tiền hàng + Phí ship khách trả",
@@ -184,7 +188,7 @@
       "metric": "Chỉ tiêu",
       "type": "Loại",
       "total": "Tổng",
-      "netProfit": "Lợi nhuận ròng",
+      "netProfit": "Lợi nhuận sau ads và vận hành",
       "margin": "Biên lợi nhuận",
       "channel": "Kênh / thị trường",
       "date": "Ngày",

@@ -11,6 +11,18 @@ import {
 } from '@/shared/ui/DateRangePicker'
 
 describe('DateRangePicker', () => {
+  it('uses Vietnam calendar boundaries independently of browser timezone', () => {
+    expect(
+      serializeDateRange([dayjs('2026-11-21'), dayjs('2026-11-27')], 'Asia/Ho_Chi_Minh'),
+    ).toEqual({
+      dateFrom: '2026-11-20T17:00:00.000Z',
+      dateTo: '2026-11-27T16:59:59.999Z',
+    })
+    expect(getDefaultDateRange(1, dayjs('2026-11-26T20:00:00Z'), 'Asia/Ho_Chi_Minh')).toEqual({
+      dateFrom: '2026-11-26T17:00:00.000Z',
+      dateTo: '2026-11-27T16:59:59.999Z',
+    })
+  })
   it('provides inclusive one, seven, and thirty-day presets', () => {
     const today = dayjs('2026-09-06T12:00:00')
 

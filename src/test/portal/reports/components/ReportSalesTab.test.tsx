@@ -1,8 +1,9 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within, cleanup } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
 import { AppProviders } from '@/app/providers/AppProviders'
 import type { SellerDailyProfit } from '@/features/portal/reports/api/reportApi'
+import { ReportProfitComparisonChart } from '@/features/portal/reports/components/ReportProfitComparisonChart'
 import { ReportSalesTab } from '@/features/portal/reports/components/ReportSalesTab'
 
 const selectedDates = Array.from({ length: 62 }, (_, index) => {
@@ -34,6 +35,67 @@ const sellerRows: SellerDailyProfit[] = Array.from({ length: 9 }, (_, index) => 
 }))
 
 describe('ReportSalesTab performance safeguards', () => {
+  it('does not chart partial profit as final profit', () => {
+    cleanup()
+    render(
+      <AppProviders>
+        <ReportProfitComparisonChart
+          currency="USD"
+          rows={[
+            {
+              ...sellerRows[0],
+              netProfitAmount: null,
+              partialNetProfitAmount: 9999,
+              partialGrossProfitAmount: 9999,
+            },
+          ]}
+        />
+      </AppProviders>,
+    )
+    expect(screen.queryByText('$99.99')).not.toBeInTheDocument()
+    cleanup()
+  })
+  it('counts an order shared by two sellers once', () => {
+    cleanup()
+    render(
+      <AppProviders>
+        <ReportSalesTab
+          data={sellerRows.slice(0, 2).map((row) => ({ ...row, orderIds: ['same-order'] }))}
+          isPending={false}
+          canCompareSellers={false}
+          dates={[selectedDates[0]]}
+        />
+      </AppProviders>,
+    )
+    const label = screen
+      .getAllByText('Orders')
+      .find((element) => element.closest('[class*="metricCard"]'))!
+    expect(label.closest('[class*="metricCard"]')).toHaveTextContent('1')
+    cleanup()
+  })
+  it('does not label an incomplete date range as a complete profit total', () => {
+    cleanup()
+    render(
+      <AppProviders>
+        <ReportSalesTab
+          data={[sellerRows[0]]}
+          isPending={false}
+          canCompareSellers={false}
+          dates={selectedDates.slice(0, 2)}
+        />
+      </AppProviders>,
+    )
+    const row = screen
+      .getAllByText('Profit before ads')
+      .map((el) => el.closest('tr'))
+      .find(Boolean)!
+    expect(within(row).getAllByRole('cell')[1]).toHaveTextContent('—')
+    const summaryLabel = screen
+      .getAllByText('Profit after ads and operating costs')
+      .find((element) => !element.closest('tr'))!
+    expect(summaryLabel.closest('[class*="metricCard"]')).toHaveTextContent('—')
+    cleanup()
+  })
   it('reuses the money formatter across matrix cells', async () => {
     const nativeNumberFormat = Intl.NumberFormat
     const numberFormat = vi.spyOn(Intl, 'NumberFormat').mockImplementation(function (...args) {

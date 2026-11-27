@@ -27,27 +27,16 @@ export const ReportProfitComparisonChart: React.FC<ReportProfitComparisonChartPr
     const { t } = useTranslation()
     const [salesMetric, setSalesMetric] = React.useState<SalesMetric>('netProfit')
     const isSalesComparison = variant === 'sales'
-    const usesPartialGrossProfit =
-      !isSalesComparison && rows.some((row) => row.missingCostCount > 0)
-    const usesPartialNetProfit =
-      isSalesComparison &&
-      salesMetric === 'netProfit' &&
-      rows.some((row) => row.missingCostCount > 0 && row.partialNetProfitAmount != null)
-    const profitAmount = (row: SellerPerformance) =>
-      isSalesComparison
-        ? salesMetric === 'revenue'
-          ? row.revenueAmount
-          : salesMetric === 'adSpend'
-            ? row.adSpendAmount || 0
-            : (row.partialNetProfitAmount ?? row.netProfitAmount ?? 0)
-        : usesPartialGrossProfit
-          ? (row.partialGrossProfitAmount ?? 0)
-          : (row.netProfitAmount ?? 0)
-    const isIncompleteRow = (row: SellerPerformance) =>
-      isSalesComparison &&
-      salesMetric === 'netProfit' &&
-      row.netProfitAmount === null &&
-      row.partialNetProfitAmount == null
+    const selectedAmount = (row: SellerPerformance) =>
+      isSalesComparison && salesMetric === 'revenue'
+        ? row.revenueAmount
+        : isSalesComparison && salesMetric === 'adSpend'
+          ? row.adsCoverage === 'RECORDED'
+            ? row.adSpendAmount
+            : null
+          : row.netProfitAmount
+    const profitAmount = (row: SellerPerformance) => selectedAmount(row) ?? 0
+    const isIncompleteRow = (row: SellerPerformance) => selectedAmount(row) == null
     const sortedRows = [...rows].sort((left, right) => {
       if (isIncompleteRow(left) !== isIncompleteRow(right)) return isIncompleteRow(left) ? 1 : -1
       return profitAmount(right) - profitAmount(left)
@@ -75,15 +64,6 @@ export const ReportProfitComparisonChart: React.FC<ReportProfitComparisonChartPr
           role="img"
           aria-label={t('reports.profitability.comparison')}
         >
-          {usesPartialGrossProfit ? (
-            <Typography.Text type="secondary">
-              {t('reports.profitability.partialGrossProfit')}
-            </Typography.Text>
-          ) : usesPartialNetProfit ? (
-            <Typography.Text type="secondary">
-              {t('reports.profitability.partialNetProfit')}
-            </Typography.Text>
-          ) : null}
           {isSalesComparison ? (
             <Space size={4} className={styles.profitComparisonTabs}>
               <Button
@@ -152,16 +132,6 @@ export const ReportProfitComparisonChart: React.FC<ReportProfitComparisonChartPr
                         {row.sellerName || row.sellerEmployeeCode || '—'}
                       </Typography.Text>
                     </div>
-                    {usesPartialGrossProfit || usesPartialNetProfit ? (
-                      <Typography.Text type="secondary" className={styles.profitCoverage}>
-                        {t('reports.profitability.costCoverage', {
-                          costed:
-                            row.costedItemCount ??
-                            Math.max(row.itemCount - row.missingCostCount, 0),
-                          total: row.itemCount,
-                        })}
-                      </Typography.Text>
-                    ) : null}
                   </div>
                   <Tooltip
                     title={

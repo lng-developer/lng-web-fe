@@ -37,15 +37,8 @@ export const FinanceCurrencySummary: React.FC<FinanceCurrencySummaryProps> = Rea
     return (
       <div className={styles.summaryGroups}>
         {summaries.map((summary) => {
-          const additionalFulfillmentCostAmount =
-            summary.totalCostAmount == null
-              ? null
-              : Math.max(summary.totalCostAmount - (summary.baseCostAmount || 0), 0)
-          const marginBps =
-            summary.grossMarginBps ??
-            (summary.revenueAmount > 0 && summary.profitAmount != null
-              ? Math.round((summary.profitAmount / summary.revenueAmount) * 10000)
-              : null)
+          const additionalFulfillmentCostAmount = summary.additionalFulfillmentCostAmount
+          const marginBps = summary.grossMarginBps
           const marginPercent = marginBps != null ? (marginBps / 100).toFixed(1) : null
           const marginVal = marginBps != null ? marginBps / 100 : 0
 

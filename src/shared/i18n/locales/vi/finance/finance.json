@@ -17,9 +17,14 @@
       "revenue": "Doanh thu gộp",
       "cost": "Tổng chi phí",
       "knownCost": "Chi phí đã ghi nhận",
-      "profit": "Lợi nhuận ròng",
+      "profit": "Lợi nhuận trước ads",
       "missing": "Thiếu chi phí",
-      "incomplete": "Chưa đủ dữ liệu"
+      "incomplete": "Chưa đủ dữ liệu",
+      "costEvidence": "Dùng phí vendor thực tế nếu có; còn lại là ước tính",
+      "effectiveCost": "Chi phí sử dụng",
+      "estimatedCost": "Chi phí ước tính",
+      "actualVendorCost": "Phí vendor thực tế",
+      "costVariance": "Chênh lệch chi phí"
     },
     "breakdown": {
       "title": "Chi phí & khấu trừ",
@@ -34,13 +39,14 @@
       "search": "Tìm mã đơn",
       "channel": "Kênh bán",
       "marketplace": "Thị trường",
-      "shop": "Cửa hàng",
+      "shop": "Shop",
       "seller": "Nhân viên bán hàng",
       "team": "Nhóm",
       "department": "Phòng ban",
       "date": "Ngày đặt hàng",
       "cost": "Trạng thái chi phí",
-      "unnamed": "Chưa đặt tên"
+      "unnamed": "Chưa đặt tên",
+      "currency": "Tiền tệ"
     },
     "costStatuses": {
       "PRESENT": "Đã có chi phí",
@@ -52,7 +58,7 @@
       "seller": "Seller / team",
       "revenue": "Doanh thu gộp",
       "cost": "Tổng chi phí",
-      "profit": "Lợi nhuận ròng",
+      "profit": "Lợi nhuận trước ads",
       "margin": "Biên lợi nhuận",
       "status": "Trạng thái"
     },
@@ -86,7 +92,10 @@
       "rateVersion": "Phiên bản {{version}}",
       "lastRecalculated": "Tính lại lần cuối",
       "sourceReferences": "Nguồn tham chiếu",
-      "amazonFeeReversal": "Amazon hoàn phí"
+      "amazonFeeReversal": "Amazon hoàn phí",
+      "allocatedFee": "Phí phân bổ",
+      "vendorAllocation": "Đơn vendor {{order}}: {{total}} phân bổ cho {{count}} item",
+      "revenueAdjustment": "Hoàn tiền, giảm giá và doanh thu hủy"
     },
     "missingReasons": {
       "FULFILLMENT_PLAN_NOT_FOUND": "Chưa có phương án fulfillment",
@@ -233,6 +242,15 @@
       "cashFlowDesc": "Theo dõi tổng thể dòng tiền vào - ra của gian hàng và rà soát các khoản tiền/chi phí phát sinh chưa gắn được với mã đơn hàng cụ thể.",
       "transactionsTitle": "Sổ cái giao dịch gốc (Raw Transaction Ledger)",
       "transactionsDesc": "Tra cứu toàn bộ lịch sử giao dịch thô nguyên bản từ sàn gửi về (Order, Refund, Service Fee, Shipping Charge) dùng để kiểm toán đối chiếu chuyên sâu."
-    }
+    },
+    "costComponents": {
+      "VENDOR_BASE": "Giá gốc vendor",
+      "VENDOR_SHIPPING": "Vận chuyển vendor",
+      "VENDOR_TAX": "Thuế vendor",
+      "VENDOR_OTHER": "Điều chỉnh vendor",
+      "LNG_FULFILLMENT_FEE": "Phí dịch vụ LNG",
+      "ESTIMATE": "Chi phí fulfillment ước tính"
+    },
+    "missingSnapshots": "{{count}} item chưa có snapshot tài chính. Số tổng chưa đầy đủ."
   }
 }
