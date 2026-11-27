@@ -51,6 +51,8 @@ function successMessageKey(action: OrderAction) {
       return 'orders.messages.addressValidated'
     case 'override-address':
       return 'orders.messages.addressOverridden'
+    case 'quantity':
+      return 'orders.quantityEdit.saved'
     case 'note':
       return 'orders.messages.noteSaved'
     case 'recheck-production':

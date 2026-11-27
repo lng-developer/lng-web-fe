@@ -70,6 +70,15 @@ export const OrderItemPanel = memo(function OrderItemPanel({
   onOpenImageViewer,
 }: OrderItemPanelProps) {
   const { t } = useTranslation()
+  const quantityLocked = [
+    'READY_TO_SEND_VENDOR',
+    'SENT_TO_VENDOR',
+    'TRACKING_PENDING',
+    'SHIPPED',
+    'CANCELLED',
+    'REFUNDED',
+    'FAILED',
+  ].includes(item.item?.status ?? '')
   const customizationInputs = useMemo(
     () => item.customization?.inputs ?? [],
     [item.customization?.inputs],
@@ -661,7 +670,25 @@ export const OrderItemPanel = memo(function OrderItemPanel({
           column={1}
           colon={false}
           items={[
-            { key: 'qty', label: t('orders.fields.quantity'), children: item.item?.quantity ?? 1 },
+            {
+              key: 'qty',
+              label: t('orders.fields.quantity'),
+              children: (
+                <Space size="small">
+                  {item.item?.quantity ?? 1}
+                  {canOperate && !quantityLocked ? (
+                    <Button
+                      size="small"
+                      type="link"
+                      disabled={pending}
+                      onClick={(event) => onConfirm(event.currentTarget, 'quantity', item)}
+                    >
+                      {t('orders.quantityEdit.title')}
+                    </Button>
+                  ) : null}
+                </Space>
+              ),
+            },
             {
               key: 'base',
               label: t('orders.fields.totalCost'),

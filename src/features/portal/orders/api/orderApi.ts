@@ -317,6 +317,13 @@ export async function overrideShippingAddress(orderId: string, reason?: string) 
   return unwrap(await apiClient.post(`/api/orders/${orderId}/override-address`, { reason }))
 }
 
+export async function updateOrderItemQuantity(
+  orderItemId: string,
+  input: { quantity: number; expectedQuantity: number; reason: string },
+) {
+  return unwrap(await apiClient.patch(`/api/orders/items/${orderItemId}/quantity`, input))
+}
+
 export async function updateOrderItemCsNote(orderItemId: string, csNote: string) {
   return unwrap(await apiClient.patch(`/api/orders/items/${orderItemId}/cs-note`, { csNote }))
 }

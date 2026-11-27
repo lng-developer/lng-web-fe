@@ -17,6 +17,7 @@ import {
   updateOrderBuyer,
   updateOrderCase,
   updateOrderItemCsNote,
+  updateOrderItemQuantity,
   updateShippingAddress,
   updateShippingService,
   validateShippingAddress,
@@ -45,6 +46,12 @@ export function useOrderActionsMutation({
       if (action.kind === 'shipping') return updateShippingService(orderId, action.shipping)
       if (action.kind === 'validate-address') return validateShippingAddress(orderId)
       if (action.kind === 'override-address') return overrideShippingAddress(orderId, action.reason)
+      if (action.kind === 'quantity')
+        return updateOrderItemQuantity(action.itemId, {
+          quantity: action.quantity,
+          expectedQuantity: action.expectedQuantity,
+          reason: action.reason,
+        })
       if (action.kind === 'note') return updateOrderItemCsNote(action.itemId, action.note)
       if (action.kind === 'recheck-mapping') return recheckMapping(action.itemId)
       if (action.kind === 'recheck-production') return recheckProduction(action.itemId)
@@ -128,6 +135,7 @@ export function useOrderActionsMutation({
           })
         }
       } else if (
+        action.kind === 'quantity' ||
         action.kind === 'ready' ||
         action.kind === 'cancel' ||
         action.kind === 'vendor-rematch-recovery' ||
