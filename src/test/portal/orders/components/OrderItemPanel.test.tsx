@@ -271,3 +271,44 @@ it('stacks multiple scale outputs vertically', async () => {
   expect(screen.getByText('File output scale (Back)')).toBeInTheDocument()
   expect(container.querySelector('[class*="scaledOutputsStack"]')).toBeInTheDocument()
 })
+
+it.each([
+  [false, 'NEED_PRODUCTION', false],
+  [true, 'READY_TO_SEND_VENDOR', false],
+  [true, 'SHIPPED', false],
+  [true, 'NEED_PRODUCTION', true],
+])(
+  'gates quantity editing for permission %s and status %s',
+  async (canOperate, status, editable) => {
+    await i18n.changeLanguage('en')
+    const item = {
+      item: { id: 'item', quantity: 1, status },
+      workflow: { nextActions: [], blockers: [] },
+      pricing: {},
+    } as unknown as OrderWorkbenchItem
+    const onConfirm = vi.fn()
+    render(
+      <AppProviders>
+        <OrderItemPanel
+          item={item}
+          canWrite={canOperate}
+          canOperate={canOperate}
+          pending={false}
+          mappingRecheckPending={false}
+          onAction={vi.fn()}
+          onConfirm={onConfirm}
+          onHistory={vi.fn()}
+          onOpenImageViewer={vi.fn()}
+        />
+      </AppProviders>,
+    )
+    const button = screen.queryByRole('button', { name: 'Edit quantity' })
+    if (editable) {
+      expect(button).toBeInTheDocument()
+      fireEvent.click(button!)
+      expect(onConfirm).toHaveBeenCalledWith(expect.anything(), 'quantity', item)
+    } else {
+      expect(button).not.toBeInTheDocument()
+    }
+  },
+)
