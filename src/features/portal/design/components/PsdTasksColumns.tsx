@@ -4,7 +4,6 @@ import {
   CheckCircleOutlined,
   DeleteOutlined,
   DownloadOutlined,
-  HistoryOutlined,
   HourglassOutlined,
   PlayCircleOutlined,
   RollbackOutlined,
@@ -12,8 +11,8 @@ import {
   UploadOutlined,
 } from '@ant-design/icons'
 import type { TableColumnsType } from 'antd'
-import { Button, Popover, Select, Space, Tooltip, Typography } from 'antd'
-import dayjs from 'dayjs'
+import { Button, Select, Space, Tooltip, Typography } from 'antd'
+import { PsdTaskHistory } from './PsdTaskHistory'
 
 import { downloadMediaAsset } from '@/shared/media'
 import {
@@ -29,47 +28,6 @@ import {
   formatTaskSeller,
   getTaskSellerIdentity,
 } from '../api/designApi'
-
-export type TaskHistoryItem = {
-  action?: string
-  status?: string
-  from?: string
-  to?: string
-  at?: string
-  createdAt?: string
-}
-
-export function renderHistoryContent(history: TaskHistoryItem[] = []) {
-  if (!history || history.length === 0) {
-    return (
-      <div style={{ color: 'var(--ant-color-text-secondary)', padding: '4px 8px' }}>
-        No history recorded
-      </div>
-    )
-  }
-  return (
-    <div style={{ maxHeight: 240, overflowY: 'auto', padding: '4px 0' }}>
-      {history.map((item, idx) => (
-        <div key={idx} style={{ marginBottom: 8, minWidth: 180 }}>
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            {item.from ? <span style={{ fontWeight: 500 }}>{item.from}</span> : null}
-            <span style={{ color: DATA_COLORS.success, fontSize: 13 }}>➔</span>
-            <span style={{ fontWeight: 500 }}>
-              {item.to || item.action || item.status || 'Updated'}
-            </span>
-          </div>
-          <div style={{ fontSize: 11, color: 'var(--ant-color-text-tertiary)', marginLeft: 16 }}>
-            {item.at
-              ? dayjs(item.at).format('YYYY-MM-DD HH:mm')
-              : item.createdAt
-                ? dayjs(item.createdAt).format('YYYY-MM-DD HH:mm')
-                : '-'}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
 
 export function getStatusInfo(status?: string) {
   switch (status) {
@@ -312,18 +270,7 @@ export function usePsdTasksColumns({
               }}
             >
               <StatusPill title={label} color={color} />
-              <Popover
-                placement="bottomLeft"
-                title="History"
-                content={renderHistoryContent(
-                  (record as { history?: TaskHistoryItem[] }).history || [],
-                )}
-                arrow={false}
-              >
-                <HistoryOutlined
-                  style={{ fontSize: 16, cursor: 'pointer', color: DATA_COLORS.title }}
-                />
-              </Popover>
+              <PsdTaskHistory taskId={record.id} />
             </div>
           )
         },
