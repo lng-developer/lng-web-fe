@@ -52,7 +52,9 @@ function OrderItemConfirmationModalInner({
 }: OrderItemConfirmationModalInnerProps) {
   const { t } = useTranslation()
   const [reason, setReason] = useState('')
-  const [quantity, setQuantity] = useState(confirmation.item.item?.quantity || 1)
+  const [quantity, setQuantity] = useState(
+    confirmation.quantity ?? confirmation.item.item?.quantity ?? 1,
+  )
   const [requireRework, setRequireRework] = useState(false)
 
   const isQuantity = confirmation.kind === 'quantity'

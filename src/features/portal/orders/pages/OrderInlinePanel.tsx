@@ -158,8 +158,13 @@ export const OrderInlinePanel = memo(function OrderInlinePanel({
       : undefined
 
   const openConfirmation = useCallback(
-    (target: EventTarget | null, kind: OrderItemConfirmation['kind'], item: OrderWorkbenchItem) => {
-      setConfirmation({ kind, item })
+    (
+      target: EventTarget | null,
+      kind: OrderItemConfirmation['kind'],
+      item: OrderWorkbenchItem,
+      quantity?: number,
+    ) => {
+      setConfirmation({ kind, item, quantity })
       const rect = target instanceof Element ? target.getBoundingClientRect() : undefined
       setConfirmationAnchor(
         rect
