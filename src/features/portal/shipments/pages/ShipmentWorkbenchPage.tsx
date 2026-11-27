@@ -4,7 +4,18 @@ import { useRouteLoaderData } from 'react-router-dom'
 import { DownloadOutlined, EditOutlined, SyncOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import type { TableColumnsType } from 'antd'
-import { Button, Descriptions, Input, Modal, Select, Space, Tag, Timeline, Typography } from 'antd'
+import {
+  Button,
+  Descriptions,
+  Input,
+  Modal,
+  Popover,
+  Select,
+  Space,
+  Tag,
+  Timeline,
+  Typography,
+} from 'antd'
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
@@ -60,6 +71,8 @@ const PROVIDERS = ['LNG_GROUP', 'MANGOTEE', 'MERCHIZE', 'LENFUL', 'PRINTWAY', 'M
 const CARRIERS = ['USPS', 'UPS', 'FEDEX', 'DHL']
 
 const DEFAULT_SHIPMENT_PAGE_SIZE = 50
+
+type ShipmentRow = Shipment & { bundledShipments: Shipment[]; historicalShipments: Shipment[] }
 
 function tone(status: ShipmentStatus) {
   if (status === 'DELIVERED') return 'operational'
@@ -273,38 +286,75 @@ export function ShipmentWorkbenchPage({
 
   const rows = useMemo(() => {
     const items = shipments.data?.items ?? []
-    const map = new Map<string, Shipment & { bundledShipments: Shipment[] }>()
+    const map = new Map<string, ShipmentRow>()
     for (const ship of items) {
-      const key = ship.externalOrderId || ship.id
+      const key = ship.orderId || `${ship.shopId}:${ship.externalOrderId || ship.id}`
       const existing = map.get(key)
       if (!existing) {
         map.set(key, {
           ...ship,
           bundledShipments: [ship],
+          historicalShipments: [],
         })
       } else {
         existing.bundledShipments.push(ship)
       }
     }
-    return Array.from(map.values())
+    // shortcut: grouping uses the current API page; complete order history needs server-side grouping.
+    return Array.from(map.values()).map((row) => {
+      const activeItemIds = new Set(
+        row.bundledShipments
+          .filter((ship) => ship.status !== 'CANCELLED')
+          .map((ship) => ship.orderItemId),
+      )
+      const historicalShipments = row.bundledShipments.filter(
+        (ship) => ship.status === 'CANCELLED' && activeItemIds.has(ship.orderItemId),
+      )
+      const bundledShipments = row.bundledShipments.filter(
+        (ship) => !historicalShipments.includes(ship),
+      )
+      return { ...bundledShipments[0], bundledShipments, historicalShipments }
+    })
   }, [shipments.data?.items])
 
-  const columns: TableColumnsType<Shipment> = useMemo(
+  const columns: TableColumnsType<ShipmentRow> = useMemo(
     () => [
       {
         title: t('portal.shipments.columns.order'),
         dataIndex: 'externalOrderId',
         width: 176,
         render: (value, row) => {
-          const all: Shipment[] = (row as unknown as { bundledShipments?: Shipment[] })
-            .bundledShipments || [row]
+          const all = row.bundledShipments
+          const itemCount = new Set(all.map((ship) => ship.orderItemId || ship.id)).size
           return (
-            <Space size={6} wrap={false} align="center">
+            <Space size={6} wrap align="center">
               <CopyableOrderId value={value} />
-              {all.length > 1 ? (
+              {itemCount > 1 ? (
                 <Tag color="blue" style={{ marginInlineEnd: 0, fontWeight: 500 }}>
-                  {all.length} items
+                  {t('portal.shipments.trackingPreview.itemCount', { count: itemCount })}
                 </Tag>
+              ) : null}
+              {row.historicalShipments.length ? (
+                <Popover
+                  trigger="click"
+                  title={t('portal.shipments.cancelledHistory')}
+                  content={
+                    <Space direction="vertical" size={4}>
+                      {row.historicalShipments.map((ship) => (
+                        <Space key={ship.id}>
+                          <Button type="link" size="small" onClick={() => setSelectedId(ship.id)}>
+                            {ship.provider || '-'} · {t(`portal.shipments.statuses.${ship.status}`)}
+                          </Button>
+                          <FormattedDateTime value={ship.updatedAt} />
+                        </Space>
+                      ))}
+                    </Space>
+                  }
+                >
+                  <Button size="small" type="link" onClick={(event) => event.stopPropagation()}>
+                    {t('portal.shipments.historyCount', { count: row.historicalShipments.length })}
+                  </Button>
+                </Popover>
               ) : null}
             </Space>
           )
@@ -315,8 +365,7 @@ export function ShipmentWorkbenchPage({
         dataIndex: 'vendorExternalOrderId',
         width: 172,
         render: (value, row) => {
-          const all: Shipment[] = (row as unknown as { bundledShipments?: Shipment[] })
-            .bundledShipments || [row]
+          const all = row.bundledShipments
           const vendorOrders = Array.from(
             new Set(all.map((s) => s.vendorExternalOrderId).filter(Boolean)),
           )
@@ -334,14 +383,19 @@ export function ShipmentWorkbenchPage({
         title: t('portal.shipments.columns.provider'),
         dataIndex: 'provider',
         width: 120,
-        render: (value) => <TableTextCell value={value} fallback="-" />,
+        render: (_, row) => (
+          <Space direction="vertical" size={2}>
+            {Array.from(new Set(row.bundledShipments.map((ship) => ship.provider))).map((value) => (
+              <TableTextCell key={value || '-'} value={value} fallback="-" />
+            ))}
+          </Space>
+        ),
       },
       {
         title: t('portal.shipments.columns.tracking'),
         width: 220,
         render: (_, row) => {
-          const all: Shipment[] = (row as unknown as { bundledShipments?: Shipment[] })
-            .bundledShipments || [row]
+          const all = row.bundledShipments
           const uniqueTrackings = all.filter(
             (s, idx, arr) => arr.findIndex((x) => x.trackingNumber === s.trackingNumber) === idx,
           )
@@ -367,8 +421,7 @@ export function ShipmentWorkbenchPage({
         dataIndex: 'status',
         width: 150,
         render: (_, row) => {
-          const all: Shipment[] = (row as unknown as { bundledShipments?: Shipment[] })
-            .bundledShipments || [row]
+          const all = row.bundledShipments
           const statuses = Array.from(new Set(all.map((s) => s.status)))
           return (
             <Space size={4} wrap>
@@ -397,8 +450,7 @@ export function ShipmentWorkbenchPage({
         title: t('portal.shipments.columns.action'),
         width: 110,
         render: (_, row) => {
-          const all: Shipment[] = (row as unknown as { bundledShipments?: Shipment[] })
-            .bundledShipments || [row]
+          const all = row.bundledShipments
           return canWrite ? (
             <Button
               size="small"
@@ -414,7 +466,7 @@ export function ShipmentWorkbenchPage({
         },
       },
     ],
-    [canWrite, handleRecheckRow, recheck.isPending, t],
+    [canWrite, handleRecheckRow, recheck.isPending, setSelectedId, t],
   )
 
   const metrics = useMemo(() => {

@@ -58,6 +58,8 @@
         "dispatchFailed": "Dispatch failed for: {{providers}}",
         "progressHint": "Current discovered submissions, not cumulative requests. Failed attempts may also be waiting or scheduled for retry. Manual checks are not included."
       },
+      "cancelledHistory": "Cancelled shipment history",
+      "historyCount": "History ({{count}})",
       "webhookHistory": "Vendor webhook history",
       "trackingPreview": {
         "title": "Amazon Tracking Upload Preview",
