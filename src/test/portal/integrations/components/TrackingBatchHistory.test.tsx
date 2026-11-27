@@ -36,7 +36,11 @@ function mount() {
   )
 }
 describe('Tracking batch history', () => {
-  afterEach(cleanup)
+  afterEach(() => {
+    cleanup()
+    vi.restoreAllMocks()
+    vi.unstubAllGlobals()
+  })
   beforeEach(async () => {
     vi.clearAllMocks()
     await i18n.changeLanguage('en')
@@ -90,6 +94,84 @@ describe('Tracking batch history', () => {
     )
     expect(screen.queryByText('One row rejected')).not.toBeInTheDocument()
   })
+  it.each([
+    ['en', 'Ready for manual upload', 'Not uploaded to Amazon', 'Download TSV (.txt)'],
+    ['vi', 'Sẵn sàng upload thủ công', 'Chưa upload lên Amazon', 'Tải TSV (.txt)'],
+  ])(
+    'downloads the exact draft feed without submitting it (%s)',
+    async (language, status, result, downloadLabel) => {
+      await i18n.changeLanguage(language)
+      const draft = {
+        ...batch,
+        status: 'DRAFT' as const,
+        agentId: null,
+        amazonBatchId: undefined,
+        result: undefined,
+      }
+      const tsv = 'order-id\ttracking-number\r\n111-3512578-3541012\t9214490374008505223783\r\n'
+      vi.mocked(listAmazonTrackingSubmissions).mockResolvedValue({
+        items: [draft],
+        total: 1,
+        page: 1,
+        limit: 10,
+      })
+      vi.mocked(getAmazonTrackingSubmission).mockResolvedValue({
+        ...draft,
+        tsv,
+        rows: [
+          {
+            shipmentId: 's1',
+            orderId: 'o1',
+            externalOrderId: '111-3512578-3541012',
+            externalItemId: 'item-73',
+            quantity: '2',
+            shipDate: '2026-11-26',
+            carrierCode: 'USPS',
+            carrierName: null,
+            trackingNumber: '9214490374008505223783',
+            shipMethod: 'Ground Advantage',
+          },
+        ],
+      })
+      const createObjectURL = vi.fn<(blob: Blob) => string>(() => 'blob:tracking-draft')
+      const revokeObjectURL = vi.fn()
+      class TestUrl extends URL {}
+      Object.assign(TestUrl, { createObjectURL, revokeObjectURL })
+      vi.stubGlobal('URL', TestUrl)
+      let downloadedFilename: string | undefined
+      vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+        this: HTMLAnchorElement,
+      ) {
+        downloadedFilename = this.download
+      })
+      mount()
+      expect(await screen.findByText(status)).toBeVisible()
+      expect(screen.getByText(result)).toBeVisible()
+      expect(screen.queryByText(/0 accepted|0 chấp nhận/)).not.toBeInTheDocument()
+      expect(getAmazonTrackingSubmission).not.toHaveBeenCalled()
+      fireEvent.click(screen.getByRole('button', { name: /expand row/i }))
+      fireEvent.click(await screen.findByRole('button', { name: downloadLabel }))
+      expect(
+        screen.getByText(i18n.t('portal.shipments.trackingPreview.itemPrefix', { id: 'item-73' })),
+      ).toBeVisible()
+      expect(
+        screen.getByText(i18n.t('portal.shipments.trackingPreview.itemCount', { count: 2 })),
+      ).toBeVisible()
+      expect(downloadedFilename).toBe('upload-nov26.txt')
+      const blob = createObjectURL.mock.calls[0][0] as Blob
+      const contents = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(String(reader.result))
+        reader.onerror = reject
+        reader.readAsText(blob)
+      })
+      expect(contents).toBe(tsv)
+      expect(revokeObjectURL).toHaveBeenCalledWith('blob:tracking-draft')
+      expect(listAmazonTrackingSubmissions).toHaveBeenCalledTimes(1)
+      expect(getAmazonTrackingSubmission).toHaveBeenCalledTimes(1)
+    },
+  )
+
   it('does not invent Amazon totals when a command failed before a result', async () => {
     vi.mocked(listAmazonTrackingSubmissions).mockResolvedValue({
       items: [
