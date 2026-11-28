@@ -2,12 +2,7 @@ import { apiClient } from '@/shared/api'
 import { unwrapResponse } from '@/shared/api/helpers'
 
 export type VendorSubmissionStatus =
-  | 'READY'
-  | 'SUBMITTING'
-  | 'SUBMITTED'
-  | 'FAILED'
-  | 'NEEDS_REVIEW'
-  | 'CANCELLED'
+  'READY' | 'SUBMITTING' | 'SUBMITTED' | 'FAILED' | 'NEEDS_REVIEW' | 'CANCELLED'
 export type VendorSubmission = {
   id: string
   productionTaskId: string
@@ -16,6 +11,8 @@ export type VendorSubmission = {
   provider: string | null
   externalOrderId: string | null
   vendorExternalOrderId: string | null
+  vendorOrderCode?: string | null
+  vendorOrderReference?: string | null
   listingTitle: string | null
   sku: string | null
   vendorName: string | null

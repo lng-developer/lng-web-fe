@@ -13,6 +13,7 @@ import { Button, Descriptions, Input, Modal, Select, Space, Tag, Timeline, Typog
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { VendorOrderIdentity } from '@/features/portal/vendor-submissions/components/VendorOrderIdentity'
 import { DEFAULT_PAGE_SIZE } from '@/shared/constants/enum'
 import {
   CopyableOrderId,
@@ -658,9 +659,45 @@ export function VendorSubmissionWorkbenchPage({
                 },
                 {
                   key: 'vendorOrder',
-                  label: t('portal.vendorSubmissions.vendorOrderId'),
-                  children: detail.data.vendorExternalOrderId || '-',
+                  label: t(
+                    detail.data.provider === 'MERCHIZE'
+                      ? 'portal.vendorSubmissions.vendorOrderCode'
+                      : 'portal.vendorSubmissions.vendorOrderId',
+                  ),
+                  children:
+                    detail.data.provider === 'MERCHIZE' ? (
+                      <CopyableOrderId
+                        value={detail.data.vendorOrderCode}
+                        fallback={t('portal.vendorSubmissions.vendorOrderUnavailable')}
+                      />
+                    ) : (
+                      <VendorOrderIdentity order={detail.data} />
+                    ),
                 },
+                ...(detail.data.provider === 'MERCHIZE'
+                  ? [
+                      {
+                        key: 'vendorReference',
+                        label: t('portal.vendorSubmissions.vendorOrderReference'),
+                        children: (
+                          <CopyableOrderId
+                            value={detail.data.vendorOrderReference}
+                            fallback={t('portal.vendorSubmissions.vendorOrderUnavailable')}
+                          />
+                        ),
+                      },
+                      {
+                        key: 'vendorTechnicalId',
+                        label: t('portal.vendorSubmissions.vendorTechnicalId'),
+                        children: (
+                          <TableTextCell
+                            value={detail.data.vendorExternalOrderId}
+                            fallback={t('portal.vendorSubmissions.vendorOrderUnavailable')}
+                          />
+                        ),
+                      },
+                    ]
+                  : []),
                 {
                   key: 'provider',
                   label: t('portal.vendorSubmissions.vendorProvider'),
