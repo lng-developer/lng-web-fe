@@ -63,7 +63,11 @@
         "payloadCorrected": "Operator confirmed payload is corrected",
         "remoteMissing": "Operator confirmed provider has no order",
         "remoteFound": "Operator confirmed order in provider portal"
-      }
+      },
+      "vendorOrderReference": "Reference",
+      "vendorTechnicalId": "Vendor technical ID",
+      "vendorOrderUnavailable": "Not available",
+      "vendorOrderCode": "Vendor order code"
     }
   }
 }

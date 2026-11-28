@@ -19,6 +19,7 @@ import {
 
 import { CoreDataTable } from '@/app/common/CoreDataTable'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
+import { VendorOrderIdentity } from '@/features/portal/vendor-submissions/components/VendorOrderIdentity'
 import { listShops } from '@/features/portal/shops/api/shopApi'
 import { shopKeys } from '@/features/portal/shops/api/shopKeys'
 import {
@@ -364,16 +365,24 @@ export function ShipmentWorkbenchPage({
         title: t('portal.shipments.columns.vendorOrder'),
         dataIndex: 'vendorExternalOrderId',
         width: 172,
-        render: (value, row) => {
-          const all = row.bundledShipments
+        render: (_, row) => {
           const vendorOrders = Array.from(
-            new Set(all.map((s) => s.vendorExternalOrderId).filter(Boolean)),
+            new Map(
+              row.bundledShipments.map((shipment) => [
+                JSON.stringify([
+                  shipment.provider,
+                  shipment.vendorOrderCode,
+                  shipment.vendorOrderReference,
+                  shipment.vendorExternalOrderId,
+                ]),
+                shipment,
+              ]),
+            ).values(),
           )
-          if (!vendorOrders.length) return <TableTextCell value={value} fallback="-" />
           return (
             <Space direction="vertical" size={2}>
-              {vendorOrders.map((vo) => (
-                <TableTextCell key={vo} value={vo} fallback="-" />
+              {vendorOrders.map((shipment) => (
+                <VendorOrderIdentity key={shipment.id} order={shipment} />
               ))}
             </Space>
           )
@@ -737,8 +746,40 @@ export function ShipmentWorkbenchPage({
                 {
                   key: 'vendor',
                   label: t('portal.shipments.columns.vendorOrder'),
-                  children: detail.data.vendorExternalOrderId || '-',
+                  children:
+                    detail.data.provider === 'MERCHIZE' ? (
+                      <CopyableOrderId
+                        value={detail.data.vendorOrderCode}
+                        fallback={t('portal.vendorSubmissions.vendorOrderUnavailable')}
+                      />
+                    ) : (
+                      <VendorOrderIdentity order={detail.data} />
+                    ),
                 },
+                ...(detail.data.provider === 'MERCHIZE'
+                  ? [
+                      {
+                        key: 'vendorReference',
+                        label: t('portal.vendorSubmissions.vendorOrderReference'),
+                        children: (
+                          <CopyableOrderId
+                            value={detail.data.vendorOrderReference}
+                            fallback={t('portal.vendorSubmissions.vendorOrderUnavailable')}
+                          />
+                        ),
+                      },
+                      {
+                        key: 'vendorTechnicalId',
+                        label: t('portal.vendorSubmissions.vendorTechnicalId'),
+                        children: (
+                          <TableTextCell
+                            value={detail.data.vendorExternalOrderId}
+                            fallback={t('portal.vendorSubmissions.vendorOrderUnavailable')}
+                          />
+                        ),
+                      },
+                    ]
+                  : []),
                 {
                   key: 'tracking',
                   label: t('portal.shipments.columns.tracking'),

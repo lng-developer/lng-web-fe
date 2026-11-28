@@ -63,7 +63,11 @@
         "payloadCorrected": "Nhân viên xác nhận dữ liệu gửi đã được sửa",
         "remoteMissing": "Nhân viên xác nhận nhà cung cấp chưa có đơn",
         "remoteFound": "Nhân viên xác nhận đã tìm thấy đơn trên hệ thống nhà cung cấp"
-      }
+      },
+      "vendorOrderReference": "Mã tham chiếu",
+      "vendorTechnicalId": "ID kỹ thuật NCC",
+      "vendorOrderUnavailable": "Chưa có",
+      "vendorOrderCode": "Mã đơn nhà cung cấp"
     }
   }
 }
