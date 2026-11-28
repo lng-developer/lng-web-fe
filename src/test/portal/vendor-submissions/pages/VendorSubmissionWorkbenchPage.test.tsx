@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '@/app/providers/AppProviders'
 import type { CurrentAccount } from '@/features/auth/api/authApi'
 import {
+  getVendorSubmission,
+  type VendorSubmission,
   getVendorSubmissionSummary,
   listVendorSubmissions,
 } from '@/features/portal/vendor-submissions/api/vendorSubmissionApi'
@@ -21,6 +23,7 @@ vi.mock('@/features/portal/vendor-submissions/api/vendorSubmissionApi', async (i
   ...(await importOriginal<
     typeof import('@/features/portal/vendor-submissions/api/vendorSubmissionApi')
   >()),
+  getVendorSubmission: vi.fn(),
   listVendorSubmissions: vi.fn(),
   getVendorSubmissionSummary: vi.fn(),
 }))
@@ -37,9 +40,9 @@ const account: CurrentAccount = {
   profileSetupRequired: false,
 }
 
-function renderPage() {
+function renderPage(url = '/portal/vendor-submissions') {
   return render(
-    <MemoryRouter initialEntries={['/portal/vendor-submissions']}>
+    <MemoryRouter initialEntries={[url]}>
       <AppProviders>
         <VendorSubmissionWorkbenchPage account={account} />
       </AppProviders>
@@ -66,6 +69,24 @@ describe('VendorSubmissionWorkbenchPage', () => {
       cancelled: 5,
       byStatus: {},
     })
+  })
+
+  it('shows separate Merchize code, retry reference and technical receipt ID', async () => {
+    vi.mocked(getVendorSubmission).mockResolvedValue({
+      id: 'sub-1',
+      externalOrderId: 'marketplace-order',
+      provider: 'MERCHIZE',
+      vendorOrderCode: 'RY-65286-27564',
+      vendorOrderReference: 'marketplace-order-R2',
+      vendorExternalOrderId: '692839abc123456789abcdef',
+      status: 'SUBMITTED',
+      submitAttemptCount: 2,
+    } as VendorSubmission)
+    renderPage('/portal/vendor-submissions?resourceId=sub-1')
+    expect(await screen.findByText('RY-65286-27564')).toBeVisible()
+    expect(screen.getByText('marketplace-order-R2')).toBeVisible()
+    expect(screen.getByText('Vendor technical ID')).toBeVisible()
+    expect(screen.getByText('692839abc123456789abcdef')).toBeVisible()
   })
 
   it('keeps submission columns compact within a stable table width', async () => {

@@ -146,6 +146,47 @@ describe('ShipmentWorkbenchPage', () => {
     })
   }
 
+  it.each([
+    ['RY-65286-27564', '114-4533300-1174625-R2', 'RY-65286-27564'],
+    [null, '114-4533300-1174625-R2', '114-4533300-1174625-R2'],
+    [null, null, 'Not available'],
+  ])(
+    'shows Merchize operational identity without leaking technical IDs into the vendor order column (%s)',
+    async (vendorOrderCode, vendorOrderReference, expected) => {
+      loadRows([
+        {
+          ...currentShipment,
+          provider: 'MERCHIZE',
+          vendorOrderCode,
+          vendorOrderReference,
+          vendorExternalOrderId: '692839abc123456789abcdef',
+        },
+      ])
+      renderPage()
+      const order = await screen.findByText(currentShipment.externalOrderId!)
+      const row = within(order.closest('tr')!)
+      expect(row.getByText(expected)).toBeVisible()
+      expect(row.queryByText('692839abc123456789abcdef')).not.toBeInTheDocument()
+      if (!vendorOrderCode && vendorOrderReference)
+        expect(row.getByText(/Reference:/)).toBeVisible()
+    },
+  )
+
+  it('separates Merchize code, submitted retry reference and technical ID in details', async () => {
+    vi.mocked(getShipment).mockResolvedValue({
+      ...currentShipment,
+      provider: 'MERCHIZE',
+      vendorOrderCode: 'RY-65286-27564',
+      vendorOrderReference: '114-4533300-1174625-R2',
+      vendorExternalOrderId: '692839abc123456789abcdef',
+    })
+    renderPage('/portal/shipments?resourceId=current')
+    expect(await screen.findByText('RY-65286-27564')).toBeVisible()
+    expect(screen.getByText('114-4533300-1174625-R2')).toBeVisible()
+    expect(screen.getByText('Vendor technical ID')).toBeVisible()
+    expect(screen.getByText('692839abc123456789abcdef')).toBeVisible()
+  })
+
   it('keeps a replaced cancellation in history without inflating items or changing the current provider', async () => {
     loadRows([cancelledShipment, currentShipment])
     vi.mocked(getShipment).mockResolvedValue(cancelledShipment)

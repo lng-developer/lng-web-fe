@@ -2,12 +2,7 @@ import { apiClient } from '@/shared/api'
 import { unwrapResponse } from '@/shared/api/helpers'
 
 export type ShipmentStatus =
-  | 'TRACKING_PENDING'
-  | 'SHIPPED'
-  | 'DELIVERED'
-  | 'EXCEPTION'
-  | 'RETURNED'
-  | 'CANCELLED'
+  'TRACKING_PENDING' | 'SHIPPED' | 'DELIVERED' | 'EXCEPTION' | 'RETURNED' | 'CANCELLED'
 
 export type MarketplaceConfirmationStatus = 'PENDING' | 'SUBMITTED' | 'CONFIRMED' | 'FAILED'
 
@@ -20,6 +15,8 @@ export type Shipment = {
   provider: string | null
   externalOrderId: string | null
   vendorExternalOrderId: string | null
+  vendorOrderCode?: string | null
+  vendorOrderReference?: string | null
   carrier: string | null
   trackingNumber: string | null
   trackingUrl: string | null
